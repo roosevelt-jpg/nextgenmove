@@ -1,0 +1,14 @@
+---
+description: Core project rules for NextGen Move — Firebase, CMS, and design system conventions
+alwaysApply: true
+---
+
+- This is a Next.js App Router + TypeScript + Tailwind project called NextGen Move.
+- Firebase Admin SDK (`firebase-admin`) is imported ONLY inside app/api/**/route.ts files or files with a "use server" directive. Never in client components.
+- Firebase Client SDK (`firebase/app`, `firebase/firestore`, `firebase/auth`, `firebase/storage`) is imported ONLY inside "use client" components/hooks. Never in API routes or server actions.
+- Firestore documents must NEVER contain `undefined` values. Always run new writes through a shared lib/stripUndefined.ts helper.
+- All binary/file data (images, PDFs, CVs, videos) goes to Firebase Storage. Firestore stores only { url, path, filename, size, mimeType, uploadedAt }.
+- Zero hardcoded UI copy. Every label, price, stat, list of select options, nav item, and block of marketing copy is fetched from Firestore and editable via the Admin CMS. If a value would otherwise be hardcoded, create a Firestore-backed settings/config document for it instead.
+- Never generate demo/fake data (no placeholder companies, students, testimonials, articles). Seed scripts only create real operational config (taxonomies, program_levers, one super-admin, empty CMS doc shells).
+- Use the design tokens defined in /styles/tokens.css and tailwind.config.ts — do not introduce new colors, fonts, or radii inline.
+- Every list screen (talent pool, pipeline, CRM tables, content store, articles, roles) must read live from Firestore with onSnapshot or a fetch-on-load pattern — no static arrays.
