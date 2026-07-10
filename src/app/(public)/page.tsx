@@ -64,7 +64,7 @@ export default async function HomePage() {
           {page?.talentCta?.title || page?.talentCta?.ctaLabel ? (
             <div className="rounded-radius-lg bg-brand-lavender p-8">
               {page.talentCta?.eyebrow ? (
-                <p className="mb-3 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
+                <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
                   {page.talentCta.eyebrow}
                 </p>
               ) : null}
@@ -91,7 +91,7 @@ export default async function HomePage() {
           {page?.companyCta?.title || page?.companyCta?.ctaLabel ? (
             <div className="rounded-radius-lg bg-fill-primary p-8 text-on-primary">
               {page.companyCta?.eyebrow ? (
-                <p className="mb-3 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-brand-lavender">
+                <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-brand-lavender">
                   {page.companyCta.eyebrow}
                 </p>
               ) : null}

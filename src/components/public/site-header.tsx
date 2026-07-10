@@ -27,7 +27,7 @@ export async function SiteHeader() {
             <>
               <span
                 aria-hidden
-                className="flex h-8 w-8 items-center justify-center rounded-md bg-border-accent font-sans text-xs font-semibold text-on-accent"
+                className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
               >
                 NG
               </span>
@@ -60,7 +60,7 @@ export async function SiteHeader() {
         {ctaLabel ? (
           <Link
             href={ctaHref}
-            className="inline-flex shrink-0 items-center justify-center rounded-radius bg-fill-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90"
+            className="inline-flex shrink-0 items-center justify-center rounded-radius-sm bg-fill-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-90"
           >
             {ctaLabel}
           </Link>

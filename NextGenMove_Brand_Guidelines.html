@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NextGen Move — Brand Guidelines</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ink:#1A1A18; --bg:#FAFAF7; --surface:#FFFFFF; --surface-2:#F1EFE8; --border:#E7E4D9;
+    --muted:#9B9A91; --secondary:#6B6A63;
+    --purple:#3C3489; --purple-bg:#EEEDFE; --purple-strong:#4B3F9C;
+    --amber:#C97A2E; --amber-bg:#FAEEDA;
+    --green:#27500A; --green-bg:#EAF3DE;
+    --oxblood:#8B3A3A; --oxblood-bg:#F5E9E7;
+    --grad-horizon: linear-gradient(115deg, #2E2768 0%, #4B3F9C 38%, #9A6A3C 78%, #C97A2E 100%);
+    --grad-dusk: linear-gradient(135deg, #EEEDFE 0%, #FAEEDA 100%);
+    --grad-route: linear-gradient(90deg, #3C3489, #C97A2E);
+    --grad-ink: linear-gradient(180deg, rgba(26,26,24,0) 0%, rgba(26,26,24,0.92) 100%);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter',sans-serif; background:var(--bg); color:var(--ink); font-size:14px; line-height:1.45;}
+  .serif{font-family:'Playfair Display',serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .wrap{max-width:1260px; margin:0 auto; padding:0 36px 80px;}
+
+  /* ---- cover ---- */
+  .cover{background:var(--grad-horizon); color:#fff; padding:70px 36px 56px; margin-bottom:36px;}
+  .cover-inner{max-width:1260px; margin:0 auto;}
+  .cover-eyebrow{font-family:'JetBrains Mono'; font-size:11px; letter-spacing:3px; color:#E8D9BE; margin-bottom:16px;}
+  .cover h1{font-family:'Playfair Display'; font-size:56px; font-weight:600; line-height:1.05;}
+  .cover h1 em{font-style:italic; color:#F4D9A8;}
+  .cover p{max-width:520px; color:#E4DFF0; font-size:15px; margin-top:14px; line-height:1.6;}
+  .cover-meta{display:flex; gap:28px; margin-top:32px; font-family:'JetBrains Mono'; font-size:11px; color:#C9C2E8; letter-spacing:0.5px;}
+
+  /* ---- section shell ---- */
+  .section{margin-bottom:34px;}
+  .section-head{display:flex; align-items:baseline; gap:12px; margin-bottom:14px; border-bottom:2px solid var(--ink); padding-bottom:8px;}
+  .section-num{font-family:'JetBrains Mono'; font-size:12px; color:var(--purple); font-weight:600;}
+  .section-title{font-family:'Playfair Display'; font-size:24px; font-weight:600;}
+  .section-note{font-size:12.5px; color:var(--secondary); margin-bottom:16px; max-width:640px;}
+
+  /* ---- compact grids ---- */
+  .grid{display:grid; gap:8px;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g5{grid-template-columns:repeat(5,1fr);}
+  .g2{grid-template-columns:repeat(2,1fr);}
+  .g6{grid-template-columns:repeat(6,1fr);}
+
+  /* ---- color swatch ---- */
+  .swatch{border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+  .swatch-fill{height:64px; display:flex; align-items:flex-end; padding:8px;}
+  .swatch-fill .role{font-family:'JetBrains Mono'; font-size:9.5px; color:rgba(255,255,255,0.85); letter-spacing:0.5px;}
+  .swatch-fill.on-light .role{color:rgba(0,0,0,0.55);}
+  .swatch-info{background:var(--surface); padding:8px 10px;}
+  .swatch-name{font-weight:700; font-size:12px;}
+  .swatch-hex{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--muted); margin-top:1px;}
+
+  /* ---- gradient cards ---- */
+  .gradient-card{border-radius:10px; overflow:hidden; border:1px solid var(--border);}
+  .gradient-fill{height:90px; position:relative;}
+  .gradient-label{position:absolute; bottom:8px; left:10px; color:#fff; font-family:'JetBrains Mono'; font-size:10px; letter-spacing:0.5px; text-shadow:0 1px 3px rgba(0,0,0,0.3);}
+  .gradient-meta{background:var(--surface); padding:9px 11px;}
+  .gradient-name{font-weight:700; font-size:12.5px;}
+  .gradient-use{font-size:11px; color:var(--secondary); margin-top:2px; line-height:1.4;}
+
+  /* ---- type specimen ---- */
+  .type-row{display:flex; align-items:baseline; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);}
+  .type-row:last-child{border-bottom:none;}
+  .type-meta{font-family:'JetBrains Mono'; font-size:10.5px; color:var(--muted); white-space:nowrap; margin-left:20px;}
+
+  /* ---- component demos ---- */
+  .demo-panel{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px;}
+  .demo-label{font-family:'JetBrains Mono'; font-size:9.5px; color:var(--muted); letter-spacing:1px; margin-bottom:10px; text-transform:uppercase;}
+  .btn{display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border-radius:7px; font-size:12.5px; font-weight:600; border:1px solid var(--border); background:#fff; cursor:default;}
+  .btn-primary{background:var(--ink); color:#fff; border:none;}
+  .btn-purple{background:var(--purple); color:#fff; border:none;}
+  .btn-grad{background:var(--grad-horizon); color:#fff; border:none;}
+  .btn-outline{background:transparent; border:1px solid var(--ink);}
+  .pill{font-size:10px; padding:3px 9px; border-radius:999px; font-weight:700; display:inline-block;}
+  .pill-purple{background:var(--purple-bg); color:var(--purple);}
+  .pill-amber{background:var(--amber-bg); color:var(--amber);}
+  .pill-green{background:var(--green-bg); color:var(--green);}
+  .pill-ox{background:var(--oxblood-bg); color:var(--oxblood);}
+  .avatar{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff;}
+
+  /* ---- do / dont ---- */
+  .dd-card{border-radius:10px; padding:14px; border:1.5px solid;}
+  .dd-good{border-color:var(--green); background:var(--green-bg);}
+  .dd-bad{border-color:var(--oxblood); background:var(--oxblood-bg);}
+  .dd-tag{font-family:'JetBrains Mono'; font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:6px;}
+  .dd-good .dd-tag{color:var(--green);}
+  .dd-bad .dd-tag{color:var(--oxblood);}
+  .dd-text{font-size:12px; color:var(--ink); line-height:1.5;}
+
+  /* ---- application mockups ---- */
+  .app-frame{border:1px solid var(--border); border-radius:10px; overflow:hidden; background:#fff;}
+  .app-frame-label{padding:8px 12px; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); border-top:1px solid var(--border); background:var(--surface-2);}
+
+  .footer-brand{display:flex; justify-content:space-between; align-items:center; padding-top:24px; margin-top:10px; border-top:1px solid var(--border); font-family:'JetBrains Mono'; font-size:10px; color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-inner">
+    <div class="cover-eyebrow">BRAND GUIDELINES — v1.0</div>
+    <h1>NextGen Move<br><em>Your next step, engineered.</em></h1>
+    <p>A relocation-and-placement brand built on precision, motion, and quiet confidence — expressed through a boarding-pass visual language, an editorial serif, and one signature gradient used with intent.</p>
+    <div class="cover-meta">
+      <span>ISSUED JUL 2026</span><span>OWNER: BRAND / LEMONI</span><span>FOR: WEB, PRODUCT, DECKS</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 01 ESSENCE -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">01</span><span class="section-title">Brand essence</span></div>
+    <div class="grid g4">
+      <div class="demo-panel"><div class="demo-label">Positioning</div><div class="serif" style="font-size:16px;">Relocation, engineered</div><div style="font-size:11.5px; color:var(--secondary); margin-top:4px;">Not a job board. A coached itinerary from application to arrival.</div></div>
+      <div class="demo-panel"><div class="demo-label">Pillar 01</div><div class="serif" style="font-size:16px;">Precision</div><div style="font-size:11.5px; color:var(--secondary); margin-top:4px;">Every number, route, and step is real and specific — never vague.</div></div>
+      <div class="demo-panel"><div class="demo-label">Pillar 02</div><div class="serif" style="font-size:16px;">Momentum</div><div style="font-size:11.5px; color:var(--secondary); margin-top:4px;">Visuals imply motion — arcs, routes, journeys — never static stock.</div></div>
+      <div class="demo-panel"><div class="demo-label">Pillar 03</div><div class="serif" style="font-size:16px;">Warmth</div><div style="font-size:11.5px; color:var(--secondary); margin-top:4px;">Coaching is human. The gradient and serif keep it from feeling corporate.</div></div>
+    </div>
+  </div>
+
+  <!-- 02 COLOR -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">02</span><span class="section-title">Color system</span></div>
+    <div class="section-note">One ink, one purple, one amber, one green — plus a narrow neutral ramp. Purple leads for brand moments; amber is the warm counter-accent; green is reserved for success/positive states only.</div>
+
+    <div class="grid g5" style="margin-bottom:8px;">
+      <div class="swatch"><div class="swatch-fill" style="background:#1A1A18;"><span class="role">INK</span></div><div class="swatch-info"><div class="swatch-name">Ink</div><div class="swatch-hex">#1A1A18</div></div></div>
+      <div class="swatch"><div class="swatch-fill" style="background:#3C3489;"><span class="role">PURPLE / PRIMARY</span></div><div class="swatch-info"><div class="swatch-name">Purple</div><div class="swatch-hex">#3C3489</div></div></div>
+      <div class="swatch"><div class="swatch-fill" style="background:#4B3F9C;"><span class="role">PURPLE STRONG</span></div><div class="swatch-info"><div class="swatch-name">Purple Strong</div><div class="swatch-hex">#4B3F9C</div></div></div>
+      <div class="swatch"><div class="swatch-fill" style="background:#C97A2E;"><span class="role">AMBER / ACCENT</span></div><div class="swatch-info"><div class="swatch-name">Amber</div><div class="swatch-hex">#C97A2E</div></div></div>
+      <div class="swatch"><div class="swatch-fill" style="background:#27500A;"><span class="role">GREEN / SUCCESS</span></div><div class="swatch-info"><div class="swatch-name">Green</div><div class="swatch-hex">#27500A</div></div></div>
+    </div>
+    <div class="grid g6">
+      <div class="swatch"><div class="swatch-fill on-light" style="background:#EEEDFE;"><span class="role">PURPLE BG</span></div><div class="swatch-info"><div class="swatch-name">Purple 10</div><div class="swatch-hex">#EEEDFE</div></div></div>
+      <div class="swatch"><div class="swatch-fill on-light" style="background:#FAEEDA;"><span class="role">AMBER BG</span></div><div class="swatch-info"><div class="swatch-name">Amber 10</div><div class="swatch-hex">#FAEEDA</div></div></div>
+      <div class="swatch"><div class="swatch-fill on-light" style="background:#EAF3DE;"><span class="role">GREEN BG</span></div><div class="swatch-info"><div class="swatch-name">Green 10</div><div class="swatch-hex">#EAF3DE</div></div></div>
+      <div class="swatch"><div class="swatch-fill on-light" style="background:#F1EFE8;"><span class="role">SURFACE 2</span></div><div class="swatch-info"><div class="swatch-name">Surface 2</div><div class="swatch-hex">#F1EFE8</div></div></div>
+      <div class="swatch"><div class="swatch-fill on-light" style="background:#E7E4D9; border-bottom:1px solid #ddd;"><span class="role">BORDER</span></div><div class="swatch-info"><div class="swatch-name">Border</div><div class="swatch-hex">#E7E4D9</div></div></div>
+      <div class="swatch"><div class="swatch-fill on-light" style="background:#9B9A91;"><span class="role">MUTED</span></div><div class="swatch-info"><div class="swatch-name">Muted</div><div class="swatch-hex">#9B9A91</div></div></div>
+    </div>
+  </div>
+
+  <!-- 03 GRADIENT SYSTEM -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">03</span><span class="section-title">Gradient system</span></div>
+    <div class="section-note">Four gradients, four jobs. "Horizon" is the signature — reserve it for the single most important moment on a page (hero, cover, primary CTA). Never run two gradients on one screen.</div>
+    <div class="grid g4">
+      <div class="gradient-card">
+        <div class="gradient-fill" style="background:var(--grad-horizon);"><span class="gradient-label">HORIZON — signature</span></div>
+        <div class="gradient-meta"><div class="gradient-name">Horizon</div><div class="gradient-use">Hero banners, cover pages, the one big moment per screen. 115°, indigo → amber.</div></div>
+      </div>
+      <div class="gradient-card">
+        <div class="gradient-fill" style="background:var(--grad-dusk);"><span class="gradient-label" style="color:#3C3489; text-shadow:none;">DUSK — subtle</span></div>
+        <div class="gradient-meta"><div class="gradient-name">Dusk</div><div class="gradient-use">Highlighted card backgrounds, empty states, quiet emphasis without shouting.</div></div>
+      </div>
+      <div class="gradient-card">
+        <div class="gradient-fill" style="background:var(--grad-route); height:90px;"><span class="gradient-label">ROUTE — accent line</span></div>
+        <div class="gradient-meta"><div class="gradient-name">Route</div><div class="gradient-use">Thin accent underlines, progress bars, the journey-arc motif. 2–4px max.</div></div>
+      </div>
+      <div class="gradient-card">
+        <div class="gradient-fill" style="background:#4B3F9C;"><div style="position:absolute; inset:0; background:var(--grad-ink);"></div><span class="gradient-label">INK FADE — overlay</span></div>
+        <div class="gradient-meta"><div class="gradient-name">Ink Fade</div><div class="gradient-use">Scrims over photography/illustration so white text stays legible.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 TYPOGRAPHY -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">04</span><span class="section-title">Typography</span></div>
+    <div class="grid g2" style="margin-bottom:12px;">
+      <div class="demo-panel">
+        <div class="demo-label">Display — Playfair Display</div>
+        <div class="type-row"><span class="serif" style="font-size:38px;">Aa</span><span class="type-meta">H1 / 40–56 / SemiBold</span></div>
+        <div class="type-row"><span class="serif" style="font-size:26px;">Aa Bb Cc</span><span class="type-meta">H2 / 24–28 / Medium</span></div>
+        <div class="type-row"><span class="serif" style="font-size:19px; font-style:italic; color:var(--purple);">Quote & script accents</span><span class="type-meta">Italic / testimonials</span></div>
+      </div>
+      <div class="demo-panel">
+        <div class="demo-label">UI — Inter</div>
+        <div class="type-row"><span style="font-size:16px; font-weight:700;">Body strong 16</span><span class="type-meta">Card titles</span></div>
+        <div class="type-row"><span style="font-size:14px;">Body regular 14</span><span class="type-meta">Paragraphs, table cells</span></div>
+        <div class="type-row"><span class="mono" style="font-size:11px; letter-spacing:1.5px; color:var(--purple);">EYEBROW LABEL 11</span><span class="type-meta">JetBrains Mono / uppercase</span></div>
+      </div>
+    </div>
+    <div class="dd-card dd-bad" style="max-width:640px;">
+      <div class="dd-tag">DON'T</div>
+      <div class="dd-text">Don't set body copy in Playfair Display — it's a display face only. Don't mix in a second serif or a rounded sans; the whole system rests on this exact pairing.</div>
+    </div>
+  </div>
+
+  <!-- 05 COMPONENTS -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">05</span><span class="section-title">Components</span></div>
+    <div class="grid g4">
+      <div class="demo-panel">
+        <div class="demo-label">Buttons</div>
+        <div style="display:flex; flex-direction:column; gap:7px; align-items:flex-start;">
+          <span class="btn btn-primary">Primary action</span>
+          <span class="btn btn-purple">Brand action</span>
+          <span class="btn btn-grad">Signature CTA</span>
+          <span class="btn btn-outline">Secondary</span>
+        </div>
+      </div>
+      <div class="demo-panel">
+        <div class="demo-label">Status pills</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+          <span class="pill pill-purple">New</span><span class="pill pill-amber">Contacted</span>
+          <span class="pill pill-green">Won</span><span class="pill pill-ox">Churned</span>
+        </div>
+        <div style="font-size:11px; color:var(--secondary); margin-top:10px; line-height:1.5;">Pills always use the 10%-tint background with the full-strength text color. Never a solid fill.</div>
+      </div>
+      <div class="demo-panel">
+        <div class="demo-label">Avatars — initials, never stock photos</div>
+        <div style="display:flex; gap:6px;">
+          <div class="avatar" style="background:var(--purple);">LE</div>
+          <div class="avatar" style="background:var(--amber);">RO</div>
+          <div class="avatar" style="background:var(--green);">ER</div>
+        </div>
+        <div style="font-size:11px; color:var(--secondary); margin-top:10px; line-height:1.5;">Rotate through the four core hues by hashing the name — keeps every list visually varied. (Lemoni, Roose, Eric)</div>
+      </div>
+      <div class="demo-panel">
+        <div class="demo-label">Stat card</div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div class="mono" style="font-size:9.5px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Placed this Q</div>
+          <div class="serif" style="font-size:26px; color:var(--amber);">41</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 APPLICATION -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">06</span><span class="section-title">Applied</span></div>
+    <div class="grid g2">
+      <div class="app-frame">
+        <div style="background:var(--grad-horizon); padding:26px; color:#fff;">
+          <div class="mono" style="font-size:9.5px; letter-spacing:2px; color:#E8D9BE; margin-bottom:8px;">RELOCATION, ENGINEERED</div>
+          <div class="serif" style="font-size:24px; line-height:1.15;">Your next step,<br><em style="color:#F4D9A8;">engineered.</em></div>
+        </div>
+        <div class="app-frame-label">HERO BANNER — Horizon gradient, one per page</div>
+      </div>
+      <div class="app-frame">
+        <div style="padding:20px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--surface-2); border-radius:7px;">
+            <div style="display:flex; align-items:center; gap:8px;"><div class="avatar" style="background:var(--green); width:26px; height:26px; font-size:10px;">ER</div><span style="font-size:12.5px; font-weight:700;">Eric</span></div>
+            <span class="pill pill-purple">Interviewing</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--surface-2); border-radius:7px;">
+            <div style="display:flex; align-items:center; gap:8px;"><div class="avatar" style="background:var(--amber); width:26px; height:26px; font-size:10px;">RO</div><span style="font-size:12.5px; font-weight:700;">Roose</span></div>
+            <span class="pill pill-amber">Shortlisted</span>
+          </div>
+        </div>
+        <div class="app-frame-label">DASHBOARD ROWS — compact, gradient-free, pill for state</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 07 DO / DONT -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">07</span><span class="section-title">Do &amp; don't</span></div>
+    <div class="grid g2">
+      <div class="dd-card dd-good"><div class="dd-tag">DO</div><div class="dd-text">Use Horizon gradient once per screen, at the top, as a full-bleed banner.</div></div>
+      <div class="dd-card dd-bad"><div class="dd-tag">DON'T</div><div class="dd-text">Apply the gradient to buttons, tags, and the hero all on the same screen — it stops feeling signature.</div></div>
+      <div class="dd-card dd-good"><div class="dd-tag">DO</div><div class="dd-text">Keep card padding and gaps tight (8–14px) — density reads as precision, not clutter.</div></div>
+      <div class="dd-card dd-bad"><div class="dd-tag">DON'T</div><div class="dd-text">Add 24px+ gaps "for breathing room" — it dilutes the engineered, itinerary feel.</div></div>
+      <div class="dd-card dd-good"><div class="dd-tag">DO</div><div class="dd-text">Use initials avatars in the four core hues, rotated by name hash.</div></div>
+      <div class="dd-card dd-bad"><div class="dd-tag">DON'T</div><div class="dd-text">Use stock photography or generic illustrated people — breaks the precision pillar.</div></div>
+    </div>
+  </div>
+
+  <div class="footer-brand">
+    <span>NEXTGEN MOVE BRAND GUIDELINES · V1.0</span>
+    <span>PURPLE #3C3489 · AMBER #C97A2E · PLAYFAIR DISPLAY + INTER + JETBRAINS MONO</span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -3,7 +3,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "primary" | "ghost" | "outline" | "secondary";
+export type ButtonVariant = "primary" | "ghost" | "outline" | "secondary" | "brand";
 export type ButtonSize = "default" | "sm" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,11 +11,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
 }
 
+/** Brand Guidelines: primary = Ink; brand = Purple; outline = Ink border. */
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-fill-primary text-on-primary hover:opacity-90 disabled:opacity-50",
-  secondary:
+  brand:
     "bg-fill-accent text-on-accent hover:opacity-90 disabled:opacity-50",
+  secondary:
+    "bg-fill-accent-strong text-on-accent hover:opacity-90 disabled:opacity-50",
   ghost:
     "bg-transparent text-text-primary hover:bg-surface-2 disabled:opacity-50",
   outline:
@@ -44,7 +47,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-radius font-medium transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-accent",
+          "inline-flex items-center justify-center gap-2 rounded-radius-sm font-semibold transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-accent",
           variantClasses[variant],
           sizeClasses[size],
           className,

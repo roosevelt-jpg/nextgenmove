@@ -15,7 +15,7 @@ export async function SiteFooter() {
           <div className="flex items-center gap-2.5">
             <span
               aria-hidden
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-border-accent font-sans text-xs font-semibold text-on-accent"
+              className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
             >
               NG
             </span>
@@ -34,7 +34,7 @@ export async function SiteFooter() {
           {groups.map((group) => (
             <div key={group.key}>
               {group.label ? (
-                <h2 className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
+                <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
                   {group.label}
                 </h2>
               ) : null}

@@ -1,0 +1,45 @@
+---
+description: Always align UI with NextGenMove_Brand_Guidelines.html in the repo root
+alwaysApply: true
+---
+
+# Brand Guidelines (source of truth)
+
+Canonical file: `NextGenMove_Brand_Guidelines.html` (repo root). Design tokens in `src/styles/tokens.css` must match it. Do not invent new colors, fonts, or radii.
+
+## Color
+
+- **Ink** `#1A1A18` — primary text + primary CTA fill
+- **Purple** `#3C3489` / **Purple Strong** `#4B3F9C` — brand moments, eyebrows, Track B
+- **Amber** `#C97A2E` — warm counter-accent (stats, secondary emphasis)
+- **Green** `#27500A` — success/positive only
+- **Oxblood** `#8B3A3A` — warning/churned only
+- Neutrals: bg `#FAFAF7`, surface `#FFFFFF`, surface-2 `#F1EFE8`, border `#E7E4D9`, muted `#9B9A91`, secondary `#6B6A63`
+- Tint backgrounds: purple `#EEEDFE`, amber `#FAEEDA`, green `#EAF3DE`, oxblood `#F5E9E7`
+
+## Gradients
+
+- **Horizon** (indigo→amber, 115°) — signature; **one full-bleed use per screen** (hero/cover only). Never on buttons + tags + hero together.
+- **Dusk** — quiet card emphasis / empty states
+- **Route** — thin 2–4px progress/underline accents only
+
+## Typography
+
+- Display: **Playfair Display** (headlines, testimonials italic) — never body copy
+- UI: **Inter**
+- Eyebrows/labels: **JetBrains Mono**, uppercase, purple, ~11px
+
+## Components
+
+- Primary button = Ink fill; Brand button = Purple; Outline = Ink border; radius ~7px
+- Status pills = tint bg + full-strength text (never solid pill fills)
+- Avatars = initials in purple/amber/green (hash by name) — no stock photos of people
+- Cards: tight padding/gaps (8–14px); radius ~8–10px
+
+## Do / Don't
+
+- DO: Horizon once at top as full-bleed banner
+- DON'T: Multiple gradients on one screen
+- DO: Density that reads as precision
+- DON'T: Large empty “breathing room” gaps that dilute the itinerary feel
+- DON'T: Stock photography or generic illustrated people

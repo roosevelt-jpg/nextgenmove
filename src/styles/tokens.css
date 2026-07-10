@@ -1,49 +1,58 @@
 /**
- * NextGen Move design system tokens.
- * All colors, fonts, and radii must reference these variables — never hardcode values in components.
+ * NextGen Move design tokens — sourced from NextGenMove_Brand_Guidelines.html (v1.0).
+ * Never hardcode colors/fonts/radii in components; use these variables only.
  */
 :root {
-  /* Surfaces & borders */
-  --bg: #f9f9f7;
+  /* Neutrals */
+  --bg: #fafaf7;
   --surface-1: #ffffff;
-  --surface-2: #f3f2ed;
-  --border: #e8e6e1;
-  --border-accent: #7b79b0;
+  --surface-2: #f1efe8;
+  --border: #e7e4d9;
 
   /* Text */
-  --text-primary: #1a1a1a;
-  --text-secondary: #4a4860;
-  --text-muted: #8a8898;
+  --text-primary: #1a1a18; /* Ink */
+  --text-secondary: #6b6a63;
+  --text-muted: #9b9a91;
 
-  /* Primary fill — black CTAs per mockups */
-  --fill-primary: #1a1a1a;
+  /* Primary CTA — Ink */
+  --fill-primary: #1a1a18;
   --on-primary: #ffffff;
 
-  /* Accent purple (section labels, badges, Track B) */
-  --fill-accent: #4b3f9c;
+  /* Purple — brand moments, eyebrows, Track B */
+  --fill-accent: #3c3489; /* Purple */
+  --fill-accent-strong: #4b3f9c; /* Purple Strong */
   --on-accent: #ffffff;
-  --text-label: #7b79b0;
+  --bg-purple: #eeedfe; /* Purple 10 */
+  --text-label: #3c3489; /* Eyebrows use purple + mono */
 
-  /* Semantic accents */
-  --bg-accent: #f4d9a8;
+  /* Amber — warm counter-accent */
+  --bg-accent: #faeeda; /* Amber 10 */
   --text-accent: #c97a2e;
-  --bg-success: #e8f3ec;
-  --text-success: #2d6a4f;
-  --bg-warning: #fdf3e3;
-  --text-warning: #c97a2e;
-  --bg-tag: #e8f5e9;
-  --text-tag: #2e7d32;
 
-  /* Radii */
-  --radius: 0.75rem; /* 12px — cards */
-  --radius-lg: 1rem; /* 16px */
+  /* Green — success only */
+  --bg-success: #eaf3de; /* Green 10 */
+  --text-success: #27500a;
 
-  /* Typography — populated by next/font variables in root layout */
+  /* Warning / oxblood */
+  --bg-warning: #f5e9e7; /* Oxblood 10 */
+  --text-warning: #8b3a3a;
+  --bg-tag: #eaf3de;
+  --text-tag: #27500a;
+
+  /* Border accent (Track B highlight, focus) */
+  --border-accent: #4b3f9c;
+
+  /* Radii — guidelines: buttons ~7px, cards ~8–10px */
+  --radius-sm: 0.4375rem; /* 7px — buttons */
+  --radius: 0.5rem; /* 8px — cards */
+  --radius-lg: 0.625rem; /* 10px */
+
+  /* Typography — next/font variables from root layout */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  /* Brand gradient stops — homepage hero only */
+  /* Horizon gradient stops (signature — one per screen) */
   --brand-indigo-1: #2e2768;
   --brand-indigo-2: #4b3f9c;
   --brand-amber-1: #f4d9a8;
@@ -51,5 +60,16 @@
   --brand-gradient-mid: #9a6a3c;
   --brand-hero-muted: #e8d9be;
   --brand-hero-subtext: #e4dff0;
-  --brand-lavender: #eaeaff;
+  --brand-lavender: #eeedfe; /* Purple 10 / Dusk start */
+
+  /* Named gradients */
+  --grad-horizon: linear-gradient(
+    115deg,
+    #2e2768 0%,
+    #4b3f9c 38%,
+    #9a6a3c 78%,
+    #c97a2e 100%
+  );
+  --grad-dusk: linear-gradient(135deg, #eeedfe 0%, #faeeda 100%);
+  --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
 }
