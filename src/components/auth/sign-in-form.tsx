@@ -40,12 +40,12 @@ export function SignInForm({ labels }: SignInFormProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-12">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-4 py-4">
       {labels.signInTitle ? (
-        <h1 className="font-serif text-3xl text-text-primary">{labels.signInTitle}</h1>
+        <h1 className="font-serif text-2xl text-text-primary">{labels.signInTitle}</h1>
       ) : null}
 
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <Input
           id="sign-in-email"
           type="email"

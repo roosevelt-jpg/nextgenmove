@@ -23,7 +23,7 @@ export default async function PricingPage() {
     (programLevers && pageLabels.trackBMonthlyLabel);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-12 px-4 py-12 md:py-16">
+    <div className="page-section space-y-8">
       <header className="max-w-2xl space-y-3">
         {pageLabels.pricingEyebrow || pageLabels.pricingTitle ? (
           <SectionEyebrow>
@@ -31,23 +31,23 @@ export default async function PricingPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.pricingHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.pricingHeadline}
           </h1>
         ) : pageLabels.pricingTitle ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.pricingTitle}
           </h1>
         ) : null}
         {pageLabels.pricingIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.pricingIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.pricingIntro}</p>
         ) : null}
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         {showTrackA ? (
           <Card>
-            <CardBody className="space-y-5 p-8">
+            <CardBody className="space-y-4">
               {pageLabels.trackATitle ? (
                 <SectionEyebrow>{pageLabels.trackATitle}</SectionEyebrow>
               ) : null}
@@ -97,7 +97,7 @@ export default async function PricingPage() {
 
         {showTrackB ? (
           <Card className="border-2 border-border-accent">
-            <CardBody className="space-y-5 p-8">
+            <CardBody className="space-y-4">
               {pageLabels.trackBTitle ? (
                 <SectionEyebrow>{pageLabels.trackBTitle}</SectionEyebrow>
               ) : null}

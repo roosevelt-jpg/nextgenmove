@@ -11,7 +11,7 @@ export default async function CreditsPage() {
   const pageLabels = settings.pageLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-12 px-4 py-12 md:py-16">
+    <div className="page-section space-y-8">
       <header className="max-w-2xl space-y-3">
         {pageLabels.creditsEyebrow || pageLabels.creditsTitle ? (
           <SectionEyebrow>
@@ -19,16 +19,16 @@ export default async function CreditsPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.creditsHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.creditsHeadline}
           </h1>
         ) : pageLabels.creditsTitle ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.creditsTitle}
           </h1>
         ) : null}
         {pageLabels.creditsIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.creditsIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.creditsIntro}</p>
         ) : null}
       </header>
 

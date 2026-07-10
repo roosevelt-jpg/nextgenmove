@@ -12,8 +12,8 @@ export async function SiteHeader() {
   const ctaHref = navLabels.headerCtaHref || "/sign-up";
 
   return (
-    <header className="border-b border-border bg-bg">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4">
+    <header className="border-b border-border bg-surface-1">
+      <div className="page-pad flex items-center justify-between gap-4 py-3">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           {settings.logoUrl ? (
             <Image
@@ -70,7 +70,7 @@ export async function SiteHeader() {
       </div>
 
       <nav
-        className="flex gap-4 overflow-x-auto border-t border-border px-4 py-3 md:hidden"
+        className="page-pad flex gap-4 overflow-x-auto border-t border-border py-2.5 md:hidden"
         aria-label="primary-mobile"
       >
         {links.map((link) =>

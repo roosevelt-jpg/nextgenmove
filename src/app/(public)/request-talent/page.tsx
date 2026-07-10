@@ -8,7 +8,7 @@ export default async function RequestTalentPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 md:py-16">
+    <div className="page-section space-y-6">
       <header className="max-w-2xl space-y-3">
         {pageLabels.requestTalentEyebrow ||
         pageLabels.requestTalentTitle ||
@@ -20,21 +20,21 @@ export default async function RequestTalentPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.requestTalentHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.requestTalentHeadline}
           </h1>
         ) : pageLabels.requestTalentTitle || settings.navLabels?.requestTalent ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.requestTalentTitle ?? settings.navLabels?.requestTalent}
           </h1>
         ) : null}
         {pageLabels.requestTalentIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.requestTalentIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.requestTalentIntro}</p>
         ) : null}
       </header>
 
-      <Card className="max-w-4xl">
-        <CardBody className="p-6 md:p-8">
+      <Card className="max-w-xl">
+        <CardBody>
           <RequestTalentForm labels={formLabels} />
         </CardBody>
       </Card>

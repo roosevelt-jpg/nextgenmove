@@ -20,7 +20,7 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {}
 export function CardHeader({ className, ...props }: CardHeaderProps) {
   return (
     <div
-      className={cn("border-b border-border px-6 py-4", className)}
+      className={cn("border-b border-border px-4 py-3", className)}
       {...props}
     />
   );
@@ -29,7 +29,7 @@ export function CardHeader({ className, ...props }: CardHeaderProps) {
 export interface CardBodyProps extends HTMLAttributes<HTMLDivElement> {}
 
 export function CardBody({ className, ...props }: CardBodyProps) {
-  return <div className={cn("px-6 py-5", className)} {...props} />;
+  return <div className={cn("px-4 py-3.5", className)} {...props} />;
 }
 
 export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {}
@@ -37,7 +37,7 @@ export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {}
 export function CardFooter({ className, ...props }: CardFooterProps) {
   return (
     <div
-      className={cn("border-t border-border px-6 py-4", className)}
+      className={cn("border-t border-border px-4 py-3", className)}
       {...props}
     />
   );

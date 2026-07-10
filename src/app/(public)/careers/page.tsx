@@ -9,7 +9,7 @@ export default async function CareersPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 md:py-16">
+    <div className="page-section space-y-6">
       <header className="max-w-2xl space-y-3">
         {pageLabels.careersEyebrow || pageLabels.careersTitle ? (
           <SectionEyebrow>
@@ -17,16 +17,16 @@ export default async function CareersPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.careersHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.careersHeadline}
           </h1>
         ) : pageLabels.careersTitle ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.careersTitle}
           </h1>
         ) : null}
         {pageLabels.careersIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.careersIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.careersIntro}</p>
         ) : null}
       </header>
 

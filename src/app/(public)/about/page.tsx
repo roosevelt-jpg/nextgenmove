@@ -10,19 +10,19 @@ export default async function AboutPage() {
   const pageLabels = settings.pageLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-16 px-4 py-12 md:py-16">
+    <div className="page-section space-y-10">
       {(page?.heroHeadline || page?.heroSubtext) && (
         <section className="max-w-3xl space-y-3">
           {pageLabels.aboutEyebrow ? (
             <SectionEyebrow>{pageLabels.aboutEyebrow}</SectionEyebrow>
           ) : null}
           {page?.heroHeadline ? (
-            <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+            <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
               {page.heroHeadline}
             </h1>
           ) : null}
           {page?.heroSubtext ? (
-            <p className="text-lg leading-relaxed text-text-secondary">
+            <p className="text-sm leading-relaxed text-text-secondary sm:text-base">
               {page.heroSubtext}
             </p>
           ) : null}

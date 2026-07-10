@@ -72,4 +72,18 @@
   );
   --grad-dusk: linear-gradient(135deg, #eeedfe 0%, #faeeda 100%);
   --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
+
+  /* Layout shell — compressed, wrapped page */
+  --page-max: 64rem; /* 1024px — tighter than 7xl */
+  --page-gutter: 1rem;
+  --page-margin-y: 0.75rem;
+  --page-margin-x: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-gutter: 1.5rem;
+    --page-margin-y: 1.25rem;
+    --page-margin-x: 1.25rem;
+  }
 }

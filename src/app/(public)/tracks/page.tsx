@@ -7,9 +7,9 @@ export default async function TracksPage() {
   const pageLabels = settings.pageLabels ?? {};
 
   return (
-    <div className="space-y-16">
+    <div className="page-section space-y-8">
       {pageLabels.tracksTitle ? (
-        <h1 className="font-serif text-4xl text-text-primary">{pageLabels.tracksTitle}</h1>
+        <h1 className="font-serif text-3xl text-text-primary">{pageLabels.tracksTitle}</h1>
       ) : null}
 
       {page?.trackABody ? (

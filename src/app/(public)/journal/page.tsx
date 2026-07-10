@@ -13,7 +13,7 @@ export default async function JournalPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-12 px-4 py-12 md:py-16">
+    <div className="page-section space-y-8">
       <header className="max-w-2xl space-y-3">
         {pageLabels.journalEyebrow || pageLabels.journalTitle ? (
           <SectionEyebrow>
@@ -21,22 +21,22 @@ export default async function JournalPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.journalHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.journalHeadline}
           </h1>
         ) : pageLabels.journalTitle ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.journalTitle}
           </h1>
         ) : null}
         {pageLabels.journalIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.journalIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.journalIntro}</p>
         ) : null}
       </header>
 
       <JournalList articles={articles} labels={formLabels} />
 
-      <div className="rounded-radius border border-border bg-surface-1 px-6 py-8 md:flex md:items-center md:justify-between md:gap-8 md:px-10">
+      <div className="rounded-radius border border-border bg-surface-2 px-4 py-5 md:flex md:items-center md:justify-between md:gap-6">
         <NewsletterForm labels={formLabels} layout="inline" />
       </div>
     </div>

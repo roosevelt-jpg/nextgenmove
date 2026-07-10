@@ -65,12 +65,12 @@ export function SignUpForm({ labels }: SignUpFormProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-12">
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-4 py-4">
       {labels.signUpTitle ? (
-        <h1 className="font-serif text-3xl text-text-primary">{labels.signUpTitle}</h1>
+        <h1 className="font-serif text-2xl text-text-primary">{labels.signUpTitle}</h1>
       ) : null}
 
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <Input
           id="sign-up-display-name"
           type="text"

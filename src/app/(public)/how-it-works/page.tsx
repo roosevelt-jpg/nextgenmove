@@ -8,7 +8,7 @@ export default async function HowItWorksPage() {
   const pageLabels = settings.pageLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-16 px-4 py-12 md:py-16">
+    <div className="page-section space-y-10">
       <header className="max-w-2xl space-y-3">
         {pageLabels.howItWorksEyebrow || pageLabels.howItWorksTitle ? (
           <SectionEyebrow>
@@ -16,16 +16,16 @@ export default async function HowItWorksPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.howItWorksHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.howItWorksHeadline}
           </h1>
         ) : pageLabels.howItWorksTitle ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.howItWorksTitle}
           </h1>
         ) : null}
         {pageLabels.howItWorksIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.howItWorksIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.howItWorksIntro}</p>
         ) : null}
       </header>
 

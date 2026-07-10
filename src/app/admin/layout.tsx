@@ -1,5 +1,6 @@
 import { RoleGate } from "@/components/auth/role-gate";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { PageFrame } from "@/components/layout/page-frame";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function AdminLayout({
@@ -12,10 +13,12 @@ export default async function AdminLayout({
 
   return (
     <RoleGate allowedRoles={["admin"]}>
-      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-        <AdminNav labels={labels} />
-        {children}
-      </div>
+      <PageFrame compact>
+        <div className="page-pad flex-1 py-6">
+          <AdminNav labels={labels} />
+          {children}
+        </div>
+      </PageFrame>
     </RoleGate>
   );
 }

@@ -5,40 +5,40 @@
 }
 
 .heroInner {
-  max-width: 80rem;
+  width: 100%;
   margin: 0 auto;
-  padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1rem, 4vw, 2.5rem);
+  padding: clamp(1.75rem, 4vw, 2.75rem) var(--page-gutter);
   display: grid;
-  gap: clamp(1.5rem, 4vw, 2.5rem);
+  gap: clamp(1rem, 3vw, 1.5rem);
   align-items: center;
 }
 
 @media (min-width: 900px) {
   .heroInner {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 1rem;
   }
 }
 
 .heroCopy {
   position: relative;
   z-index: 2;
-  max-width: 36rem;
+  max-width: 28rem;
 }
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--brand-hero-muted);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.85rem;
 }
 
 .headline {
   font-family: var(--font-serif);
-  font-size: clamp(2.25rem, 5.5vw, 3.25rem);
+  font-size: clamp(1.85rem, 4.2vw, 2.65rem);
   line-height: 1.15;
   color: var(--on-accent);
   font-weight: 500;
@@ -48,30 +48,30 @@
   display: block;
   font-style: italic;
   color: var(--brand-amber-1);
-  font-size: clamp(2.5rem, 6vw, 3.75rem);
-  margin-top: 0.15rem;
+  font-size: clamp(2.05rem, 4.6vw, 3rem);
+  margin-top: 0.1rem;
 }
 
 .subtext {
-  max-width: 27.5rem;
-  font-size: clamp(0.95rem, 2vw, 1rem);
-  line-height: 1.7;
+  max-width: 24rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
   color: var(--brand-hero-subtext);
-  margin: 1.35rem 0 2rem;
+  margin: 1rem 0 1.35rem;
 }
 
 .ctas {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
 }
 
 .btnPrimary {
   background: var(--surface-1);
   color: var(--brand-indigo-2);
-  padding: 0.875rem 1.5rem;
+  padding: 0.65rem 1.1rem;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   transition: opacity 0.15s ease;
 }
@@ -84,9 +84,9 @@
   background: rgba(255, 255, 255, 0.08);
   color: var(--on-accent);
   border: 1px solid rgba(255, 253, 248, 0.4);
-  padding: 0.875rem 1.5rem;
+  padding: 0.65rem 1.1rem;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   transition: background 0.15s ease;
 }
@@ -101,15 +101,15 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 32rem;
+  max-width: 22rem;
   margin-inline: auto;
   aspect-ratio: 1;
 }
 
 @media (min-width: 900px) {
   .globeWrap {
-    max-width: none;
-    justify-self: stretch;
+    max-width: 26rem;
+    justify-self: end;
   }
 }
 
@@ -247,12 +247,11 @@
 }
 
 .routeBarInner {
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 0.85rem clamp(1rem, 4vw, 1.5rem);
+  width: 100%;
+  padding: 0.65rem var(--page-gutter);
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
+  gap: 0.5rem 1rem;
   align-items: center;
 }
 

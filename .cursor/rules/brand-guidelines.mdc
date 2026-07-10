@@ -29,6 +29,11 @@ Canonical file: `NextGenMove_Brand_Guidelines.html` (repo root). Design tokens i
 - UI: **Inter**
 - Eyebrows/labels: **JetBrains Mono**, uppercase, purple, ~11px
 
+## Layout
+
+- App content lives in a centered **PageFrame** (`--page-max: 64rem`) with border + light shadow — never edge-to-edge full viewport width
+- Cards/forms: tight padding (8–14px); prefer compressed density over large empty gaps
+
 ## Components
 
 - Primary button = Ink fill; Brand button = Purple; Outline = Ink border; radius ~7px

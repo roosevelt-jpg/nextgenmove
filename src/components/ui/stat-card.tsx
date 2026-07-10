@@ -19,13 +19,13 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-radius border border-border bg-surface-1 px-5 py-4",
+        "rounded-radius border border-border bg-surface-1 px-3.5 py-3",
         className,
       )}
     >
       <div
         className={cn(
-          "font-mono text-xs uppercase tracking-wide text-text-muted",
+          "font-mono text-[10px] uppercase tracking-wide text-text-muted",
           labelClassName,
         )}
       >
@@ -33,7 +33,7 @@ export function StatCard({
       </div>
       <div
         className={cn(
-          "mt-1 font-serif text-2xl font-semibold text-text-primary",
+          "mt-0.5 font-serif text-xl font-semibold text-text-primary",
           valueClassName,
         )}
       >

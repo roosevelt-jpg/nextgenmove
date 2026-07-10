@@ -74,8 +74,8 @@ export function RequestTalentForm({ labels }: RequestTalentFormProps) {
   }
 
   return (
-    <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-      <div className="grid gap-5 md:grid-cols-2">
+    <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+      <div className="grid gap-3 md:grid-cols-2">
         <Input
           id="request-company-name"
           required
@@ -180,7 +180,7 @@ export function RequestTalentForm({ labels }: RequestTalentFormProps) {
         </div>
       </fieldset>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         <Select
           id="request-timeline"
           required

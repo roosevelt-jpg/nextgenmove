@@ -9,7 +9,7 @@ export default async function BrowseRolesPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 md:py-16">
+    <div className="page-section space-y-6">
       <header className="max-w-2xl space-y-3">
         {pageLabels.browseRolesEyebrow ||
         pageLabels.browseRolesTitle ||
@@ -21,16 +21,16 @@ export default async function BrowseRolesPage() {
           </SectionEyebrow>
         ) : null}
         {pageLabels.browseRolesHeadline ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.browseRolesHeadline}
           </h1>
         ) : pageLabels.browseRolesTitle || settings.navLabels?.browseRoles ? (
-          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {pageLabels.browseRolesTitle ?? settings.navLabels?.browseRoles}
           </h1>
         ) : null}
         {pageLabels.browseRolesIntro ? (
-          <p className="text-lg text-text-secondary">{pageLabels.browseRolesIntro}</p>
+          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.browseRolesIntro}</p>
         ) : null}
       </header>
 
