@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
+import { z } from "zod";
+import { adminDb } from "@/lib/firebase-admin";
+import { getProgramLevers } from "@/lib/collections/pages";
+import { serializeTimestamp } from "@/lib/firestore-utils";
+import {
+  getAdminSession,
+  logActivity,
+  unauthorizedResponse,
+} from "@/lib/admin/session";
+import { revalidateAdminCollection } from "@/lib/admin/revalidate";
+import { stripUndefined } from "@/lib/stripUndefined";
+
+export async function GET() {
+  const session = await getAdminSession();
+
+  if (!session) {
+    return unauthorizedResponse();
+  }
+
+  const levers = await getProgramLevers();
+  return NextResponse.json({ levers });
+}
+
+const waySchema = z.object({
+  id: z.string(),
+  action: z.string(),
+  credits: z.number(),
+  description: z.string(),
+});
+
+const patchSchema = z.object({
+  trackAMonthly: z.number().optional(),
+  trackAMatchFee: z.number().optional(),
+  trackBMonthly: z.number().optional(),
+  waysToEarn: z.array(waySchema).optional(),
+});
+
+export async function PATCH(request: Request) {
+  const session = await getAdminSession();
+
+  if (!session) {
+    return unauthorizedResponse();
+  }
+
+  try {
+    const body = patchSchema.parse(await request.json());
+
+    await adminDb
+      .collection("program_levers")
+      .doc("default")
+      .set(
+        stripUndefined({
+          id: "default",
+          ...body,
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+        { merge: true },
+      );
+
+    revalidateAdminCollection("program_levers");
+
+    await logActivity({
+      actorId: session.uid,
+      actorRole: session.role,
+      action: "program_levers_updated",
+      targetType: "program_levers",
+      targetId: "default",
+    });
+
+    const snapshot = await adminDb.collection("program_levers").doc("default").get();
+    const data = snapshot.data() ?? {};
+
+    return NextResponse.json({
+      levers: {
+        trackAMonthly: data.trackAMonthly ?? 0,
+        trackAMatchFee: data.trackAMatchFee ?? 0,
+        trackBMonthly: data.trackBMonthly ?? 0,
+        waysToEarn: data.waysToEarn ?? [],
+        updatedAt: serializeTimestamp(data.updatedAt),
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+    }
+
+    console.error("levers_patch_failed", error);
+    return NextResponse.json({ error: "update_failed" }, { status: 500 });
+  }
+}

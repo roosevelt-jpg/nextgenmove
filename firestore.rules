@@ -1,0 +1,225 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Auth helpers ──────────────────────────────────────────────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userDocPath() {
+      return /databases/$(database)/documents/users/$(uid());
+    }
+
+    function userDocExists() {
+      return isSignedIn() && exists(userDocPath());
+    }
+
+    function userData() {
+      return userDocExists() ? get(userDocPath()).data : null;
+    }
+
+    function isActiveUser() {
+      return userDocExists() && userData().status == 'active';
+    }
+
+    function isAdmin() {
+      return userDocExists() && userData().role == 'admin';
+    }
+
+    function isCompany() {
+      return userDocExists() && userData().role == 'company';
+    }
+
+    function isStudent() {
+      return userDocExists() && userData().role == 'student';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && uid() == userId;
+    }
+
+    function companyHasMatchAccess(studentId) {
+      return isCompany()
+        && isActiveUser()
+        && exists(/databases/$(database)/documents/match_access/$(uid() + '_' + studentId));
+    }
+
+    function onlyKeysChanged(allowedKeys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedKeys);
+    }
+
+    // ── users ─────────────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if false;
+      allow update: if isAdmin()
+        || (isOwner(userId) && isActiveUser()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'status', 'uid']));
+      allow delete: if isAdmin();
+    }
+
+    // ── companies (doc id == owner uid) ───────────────────────────────────
+
+    match /companies/{companyId} {
+      allow read: if isAdmin() || isOwner(companyId);
+      allow create: if false;
+      allow update: if isAdmin()
+        || (isOwner(companyId) && isCompany() && isActiveUser()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'plan', 'subscriptionStatus', 'id', 'userId', 'createdAt'
+          ]));
+      allow delete: if isAdmin();
+    }
+
+    // ── students (doc id == owner uid) ────────────────────────────────────
+
+    match /students/{studentId} {
+      allow read: if isAdmin()
+        || isOwner(studentId)
+        || companyHasMatchAccess(studentId);
+      allow create: if false;
+      allow update: if isAdmin()
+        || (isOwner(studentId) && isStudent() && isActiveUser()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'credits', 'status', 'id', 'userId', 'createdAt'
+          ]));
+      allow delete: if isAdmin();
+    }
+
+    // ── matches ───────────────────────────────────────────────────────────
+
+    match /matches/{matchId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.companyId == uid())
+        || (isSignedIn() && resource.data.studentId == uid());
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+        || (isCompany() && isActiveUser()
+          && resource.data.companyId == uid()
+          && onlyKeysChanged(['stageId', 'shortlisted', 'notes', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    // Denormalized match index for Storage CV access checks (Admin SDK only).
+    match /match_access/{pairId} {
+      allow read, write: if false;
+    }
+
+    // ── Admin SDK–only collections ────────────────────────────────────────
+
+    match /job_applications/{docId} {
+      allow read, write: if false;
+    }
+
+    match /role_interest_submissions/{docId} {
+      allow read, write: if false;
+    }
+
+    match /requests/{docId} {
+      allow read, write: if false;
+    }
+
+    match /newsletter_subscribers/{docId} {
+      allow read, write: if false;
+    }
+
+    match /content_purchases/{docId} {
+      allow read, write: if false;
+    }
+
+    match /activity_log/{docId} {
+      allow read, write: if false;
+    }
+
+    match /integration_secrets/{docId} {
+      allow read, write: if false;
+    }
+
+    // ── integrations ──────────────────────────────────────────────────────
+
+    match /integrations/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Public-read CMS / marketing content ───────────────────────────────
+
+    match /articles/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'published';
+      allow write: if isAdmin();
+    }
+
+    match /public_roles/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'open';
+      allow write: if isAdmin();
+    }
+
+    match /content_items/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'live';
+      allow write: if isAdmin();
+    }
+
+    match /job_postings/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'open';
+      allow write: if isAdmin();
+    }
+
+    match /page_home/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /page_about/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /page_how_it_works/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /page_pricing/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /page_tracks/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /program_levers/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /site_settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /taxonomies/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /pipeline_stages/{docId} {
+      allow read: if isAdmin() || (isCompany() && isActiveUser());
+      allow write: if isAdmin();
+    }
+
+    // ── Default deny ──────────────────────────────────────────────────────
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

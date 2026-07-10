@@ -1,0 +1,218 @@
+.hero {
+  border-radius: var(--radius-lg);
+  padding: 70px 60px;
+  background: linear-gradient(
+    115deg,
+    var(--brand-indigo-1) 0%,
+    var(--brand-indigo-2) 38%,
+    var(--brand-gradient-mid) 78%,
+    var(--brand-amber-2) 100%
+  );
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.heroLeft {
+  position: relative;
+  z-index: 2;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--brand-hero-muted);
+  margin-bottom: 20px;
+}
+
+.headline {
+  font-family: var(--font-serif);
+  font-size: 52px;
+  line-height: 1.15;
+  color: var(--surface-1);
+  font-weight: 500;
+}
+
+.headlineEmphasis {
+  font-style: italic;
+  color: var(--brand-amber-1);
+  display: block;
+  font-size: 60px;
+  margin-top: 4px;
+}
+
+.subtext {
+  max-width: 440px;
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--brand-hero-subtext);
+  margin: 22px 0 32px;
+}
+
+.ctas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  background: var(--surface-1);
+  color: var(--brand-indigo-2);
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btnGhost {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--surface-1);
+  border: 1px solid rgba(255, 253, 248, 0.4);
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.globeWrap {
+  position: relative;
+  z-index: 1;
+}
+
+.graticule {
+  fill: none;
+  stroke: rgba(255, 253, 248, 0.16);
+  stroke-width: 1;
+}
+
+.globeOutline {
+  fill: rgba(255, 253, 248, 0.03);
+  stroke: rgba(255, 253, 248, 0.22);
+  stroke-width: 1;
+}
+
+.globeSlowspin {
+  transform-origin: 250px 250px;
+  animation: spin 40s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.routeArc {
+  fill: none;
+  stroke: var(--brand-amber-1);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 6 8;
+  opacity: 0.85;
+  animation: flow 2.4s linear infinite;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -140;
+  }
+}
+
+.hubDot {
+  fill: var(--surface-1);
+}
+
+.hubRing {
+  fill: none;
+  stroke: var(--brand-amber-1);
+  stroke-width: 1.5;
+  opacity: 0.8;
+  transform-origin: center;
+  animation: pulse 2.2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    r: 8;
+    opacity: 0.9;
+    stroke-width: 2;
+  }
+  100% {
+    r: 34;
+    opacity: 0;
+    stroke-width: 0.5;
+  }
+}
+
+.cityDot {
+  fill: var(--brand-amber-1);
+}
+
+.traveler {
+  fill: var(--surface-1);
+}
+
+.avatarBubble {
+  animation: bob 3.6s ease-in-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+.avatarCircle {
+  fill: var(--surface-1);
+}
+
+.avatarText {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  fill: var(--brand-indigo-2);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.avatarLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--brand-hero-muted);
+  text-anchor: middle;
+  letter-spacing: 0.5px;
+}
+
+.dxbLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--surface-1);
+  text-anchor: middle;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 960px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 40px 24px;
+  }
+
+  .headline {
+    font-size: 40px;
+  }
+
+  .headlineEmphasis {
+    font-size: 46px;
+  }
+}

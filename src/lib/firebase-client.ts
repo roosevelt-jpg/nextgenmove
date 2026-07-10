@@ -18,7 +18,7 @@ function createFirebaseApp(): FirebaseApp {
   return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 }
 
-export const firebaseApp: FirebaseApp = createFirebaseApp();
-export const auth: Auth = getAuth(firebaseApp);
-export const db: Firestore = getFirestore(firebaseApp);
-export const storage: FirebaseStorage = getStorage(firebaseApp);
+export const app: FirebaseApp = createFirebaseApp();
+export const auth: Auth = getAuth(app);
+export const db: Firestore = getFirestore(app);
+export const storage: FirebaseStorage = getStorage(app);

@@ -1,7 +1,9 @@
+import { RoleGate } from "@/components/auth/role-gate";
+
 export default function StudentLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return <RoleGate allowedRoles={["student"]}>{children}</RoleGate>;
 }

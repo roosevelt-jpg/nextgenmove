@@ -1,0 +1,235 @@
+"use client";
+
+import type { AdminFieldSchema } from "@/lib/admin/entity-schemas";
+import {
+  COLLECTION_FIELD_STATIC_OPTIONS,
+  STATIC_SELECT_OPTIONS,
+} from "@/lib/admin/entity-schemas";
+import type { TaxonomiesDocument } from "@/types/cms";
+import { Input, Select, Textarea } from "@/components/ui";
+import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
+
+function getSelectOptions(
+  field: AdminFieldSchema,
+  taxonomies: TaxonomiesDocument,
+  entityCollection?: string,
+): { value: string; label: string }[] {
+  if (field.taxonomyKey && taxonomies[field.taxonomyKey]) {
+    return taxonomies[field.taxonomyKey] ?? [];
+  }
+
+  const collectionStaticKey =
+    entityCollection &&
+    COLLECTION_FIELD_STATIC_OPTIONS[entityCollection]?.[field.key];
+
+  const staticKey = collectionStaticKey ?? `${field.labelKey}_${field.key}`;
+
+  return (
+    STATIC_SELECT_OPTIONS[staticKey] ??
+    STATIC_SELECT_OPTIONS[field.labelKey] ??
+    STATIC_SELECT_OPTIONS[field.key] ??
+    []
+  );
+}
+
+function getNestedValue(values: Record<string, unknown>, key: string): unknown {
+  return values[key];
+}
+
+function setNestedValue(
+  values: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): Record<string, unknown> {
+  return { ...values, [key]: value };
+}
+
+export interface AdminFieldRendererProps {
+  field: AdminFieldSchema;
+  values: Record<string, unknown>;
+  onChange: (values: Record<string, unknown>) => void;
+  labels: Record<string, string>;
+  taxonomies: TaxonomiesDocument;
+  storagePath: string;
+  entityCollection?: string;
+}
+
+export function AdminFieldRenderer({
+  field,
+  values,
+  onChange,
+  labels,
+  taxonomies,
+  storagePath,
+  entityCollection,
+}: AdminFieldRendererProps) {
+  const label = labels[field.labelKey] ?? field.labelKey;
+  const value = getNestedValue(values, field.key);
+
+  if (field.type === "repeatable" && field.fields) {
+    const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+
+    return (
+      <fieldset className="space-y-3 rounded-radius border border-border p-3">
+        {label ? <legend className="text-sm font-medium text-text-secondary">{label}</legend> : null}
+        {rows.map((row, index) => (
+          <div key={index} className="space-y-2 rounded-radius bg-surface-2 p-3">
+            {field.fields!.map((nested) => (
+              <AdminFieldRenderer
+                key={nested.key}
+                field={nested}
+                values={row}
+                labels={labels}
+                taxonomies={taxonomies}
+                storagePath={storagePath}
+                entityCollection={entityCollection}
+                onChange={(nextRow) => {
+                  const nextRows = [...rows];
+                  nextRows[index] = nextRow;
+                  onChange(setNestedValue(values, field.key, nextRows));
+                }}
+              />
+            ))}
+            <button
+              type="button"
+              className="text-xs text-text-warning"
+              onClick={() => {
+                const nextRows = rows.filter((_, rowIndex) => rowIndex !== index);
+                onChange(setNestedValue(values, field.key, nextRows));
+              }}
+            >
+              {labels.removeRow}
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="text-xs text-text-accent"
+          onClick={() => {
+            onChange(setNestedValue(values, field.key, [...rows, {}]));
+          }}
+        >
+          {labels.addRow}
+        </button>
+      </fieldset>
+    );
+  }
+
+  if (field.type === "boolean") {
+    return (
+      <label className="flex items-center gap-2 text-sm text-text-primary">
+        <input
+          type="checkbox"
+          checked={Boolean(value)}
+          onChange={(event) =>
+            onChange(setNestedValue(values, field.key, event.target.checked))
+          }
+        />
+        {label}
+      </label>
+    );
+  }
+
+  if (field.type === "select") {
+    const options = getSelectOptions(field, taxonomies, entityCollection);
+    return (
+      <Select
+        id={field.key}
+        label={label}
+        value={String(value ?? "")}
+        options={options}
+        onChange={(event) => onChange(setNestedValue(values, field.key, event.target.value))}
+      />
+    );
+  }
+
+  if (field.type === "multiselect") {
+    const current = Array.isArray(value) ? (value as string[]).join(", ") : String(value ?? "");
+    return (
+      <Input
+        id={field.key}
+        label={label}
+        value={current}
+        onChange={(event) =>
+          onChange(
+            setNestedValue(
+              values,
+              field.key,
+              event.target.value
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+            ),
+          )
+        }
+      />
+    );
+  }
+
+  if (field.type === "textarea" || field.type === "richtext") {
+    return (
+      <Textarea
+        id={field.key}
+        label={label}
+        value={String(value ?? "")}
+        onChange={(event) => onChange(setNestedValue(values, field.key, event.target.value))}
+      />
+    );
+  }
+
+  if (field.type === "number") {
+    return (
+      <Input
+        id={field.key}
+        type="number"
+        label={label}
+        value={value == null ? "" : String(value)}
+        onChange={(event) =>
+          onChange(setNestedValue(values, field.key, Number(event.target.value)))
+        }
+      />
+    );
+  }
+
+  if (field.type === "date") {
+    return (
+      <Input
+        id={field.key}
+        type="date"
+        label={label}
+        value={String(value ?? "").slice(0, 10)}
+        onChange={(event) => onChange(setNestedValue(values, field.key, event.target.value))}
+      />
+    );
+  }
+
+  if (field.type === "image" || field.type === "file") {
+    return (
+      <div className="space-y-2">
+        <FileUpload
+          storagePath={storagePath}
+          accept={field.type === "image" ? "image/*" : undefined}
+          label={label}
+          dropzoneContent={labels.uploadDropzone}
+          progressLabel={labels.uploadProgress}
+          onUploadComplete={(result: FileUploadMetadata) =>
+            onChange(setNestedValue(values, field.key, result.url))
+          }
+        />
+        {value ? (
+          <p className="truncate text-xs text-text-muted">{String(value)}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <Input
+      id={field.key}
+      label={label}
+      value={String(value ?? "")}
+      required={field.required}
+      onChange={(event) => onChange(setNestedValue(values, field.key, event.target.value))}
+    />
+  );
+}

@@ -1,0 +1,92 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { Button, Input } from "@/components/ui";
+import { establishSession, signInWithEmail } from "@/lib/auth-client";
+import type { AuthLabels } from "@/types/user";
+
+export interface SignInFormProps {
+  labels: AuthLabels;
+}
+
+export function SignInForm({ labels }: SignInFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorCode(null);
+    setIsSubmitting(true);
+
+    try {
+      const credential = await signInWithEmail(email, password);
+      const idToken = await credential.user.getIdToken();
+      const session = await establishSession(idToken);
+      const nextPath = searchParams.get("next");
+
+      router.push(nextPath ?? session.redirectTo);
+      router.refresh();
+    } catch {
+      setErrorCode("sign_in_failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-12">
+      {labels.signInTitle ? (
+        <h1 className="font-serif text-3xl text-text-primary">{labels.signInTitle}</h1>
+      ) : null}
+
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <Input
+          id="sign-in-email"
+          type="email"
+          autoComplete="email"
+          required
+          aria-label={labels.emailLabel ?? "email"}
+          label={labels.emailLabel}
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <Input
+          id="sign-in-password"
+          type="password"
+          autoComplete="current-password"
+          required
+          aria-label={labels.passwordLabel ?? "password"}
+          label={labels.passwordLabel}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+
+        {errorCode ? (
+          <p className="text-sm text-text-warning" role="alert">
+            {labels[errorCode as keyof AuthLabels] ?? labels.genericErrorLabel}
+          </p>
+        ) : null}
+
+        <Button type="submit" disabled={isSubmitting}>
+          {labels.signInSubmitLabel}
+        </Button>
+      </form>
+
+      {labels.signUpLinkLabel ? (
+        <Link href="/sign-up" className="text-sm text-text-secondary hover:text-text-primary">
+          {labels.signUpLinkLabel}
+        </Link>
+      ) : (
+        <Link href="/sign-up" className="sr-only" aria-hidden="false">
+          /sign-up
+        </Link>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,219 @@
+export interface StatBlock {
+  label: string;
+  value: string;
+}
+
+export interface StepItem {
+  legNumber: number;
+  title: string;
+  description: string;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface OriginCity {
+  code: string;
+  label: string;
+  x: number;
+  y: number;
+}
+
+export interface PageHomeDocument {
+  eyebrowText?: string;
+  headline?: string;
+  headlineEmphasis?: string;
+  subtext?: string;
+  ctaPrimaryLabel?: string;
+  ctaPrimaryHref?: string;
+  ctaSecondaryLabel?: string;
+  ctaSecondaryHref?: string;
+  hubLabel?: string;
+  originCities?: OriginCity[];
+  statBlocks?: StatBlock[];
+  steps?: StepItem[];
+}
+
+export interface PageAboutDocument {
+  heroHeadline?: string;
+  heroSubtext?: string;
+  missionBody?: string;
+  statBlocks?: StatBlock[];
+  teamMembers?: TeamMember[];
+  foundingStory?: string;
+}
+
+export interface TeamMember {
+  name: string;
+  role: string;
+  photo: string;
+  bio: string;
+}
+
+export interface PageHowItWorksDocument {
+  steps?: StepItem[];
+  faqItems?: FaqItem[];
+}
+
+export interface PagePricingDocument {
+  trackAHeadline?: string;
+  trackAFeatures?: string[];
+  trackBHeadline?: string;
+  trackBFeatures?: string[];
+  faqItems?: FaqItem[];
+  ctaLabel?: string;
+}
+
+export interface ComparisonRow {
+  feature: string;
+  trackAValue: string;
+  trackBValue: string;
+}
+
+export interface CaseStudyQuote {
+  quote: string;
+  companyName: string;
+  resultStat: string;
+}
+
+export interface PageTracksDocument {
+  trackABody?: string;
+  trackBBody?: string;
+  comparisonRows?: ComparisonRow[];
+  caseStudyQuote?: CaseStudyQuote | null;
+}
+
+export interface NavLabels {
+  siteName?: string;
+  companySection?: string;
+  talentSection?: string;
+  employersSection?: string;
+  about?: string;
+  careers?: string;
+  journal?: string;
+  browseRoles?: string;
+  howItWorks?: string;
+  credits?: string;
+  pricing?: string;
+  tracks?: string;
+  requestTalent?: string;
+  [key: string]: string | undefined;
+}
+
+export interface FooterLink {
+  key: string;
+  href: string;
+  label?: string;
+}
+
+export interface FooterGroup {
+  key: string;
+  label?: string;
+  links: FooterLink[];
+}
+
+export interface SiteSettingsDocument {
+  siteName?: string;
+  tagline?: string;
+  logoUrl?: string;
+  contactEmail?: string;
+  socialLinks?: Record<string, string>;
+  navLabels?: NavLabels;
+  footerLinks?: FooterGroup[];
+  formLabels?: Record<string, string>;
+  pageLabels?: Record<string, string>;
+  authLabels?: Record<string, string>;
+  employerNavLabels?: Record<string, string>;
+  employerPageLabels?: Record<string, Record<string, string>>;
+  employerNotificationKeys?: string[];
+  studentNavLabels?: Record<string, string>;
+  studentPageLabels?: Record<string, Record<string, string>>;
+  studentNotificationKeys?: string[];
+  adminNavLabels?: Record<string, string>;
+  adminPageLabels?: Record<string, Record<string, string>>;
+}
+
+export interface TaxonomyOption {
+  value: string;
+  label: string;
+}
+
+export interface TaxonomiesDocument {
+  sector?: TaxonomyOption[];
+  department?: TaxonomyOption[];
+  employmentType?: TaxonomyOption[];
+  seniority?: TaxonomyOption[];
+  timeline?: TaxonomyOption[];
+  category?: TaxonomyOption[];
+  preferredTrack?: TaxonomyOption[];
+  articleTag?: TaxonomyOption[];
+}
+
+export interface JobPostingDocument {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  employmentType: string;
+  description: string;
+  status: "open" | "closed";
+  createdAt: string | null;
+}
+
+export interface ArticleDocument {
+  id: string;
+  title: string;
+  slug: string;
+  coverImageUrl: string;
+  excerpt: string;
+  body: string;
+  author: string;
+  category: string;
+  publishedDate: string | null;
+  tags: string[];
+  status: "draft" | "published";
+  createdAt: string | null;
+}
+
+export interface PublicRoleDocument {
+  id: string;
+  title: string;
+  employerLabel: string;
+  sector: string;
+  location: string;
+  seniority: string;
+  relocationSupport: boolean;
+  description: string;
+  status: "open" | "filled";
+  createdAt: string | null;
+}
+
+export interface ContentItemDocument {
+  id: string;
+  title: string;
+  type: "video" | "pdf" | "course" | "download";
+  description: string;
+  thumbnailUrl: string;
+  fileUrl: string;
+  costCredits: number;
+  category: string;
+  status: "draft" | "live";
+  createdAt: string | null;
+}
+
+export interface WayToEarn {
+  id: string;
+  action: string;
+  credits: number;
+  description: string;
+}
+
+export interface ProgramLeversDocument {
+  trackAMonthly: number;
+  trackAMatchFee: number;
+  trackBMonthly: number;
+  waysToEarn: WayToEarn[];
+  updatedAt: string | null;
+}

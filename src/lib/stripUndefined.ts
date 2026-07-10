@@ -9,16 +9,42 @@ function isPlainObject(value: unknown): value is PlainObject {
   );
 }
 
+function isFirestoreTimestamp(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof (value as { toDate: unknown }).toDate === "function" &&
+    "seconds" in value
+  );
+}
+
+function isFirestoreDocumentReference(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "path" in value &&
+    "id" in value &&
+    typeof (value as { path: unknown }).path === "string" &&
+    typeof (value as { id: unknown }).id === "string"
+  );
+}
+
+function shouldPreserveValue(value: unknown): boolean {
+  return (
+    Array.isArray(value) ||
+    isFirestoreTimestamp(value) ||
+    isFirestoreDocumentReference(value)
+  );
+}
+
 /**
  * Removes undefined keys from objects before Firestore writes.
- * Recurses into nested plain objects; arrays are mapped but not stripped at the top level.
+ * Recurses into nested plain objects. Arrays, Timestamps, and
+ * DocumentReferences are returned unchanged.
  */
 export function stripUndefined<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value.map((item) => stripUndefined(item)) as T;
-  }
-
-  if (!isPlainObject(value)) {
+  if (shouldPreserveValue(value) || !isPlainObject(value)) {
     return value;
   }
 

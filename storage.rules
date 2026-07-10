@@ -1,0 +1,162 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Auth helpers (role is read from Firestore users/{uid}) ────────────
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userDocPath() {
+      return /databases/(default)/documents/users/$(uid());
+    }
+
+    function userDocExists() {
+      return isSignedIn() && firestore.exists(userDocPath());
+    }
+
+    function userData() {
+      return firestore.get(userDocPath()).data;
+    }
+
+    function isActiveUser() {
+      return userDocExists() && userData().status == 'active';
+    }
+
+    function isAdmin() {
+      return userDocExists() && userData().role == 'admin';
+    }
+
+    function isCompany() {
+      return userDocExists() && userData().role == 'company';
+    }
+
+    function isStudent() {
+      return userDocExists() && userData().role == 'student';
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && uid() == ownerId;
+    }
+
+    function companyHasMatchAccess(studentId) {
+      return isCompany()
+        && isActiveUser()
+        && firestore.exists(/databases/(default)/documents/match_access/$(uid() + '_' + studentId));
+    }
+
+    function isValidUpload() {
+      return request.resource != null
+        && request.resource.size < 15 * 1024 * 1024;
+    }
+
+    function isPdfOrImageUpload() {
+      return request.resource.contentType.matches('application/pdf|image/.*');
+    }
+
+    // ── Student CVs (canonical + current app paths) ───────────────────────
+
+    match /cvs/{studentId}/{allPaths=**} {
+      allow write: if isValidUpload() && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
+    }
+
+    match /students/{studentId}/cv/{allPaths=**} {
+      allow write: if isValidUpload() && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
+    }
+
+    // ── Student photos ────────────────────────────────────────────────────
+
+    match /student-photos/{studentId}/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload()
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if true;
+    }
+
+    match /students/{studentId}/photo/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload()
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if true;
+    }
+
+    // ── Company logos ─────────────────────────────────────────────────────
+
+    match /company-logos/{companyId}/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload()
+        && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
+      allow read: if true;
+    }
+
+    match /companies/{companyId}/logo/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload()
+        && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
+      allow read: if true;
+    }
+
+    // Company requirement documents (private to owner + admin).
+    match /companies/{companyId}/requirements/{allPaths=**} {
+      allow write: if isValidUpload() && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
+      allow read: if isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser());
+    }
+
+    // ── Purchase-gated store content (stream via /api/student/store/download) ─
+
+    match /content/{contentItemId}/{allPaths=**} {
+      allow write: if isValidUpload() && isAdmin();
+      allow read: if false;
+    }
+
+    // ── Public CMS media ──────────────────────────────────────────────────
+
+    match /journal-covers/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload() && isAdmin();
+      allow read: if true;
+    }
+
+    match /team-photos/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload() && isAdmin();
+      allow read: if true;
+    }
+
+    match /admin/{allPaths=**} {
+      allow write: if isValidUpload() && isAdmin();
+      allow read: if true;
+    }
+
+    // ── Job descriptions / inbound form uploads ───────────────────────────
+
+    match /job-descriptions/{allPaths=**} {
+      allow write: if isValidUpload() && (isAdmin() || (isCompany() && isActiveUser()));
+      allow read: if isAdmin() || (isCompany() && isActiveUser());
+    }
+
+    // Anonymous inbound uploads (write-only; served/processed via Admin SDK APIs).
+    match /careers/applications/{jobId}/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload();
+      allow read: if isAdmin();
+    }
+
+    match /requests/sourcing/{allPaths=**} {
+      allow write: if isValidUpload();
+      allow read: if isAdmin();
+    }
+
+    match /roles/interest/{roleId}/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload();
+      allow read: if isAdmin();
+    }
+
+    // ── Default deny ──────────────────────────────────────────────────────
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
