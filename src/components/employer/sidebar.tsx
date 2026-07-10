@@ -8,6 +8,7 @@ import {
   Briefcase,
   FileText,
   Users,
+  Zap,
   Settings,
   LogOut,
 } from 'lucide-react'
@@ -27,6 +28,11 @@ const navItems = [
     label: 'Talent Pool',
     href: '/talent-pool',
     icon: Users,
+  },
+  {
+    label: 'Matching Pipeline',
+    href: '/matching-pipeline',
+    icon: Zap,
   },
   {
     label: 'Jobs',
