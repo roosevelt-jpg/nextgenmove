@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
+import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Mail, Lock } from 'lucide-react'
@@ -15,13 +16,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [rateLimitError, setRateLimitError] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setRateLimitError(false)
 
     if (!email || !password) {
       setError('Please fill in all fields')
+      return
+    }
+
+    // Check rate limit using email as identifier
+    const identifier = `login:${email}`
+    if (!rateLimit(identifier, rateLimitConfigs.login.limit, rateLimitConfigs.login.windowMs)) {
+      setRateLimitError(true)
+      setError(rateLimitConfigs.login.message)
       return
     }
 

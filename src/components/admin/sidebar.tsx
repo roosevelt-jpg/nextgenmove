@@ -8,6 +8,8 @@ import {
   Settings,
   Users,
   FileText,
+  BookOpen,
+  Wrench,
   LogOut,
   ChevronDown,
 } from 'lucide-react'
@@ -24,6 +26,11 @@ const navItems = [
     icon: Users,
   },
   {
+    label: 'Articles',
+    href: '/admin/articles',
+    icon: BookOpen,
+  },
+  {
     label: 'Settings',
     href: '/admin/settings',
     icon: Settings,
@@ -32,6 +39,11 @@ const navItems = [
     label: 'Content',
     href: '/admin/content',
     icon: FileText,
+  },
+  {
+    label: 'Tools',
+    href: '/admin/tools',
+    icon: Wrench,
   },
 ]
 

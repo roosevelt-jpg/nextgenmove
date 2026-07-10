@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isCompany(companyId) {
+      return isSignedIn() && get(/databases/$(database)/documents/companies/$(companyId)).data.userId == request.auth.uid;
+    }
+    
+    function isStudent(studentId) {
+      return isSignedIn() && get(/databases/$(database)/documents/students/$(studentId)).data.userId == request.auth.uid;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users collection - only accessible by owner or admin
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId);
+      allow create: if isSignedIn();
+    }
+
+    // Students collection - owner and admin access
+    match /students/{studentId} {
+      allow read: if isStudent(studentId) || isAdmin() || isCompany(get(resource.data.companyId).data.id);
+      allow write: if isStudent(studentId) || isAdmin();
+      allow create: if isSignedIn();
+      
+      // Prevent privilege escalation
+      allow update: if !('role' in request.resource.data.diff(resource.data));
+    }
+
+    // Companies collection - owner and admin access
+    match /companies/{companyId} {
+      allow read: if isCompany(companyId) || isAdmin();
+      allow write: if isCompany(companyId) || isAdmin();
+      allow create: if isSignedIn();
+      
+      // Prevent privilege escalation
+      allow update: if !('verified' in request.resource.data.diff(resource.data));
+    }
+
+    // Job postings - public read, owner/admin write
+    match /jobPostings/{jobId} {
+      allow read: if true;
+      allow write: if isAdmin() || (isSignedIn() && isCompany(resource.data.companyId));
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Applications - owner, company, or admin
+    match /applications/{appId} {
+      allow read: if isAdmin() || 
+                    (isSignedIn() && isStudent(resource.data.studentId)) ||
+                    (isSignedIn() && isCompany(get(/databases/$(database)/documents/jobPostings/$(resource.data.jobId)).data.companyId));
+      allow write: if isAdmin() || isStudent(resource.data.studentId);
+      allow create: if isStudent(request.resource.data.studentId);
+    }
+
+    // Articles - public read, admin write
+    match /articles/{articleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      allow create: if isAdmin();
+      
+      // Prevent status bypassing
+      allow update: if isAdmin() && !('publishedDate' in request.resource.data.diff(resource.data));
+    }
+
+    // Communities - owner and members read, owner/admin write
+    match /communities/{communityId} {
+      allow read: if true;
+      allow write: if isAdmin() || resource.data.createdBy == request.auth.uid;
+      allow create: if isSignedIn();
+    }
+
+    // Events - public read, owner/admin write
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin() || resource.data.createdBy == request.auth.uid;
+      allow create: if isSignedIn();
+    }
+
+    // Settings - admin only
+    match /settings/{setting} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Deny all other accesses
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
