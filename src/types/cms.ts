@@ -18,8 +18,13 @@ export interface FaqItem {
 export interface OriginCity {
   code: string;
   label: string;
+  /** Optional avatar initials shown on the homepage globe */
+  initials?: string;
   x: number;
   y: number;
+  /** Optional avatar bubble position (defaults from city x/y) */
+  avatarX?: number;
+  avatarY?: number;
 }
 
 export interface BoardingPassFields {

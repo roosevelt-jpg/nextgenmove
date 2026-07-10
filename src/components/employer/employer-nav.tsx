@@ -19,12 +19,15 @@ const NAV_ITEMS = [
   { key: "profile" as const, href: "/employer/profile" },
 ];
 
+const linkClass =
+  "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary";
+
 export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
   const pathname = usePathname();
 
   return (
     <nav
-      className="mb-6 flex flex-wrap gap-6 border-b border-border text-sm"
+      className="mb-6 flex gap-4 overflow-x-auto border-b border-border text-sm sm:gap-6"
       aria-label="employer"
     >
       {NAV_ITEMS.map((item) => {
@@ -41,7 +44,7 @@ export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
             key={item.key}
             href={item.href}
             className={cn(
-              "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
+              linkClass,
               isActive && "border-fill-primary font-bold text-text-primary",
             )}
           >
@@ -53,7 +56,7 @@ export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
         <Link
           href="/employer/settings"
           className={cn(
-            "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
+            linkClass,
             pathname === "/employer/settings" &&
               "border-fill-primary font-bold text-text-primary",
           )}

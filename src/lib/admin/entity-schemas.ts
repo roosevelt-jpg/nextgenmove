@@ -189,8 +189,11 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         fields: [
           { key: "code", type: "text", labelKey: "code" },
           { key: "label", type: "text", labelKey: "label" },
+          { key: "initials", type: "text", labelKey: "initials" },
           { key: "x", type: "number", labelKey: "x" },
           { key: "y", type: "number", labelKey: "y" },
+          { key: "avatarX", type: "number", labelKey: "avatarX" },
+          { key: "avatarY", type: "number", labelKey: "avatarY" },
         ],
       },
       { key: "itineraryEyebrow", type: "text", labelKey: "itineraryEyebrow" },

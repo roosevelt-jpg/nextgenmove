@@ -35,4 +35,12 @@ body {
   background: var(--bg);
   color: var(--text-primary);
   font-family: var(--font-sans);
+  overflow-x: hidden;
 }
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+}
+

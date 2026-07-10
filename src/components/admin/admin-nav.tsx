@@ -19,7 +19,7 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
 
   return (
     <nav
-      className="mb-6 flex flex-wrap gap-6 border-b border-border text-sm"
+      className="mb-6 flex gap-4 overflow-x-auto border-b border-border text-sm sm:gap-6"
       aria-label="admin"
     >
       {NAV_ITEMS.map((item) => {
@@ -38,7 +38,7 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
             key={item.key}
             href={item.href}
             className={cn(
-              "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
+              "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
               isActive && "border-fill-primary font-bold text-text-primary",
             )}
           >
