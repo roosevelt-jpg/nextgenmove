@@ -1,19 +1,16 @@
 # Git & GitHub setup
 
-## Remotes
+## Remote
 
-| Remote | URL | Role |
-|---|---|---|
-| `origin` | https://github.com/roosevelt-jpg/nextgenmove.git | Primary app (push here) |
-| `rules` | https://github.com/roosevelt-jpg/nextgen-move-rules.git | Phase 0 / v0 rules reference (fetch only) |
+Primary remote (`origin`):
 
 ```bash
-git remote add origin https://github.com/roosevelt-jpg/nextgenmove.git
-git remote add rules https://github.com/roosevelt-jpg/nextgen-move-rules.git
+git remote add origin https://github.com/roosevelt-jpg/nextgen-move-rules.git
 git push -u origin master
 ```
 
-This app is the build target. The `rules` remote is the earlier scaffold; do not overwrite live `src/app` with its stubs. Fetch updates with `git fetch rules`.
+Repo: https://github.com/roosevelt-jpg/nextgen-move-rules  
+Default working branch: `master` (the earlier v0 scaffold lives on `main`).
 
 ## Daily workflow
 
@@ -29,5 +26,4 @@ git push origin master
 ```powershell
 winget install GitHub.cli
 gh auth login
-gh repo create nextgenmove --private --source=. --remote=origin --push
 ```

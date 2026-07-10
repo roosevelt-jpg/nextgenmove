@@ -5,9 +5,9 @@ alwaysApply: true
 
 # Git workflow
 
-- This project is version-controlled on GitHub. After completing a meaningful chunk of work (feature, phase, or bugfix), **commit and push** to `origin`.
+- This project is version-controlled on GitHub at `https://github.com/roosevelt-jpg/nextgen-move-rules`. After completing a meaningful chunk of work (feature, phase, or bugfix), **commit and push** to `origin`.
 - **Never commit** `.env.local`, Firebase private keys, `integration_secrets`, or any credentials. Only `.env.local.example` is tracked.
 - Use clear commit messages: `phase N: short description` or `fix: what changed and why`.
-- Default branch is `master` (rename to `main` only if the remote uses `main`). Push with `git push -u origin master` after every commit unless the user says otherwise.
+- Default branch is `master` (the older v0 scaffold is on `main`). Push with `git push -u origin master` after every commit unless the user says otherwise.
 - If the user asks to "save to git" or "push updates", run: `git add` (relevant files) → `git commit` → `git push origin master`.
-- Do not force-push to `main` unless the user explicitly requests it.
+- Do not force-push to `main`/`master` unless the user explicitly requests it.
