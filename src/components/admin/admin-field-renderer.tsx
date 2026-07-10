@@ -66,6 +66,35 @@ export function AdminFieldRenderer({
   const label = labels[field.labelKey] ?? field.labelKey;
   const value = getNestedValue(values, field.key);
 
+  if (field.type === "object" && field.fields) {
+    const obj =
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : {};
+
+    return (
+      <fieldset className="space-y-3 rounded-radius border border-border p-3">
+        {label ? (
+          <legend className="text-sm font-medium text-text-secondary">{label}</legend>
+        ) : null}
+        {field.fields.map((nested) => (
+          <AdminFieldRenderer
+            key={nested.key}
+            field={nested}
+            values={obj}
+            labels={labels}
+            taxonomies={taxonomies}
+            storagePath={storagePath}
+            entityCollection={entityCollection}
+            onChange={(nextObj) =>
+              onChange(setNestedValue(values, field.key, nextObj))
+            }
+          />
+        ))}
+      </fieldset>
+    );
+  }
+
   if (field.type === "repeatable" && field.fields) {
     const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 

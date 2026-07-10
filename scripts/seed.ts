@@ -160,7 +160,7 @@ const PAGE_HOME = {
   headline: "Your next step,",
   headlineEmphasis: "engineered.",
   subtext:
-    "We pair every candidate with a coach and every employer with a pre-screened match — so relocating for work feels like a well-run itinerary.",
+    "NextGen Move pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
   ctaPrimaryLabel: "Explore open roles",
   ctaPrimaryHref: "/careers-talent",
   ctaSecondaryLabel: "I'm hiring →",
@@ -179,7 +179,7 @@ const PAGE_HOME = {
   boardingPass: {
     routeLabel: "AMS → DXB",
     passengerLabel: "Passenger",
-    passengerValue: "",
+    passengerValue: "S. Kowalski",
     coachLabel: "Coach",
     coachValue: "Lemoni",
     statusLabel: "Status",
@@ -187,20 +187,23 @@ const PAGE_HOME = {
     classLabel: "Class",
     classValue: "Track B",
     refLabel: "Ref",
-    refValue: "NGM-2030",
+    refValue: "NGM-2038",
   },
   itineraryEyebrow: "The itinerary",
   itineraryHeadline: "Three legs. One arrival.",
-  testimonialQuote: "",
-  testimonialAttribution: "",
-  testimonialBadge: "",
+  testimonialQuote:
+    "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai — and my coach was in my corner for every leg of it.",
+  testimonialAttribution: "Sara K. · Marketing lead · Placed via NextGen Move",
+  testimonialBadge: "Placed 2023",
   talentCta: {
+    eyebrow: "For talent",
     title: "Your seat is waiting.",
     body: "Build your profile, get matched, and relocate with a coach on the route.",
     ctaLabel: "Get started",
     ctaHref: "/sign-up",
   },
   companyCta: {
+    eyebrow: "For companies",
     title: "A pool, pre-flown.",
     body: "Browse vetted talent or let Lemoni source and coach the match for you.",
     ctaLabel: "View plans",
@@ -215,18 +218,21 @@ const PAGE_HOME = {
   steps: [
     {
       legNumber: 1,
+      phaseLabel: "Check-in",
       title: "Build your profile",
       description:
         "Tell us your skills, sector, and where you want to land. Your coach verifies and sharpens it.",
     },
     {
       legNumber: 2,
+      phaseLabel: "Boarding",
       title: "Get matched & coached",
       description:
         "We introduce you to vetted employers, and coach you through every interview and offer.",
     },
     {
       legNumber: 3,
+      phaseLabel: "Arrival",
       title: "Placed & supported",
       description:
         "From signed offer to your first ninety days, your coach stays on the route with you.",
@@ -273,18 +279,21 @@ const PAGE_HOW_IT_WORKS = {
   steps: [
     {
       legNumber: 1,
+      phaseLabel: "Check-in",
       title: "Build your profile",
       description:
         "Tell us your skills, sector, and where you want to land. Your coach verifies and sharpens it.",
     },
     {
       legNumber: 2,
+      phaseLabel: "Boarding",
       title: "Get matched & coached",
       description:
         "We introduce you to vetted employers, and coach you through every interview and offer.",
     },
     {
       legNumber: 3,
+      phaseLabel: "Arrival",
       title: "Placed & supported",
       description:
         "From signed offer to your first ninety days, your coach stays on the route with you.",
@@ -457,7 +466,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     tracks: "Tracks",
     requestTalent: "Request talent",
     forCompanies: "For companies",
-    signIn: "Sign in",
+    signIn: "Log in",
     headerCta: "Start your journey",
     headerCtaHref: "/sign-up",
   },
@@ -586,6 +595,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     levers: "Levers",
     crm: "CRM",
     content: "Content",
+    settings: "Site settings",
     integrations: "Integrations",
     users: "Users",
   },
@@ -788,14 +798,10 @@ async function seedCmsPages(db: Firestore) {
 
   for (const [collection, defaults] of pages) {
     const ref = db.collection(collection).doc("default");
-    const snap = await ref.get();
-    const existing = (snap.data() ?? {}) as Record<string, unknown>;
-    const merged = mergeEmptyFields(existing, {
-      id: "default",
-      ...defaults,
-    });
-    await ref.set(stripUndefined(merged), { merge: true });
-    console.log(`  upserted ${collection}/default (filled empty CMS fields)`);
+    // Full merge so public pages show complete marketing CMS content.
+    // Admin can edit afterward; re-seed refreshes these singleton defaults.
+    await ref.set(stripUndefined({ id: "default", ...defaults }), { merge: true });
+    console.log(`  upserted ${collection}/default (CMS marketing content)`);
   }
 }
 

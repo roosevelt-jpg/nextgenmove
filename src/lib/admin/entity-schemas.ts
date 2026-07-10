@@ -11,6 +11,7 @@ export type AdminFieldType =
   | "date"
   | "image"
   | "file"
+  | "object"
   | "repeatable";
 
 export interface AdminFieldSchema {
@@ -164,6 +165,24 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "hubLabel", type: "text", labelKey: "hubLabel" },
       { key: "currentRoutesLabel", type: "text", labelKey: "currentRoutesLabel" },
       {
+        key: "boardingPass",
+        type: "object",
+        labelKey: "boardingPass",
+        fields: [
+          { key: "routeLabel", type: "text", labelKey: "routeLabel" },
+          { key: "passengerLabel", type: "text", labelKey: "passengerLabel" },
+          { key: "passengerValue", type: "text", labelKey: "passengerValue" },
+          { key: "coachLabel", type: "text", labelKey: "coachLabel" },
+          { key: "coachValue", type: "text", labelKey: "coachValue" },
+          { key: "statusLabel", type: "text", labelKey: "statusLabel" },
+          { key: "statusValue", type: "text", labelKey: "statusValue" },
+          { key: "classLabel", type: "text", labelKey: "classLabel" },
+          { key: "classValue", type: "text", labelKey: "classValue" },
+          { key: "refLabel", type: "text", labelKey: "refLabel" },
+          { key: "refValue", type: "text", labelKey: "refValue" },
+        ],
+      },
+      {
         key: "originCities",
         type: "repeatable",
         labelKey: "originCities",
@@ -182,6 +201,7 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         labelKey: "steps",
         fields: [
           { key: "legNumber", type: "number", labelKey: "legNumber" },
+          { key: "phaseLabel", type: "text", labelKey: "phaseLabel" },
           { key: "title", type: "text", labelKey: "title" },
           { key: "description", type: "textarea", labelKey: "description" },
         ],
@@ -202,6 +222,30 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         labelKey: "testimonialAttribution",
       },
       { key: "testimonialBadge", type: "text", labelKey: "testimonialBadge" },
+      {
+        key: "talentCta",
+        type: "object",
+        labelKey: "talentCta",
+        fields: [
+          { key: "eyebrow", type: "text", labelKey: "eyebrow" },
+          { key: "title", type: "text", labelKey: "title" },
+          { key: "body", type: "textarea", labelKey: "body" },
+          { key: "ctaLabel", type: "text", labelKey: "ctaLabel" },
+          { key: "ctaHref", type: "text", labelKey: "ctaHref" },
+        ],
+      },
+      {
+        key: "companyCta",
+        type: "object",
+        labelKey: "companyCta",
+        fields: [
+          { key: "eyebrow", type: "text", labelKey: "eyebrow" },
+          { key: "title", type: "text", labelKey: "title" },
+          { key: "body", type: "textarea", labelKey: "body" },
+          { key: "ctaLabel", type: "text", labelKey: "ctaLabel" },
+          { key: "ctaHref", type: "text", labelKey: "ctaHref" },
+        ],
+      },
     ],
   },
   page_about: {
@@ -244,6 +288,7 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         labelKey: "steps",
         fields: [
           { key: "legNumber", type: "number", labelKey: "legNumber" },
+          { key: "phaseLabel", type: "text", labelKey: "phaseLabel" },
           { key: "title", type: "text", labelKey: "title" },
           { key: "description", type: "textarea", labelKey: "description" },
         ],
@@ -293,6 +338,40 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
           { key: "feature", type: "text", labelKey: "feature" },
           { key: "trackAValue", type: "text", labelKey: "trackAValue" },
           { key: "trackBValue", type: "text", labelKey: "trackBValue" },
+        ],
+      },
+    ],
+  },
+  site_settings: {
+    collection: "site_settings",
+    singletonId: "default",
+    fields: [
+      { key: "siteName", type: "text", labelKey: "siteName" },
+      { key: "tagline", type: "text", labelKey: "tagline" },
+      { key: "logoUrl", type: "image", labelKey: "logoUrl" },
+      { key: "contactEmail", type: "text", labelKey: "contactEmail" },
+      {
+        key: "navLabels",
+        type: "object",
+        labelKey: "navLabels",
+        fields: [
+          { key: "siteName", type: "text", labelKey: "siteName" },
+          { key: "howItWorks", type: "text", labelKey: "howItWorks" },
+          { key: "forCompanies", type: "text", labelKey: "forCompanies" },
+          { key: "pricing", type: "text", labelKey: "pricing" },
+          { key: "signIn", type: "text", labelKey: "signIn" },
+          { key: "headerCta", type: "text", labelKey: "headerCta" },
+          { key: "headerCtaHref", type: "text", labelKey: "headerCtaHref" },
+          { key: "about", type: "text", labelKey: "about" },
+          { key: "careers", type: "text", labelKey: "careers" },
+          { key: "journal", type: "text", labelKey: "journal" },
+          { key: "browseRoles", type: "text", labelKey: "browseRoles" },
+          { key: "credits", type: "text", labelKey: "credits" },
+          { key: "tracks", type: "text", labelKey: "tracks" },
+          { key: "requestTalent", type: "text", labelKey: "requestTalent" },
+          { key: "companySection", type: "text", labelKey: "companySection" },
+          { key: "talentSection", type: "text", labelKey: "talentSection" },
+          { key: "employersSection", type: "text", labelKey: "employersSection" },
         ],
       },
     ],

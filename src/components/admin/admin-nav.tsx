@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { key: "levers", href: "/admin/levers" },
   { key: "crm", href: "/admin/crm" },
   { key: "content", href: "/admin/content" },
+  { key: "settings", href: "/admin/settings" },
   { key: "integrations", href: "/admin/integrations" },
   { key: "users", href: "/admin/users" },
 ] as const;

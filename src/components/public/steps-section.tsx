@@ -19,7 +19,9 @@ export function StepsSection({ steps, className }: StepsSectionProps) {
             className="rounded-radius border border-border bg-surface-1 p-6"
           >
             <div className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
-              {`LEG ${String(step.legNumber).padStart(2, "0")}`}
+              {step.phaseLabel
+                ? `LEG ${String(step.legNumber).padStart(2, "0")} · ${step.phaseLabel}`
+                : `LEG ${String(step.legNumber).padStart(2, "0")}`}
             </div>
             <h3 className="mt-3 font-serif text-xl text-text-primary">
               {step.title}

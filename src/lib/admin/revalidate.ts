@@ -13,7 +13,7 @@ const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
   content_items: ["/credits", "/student/store"],
   public_roles: ["/careers-talent"],
   companies: ["/employer/profile"],
-  site_settings: ["/", "/about", "/pricing", "/how-it-works", "/credits"],
+  site_settings: ["/", "/about", "/pricing", "/how-it-works", "/credits", "/request-talent", "/careers-talent", "/journal", "/careers"],
 };
 
 export function revalidateAdminCollection(collection: string) {

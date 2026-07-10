@@ -63,6 +63,11 @@ export default async function HomePage() {
         <section className="mx-auto grid max-w-7xl gap-6 px-4 pb-20 md:grid-cols-2">
           {page?.talentCta?.title || page?.talentCta?.ctaLabel ? (
             <div className="rounded-radius-lg bg-brand-lavender p-8">
+              {page.talentCta?.eyebrow ? (
+                <p className="mb-3 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
+                  {page.talentCta.eyebrow}
+                </p>
+              ) : null}
               {page.talentCta?.title ? (
                 <h3 className="font-serif text-2xl text-text-primary">
                   {page.talentCta.title}
@@ -85,6 +90,11 @@ export default async function HomePage() {
           ) : null}
           {page?.companyCta?.title || page?.companyCta?.ctaLabel ? (
             <div className="rounded-radius-lg bg-fill-primary p-8 text-on-primary">
+              {page.companyCta?.eyebrow ? (
+                <p className="mb-3 font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-brand-lavender">
+                  {page.companyCta.eyebrow}
+                </p>
+              ) : null}
               {page.companyCta?.title ? (
                 <h3 className="font-serif text-2xl">{page.companyCta.title}</h3>
               ) : null}

@@ -5,6 +5,7 @@ export interface StatBlock {
 
 export interface StepItem {
   legNumber: number;
+  phaseLabel?: string;
   title: string;
   description: string;
 }
@@ -36,6 +37,7 @@ export interface BoardingPassFields {
 }
 
 export interface AudienceCtaBand {
+  eyebrow?: string;
   title?: string;
   body?: string;
   ctaLabel?: string;
