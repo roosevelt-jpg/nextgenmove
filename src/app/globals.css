@@ -44,32 +44,21 @@ video {
   height: auto;
 }
 
-/* Contained app shell */
-.page-frame {
-  width: min(calc(100% - (var(--page-margin-x) * 2)), var(--page-max));
-  margin: var(--page-margin-y) auto;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: calc(100vh - (var(--page-margin-y) * 2));
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 1px 2px rgba(26, 26, 24, 0.04),
-    0 10px 28px rgba(26, 26, 24, 0.06);
-  overflow: hidden;
-}
-
-.page-frame--compact {
-  min-height: calc(100vh - (var(--page-margin-y) * 2));
-}
-
-.page-pad {
+/*
+  Content column — cards/copy/nav sit here.
+  Section backgrounds stay full-bleed on the parent; sides stay empty.
+*/
+.page-container {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
   padding-inline: var(--page-gutter);
 }
 
 .page-section {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
   padding-inline: var(--page-gutter);
   padding-block: 2.5rem;
 }
@@ -80,3 +69,7 @@ video {
   }
 }
 
+/* Legacy alias used by portal layouts */
+.page-pad {
+  padding-inline: var(--page-gutter);
+}

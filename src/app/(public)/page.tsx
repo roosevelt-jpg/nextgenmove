@@ -30,7 +30,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="page-pad pb-8">
+      <section className="page-container pb-8">
         <StatBlocksSection
           statBlocks={page?.statBlocks}
           valueTone
@@ -38,29 +38,31 @@ export default async function HomePage() {
       </section>
 
       {(page?.testimonialQuote || page?.testimonialAttribution) && (
-        <section className="page-pad pb-8">
-          <blockquote className="relative rounded-radius bg-surface-2 px-5 py-6 sm:px-7 sm:py-7">
-            {page?.testimonialBadge ? (
-              <span className="mb-3 inline-block rounded-full bg-surface-1 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-text-label sm:absolute sm:right-5 sm:top-5 sm:mb-0">
-                {page.testimonialBadge}
-              </span>
-            ) : null}
-            {page?.testimonialQuote ? (
-              <p className="max-w-2xl font-serif text-lg leading-snug text-text-primary sm:text-xl md:text-2xl">
-                “{page.testimonialQuote}”
-              </p>
-            ) : null}
-            {page?.testimonialAttribution ? (
-              <footer className="mt-4 text-sm text-text-secondary">
-                {page.testimonialAttribution}
-              </footer>
-            ) : null}
-          </blockquote>
+        <section className="bg-surface-2">
+          <div className="page-container py-8 sm:py-10">
+            <blockquote className="relative">
+              {page?.testimonialBadge ? (
+                <span className="mb-3 inline-block rounded-full bg-surface-1 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-text-label sm:absolute sm:right-0 sm:top-0 sm:mb-0">
+                  {page.testimonialBadge}
+                </span>
+              ) : null}
+              {page?.testimonialQuote ? (
+                <p className="max-w-2xl font-serif text-lg leading-snug text-text-primary sm:text-xl md:text-2xl">
+                  “{page.testimonialQuote}”
+                </p>
+              ) : null}
+              {page?.testimonialAttribution ? (
+                <footer className="mt-4 text-sm text-text-secondary">
+                  {page.testimonialAttribution}
+                </footer>
+              ) : null}
+            </blockquote>
+          </div>
         </section>
       )}
 
       {(page?.talentCta || page?.companyCta) && (
-        <section className="page-pad grid gap-3 pb-10 md:grid-cols-2">
+        <section className="page-section grid gap-3 md:grid-cols-2">
           {page?.talentCta?.title || page?.talentCta?.ctaLabel ? (
             <div className="rounded-radius bg-brand-lavender p-5">
               {page.talentCta?.eyebrow ? (

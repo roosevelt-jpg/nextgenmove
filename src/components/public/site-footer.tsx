@@ -9,8 +9,8 @@ export async function SiteFooter() {
   const siteName = settings.siteName ?? navLabels.siteName;
 
   return (
-    <footer className="mt-auto border-t border-border bg-surface-1">
-      <div className="page-pad flex flex-col gap-8 py-10 md:flex-row md:justify-between">
+    <footer className="mt-auto border-t border-border bg-bg">
+      <div className="page-container flex flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
             <span

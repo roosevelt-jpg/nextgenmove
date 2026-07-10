@@ -1,5 +1,4 @@
 import { EmployerNav } from "@/components/employer/employer-nav";
-import { PageFrame } from "@/components/layout/page-frame";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function EmployerPortalLayout({
@@ -11,11 +10,9 @@ export default async function EmployerPortalLayout({
   const labels = settings.employerNavLabels ?? settings.formLabels ?? {};
 
   return (
-    <PageFrame compact>
-      <div className="page-pad flex-1 py-6">
-        <EmployerNav labels={labels} />
-        {children}
-      </div>
-    </PageFrame>
+    <div className="page-container flex-1 py-6">
+      <EmployerNav labels={labels} />
+      {children}
+    </div>
   );
 }
