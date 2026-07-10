@@ -67,6 +67,7 @@ export interface Student {
   experience?: string;
   skills?: string[];
   availability?: string;
+  expectedSalary?: number;
   resume?: string;
   credits: number;
   status: StudentStatus;
@@ -126,6 +127,11 @@ export interface JobPosting {
   location: string;
   employmentType: string;
   description: string;
+  requirements?: string[];
+  level?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  companyName?: string;
   status: JobStatus;
   createdAt: Timestamp;
 }
@@ -347,6 +353,24 @@ export interface SiteSettings {
   socialLinks: SocialLinks;
   navLabels: NavLabels;
   footerLinks: FooterSection[];
+}
+
+// Notifications
+export type NotificationType = 'job_application' | 'job_match' | 'message' | 'event_update' | 'community_invite' | 'system';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  read: boolean;
+  readAt?: Timestamp;
+  relatedId?: string;
+  relatedType?: string;
+  actionUrl?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 // Activity Log
