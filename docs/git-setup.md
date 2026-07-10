@@ -3,12 +3,11 @@
 ## Remote
 
 ```bash
-git remote add origin https://github.com/YOUR_USER/nextgenmove.git
-git branch -M main
-git push -u origin main
+git remote add origin https://github.com/roosevelt-jpg/nextgenmove.git
+git push -u origin master
 ```
 
-Replace `YOUR_USER` with your GitHub username. Create the empty repo on GitHub first (no README if you already have local commits).
+Create the empty repo on GitHub first (no README if you already have local commits), or use GitHub CLI below.
 
 ## Daily workflow
 

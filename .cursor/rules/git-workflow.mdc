@@ -8,6 +8,6 @@ alwaysApply: true
 - This project is version-controlled on GitHub. After completing a meaningful chunk of work (feature, phase, or bugfix), **commit and push** to `origin`.
 - **Never commit** `.env.local`, Firebase private keys, `integration_secrets`, or any credentials. Only `.env.local.example` is tracked.
 - Use clear commit messages: `phase N: short description` or `fix: what changed and why`.
-- Default branch is `main`. Push with `git push origin main` after every commit unless the user says otherwise.
-- If the user asks to "save to git" or "push updates", run: `git add` (relevant files) → `git commit` → `git push origin main`.
+- Default branch is `master` (rename to `main` only if the remote uses `main`). Push with `git push -u origin master` after every commit unless the user says otherwise.
+- If the user asks to "save to git" or "push updates", run: `git add` (relevant files) → `git commit` → `git push origin master`.
 - Do not force-push to `main` unless the user explicitly requests it.
