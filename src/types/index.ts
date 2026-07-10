@@ -156,7 +156,7 @@ export interface Article {
   body: string;
   author: string;
   category: string;
-  publishedDate: Timestamp;
+  publishedDate?: Timestamp;
   tags: string[];
   status: ArticleStatus;
   createdAt: Timestamp;
@@ -347,25 +347,6 @@ export interface SiteSettings {
   socialLinks: SocialLinks;
   navLabels: NavLabels;
   footerLinks: FooterSection[];
-}
-
-// Articles & Blog
-export interface Article {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  tags?: string[];
-  authorId: string;
-  authorName: string;
-  imageUrl?: string;
-  status: 'draft' | 'published' | 'archived';
-  publishedAt?: Timestamp;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  viewCount: number;
 }
 
 // Activity Log
