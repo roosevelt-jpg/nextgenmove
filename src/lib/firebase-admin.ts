@@ -1,22 +1,26 @@
-import * as admin from 'firebase-admin';
+import * as admin from 'firebase-admin'
 
-const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+const adminProjectId = process.env.FIREBASE_ADMIN_PROJECT_ID
+const adminClientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL
+const adminPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n')
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    } as admin.ServiceAccount),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  });
+// Initialize Firebase Admin SDK
+const initializeAdminApp = () => {
+  const apps = (admin as any).apps as any[]
+  if (apps && apps.length > 0) {
+    return (admin as any).app()
+  }
+  return (admin as any).initializeApp({
+    credential: (admin as any).credential.cert({
+      projectId: adminProjectId,
+      clientEmail: adminClientEmail,
+      privateKey: adminPrivateKey,
+    }),
+  })
 }
 
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
-export const adminStorage = admin.storage();
+const adminApp = initializeAdminApp()
 
-export default admin;
+export const adminDb = (admin as any).firestore(adminApp)
+export const adminAuth = (admin as any).auth(adminApp)
+export const adminStorage = (admin as any).storage(adminApp)

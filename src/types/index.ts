@@ -64,8 +64,10 @@ export interface Student {
   linkedinUrl?: string;
   portfolioUrl?: string;
   bio?: string;
+  experience?: string;
   skills?: string[];
   availability?: string;
+  resume?: string;
   credits: number;
   status: StudentStatus;
   createdAt: Timestamp;
