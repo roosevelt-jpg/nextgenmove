@@ -349,6 +349,25 @@ export interface SiteSettings {
   footerLinks: FooterSection[];
 }
 
+// Articles & Blog
+export interface Article {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags?: string[];
+  authorId: string;
+  authorName: string;
+  imageUrl?: string;
+  status: 'draft' | 'published' | 'archived';
+  publishedAt?: Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  viewCount: number;
+}
+
 // Activity Log
 export interface ActivityLog {
   id: string;
