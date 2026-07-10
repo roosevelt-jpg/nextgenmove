@@ -74,12 +74,12 @@
   --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
 
   /* Content column — leave excess side area on wide screens */
-  --page-max: 64rem; /* 1024px */
-  --page-gutter: 1rem;
+  --page-max: 56rem; /* 896px — visibly inset on laptop+ */
+  --page-gutter: 1.25rem;
 }
 
 @media (min-width: 768px) {
   :root {
-    --page-gutter: 1.5rem;
+    --page-gutter: 1.75rem;
   }
 }

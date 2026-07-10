@@ -49,6 +49,9 @@ const config: Config = {
         "grad-dusk": "var(--grad-dusk)",
         "grad-route": "var(--grad-route)",
       },
+      maxWidth: {
+        page: "var(--page-max)",
+      },
     },
   },
 };

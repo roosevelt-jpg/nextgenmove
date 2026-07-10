@@ -10,7 +10,7 @@ export async function SiteFooter() {
 
   return (
     <footer className="mt-auto border-t border-border bg-bg">
-      <div className="page-container flex flex-col gap-8 py-10 md:flex-row md:justify-between">
+      <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
             <span

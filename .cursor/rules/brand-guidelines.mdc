@@ -31,7 +31,7 @@ Canonical file: `NextGenMove_Brand_Guidelines.html` (repo root). Design tokens i
 
 ## Layout
 
-- **Full-bleed backgrounds**, **constrained content**: section/hero backgrounds span the viewport; nav, cards, copy, and forms sit in `.page-container` / `.page-section` (`--page-max: 64rem`) so wide screens keep empty side margins
+- **Full-bleed backgrounds**, **constrained content**: section/hero backgrounds span the viewport; nav, cards, copy, and forms sit in `.page-container` / `.page-section` / `max-w-page` (`--page-max: 56rem`) so wide screens keep empty side margins
 - Cards/forms: tight padding (8–14px); prefer compressed density over large empty gaps
 
 ## Components

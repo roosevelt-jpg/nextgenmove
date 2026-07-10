@@ -13,7 +13,7 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-bg">
-      <div className="page-container flex items-center justify-between gap-4 py-3">
+      <div className="page-container mx-auto flex w-full max-w-page items-center justify-between gap-4 py-3">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           {settings.logoUrl ? (
             <Image
@@ -70,7 +70,7 @@ export async function SiteHeader() {
       </div>
 
       <nav
-        className="page-container flex gap-4 overflow-x-auto border-t border-border py-2.5 md:hidden"
+        className="page-container mx-auto flex w-full max-w-page gap-4 overflow-x-auto border-t border-border py-2.5 md:hidden"
         aria-label="primary-mobile"
       >
         {links.map((link) =>
