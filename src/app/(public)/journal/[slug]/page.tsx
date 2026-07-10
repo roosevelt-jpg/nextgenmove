@@ -20,7 +20,7 @@ export default async function JournalArticlePage({
   }
 
   return (
-    <article className="mx-auto max-w-3xl space-y-8">
+    <article className="page-section mx-auto max-w-2xl space-y-6">
       {article.coverImageUrl ? (
         <Image
           src={article.coverImageUrl}
