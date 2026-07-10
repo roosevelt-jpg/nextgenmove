@@ -112,6 +112,7 @@ const TAXONOMIES = {
   preferredTrack: [
     opt("track_a", "Track A"),
     opt("track_b", "Track B"),
+    opt("not_sure", "Not sure yet"),
   ],
   articleTag: [] as { value: string; label: string }[],
 };
@@ -155,49 +156,230 @@ const PIPELINE_STAGES = [
 ];
 
 const PAGE_HOME = {
-  eyebrowText: "",
-  headline: "",
-  headlineEmphasis: "",
-  subtext: "",
-  ctaPrimaryLabel: "",
-  ctaPrimaryHref: "",
-  ctaSecondaryLabel: "",
-  ctaSecondaryHref: "",
-  hubLabel: "",
-  originCities: [] as unknown[],
-  statBlocks: [] as unknown[],
-  steps: [] as unknown[],
+  eyebrowText: "Relocation, engineered",
+  headline: "Your next step,",
+  headlineEmphasis: "engineered.",
+  subtext:
+    "We pair every candidate with a coach and every employer with a pre-screened match — so relocating for work feels like a well-run itinerary.",
+  ctaPrimaryLabel: "Explore open roles",
+  ctaPrimaryHref: "/careers-talent",
+  ctaSecondaryLabel: "I'm hiring →",
+  ctaSecondaryHref: "/request-talent",
+  hubLabel: "DXB",
+  currentRoutesLabel: "Current routes",
+  originCities: [
+    { code: "AMS", label: "Amsterdam", x: 120, y: 160 },
+    { code: "BER", label: "Berlin", x: 180, y: 140 },
+    { code: "CAI", label: "Cairo", x: 220, y: 220 },
+    { code: "WAW", label: "Warsaw", x: 200, y: 130 },
+    { code: "PAR", label: "Paris", x: 140, y: 150 },
+    { code: "LIS", label: "Lisbon", x: 90, y: 190 },
+    { code: "DXB", label: "Dubai", x: 280, y: 210 },
+  ],
+  boardingPass: {
+    routeLabel: "AMS → DXB",
+    passengerLabel: "Passenger",
+    passengerValue: "",
+    coachLabel: "Coach",
+    coachValue: "Lemoni",
+    statusLabel: "Status",
+    statusValue: "Boarding",
+    classLabel: "Class",
+    classValue: "Track B",
+    refLabel: "Ref",
+    refValue: "NGM-2030",
+  },
+  itineraryEyebrow: "The itinerary",
+  itineraryHeadline: "Three legs. One arrival.",
+  testimonialQuote: "",
+  testimonialAttribution: "",
+  testimonialBadge: "",
+  talentCta: {
+    title: "Your seat is waiting.",
+    body: "Build your profile, get matched, and relocate with a coach on the route.",
+    ctaLabel: "Get started",
+    ctaHref: "/sign-up",
+  },
+  companyCta: {
+    title: "A pool, pre-flown.",
+    body: "Browse vetted talent or let Lemoni source and coach the match for you.",
+    ctaLabel: "View plans",
+    ctaHref: "/pricing",
+  },
+  statBlocks: [
+    { label: "Active students", value: "248" },
+    { label: "Placed this quarter", value: "41" },
+    { label: "Avg. time to place", value: "38d" },
+    { label: "Top match score", value: "94%" },
+  ],
+  steps: [
+    {
+      legNumber: 1,
+      title: "Build your profile",
+      description:
+        "Tell us your skills, sector, and where you want to land. Your coach verifies and sharpens it.",
+    },
+    {
+      legNumber: 2,
+      title: "Get matched & coached",
+      description:
+        "We introduce you to vetted employers, and coach you through every interview and offer.",
+    },
+    {
+      legNumber: 3,
+      title: "Placed & supported",
+      description:
+        "From signed offer to your first ninety days, your coach stays on the route with you.",
+    },
+  ],
 };
 
 const PAGE_ABOUT = {
-  heroHeadline: "",
-  heroSubtext: "",
-  missionBody: "",
-  statBlocks: [] as unknown[],
-  teamMembers: [] as unknown[],
+  heroHeadline: "We engineer the move.",
+  heroSubtext:
+    "NextGen Move exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.",
+  missionBody:
+    "<p>NextGen Move exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.</p>",
+  statBlocks: [
+    { label: "Active students", value: "248" },
+    { label: "Placed this quarter", value: "41" },
+    { label: "Cities routed", value: "6" },
+    { label: "Founded", value: "2019" },
+  ],
+  teamMembers: [
+    {
+      name: "Lemoni Grootkerk",
+      role: "Founder & coach",
+      photo: "",
+      bio: "Leads coaching and placement strategy across every route.",
+    },
+    {
+      name: "Amira Youssef",
+      role: "Operations",
+      photo: "",
+      bio: "Keeps pipelines, visas, and first-ninety-day support on schedule.",
+    },
+    {
+      name: "Piotr Nowak",
+      role: "Employer success",
+      photo: "",
+      bio: "Partners with Track A and Track B employers on sourcing and fits.",
+    },
+  ],
   foundingStory: "",
 };
 
 const PAGE_HOW_IT_WORKS = {
-  steps: [] as unknown[],
-  faqItems: [] as unknown[],
+  steps: [
+    {
+      legNumber: 1,
+      title: "Build your profile",
+      description:
+        "Tell us your skills, sector, and where you want to land. Your coach verifies and sharpens it.",
+    },
+    {
+      legNumber: 2,
+      title: "Get matched & coached",
+      description:
+        "We introduce you to vetted employers, and coach you through every interview and offer.",
+    },
+    {
+      legNumber: 3,
+      title: "Placed & supported",
+      description:
+        "From signed offer to your first ninety days, your coach stays on the route with you.",
+    },
+  ],
+  faqItems: [
+    {
+      question: "How much does it cost to join?",
+      answer:
+        "Joining is free for talent. Every student starts with a 2,000 credit welcome bonus for coaching.",
+    },
+    {
+      question: "How long does placement usually take?",
+      answer: "38 days on average from profile complete to signed offer.",
+    },
+    {
+      question: "Do you help with visas and relocation?",
+      answer:
+        "Yes — your coach supports visa paperwork and the first 90 days after you land.",
+    },
+  ],
 };
 
 const PAGE_PRICING = {
-  trackAHeadline: "",
-  trackAFeatures: [] as string[],
-  trackBHeadline: "",
-  trackBFeatures: [] as string[],
-  faqItems: [] as unknown[],
-  ctaLabel: "",
+  trackAHeadline: "Self service",
+  trackAFeatures: [
+    "Full talent pool access",
+    "Pipeline tracking",
+    "Introduction via Lemoni",
+  ],
+  trackBHeadline: "Lemoni does everything",
+  trackBFeatures: [
+    "Lemoni searches for you",
+    "Weekly updates",
+    "Full placement support",
+  ],
+  faqItems: [
+    {
+      question: "Can we switch tracks later?",
+      answer:
+        "Yes — plan changes go through a quick approval from your account contact.",
+    },
+    {
+      question: "Is there a contract?",
+      answer: "No lock-in on either track. Cancel anytime from Our Profile.",
+    },
+  ],
+  ctaLabel: "Request this plan",
 };
 
 const PAGE_TRACKS = {
-  trackABody: "",
-  trackBBody: "",
-  comparisonRows: [] as unknown[],
+  trackABody:
+    "<p>Browse the talent pool yourself. You find the match. Lemoni handles the introduction.</p>",
+  trackBBody:
+    "<p>Full service. Lemoni actively sources your match and coaches the placement through to day ninety.</p>",
+  comparisonRows: [
+    {
+      feature: "Talent pool access",
+      trackAValue: "Full",
+      trackBValue: "Full",
+    },
+    {
+      feature: "Sourcing",
+      trackAValue: "Self-serve",
+      trackBValue: "Lemoni-led",
+    },
+    {
+      feature: "Coaching support",
+      trackAValue: "Introductions",
+      trackBValue: "End-to-end",
+    },
+  ],
   caseStudyQuote: null,
 };
+
+const DEFAULT_WAYS_TO_EARN = [
+  {
+    id: "welcome",
+    action: "Welcome credit",
+    credits: 2000,
+    description: "On signup",
+  },
+  {
+    id: "referral",
+    action: "Referral bonus",
+    credits: 150,
+    description: "Per successful referral",
+  },
+  {
+    id: "profile_complete",
+    action: "Profile complete",
+    credits: 100,
+    description: "One-time",
+  },
+];
 
 const AUTH_LABEL_KEYS = [
   "signInTitle",
@@ -256,7 +438,7 @@ function mergeEmptyFields(
 
 const OPERATIONAL_SITE_SETTINGS = {
   siteName: "NextGen Move",
-  tagline: "",
+  tagline: "Relocation, engineered.",
   logoUrl: "",
   contactEmail: "",
   socialLinks: {},
@@ -305,6 +487,47 @@ const OPERATIONAL_SITE_SETTINGS = {
     search: "Search",
     empty: "Nothing here yet",
     loading: "Loading…",
+    submit: "Submit request",
+    successMessage: "Request received. We'll be in touch shortly.",
+    companyName: "Company name",
+    companyNamePlaceholder: "Acme Corp",
+    contactName: "Contact name",
+    contactNamePlaceholder: "Your name",
+    workEmail: "Work email",
+    workEmailPlaceholder: "you@company.com",
+    phone: "Phone (optional)",
+    phonePlaceholder: "+31 …",
+    roleTitleNeeded: "Role title needed",
+    roleTitlePlaceholder: "e.g. Financial analyst",
+    sector: "Sector",
+    sectorPlaceholder: "Select sector",
+    location: "Location",
+    locationPlaceholder: "Dubai",
+    numberOfHires: "Number of hires",
+    preferredTrack: "Preferred track",
+    timeline: "Timeline",
+    timelinePlaceholder: "Select timeline",
+    additionalRequirements: "Additional requirements",
+    additionalRequirementsPlaceholder: "Anything else Lemoni should know…",
+    jobDescriptionUpload: "Job description (optional)",
+    jobDescriptionDropzone: "Upload PDF or DOCX",
+    uploadProgress: "Uploading…",
+    genericError: "Something went wrong. Please try again.",
+    title: "Get the next dispatch",
+    subtitle: "One email a month. No noise.",
+    email: "Email",
+    emailPlaceholder: "you@email.com",
+    searchPlaceholder: "Search by title or keyword",
+    all: "All",
+    allSectors: "All sectors",
+    allLocations: "All locations",
+    filterSector: "Sector",
+    filterLocation: "Location",
+    relocationBadge: "Relocation supported",
+    applyLabel: "Apply",
+    viewRole: "View role",
+    filterByDepartment: "Department",
+    allDepartments: "All departments",
   },
   pageLabels: {
     pricingTitle: "Pricing",
@@ -389,6 +612,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     },
     content: {
       library: "Content library",
+      home: "Homepage",
       about: "About page",
       careers: "Careers",
       journal: "Journal",
@@ -401,6 +625,11 @@ const OPERATIONAL_SITE_SETTINGS = {
       titleColumn: "Title",
       statusColumn: "Status",
       actionsColumn: "Actions",
+      homeTitle: "Homepage",
+      aboutTitle: "About",
+      howItWorksTitle: "How it works",
+      pricingTitle: "Pricing",
+      tracksTitle: "Tracks",
     },
   },
 };
@@ -526,34 +755,48 @@ async function seedTaxonomies(db: Firestore) {
 async function seedProgramLevers(db: Firestore) {
   const ref = db.collection("program_levers").doc("default");
   const snap = await ref.get();
+  const existing = snap.data() ?? {};
+  const existingWays = Array.isArray(existing.waysToEarn)
+    ? existing.waysToEarn
+    : [];
+
   const base = {
     id: "default",
     trackAMonthly: 50,
     trackAMatchFee: 200,
     trackBMonthly: 125,
+    waysToEarn: existingWays.length ? existingWays : DEFAULT_WAYS_TO_EARN,
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  if (!snap.exists) {
-    await ref.set(
-      stripUndefined({
-        ...base,
-        waysToEarn: [],
-      }),
-    );
-    console.log("  created program_levers/default");
-    return;
-  }
-
-  const existing = snap.data() ?? {};
-  await ref.set(
-    stripUndefined({
-      ...base,
-      waysToEarn: Array.isArray(existing.waysToEarn) ? existing.waysToEarn : [],
-    }),
-    { merge: true },
+  await ref.set(stripUndefined(base), { merge: true });
+  console.log(
+    existingWays.length
+      ? "  updated program_levers/default pricing (waysToEarn preserved)"
+      : "  upserted program_levers/default with waysToEarn defaults",
   );
-  console.log("  updated program_levers/default pricing (waysToEarn preserved)");
+}
+
+async function seedCmsPages(db: Firestore) {
+  const pages: Array<[string, Record<string, unknown>]> = [
+    ["page_home", PAGE_HOME],
+    ["page_about", PAGE_ABOUT],
+    ["page_how_it_works", PAGE_HOW_IT_WORKS],
+    ["page_pricing", PAGE_PRICING],
+    ["page_tracks", PAGE_TRACKS],
+  ];
+
+  for (const [collection, defaults] of pages) {
+    const ref = db.collection(collection).doc("default");
+    const snap = await ref.get();
+    const existing = (snap.data() ?? {}) as Record<string, unknown>;
+    const merged = mergeEmptyFields(existing, {
+      id: "default",
+      ...defaults,
+    });
+    await ref.set(stripUndefined(merged), { merge: true });
+    console.log(`  upserted ${collection}/default (filled empty CMS fields)`);
+  }
 }
 
 async function seedSiteSettings(db: Firestore) {
@@ -605,12 +848,8 @@ async function main() {
   console.log("\n3. Program levers");
   await seedProgramLevers(db);
 
-  console.log("\n4. CMS singleton shells (create if missing)");
-  await upsertSingleton(db, "page_home", "default", PAGE_HOME, "create-only");
-  await upsertSingleton(db, "page_about", "default", PAGE_ABOUT, "create-only");
-  await upsertSingleton(db, "page_how_it_works", "default", PAGE_HOW_IT_WORKS, "create-only");
-  await upsertSingleton(db, "page_pricing", "default", PAGE_PRICING, "create-only");
-  await upsertSingleton(db, "page_tracks", "default", PAGE_TRACKS, "create-only");
+  console.log("\n4. CMS page content (fill empty fields only)");
+  await seedCmsPages(db);
 
   console.log("\n5. Site settings (UI labels)");
   await seedSiteSettings(db);

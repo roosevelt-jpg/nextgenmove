@@ -3,15 +3,17 @@ import { ENTITY_SCHEMAS, isAdminCollection } from "@/lib/admin/entity-schemas";
 
 const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
   program_levers: ["/pricing", "/tracks", "/credits", "/employer/profile"],
+  page_home: ["/"],
   page_about: ["/about"],
   page_how_it_works: ["/how-it-works"],
   page_pricing: ["/pricing"],
   page_tracks: ["/tracks"],
   job_postings: ["/careers"],
   articles: ["/journal"],
-  content_items: ["/student/content"],
+  content_items: ["/credits", "/student/store"],
   public_roles: ["/careers-talent"],
   companies: ["/employer/profile"],
+  site_settings: ["/", "/about", "/pricing", "/how-it-works", "/credits"],
 };
 
 export function revalidateAdminCollection(collection: string) {

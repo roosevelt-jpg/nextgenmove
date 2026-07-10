@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 const CONTENT_SECTIONS = [
   { key: "library", href: "/admin/content" },
+  { key: "home", href: "/admin/content/home" },
   { key: "about", href: "/admin/content/about" },
   { key: "careers", href: "/admin/content/careers" },
   { key: "journal", href: "/admin/content/journal" },
