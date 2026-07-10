@@ -21,6 +21,27 @@ export interface OriginCity {
   y: number;
 }
 
+export interface BoardingPassFields {
+  routeLabel?: string;
+  passengerLabel?: string;
+  passengerValue?: string;
+  coachLabel?: string;
+  coachValue?: string;
+  statusLabel?: string;
+  statusValue?: string;
+  classLabel?: string;
+  classValue?: string;
+  refLabel?: string;
+  refValue?: string;
+}
+
+export interface AudienceCtaBand {
+  title?: string;
+  body?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
 export interface PageHomeDocument {
   eyebrowText?: string;
   headline?: string;
@@ -32,6 +53,15 @@ export interface PageHomeDocument {
   ctaSecondaryHref?: string;
   hubLabel?: string;
   originCities?: OriginCity[];
+  currentRoutesLabel?: string;
+  boardingPass?: BoardingPassFields;
+  itineraryEyebrow?: string;
+  itineraryHeadline?: string;
+  testimonialQuote?: string;
+  testimonialAttribution?: string;
+  testimonialBadge?: string;
+  talentCta?: AudienceCtaBand;
+  companyCta?: AudienceCtaBand;
   statBlocks?: StatBlock[];
   steps?: StepItem[];
 }

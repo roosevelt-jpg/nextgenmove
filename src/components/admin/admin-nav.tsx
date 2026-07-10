@@ -17,7 +17,10 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
   const pathname = usePathname();
 
   return (
-    <nav className="mb-6 flex flex-wrap gap-6 border-b border-border pb-3 text-sm" aria-label="admin">
+    <nav
+      className="mb-6 flex flex-wrap gap-6 border-b border-border text-sm"
+      aria-label="admin"
+    >
       {NAV_ITEMS.map((item) => {
         const label = labels[item.key];
         if (!label) {
@@ -34,8 +37,8 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
             key={item.key}
             href={item.href}
             className={cn(
-              "text-text-secondary transition-colors hover:text-text-primary",
-              isActive && "font-medium text-text-primary",
+              "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
+              isActive && "border-fill-primary font-bold text-text-primary",
             )}
           >
             {label}

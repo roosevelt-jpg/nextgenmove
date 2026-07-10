@@ -4,20 +4,25 @@
  */
 :root {
   /* Surfaces & borders */
-  --bg: #fafaf7;
-  --surface-1: #fffdf8;
+  --bg: #f9f9f7;
+  --surface-1: #ffffff;
   --surface-2: #f3f2ed;
   --border: #e8e6e1;
-  --border-accent: #4b3f9c;
+  --border-accent: #7b79b0;
 
   /* Text */
-  --text-primary: #1a1830;
+  --text-primary: #1a1a1a;
   --text-secondary: #4a4860;
   --text-muted: #8a8898;
 
-  /* Primary fill */
-  --fill-primary: #2e2768;
-  --on-primary: #fffdf8;
+  /* Primary fill — black CTAs per mockups */
+  --fill-primary: #1a1a1a;
+  --on-primary: #ffffff;
+
+  /* Accent purple (section labels, badges, Track B) */
+  --fill-accent: #4b3f9c;
+  --on-accent: #ffffff;
+  --text-label: #7b79b0;
 
   /* Semantic accents */
   --bg-accent: #f4d9a8;
@@ -26,6 +31,8 @@
   --text-success: #2d6a4f;
   --bg-warning: #fdf3e3;
   --text-warning: #c97a2e;
+  --bg-tag: #e8f5e9;
+  --text-tag: #2e7d32;
 
   /* Radii */
   --radius: 0.75rem; /* 12px — cards */
@@ -44,4 +51,5 @@
   --brand-gradient-mid: #9a6a3c;
   --brand-hero-muted: #e8d9be;
   --brand-hero-subtext: #e4dff0;
+  --brand-lavender: #eaeaff;
 }

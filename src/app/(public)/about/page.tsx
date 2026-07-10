@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { RichText } from "@/components/public/rich-text";
 import { StatBlocksSection } from "@/components/public/stat-blocks-section";
+import { SectionEyebrow } from "@/components/ui";
 import { getPageAbout } from "@/lib/collections/pages";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
@@ -9,57 +10,63 @@ export default async function AboutPage() {
   const pageLabels = settings.pageLabels ?? {};
 
   return (
-    <div className="space-y-16">
+    <div className="mx-auto max-w-7xl space-y-16 px-4 py-12 md:py-16">
       {(page?.heroHeadline || page?.heroSubtext) && (
-        <section className="space-y-4">
+        <section className="max-w-3xl space-y-3">
+          {pageLabels.aboutEyebrow ? (
+            <SectionEyebrow>{pageLabels.aboutEyebrow}</SectionEyebrow>
+          ) : null}
           {page?.heroHeadline ? (
-            <h1 className="font-serif text-4xl text-text-primary">{page.heroHeadline}</h1>
+            <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+              {page.heroHeadline}
+            </h1>
           ) : null}
           {page?.heroSubtext ? (
-            <p className="max-w-2xl text-lg text-text-secondary">{page.heroSubtext}</p>
+            <p className="text-lg leading-relaxed text-text-secondary">
+              {page.heroSubtext}
+            </p>
           ) : null}
         </section>
       )}
 
       {page?.missionBody ? (
-        <section>
+        <section className="max-w-3xl">
           {pageLabels.missionTitle ? (
-            <h2 className="mb-4 font-serif text-2xl text-text-primary">
-              {pageLabels.missionTitle}
-            </h2>
+            <SectionEyebrow className="mb-4">{pageLabels.missionTitle}</SectionEyebrow>
           ) : null}
           <RichText html={page.missionBody} />
         </section>
       ) : null}
 
-      <StatBlocksSection statBlocks={page?.statBlocks} />
+      <StatBlocksSection statBlocks={page?.statBlocks} valueTone />
 
       {page?.teamMembers?.length ? (
-        <section className="space-y-6">
+        <section className="space-y-8">
           {pageLabels.teamTitle ? (
-            <h2 className="font-serif text-2xl text-text-primary">{pageLabels.teamTitle}</h2>
+            <SectionEyebrow>{pageLabels.teamTitle}</SectionEyebrow>
           ) : null}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {page.teamMembers.map((member) => (
-              <article
-                key={`${member.name}-${member.role}`}
-                className="rounded-radius border border-border bg-surface-1 p-5"
-              >
+              <article key={`${member.name}-${member.role}`} className="space-y-4">
                 {member.photo ? (
                   <Image
                     src={member.photo}
                     alt={member.name}
-                    width={320}
-                    height={320}
-                    className="mb-4 aspect-square w-full rounded-radius object-cover"
+                    width={420}
+                    height={480}
+                    className="aspect-[4/5] w-full rounded-radius object-cover"
                   />
+                ) : (
+                  <div className="aspect-[4/5] w-full rounded-radius bg-gradient-to-br from-brand-indigo-1 to-brand-amber-2" />
+                )}
+                {member.role ? (
+                  <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
+                    {member.role}
+                  </p>
                 ) : null}
                 <h3 className="font-serif text-xl text-text-primary">{member.name}</h3>
-                {member.role ? (
-                  <p className="mt-1 text-sm text-text-muted">{member.role}</p>
-                ) : null}
                 {member.bio ? (
-                  <p className="mt-3 text-sm leading-relaxed text-text-secondary">
+                  <p className="text-sm leading-relaxed text-text-secondary">
                     {member.bio}
                   </p>
                 ) : null}
@@ -70,11 +77,11 @@ export default async function AboutPage() {
       ) : null}
 
       {page?.foundingStory ? (
-        <section>
+        <section className="max-w-3xl">
           {pageLabels.foundingStoryTitle ? (
-            <h2 className="mb-4 font-serif text-2xl text-text-primary">
+            <SectionEyebrow className="mb-4">
               {pageLabels.foundingStoryTitle}
-            </h2>
+            </SectionEyebrow>
           ) : null}
           <RichText html={page.foundingStory} />
         </section>

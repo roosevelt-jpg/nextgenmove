@@ -10,6 +10,12 @@ export interface JournalListProps {
   labels: Record<string, string>;
 }
 
+const COVER_TONES = [
+  "from-brand-indigo-1 to-brand-amber-2",
+  "from-text-success to-brand-amber-2",
+  "from-brand-indigo-2 to-border-accent",
+] as const;
+
 export function JournalList({ articles, labels }: JournalListProps) {
   const { taxonomies } = useTaxonomies();
   const [category, setCategory] = useState("");
@@ -42,10 +48,10 @@ export function JournalList({ articles, labels }: JournalListProps) {
     <div className="space-y-8">
       <div className="grid gap-4 md:grid-cols-2">
         {labels.filterCategory ? (
-          <label className="flex flex-col gap-1 text-sm text-text-secondary">
+          <label className="flex flex-col gap-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
             {labels.filterCategory}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2"
+              className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm font-normal normal-case tracking-normal text-text-primary"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
             >
@@ -59,10 +65,10 @@ export function JournalList({ articles, labels }: JournalListProps) {
           </label>
         ) : null}
         {labels.filterTag ? (
-          <label className="flex flex-col gap-1 text-sm text-text-secondary">
+          <label className="flex flex-col gap-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
             {labels.filterTag}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2"
+              className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm font-normal normal-case tracking-normal text-text-primary"
               value={tag}
               onChange={(event) => setTag(event.target.value)}
             >
@@ -78,23 +84,39 @@ export function JournalList({ articles, labels }: JournalListProps) {
         ) : null}
       </div>
 
-      <ul className="grid gap-6 md:grid-cols-2">
-        {filteredArticles.map((article) => (
+      <ul className="grid gap-6 md:grid-cols-3">
+        {filteredArticles.map((article, index) => (
           <li
             key={article.id}
-            className="rounded-radius border border-border bg-surface-1 p-5"
+            className="overflow-hidden rounded-radius border border-border bg-surface-1"
           >
-            <Link href={`/journal/${article.slug}`} className="block space-y-2">
-              <h2 className="font-serif text-2xl text-text-primary">{article.title}</h2>
-              {article.excerpt ? (
-                <p className="text-sm text-text-secondary">{article.excerpt}</p>
-              ) : null}
-              <p className="text-xs text-text-muted">
-                {article.author}
-                {article.publishedDate
-                  ? ` · ${new Date(article.publishedDate).toLocaleDateString()}`
-                  : null}
-              </p>
+            <Link href={`/journal/${article.slug}`} className="block">
+              {article.coverImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={article.coverImageUrl}
+                  alt=""
+                  className="aspect-[16/10] w-full object-cover"
+                />
+              ) : (
+                <div
+                  className={`aspect-[16/10] w-full bg-gradient-to-br ${COVER_TONES[index % COVER_TONES.length]}`}
+                />
+              )}
+              <div className="space-y-2 p-5">
+                {article.category ? (
+                  <p className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
+                    {taxonomies.category?.find((c) => c.value === article.category)
+                      ?.label ?? article.category}
+                  </p>
+                ) : null}
+                <h2 className="font-serif text-xl text-text-primary">
+                  {article.title}
+                </h2>
+                {article.excerpt ? (
+                  <p className="text-sm text-text-secondary">{article.excerpt}</p>
+                ) : null}
+              </div>
             </Link>
           </li>
         ))}

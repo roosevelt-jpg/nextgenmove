@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { AdminPromoteModal } from "@/components/admin/admin-promote-modal";
 import { Button, EmptyState, StatCard } from "@/components/ui";
 import type { AdminDashboardStats, ActivityLogEntry, PendingRequestItem } from "@/lib/admin/dashboard";
@@ -11,6 +12,14 @@ interface AdminDashboardViewProps {
   initialActivity: ActivityLogEntry[];
   initialPending: PendingRequestItem[];
 }
+
+const VALUE_TONES = [
+  "text-fill-accent",
+  "text-text-accent",
+  "text-text-success",
+  "text-text-primary",
+  "text-text-label",
+] as const;
 
 export function AdminDashboardView({
   labels,
@@ -134,25 +143,56 @@ export function AdminDashboardView({
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {statCards.map((card) => (
-          <StatCard
-            key={card.key}
-            label={labels[card.key]}
-            value={card.value}
-          />
-        ))}
+        {statCards.map((card, index) =>
+          labels[card.key] ? (
+            <StatCard
+              key={card.key}
+              label={labels[card.key]}
+              value={card.value}
+              valueClassName={VALUE_TONES[index % VALUE_TONES.length]}
+            />
+          ) : null,
+        )}
       </section>
 
+      {(labels.contentLibraryTitle || labels.liveContentItems) && (
+        <section className="flex flex-wrap items-center gap-3 rounded-radius border border-border bg-surface-1 px-5 py-4">
+          {labels.contentLibraryTitle ? (
+            <p className="font-serif text-lg text-text-primary">
+              {labels.contentLibraryTitle}
+            </p>
+          ) : labels.liveContentItems ? (
+            <p className="font-serif text-lg text-text-primary">
+              {labels.liveContentItems}
+            </p>
+          ) : null}
+          <span className="inline-flex items-center rounded-full bg-bg-success px-2.5 py-0.5 text-xs font-medium text-text-success">
+            {stats.liveContentItems}
+            {labels.contentLivePill ? ` · ${labels.contentLivePill}` : ""}
+          </span>
+          {labels.contentLibraryLink ? (
+            <Link
+              href="/admin/content"
+              className="ml-auto text-sm font-medium text-text-label hover:text-fill-accent"
+            >
+              {labels.contentLibraryLink}
+            </Link>
+          ) : null}
+        </section>
+      )}
+
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-radius border border-border bg-surface-1 p-4">
+        <div className="rounded-radius border border-border bg-surface-1 p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-medium text-text-primary">{labels.pendingTitle}</h2>
-            <Button variant="ghost" onClick={refreshLiveData}>
-              {labels.refresh}
-            </Button>
+            <h2 className="font-serif text-xl text-text-primary">{labels.pendingTitle}</h2>
+            {labels.refresh ? (
+              <Button variant="ghost" size="sm" onClick={refreshLiveData}>
+                {labels.refresh}
+              </Button>
+            ) : null}
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-wrap gap-2 border-b border-border pb-3">
             {sourceTabs.map((tab) => {
               if (!tab.label) {
                 return null;
@@ -165,8 +205,8 @@ export function AdminDashboardView({
                   onClick={() => setSourceFilter(tab.id)}
                   className={
                     sourceFilter === tab.id
-                      ? "rounded-radius bg-surface-2 px-3 py-1 text-sm text-text-primary"
-                      : "rounded-radius px-3 py-1 text-sm text-text-muted hover:text-text-secondary"
+                      ? "-mb-px border-b-2 border-fill-primary pb-2 text-sm font-bold text-text-primary"
+                      : "pb-2 text-sm text-text-muted hover:text-text-secondary"
                   }
                 >
                   {tab.label}
@@ -184,17 +224,21 @@ export function AdminDashboardView({
                 const isLoading = actionLoadingId === rowKey;
 
                 return (
-                  <li key={rowKey} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <li
+                    key={rowKey}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div>
                       <p className="font-medium text-text-primary">{item.title}</p>
                       <p className="text-sm text-text-muted">{item.subtitle}</p>
-                      <p className="text-xs text-text-muted">
+                      <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-text-label">
                         {labels[`source_${item.source}`] ?? item.source}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
+                        size="sm"
                         disabled={isLoading}
                         onClick={() => runAction(item, "approve")}
                       >
@@ -202,6 +246,7 @@ export function AdminDashboardView({
                       </Button>
                       <Button
                         variant="ghost"
+                        size="sm"
                         disabled={isLoading}
                         onClick={() => runAction(item, "reject")}
                       >
@@ -209,6 +254,7 @@ export function AdminDashboardView({
                       </Button>
                       {item.source === "role_interest_submissions" ? (
                         <Button
+                          size="sm"
                           disabled={isLoading}
                           onClick={() => openPromote(item)}
                         >
@@ -223,25 +269,56 @@ export function AdminDashboardView({
           )}
         </div>
 
-        <div className="rounded-radius border border-border bg-surface-1 p-4">
-          <h2 className="mb-4 font-medium text-text-primary">{labels.activityTitle}</h2>
-          {activity.length === 0 ? (
-            <EmptyState title={labels.activityEmpty} />
-          ) : (
-            <ul className="divide-y divide-border">
-              {activity.map((entry) => (
-                <li key={entry.id} className="py-3">
-                  <p className="text-sm text-text-primary">{entry.action}</p>
-                  <p className="text-xs text-text-muted">
-                    {entry.targetType} · {entry.targetId}
-                  </p>
-                  {entry.createdAt ? (
-                    <p className="text-xs text-text-muted">{entry.createdAt}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="space-y-6">
+          <div className="rounded-radius border border-border bg-surface-1 p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-serif text-xl text-text-primary">{labels.activityTitle}</h2>
+              {labels.leversLink ? (
+                <Link
+                  href="/admin/levers"
+                  className="text-sm font-medium text-text-label hover:text-fill-accent"
+                >
+                  {labels.leversLink}
+                </Link>
+              ) : null}
+            </div>
+            {activity.length === 0 ? (
+              <EmptyState title={labels.activityEmpty} />
+            ) : (
+              <ul className="divide-y divide-border">
+                {activity.map((entry) => (
+                  <li key={entry.id} className="py-3">
+                    <p className="text-sm text-text-primary">{entry.action}</p>
+                    <p className="text-xs text-text-muted">
+                      {entry.targetType} · {entry.targetId}
+                    </p>
+                    {entry.createdAt ? (
+                      <p className="text-xs text-text-muted">{entry.createdAt}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {labels.leversPanelTitle ? (
+            <div className="rounded-radius border border-border-accent bg-brand-lavender p-5">
+              <h2 className="font-serif text-xl text-fill-accent">
+                {labels.leversPanelTitle}
+              </h2>
+              {labels.leversPanelBody ? (
+                <p className="mt-2 text-sm text-text-secondary">{labels.leversPanelBody}</p>
+              ) : null}
+              {labels.leversLink ? (
+                <Link
+                  href="/admin/levers"
+                  className="mt-4 inline-flex items-center justify-center rounded-radius bg-fill-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90"
+                >
+                  {labels.leversLink}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </section>
 

@@ -70,3 +70,29 @@ export function resolveFooterGroups(
 export function buildHeaderSections(navLabels: NavLabels = {}) {
   return buildDefaultFooterGroups(navLabels);
 }
+
+/** Flat primary nav links matching the marketing mockup header. */
+export function buildHeaderPrimaryLinks(navLabels: NavLabels = {}) {
+  return [
+    {
+      key: "howItWorks",
+      href: PUBLIC_ROUTES.howItWorks,
+      label: navLabels.howItWorks,
+    },
+    {
+      key: "forCompanies",
+      href: PUBLIC_ROUTES.tracks,
+      label: navLabels.forCompanies,
+    },
+    {
+      key: "pricing",
+      href: PUBLIC_ROUTES.pricing,
+      label: navLabels.pricing,
+    },
+    {
+      key: "signIn",
+      href: "/sign-in",
+      label: navLabels.signIn,
+    },
+  ] as const;
+}

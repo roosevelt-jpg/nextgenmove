@@ -22,7 +22,10 @@ export function StudentNav({ labels }: { labels: StudentNavLabels }) {
   const pathname = usePathname();
 
   return (
-    <nav className="mb-5 flex flex-wrap gap-6 text-sm" aria-label="student">
+    <nav
+      className="mb-6 flex flex-wrap gap-6 border-b border-border text-sm"
+      aria-label="student"
+    >
       {NAV_ITEMS.map((item) => {
         const label = labels[item.key];
         if (!label) {
@@ -39,8 +42,8 @@ export function StudentNav({ labels }: { labels: StudentNavLabels }) {
             key={item.key}
             href={item.href}
             className={cn(
-              "pb-2 text-text-secondary transition-colors hover:text-text-primary",
-              isActive && "border-b-2 border-text-primary font-medium text-text-primary",
+              "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
+              isActive && "border-fill-primary font-bold text-text-primary",
             )}
           >
             {label}

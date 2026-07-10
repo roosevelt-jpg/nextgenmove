@@ -24,7 +24,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label ? (
           <label
             htmlFor={selectId}
-            className="text-sm font-medium text-text-secondary"
+            className="font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted"
           >
             {label}
           </label>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EmptyState, KanbanBoard } from "@/components/ui";
+import { EmptyState, KanbanBoard, StatCard } from "@/components/ui";
 
 interface PipelineStage {
   id: string;
@@ -25,6 +25,13 @@ interface EmployerMatch {
 export interface PipelineViewProps {
   labels: Record<string, string>;
 }
+
+const VALUE_TONES = [
+  "text-fill-accent",
+  "text-text-accent",
+  "text-text-success",
+  "text-text-primary",
+] as const;
 
 export function PipelineView({ labels }: PipelineViewProps) {
   const [stages, setStages] = useState<PipelineStage[]>([]);
@@ -79,6 +86,17 @@ export function PipelineView({ labels }: PipelineViewProps) {
     [matches],
   );
 
+  const stageCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const stage of stages) {
+      counts.set(stage.id, 0);
+    }
+    for (const match of matches) {
+      counts.set(match.stageId, (counts.get(match.stageId) ?? 0) + 1);
+    }
+    return counts;
+  }, [matches, stages]);
+
   const handleMove = async (itemId: string, toColumnId: string) => {
     await fetch(`/api/employer/matches/${itemId}`, {
       method: "PATCH",
@@ -93,10 +111,42 @@ export function PipelineView({ labels }: PipelineViewProps) {
   }
 
   if (!stages.length) {
-    return labels.emptyState ? <EmptyState title={labels.emptyState} /> : null;
+    return labels.emptyState ? (
+      <div className="rounded-radius border border-dashed border-border bg-surface-1 p-2">
+        <EmptyState title={labels.emptyState} />
+      </div>
+    ) : null;
   }
 
   return (
-    <KanbanBoard columns={columns} items={items} onItemMove={handleMove} />
+    <div className="space-y-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {labels.statTotal ? (
+          <StatCard
+            label={labels.statTotal}
+            value={matches.length}
+            valueClassName={VALUE_TONES[0]}
+          />
+        ) : null}
+        {stages.slice(0, 3).map((stage, index) => (
+          <StatCard
+            key={stage.id}
+            label={stage.name}
+            value={stageCounts.get(stage.id) ?? 0}
+            valueClassName={VALUE_TONES[(index + 1) % VALUE_TONES.length]}
+          />
+        ))}
+      </div>
+
+      {matches.length === 0 && labels.emptyState ? (
+        <div className="rounded-radius border border-dashed border-border bg-surface-1">
+          <EmptyState title={labels.emptyState} />
+        </div>
+      ) : (
+        <div className="rounded-radius border border-border bg-surface-1 p-4">
+          <KanbanBoard columns={columns} items={items} onItemMove={handleMove} />
+        </div>
+      )}
+    </div>
   );
 }

@@ -23,7 +23,10 @@ export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
   const pathname = usePathname();
 
   return (
-    <nav className="mb-5 flex flex-wrap gap-6 text-sm" aria-label="employer">
+    <nav
+      className="mb-6 flex flex-wrap gap-6 border-b border-border text-sm"
+      aria-label="employer"
+    >
       {NAV_ITEMS.map((item) => {
         const label = labels[item.key];
         if (!label) {
@@ -38,8 +41,8 @@ export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
             key={item.key}
             href={item.href}
             className={cn(
-              "pb-2 text-text-secondary transition-colors hover:text-text-primary",
-              isActive && "border-b-2 border-text-primary font-medium text-text-primary",
+              "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
+              isActive && "border-fill-primary font-bold text-text-primary",
             )}
           >
             {label}
@@ -50,9 +53,9 @@ export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
         <Link
           href="/employer/settings"
           className={cn(
-            "pb-2 text-text-secondary transition-colors hover:text-text-primary",
+            "-mb-px border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
             pathname === "/employer/settings" &&
-              "border-b-2 border-text-primary font-medium text-text-primary",
+              "border-fill-primary font-bold text-text-primary",
           )}
         >
           {labels.settings}

@@ -32,6 +32,7 @@ export {
 } from "./kanban-board";
 export { Modal, type ModalProps } from "./modal";
 export { Select, type SelectOption, type SelectProps } from "./select";
+export { SectionEyebrow, type SectionEyebrowProps } from "./section-eyebrow";
 export { StatCard, type StatCardProps } from "./stat-card";
 export { Tabs, type TabItem, type TabsProps } from "./tabs";
 export { Textarea, type TextareaProps } from "./textarea";

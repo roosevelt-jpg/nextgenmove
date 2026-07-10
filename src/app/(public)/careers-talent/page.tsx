@@ -1,4 +1,5 @@
 import { PublicRolesList } from "@/components/public/public-roles-list";
+import { SectionEyebrow } from "@/components/ui";
 import { getOpenPublicRoles } from "@/lib/collections/pages";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
@@ -8,15 +9,31 @@ export default async function BrowseRolesPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="space-y-8">
-      {pageLabels.browseRolesTitle ?? settings.navLabels?.browseRoles ? (
-        <h1 className="font-serif text-4xl text-text-primary">
-          {pageLabels.browseRolesTitle ?? settings.navLabels?.browseRoles}
-        </h1>
-      ) : null}
-      {pageLabels.browseRolesIntro ? (
-        <p className="max-w-2xl text-text-secondary">{pageLabels.browseRolesIntro}</p>
-      ) : null}
+    <div className="mx-auto max-w-7xl space-y-10 px-4 py-12 md:py-16">
+      <header className="max-w-2xl space-y-3">
+        {pageLabels.browseRolesEyebrow ||
+        pageLabels.browseRolesTitle ||
+        settings.navLabels?.browseRoles ? (
+          <SectionEyebrow>
+            {pageLabels.browseRolesEyebrow ??
+              pageLabels.browseRolesTitle ??
+              settings.navLabels?.browseRoles}
+          </SectionEyebrow>
+        ) : null}
+        {pageLabels.browseRolesHeadline ? (
+          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+            {pageLabels.browseRolesHeadline}
+          </h1>
+        ) : pageLabels.browseRolesTitle || settings.navLabels?.browseRoles ? (
+          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+            {pageLabels.browseRolesTitle ?? settings.navLabels?.browseRoles}
+          </h1>
+        ) : null}
+        {pageLabels.browseRolesIntro ? (
+          <p className="text-lg text-text-secondary">{pageLabels.browseRolesIntro}</p>
+        ) : null}
+      </header>
+
       <PublicRolesList roles={roles} labels={formLabels} />
     </div>
   );

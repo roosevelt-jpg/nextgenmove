@@ -12,16 +12,18 @@ export function StepsSection({ steps, className }: StepsSectionProps) {
 
   return (
     <section className={className}>
-      <ol className="grid gap-6 md:grid-cols-3">
+      <ol className="grid gap-5 md:grid-cols-3">
         {steps.map((step) => (
           <li
             key={`${step.legNumber}-${step.title}`}
             className="rounded-radius border border-border bg-surface-1 p-6"
           >
-            <div className="font-mono text-xs uppercase tracking-wide text-text-accent">
-              {step.legNumber}
+            <div className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
+              {`LEG ${String(step.legNumber).padStart(2, "0")}`}
             </div>
-            <h3 className="mt-2 font-serif text-xl text-text-primary">{step.title}</h3>
+            <h3 className="mt-3 font-serif text-xl text-text-primary">
+              {step.title}
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-text-secondary">
               {step.description}
             </p>

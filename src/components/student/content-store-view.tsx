@@ -76,29 +76,31 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
 
   return (
     <div className="space-y-6">
-      {labels.creditsBalance ? (
-        <p className="text-sm text-text-secondary">
-          {labels.creditsBalance.replace("{credits}", String(credits))}
-        </p>
-      ) : null}
+      <div className="flex flex-col gap-4 rounded-radius border border-border bg-surface-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        {labels.creditsBalance ? (
+          <p className="font-serif text-xl text-text-primary">
+            {labels.creditsBalance.replace("{credits}", String(credits))}
+          </p>
+        ) : null}
 
-      {labels.filterCategory ? (
-        <label className="flex max-w-xs flex-col gap-1 text-sm text-text-secondary">
-          {labels.filterCategory}
-          <select
-            className="rounded-radius border border-border bg-surface-1 px-3 py-2"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-          >
-            <option value="">{labels.allCategories}</option>
-            {(taxonomies.category ?? []).map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
+        {labels.filterCategory ? (
+          <label className="flex max-w-xs flex-col gap-1 text-sm text-text-secondary sm:ml-auto">
+            {labels.filterCategory}
+            <select
+              className="rounded-radius border border-border bg-bg px-3 py-2"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              <option value="">{labels.allCategories}</option>
+              {(taxonomies.category ?? []).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
 
       {errorCode ? (
         <p className="text-sm text-text-warning" role="alert">
@@ -106,53 +108,79 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
         </p>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="space-y-3">
         {filteredItems.map((item) => (
-          <Card key={item.id}>
-            <CardBody className="space-y-3">
-              {item.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.thumbnailUrl}
-                  alt={item.title}
-                  className="h-32 w-full rounded-radius object-cover"
-                />
-              ) : null}
-              <p className="font-medium text-text-primary">{item.title}</p>
-              {item.description ? (
-                <p className="text-sm text-text-secondary">{item.description}</p>
-              ) : null}
-              {labels.costCreditsLabel ? (
-                <p className="font-mono text-xs text-text-accent">
-                  {labels.costCreditsLabel.replace("{credits}", String(item.costCredits))}
-                </p>
-              ) : null}
-              {item.purchased ? (
-                <>
-                  {labels.unlockedLabel ? (
-                    <Badge variant="success">{labels.unlockedLabel}</Badge>
-                  ) : null}
-                  {item.downloadHref && labels.openContent ? (
-                    <a
-                      href={item.downloadHref}
-                      className="text-sm text-text-primary hover:text-text-accent"
+          <li key={item.id}>
+            <Card>
+              <CardBody className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-4">
+                  <span
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-radius bg-brand-lavender font-serif text-base font-semibold text-fill-accent"
+                    aria-hidden="true"
+                  >
+                    {initialsFromTitle(item.title)}
+                  </span>
+                  <div className="min-w-0 space-y-1">
+                    <p className="font-medium text-text-primary">{item.title}</p>
+                    {item.description ? (
+                      <p className="text-sm text-text-secondary">{item.description}</p>
+                    ) : null}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {item.category ? (
+                        <span className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag">
+                          {item.category}
+                        </span>
+                      ) : null}
+                      {labels.costCreditsLabel ? (
+                        <p className="font-mono text-xs text-text-accent">
+                          {labels.costCreditsLabel.replace(
+                            "{credits}",
+                            String(item.costCredits),
+                          )}
+                        </p>
+                      ) : null}
+                      {item.purchased && labels.unlockedLabel ? (
+                        <Badge variant="success">{labels.unlockedLabel}</Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                  {item.purchased ? (
+                    item.downloadHref && labels.openContent ? (
+                      <a
+                        href={item.downloadHref}
+                        className="inline-flex items-center justify-center rounded-radius border border-fill-primary px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-2"
+                      >
+                        {labels.openContent}
+                      </a>
+                    ) : null
+                  ) : labels.purchaseAction ? (
+                    <Button
+                      disabled={loadingItemId === item.id}
+                      onClick={() => purchase(item.id)}
                     >
-                      {labels.openContent}
-                    </a>
+                      {labels.purchaseAction}
+                    </Button>
                   ) : null}
-                </>
-              ) : labels.purchaseAction ? (
-                <Button
-                  disabled={loadingItemId === item.id}
-                  onClick={() => purchase(item.id)}
-                >
-                  {labels.purchaseAction}
-                </Button>
-              ) : null}
-            </CardBody>
-          </Card>
+                </div>
+              </CardBody>
+            </Card>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
+}
+
+function initialsFromTitle(title: string): string {
+  const parts = title.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) {
+    return "";
+  }
+  if (parts.length === 1) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
+  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
 }

@@ -1,218 +1,192 @@
-.hero {
-  border-radius: var(--radius-lg);
-  padding: 70px 60px;
+.heroBand {
   background: linear-gradient(
     115deg,
     var(--brand-indigo-1) 0%,
-    var(--brand-indigo-2) 38%,
+    var(--brand-indigo-2) 42%,
     var(--brand-gradient-mid) 78%,
     var(--brand-amber-2) 100%
   );
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: center;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
 }
 
-.heroLeft {
+.heroInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 4.5rem 1rem 5.5rem;
+  display: grid;
+  gap: 2rem;
+  align-items: end;
+}
+
+@media (min-width: 900px) {
+  .heroInner {
+    grid-template-columns: 1.2fr 0.9fr;
+    padding: 5rem 1.5rem 6rem;
+  }
+}
+
+.heroCopy {
   position: relative;
   z-index: 2;
+  max-width: 36rem;
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--brand-hero-muted);
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .headline {
   font-family: var(--font-serif);
-  font-size: 52px;
-  line-height: 1.15;
-  color: var(--surface-1);
+  font-size: clamp(2.4rem, 5vw, 3.5rem);
+  line-height: 1.12;
+  color: var(--on-accent);
   font-weight: 500;
 }
 
 .headlineEmphasis {
   font-style: italic;
   color: var(--brand-amber-1);
-  display: block;
-  font-size: 60px;
-  margin-top: 4px;
 }
 
 .subtext {
-  max-width: 440px;
-  font-size: 15.5px;
+  max-width: 28rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: var(--brand-hero-subtext);
-  margin: 22px 0 32px;
+  margin: 1.25rem 0 1.75rem;
 }
 
 .ctas {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 .btnPrimary {
   background: var(--surface-1);
-  color: var(--brand-indigo-2);
-  padding: 14px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--text-primary);
+  padding: 0.85rem 1.4rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .btnGhost {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--surface-1);
-  border: 1px solid rgba(255, 253, 248, 0.4);
-  padding: 14px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.globeWrap {
-  position: relative;
-  z-index: 1;
-}
-
-.graticule {
-  fill: none;
-  stroke: rgba(255, 253, 248, 0.16);
-  stroke-width: 1;
-}
-
-.globeOutline {
-  fill: rgba(255, 253, 248, 0.03);
-  stroke: rgba(255, 253, 248, 0.22);
-  stroke-width: 1;
-}
-
-.globeSlowspin {
-  transform-origin: 250px 250px;
-  animation: spin 40s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.routeArc {
-  fill: none;
-  stroke: var(--brand-amber-1);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-dasharray: 6 8;
-  opacity: 0.85;
-  animation: flow 2.4s linear infinite;
-}
-
-@keyframes flow {
-  to {
-    stroke-dashoffset: -140;
-  }
-}
-
-.hubDot {
-  fill: var(--surface-1);
-}
-
-.hubRing {
-  fill: none;
-  stroke: var(--brand-amber-1);
-  stroke-width: 1.5;
-  opacity: 0.8;
-  transform-origin: center;
-  animation: pulse 2.2s ease-out infinite;
-}
-
-@keyframes pulse {
-  0% {
-    r: 8;
-    opacity: 0.9;
-    stroke-width: 2;
-  }
-  100% {
-    r: 34;
-    opacity: 0;
-    stroke-width: 0.5;
-  }
-}
-
-.cityDot {
-  fill: var(--brand-amber-1);
-}
-
-.traveler {
-  fill: var(--surface-1);
-}
-
-.avatarBubble {
-  animation: bob 3.6s ease-in-out infinite;
-}
-
-@keyframes bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-7px);
-  }
-}
-
-.avatarCircle {
-  fill: var(--surface-1);
-}
-
-.avatarText {
-  font-family: var(--font-mono);
-  font-size: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--on-accent);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 0.85rem 1.4rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
   font-weight: 500;
-  fill: var(--brand-indigo-2);
-  text-anchor: middle;
-  dominant-baseline: central;
 }
 
-.avatarLabel {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  fill: var(--brand-hero-muted);
-  text-anchor: middle;
-  letter-spacing: 0.5px;
+.boardingPass {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(26, 26, 26, 0.22);
+  transform: translateY(1.5rem);
 }
 
-.dxbLabel {
-  font-family: var(--font-mono);
-  font-size: 11px;
+.passMain {
+  background: var(--surface-1);
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.passStub {
+  background: var(--brand-lavender);
+  padding: 1.25rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  border-left: 2px dashed var(--border);
+}
+
+.passRoute {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.passMeta {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.passKey {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
+}
+
+.passVal {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-primary);
   font-weight: 500;
-  fill: var(--surface-1);
-  text-anchor: middle;
-  letter-spacing: 1px;
 }
 
-@media (max-width: 960px) {
-  .hero {
+.passStatus {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-success);
+  font-weight: 600;
+}
+
+.routeBar {
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+}
+
+.routeBarInner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+}
+
+.routeBarLabel {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.routeBarCodes {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 640px) {
+  .boardingPass {
     grid-template-columns: 1fr;
-    padding: 40px 24px;
+    transform: none;
   }
 
-  .headline {
-    font-size: 40px;
-  }
-
-  .headlineEmphasis {
-    font-size: 46px;
+  .passStub {
+    border-left: none;
+    border-top: 2px dashed var(--border);
   }
 }

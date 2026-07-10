@@ -1,4 +1,4 @@
-import { Accordion } from "@/components/ui";
+import { SectionEyebrow } from "@/components/ui";
 import { StepsSection } from "@/components/public/steps-section";
 import { getPageHowItWorks } from "@/lib/collections/pages";
 import { getSiteSettings } from "@/lib/collections/site-settings";
@@ -8,23 +8,44 @@ export default async function HowItWorksPage() {
   const pageLabels = settings.pageLabels ?? {};
 
   return (
-    <div className="space-y-16">
-      {pageLabels.howItWorksTitle ? (
-        <h1 className="font-serif text-4xl text-text-primary">{pageLabels.howItWorksTitle}</h1>
-      ) : null}
+    <div className="mx-auto max-w-7xl space-y-16 px-4 py-12 md:py-16">
+      <header className="max-w-2xl space-y-3">
+        {pageLabels.howItWorksEyebrow || pageLabels.howItWorksTitle ? (
+          <SectionEyebrow>
+            {pageLabels.howItWorksEyebrow ?? pageLabels.howItWorksTitle}
+          </SectionEyebrow>
+        ) : null}
+        {pageLabels.howItWorksHeadline ? (
+          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+            {pageLabels.howItWorksHeadline}
+          </h1>
+        ) : pageLabels.howItWorksTitle ? (
+          <h1 className="font-serif text-4xl text-text-primary md:text-5xl">
+            {pageLabels.howItWorksTitle}
+          </h1>
+        ) : null}
+        {pageLabels.howItWorksIntro ? (
+          <p className="text-lg text-text-secondary">{pageLabels.howItWorksIntro}</p>
+        ) : null}
+      </header>
+
       <StepsSection steps={page?.steps} />
+
       {page?.faqItems?.length ? (
-        <section className="space-y-4">
+        <section className="space-y-6 border-t border-border pt-12">
           {pageLabels.faqTitle ? (
-            <h2 className="font-serif text-2xl text-text-primary">{pageLabels.faqTitle}</h2>
+            <SectionEyebrow>{pageLabels.faqTitle}</SectionEyebrow>
           ) : null}
-          <Accordion
-            items={page.faqItems.map((item, index) => ({
-              id: `faq-${index}`,
-              title: item.question,
-              content: item.answer,
-            }))}
-          />
+          <div className="divide-y divide-border">
+            {page.faqItems.map((item, index) => (
+              <div key={`faq-${index}`} className="py-5">
+                <h3 className="font-serif text-xl text-text-primary">
+                  {item.question}
+                </h3>
+                <p className="mt-2 text-sm text-text-secondary">{item.answer}</p>
+              </div>
+            ))}
+          </div>
         </section>
       ) : null}
     </div>

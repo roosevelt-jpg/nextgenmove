@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, DataTable, EmptyState } from "@/components/ui";
+import { Button, EmptyState, StatCard } from "@/components/ui";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface TalentPoolRow extends Record<string, unknown> {
@@ -20,6 +20,12 @@ interface TalentPoolRow extends Record<string, unknown> {
 export interface TalentPoolViewProps {
   labels: Record<string, string>;
 }
+
+const VALUE_TONES = [
+  "text-fill-accent",
+  "text-text-accent",
+  "text-text-success",
+] as const;
 
 export function TalentPoolView({ labels }: TalentPoolViewProps) {
   const { taxonomies } = useTaxonomies();
@@ -60,6 +66,16 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
     [rows],
   );
 
+  const shortlistedCount = useMemo(
+    () => rows.filter((row) => row.shortlisted).length,
+    [rows],
+  );
+
+  const sectorCount = useMemo(
+    () => new Set(rows.map((row) => row.sector).filter(Boolean)).size,
+    [rows],
+  );
+
   const shortlist = useCallback(
     async (matchId: string) => {
       await fetch(`/api/employer/matches/${matchId}`, {
@@ -72,82 +88,42 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
     [loadRows],
   );
 
-  const columns = useMemo(
-    () =>
-      [
-        labels.columnName
-          ? {
-              key: "fullName" as const,
-              header: labels.columnName,
-              sortable: true,
-            }
-          : null,
-        labels.columnSector
-          ? {
-              key: "sector" as const,
-              header: labels.columnSector,
-              sortable: true,
-              render: (row: TalentPoolRow) =>
-                taxonomies.sector?.find((option) => option.value === row.sector)?.label ??
-                row.sector,
-            }
-          : null,
-        labels.columnSeniority
-          ? {
-              key: "seniority" as const,
-              header: labels.columnSeniority,
-              sortable: true,
-              render: (row: TalentPoolRow) =>
-                taxonomies.seniority?.find((option) => option.value === row.seniority)
-                  ?.label ?? row.seniority,
-            }
-          : null,
-        labels.columnLocation
-          ? {
-              key: "currentCity" as const,
-              header: labels.columnLocation,
-              sortable: true,
-            }
-          : null,
-        labels.columnAvailability
-          ? {
-              key: "availability" as const,
-              header: labels.columnAvailability,
-              sortable: true,
-            }
-          : null,
-        labels.shortlistAction
-          ? {
-              key: "matchId" as const,
-              header: labels.columnActions,
-              render: (row: TalentPoolRow) =>
-                row.shortlisted ? (
-                  labels.shortlistedLabel ? (
-                    <span className="text-xs text-text-muted">{labels.shortlistedLabel}</span>
-                  ) : null
-                ) : (
-                  <Button variant="outline" onClick={() => shortlist(row.matchId)}>
-                    {labels.shortlistAction}
-                  </Button>
-                ),
-            }
-          : null,
-      ].filter(Boolean),
-    [labels, shortlist, taxonomies.sector, taxonomies.seniority],
-  );
-
   if (isLoading) {
     return null;
   }
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {labels.statCandidates ? (
+          <StatCard
+            label={labels.statCandidates}
+            value={rows.length}
+            valueClassName={VALUE_TONES[0]}
+          />
+        ) : null}
+        {labels.statShortlisted ? (
+          <StatCard
+            label={labels.statShortlisted}
+            value={shortlistedCount}
+            valueClassName={VALUE_TONES[1]}
+          />
+        ) : null}
+        {labels.statSectors ? (
+          <StatCard
+            label={labels.statSectors}
+            value={sectorCount}
+            valueClassName={VALUE_TONES[2]}
+          />
+        ) : null}
+      </div>
+
+      <div className="grid gap-4 rounded-radius border border-border bg-surface-1 p-4 md:grid-cols-3">
         {labels.filterSector ? (
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterSector}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2"
+              className="rounded-radius border border-border bg-bg px-3 py-2"
               value={sector}
               onChange={(event) => setSector(event.target.value)}
             >
@@ -164,7 +140,7 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterSeniority}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2"
+              className="rounded-radius border border-border bg-bg px-3 py-2"
               value={seniority}
               onChange={(event) => setSeniority(event.target.value)}
             >
@@ -181,7 +157,7 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterLocation}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2"
+              className="rounded-radius border border-border bg-bg px-3 py-2"
               value={location}
               onChange={(event) => setLocation(event.target.value)}
             >
@@ -197,17 +173,82 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
       </div>
 
       {rows.length ? (
-        <DataTable
-          columns={columns as never}
-          data={rows}
-          rowKey={(row) => row.matchId}
-          emptyState={
-            labels.emptyState ? <EmptyState title={labels.emptyState} /> : null
-          }
-        />
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((row) => {
+            const sectorLabel =
+              taxonomies.sector?.find((option) => option.value === row.sector)
+                ?.label ?? row.sector;
+            const seniorityLabel =
+              taxonomies.seniority?.find(
+                (option) => option.value === row.seniority,
+              )?.label ?? row.seniority;
+
+            return (
+              <li
+                key={row.matchId}
+                className="flex flex-col rounded-radius border border-border bg-surface-1 p-5"
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-radius bg-brand-lavender font-serif text-base font-semibold text-fill-accent"
+                    aria-hidden="true"
+                  >
+                    {initialsFromName(row.fullName)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-serif text-lg text-text-primary">
+                      {row.fullName}
+                    </p>
+                    <p className="mt-0.5 text-sm text-text-secondary">
+                      {[seniorityLabel, sectorLabel, row.currentCity]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                </div>
+
+                {row.skills?.length ? (
+                  <ul className="mt-4 flex flex-wrap gap-1.5">
+                    {row.skills.slice(0, 6).map((skill) => (
+                      <li
+                        key={skill}
+                        className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag"
+                      >
+                        {skill}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
+                  {row.shortlisted && labels.shortlistedLabel ? (
+                    <span className="text-xs font-medium text-text-label">
+                      {labels.shortlistedLabel}
+                    </span>
+                  ) : labels.shortlistAction || labels.viewProfile ? (
+                    <Button size="sm" onClick={() => shortlist(row.matchId)}>
+                      {labels.viewProfile ?? labels.shortlistAction}
+                    </Button>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       ) : labels.emptyState ? (
         <EmptyState title={labels.emptyState} />
       ) : null}
     </div>
   );
+}
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) {
+    return "";
+  }
+  if (parts.length === 1) {
+    return parts[0]!.slice(0, 2).toUpperCase();
+  }
+  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
 }

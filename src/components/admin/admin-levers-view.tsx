@@ -98,40 +98,53 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         </Button>
       </header>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Input
-          id="trackAMonthly"
-          type="number"
-          label={labels.trackAMonthly}
-          value={String(levers.trackAMonthly)}
-          onChange={(event) =>
-            setLevers({ ...levers, trackAMonthly: Number(event.target.value) })
-          }
-        />
-        <Input
-          id="trackAMatchFee"
-          type="number"
-          label={labels.trackAMatchFee}
-          value={String(levers.trackAMatchFee)}
-          onChange={(event) =>
-            setLevers({ ...levers, trackAMatchFee: Number(event.target.value) })
-          }
-        />
-        <Input
-          id="trackBMonthly"
-          type="number"
-          label={labels.trackBMonthly}
-          value={String(levers.trackBMonthly)}
-          onChange={(event) =>
-            setLevers({ ...levers, trackBMonthly: Number(event.target.value) })
-          }
-        />
-      </div>
+      <section className="rounded-radius border border-border bg-surface-1 p-5">
+        {labels.pricingSectionTitle ? (
+          <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-text-label">
+            {labels.pricingSectionTitle}
+          </p>
+        ) : null}
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
+            <Input
+              id="trackAMonthly"
+              type="number"
+              label={labels.trackAMonthly}
+              value={String(levers.trackAMonthly)}
+              onChange={(event) =>
+                setLevers({ ...levers, trackAMonthly: Number(event.target.value) })
+              }
+            />
+          </div>
+          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
+            <Input
+              id="trackAMatchFee"
+              type="number"
+              label={labels.trackAMatchFee}
+              value={String(levers.trackAMatchFee)}
+              onChange={(event) =>
+                setLevers({ ...levers, trackAMatchFee: Number(event.target.value) })
+              }
+            />
+          </div>
+          <div className="space-y-1 rounded-radius border border-fill-accent bg-brand-lavender px-4 py-3">
+            <Input
+              id="trackBMonthly"
+              type="number"
+              label={labels.trackBMonthly}
+              value={String(levers.trackBMonthly)}
+              onChange={(event) =>
+                setLevers({ ...levers, trackBMonthly: Number(event.target.value) })
+              }
+            />
+          </div>
+        </div>
+      </section>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-medium text-text-primary">{labels.waysToEarnTitle}</h2>
-          <Button variant="outline" onClick={addWay}>
+      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-serif text-xl text-text-primary">{labels.waysToEarnTitle}</h2>
+          <Button variant="outline" size="sm" onClick={addWay}>
             {labels.addRow}
           </Button>
         </div>
@@ -139,7 +152,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         {levers.waysToEarn.map((way, index) => (
           <div
             key={way.id || index}
-            className="grid gap-3 rounded-radius border border-border p-4 md:grid-cols-4"
+            className="grid gap-3 rounded-radius border border-border bg-bg p-4 md:grid-cols-[1.2fr_0.6fr_1.4fr_auto]"
           >
             <Input
               id={`way-action-${index}`}
@@ -163,7 +176,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               onChange={(event) => updateWay(index, { description: event.target.value })}
             />
             <div className="flex items-end">
-              <Button variant="ghost" onClick={() => removeWay(index)}>
+              <Button variant="ghost" size="sm" onClick={() => removeWay(index)}>
                 {labels.removeRow}
               </Button>
             </div>

@@ -5,6 +5,7 @@ import { Badge, Button, Card, CardBody, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import type { PagePricingDocument, ProgramLeversDocument } from "@/types/cms";
 import type { CompanyDocument } from "@/lib/employer/session";
+import { cn } from "@/lib/utils";
 
 interface ProfileData {
   company: CompanyDocument;
@@ -85,22 +86,28 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
         ? programLevers?.trackBMonthly
         : null;
 
+  const trackBHighlighted = currentPlan === "track_b" || currentPlan !== "track_a";
+
   return (
     <div className="space-y-5">
-      <Card>
+      <Card className="overflow-hidden border-fill-accent bg-fill-accent">
         <CardBody className="space-y-3">
           {company.name ? (
-            <h1 className="text-xl font-medium text-text-primary">{company.name}</h1>
+            <h1 className="font-serif text-2xl text-on-accent">{company.name}</h1>
           ) : null}
           {company.contactEmail ? (
-            <p className="text-sm text-text-secondary">{company.contactEmail}</p>
+            <p className="text-sm text-brand-lavender">{company.contactEmail}</p>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            {subscriptionLabel ? <Badge>{subscriptionLabel}</Badge> : null}
+            {subscriptionLabel ? (
+              <span className="inline-flex items-center rounded-full bg-brand-lavender px-2.5 py-0.5 text-xs font-medium text-fill-accent">
+                {subscriptionLabel}
+              </span>
+            ) : null}
             {currentPrice != null && labels.currentPriceLabel ? (
-              <Badge variant="success">
+              <span className="inline-flex items-center rounded-full bg-surface-1 px-2.5 py-0.5 text-xs font-medium text-fill-accent">
                 {labels.currentPriceLabel.replace("{amount}", String(currentPrice))}
-              </Badge>
+              </span>
             ) : null}
           </div>
         </CardBody>
@@ -109,19 +116,25 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <section className="space-y-4">
           {labels.choosePlanTitle ? (
-            <p className="font-mono text-xs uppercase tracking-wide text-text-muted">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-label">
               {labels.choosePlanTitle}
             </p>
           ) : null}
 
-          <Card className={currentPlan === "track_a" ? "border-2 border-border-accent" : ""}>
+          <Card
+            className={cn(
+              currentPlan === "track_a" && "border-2 border-border-accent",
+            )}
+          >
             <CardBody className="space-y-2">
               {currentPlan === "track_a" && labels.currentPlanBadge ? (
                 <Badge variant="accent">{labels.currentPlanBadge}</Badge>
               ) : null}
               <div className="flex items-baseline justify-between gap-3">
                 {pricing?.trackAHeadline ? (
-                  <p className="font-medium text-text-primary">{pricing.trackAHeadline}</p>
+                  <p className="font-serif text-lg text-text-primary">
+                    {pricing.trackAHeadline}
+                  </p>
                 ) : null}
                 {programLevers && labels.trackAMonthlyLabel ? (
                   <p className="font-medium text-text-primary">
@@ -150,17 +163,26 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
             </CardBody>
           </Card>
 
-          <Card className={currentPlan === "track_b" ? "border-2 border-border-accent" : ""}>
+          <Card
+            className={cn(
+              "border-2",
+              trackBHighlighted
+                ? "border-fill-accent bg-brand-lavender"
+                : "border-border",
+            )}
+          >
             <CardBody className="space-y-2">
               {currentPlan === "track_b" && labels.currentPlanBadge ? (
                 <Badge variant="accent">{labels.currentPlanBadge}</Badge>
               ) : null}
               <div className="flex items-baseline justify-between gap-3">
                 {pricing?.trackBHeadline ? (
-                  <p className="font-medium text-text-primary">{pricing.trackBHeadline}</p>
+                  <p className="font-serif text-lg text-fill-accent">
+                    {pricing.trackBHeadline}
+                  </p>
                 ) : null}
                 {programLevers && labels.trackBMonthlyLabel ? (
-                  <p className="font-medium text-text-primary">
+                  <p className="font-medium text-fill-accent">
                     {labels.trackBMonthlyLabel.replace(
                       "{amount}",
                       String(programLevers.trackBMonthly),
@@ -181,6 +203,7 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
           <div className="grid gap-2 sm:grid-cols-2">
             {labels.requestTrackA ? (
               <Button
+                variant="outline"
                 disabled={isSubmittingPlan}
                 onClick={() => requestPlan("track_a")}
               >
@@ -203,11 +226,13 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
           ) : null}
         </section>
 
-        <Card>
+        <Card className="border-border-accent">
           <CardBody className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               {labels.requirementsTitle ? (
-                <p className="font-medium text-text-primary">{labels.requirementsTitle}</p>
+                <p className="font-serif text-lg text-text-primary">
+                  {labels.requirementsTitle}
+                </p>
               ) : null}
             </div>
             {company.requirements?.length ? (
