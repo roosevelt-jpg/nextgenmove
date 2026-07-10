@@ -5,12 +5,12 @@
 Primary remote (`origin`):
 
 ```bash
-git remote add origin https://github.com/roosevelt-jpg/nextgen-move-rules.git
+git remote add origin https://github.com/roosevelt-jpg/nextgenmove.git
 git push -u origin master
 ```
 
-Repo: https://github.com/roosevelt-jpg/nextgen-move-rules  
-Default working branch: `master` (the earlier v0 scaffold lives on `main`).
+Repo: https://github.com/roosevelt-jpg/nextgenmove  
+Default working branch: `master` (older v0 scaffold remains on `main` with a separate history).
 
 ## Daily workflow
 
