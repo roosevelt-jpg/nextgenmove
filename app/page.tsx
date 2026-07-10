@@ -7,8 +7,17 @@ export default function Home() {
             NextGenMove
           </h1>
           <p className="max-w-md text-lg text-muted-foreground">
-            To get started, send a prompt or modify this page directly.
+            Talent matching &amp; recruitment platform. Phase 0 setup complete.
           </p>
+        </div>
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+          <p className="font-semibold">✅ Phase 0 Complete:</p>
+          <ul className="text-left space-y-1 pl-4">
+            <li>• Firebase integration (client + admin SDK)</li>
+            <li>• Core types and utilities</li>
+            <li>• Folder structure established</li>
+            <li>• Dev environment configured</li>
+          </ul>
         </div>
       </main>
     </div>
