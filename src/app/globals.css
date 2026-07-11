@@ -127,11 +127,12 @@ video {
   transition: opacity 0.15s ease;
 }
 
-/* Dashboard chrome — keep interactive controls compact */
+/* Dashboard chrome — keep interactive controls compact but readable */
 .dashboard-shell .btn-brand {
-  min-height: 1.5rem;
-  padding: 0.15rem 0.45rem;
-  font-size: 0.625rem;
+  min-height: 1.75rem;
+  min-width: fit-content;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 

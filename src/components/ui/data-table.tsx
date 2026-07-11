@@ -82,7 +82,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div className={cn("w-full overflow-x-auto rounded-radius border border-border bg-grad-card", className)}>
-      <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-[64rem] border-collapse text-left text-sm">
         <thead className={cn("bg-transparent", headerClassName)}>
           <tr>
             {columns.map((column) => {
