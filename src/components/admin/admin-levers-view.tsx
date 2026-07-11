@@ -33,19 +33,21 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
       if (leversRes.ok) {
         const payload = (await leversRes.json()) as {
           levers: ProgramLeversDocument | null;
+          warning?: string;
         };
-        setLevers(
-          payload.levers ?? {
-            trackAMonthly: 50,
-            trackAMatchFee: 200,
-            trackBMonthly: 125,
-            placementFeeEur: 350,
-            creditsPerEuro: 4,
-            creditTopUpPackages: [],
-            waysToEarn: [],
-            updatedAt: null,
-          },
-        );
+        setLevers(payload.levers ?? {
+          trackAMonthly: 50,
+          trackAMatchFee: 200,
+          trackBMonthly: 125,
+          placementFeeEur: 350,
+          creditsPerEuro: 4,
+          creditTopUpPackages: [],
+          waysToEarn: [],
+          updatedAt: null,
+        });
+        if (payload.warning === "levers_degraded") {
+          setErrorCode("load_degraded");
+        }
       } else {
         setErrorCode("load_failed");
         setLevers({
@@ -212,7 +214,11 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           ) : null}
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
-              {labels[errorCode] ?? labels.loadError ?? "Could not load levers — showing defaults."}
+              {labels[errorCode] ??
+                labels.loadError ??
+                (errorCode === "load_degraded"
+                  ? "Could not refresh live levers — showing defaults."
+                  : "Could not load levers — showing defaults.")}
             </p>
           ) : null}
         </div>
@@ -507,12 +513,6 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           </div>
         ))}
       </section>
-
-      {errorCode ? (
-        <p className="text-sm text-text-warning" role="alert">
-          {labels[errorCode] ?? errorCode}
-        </p>
-      ) : null}
 
       <AdminPromoteModal
         open={Boolean(promoteItem)}

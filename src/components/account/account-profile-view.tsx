@@ -37,17 +37,38 @@ export function AccountProfileView({
   >({});
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
 
   const load = useCallback(async () => {
-    const response = await fetch("/api/account");
-    if (!response.ok) return;
-    const data = (await response.json()) as { account: AccountPayload };
-    setAccount(data.account);
-    setDisplayName(data.account.displayName);
-    setPhone(data.account.phone ?? "");
-    setPhotoUrl(data.account.photoUrl);
-    setNotificationPreferences(data.account.notificationPreferences ?? {});
-  }, []);
+    setLoadState("loading");
+    try {
+      const response = await fetch("/api/account", { cache: "no-store" });
+      if (!response.ok) {
+        setLoadState("error");
+        return;
+      }
+      const data = (await response.json()) as {
+        account: AccountPayload;
+        warning?: string;
+      };
+      setAccount(data.account);
+      setDisplayName(data.account.displayName);
+      setPhone(data.account.phone ?? "");
+      setPhotoUrl(data.account.photoUrl);
+      setNotificationPreferences(data.account.notificationPreferences ?? {});
+      if (data.warning === "account_degraded") {
+        setStatusMessage(
+          labels.degradedWarning ??
+            "Profile details may be incomplete while the database is slow.",
+        );
+      }
+      setLoadState("ready");
+    } catch {
+      setLoadState("error");
+    }
+  }, [labels.degradedWarning]);
 
   useEffect(() => {
     void load();
@@ -88,7 +109,26 @@ export function AccountProfileView({
     }
   };
 
-  if (!account) return null;
+  if (loadState === "loading") {
+    return (
+      <p className="text-sm text-text-secondary">
+        {labels.loading ?? "Loading…"}
+      </p>
+    );
+  }
+
+  if (loadState === "error" || !account) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-text-warning" role="alert">
+          {labels.loadError ?? "Could not load your account. Try again."}
+        </p>
+        <Button type="button" variant="outline" onClick={() => void load()}>
+          {labels.retry ?? "Retry"}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form className="max-w-xl space-y-6" onSubmit={save}>

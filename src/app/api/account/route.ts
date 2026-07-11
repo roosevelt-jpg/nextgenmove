@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { getCurrentUser } from "@/lib/auth";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { syncLinkedProfile } from "@/lib/auth/profile-sync";
 import { stripUndefined } from "@/lib/stripUndefined";
 
@@ -12,21 +13,43 @@ export async function GET() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const snap = await adminDb.collection("users").doc(user.uid).get();
-  const data = snap.data() ?? {};
+  try {
+    const snap = await withTimeout(
+      adminDb.collection("users").doc(user.uid).get(),
+      5000,
+      "account_lookup",
+    );
+    const data = snap.data() ?? {};
 
-  return NextResponse.json({
-    account: {
-      displayName: data.displayName ?? user.displayName ?? "",
-      email: data.email ?? user.email ?? "",
-      photoUrl: data.photoUrl ?? user.photoUrl ?? null,
-      phone: data.phone ?? null,
-      preferredLocale: data.preferredLocale ?? null,
-      role: data.role ?? user.role,
-      profileComplete: Boolean(data.profileComplete),
-      notificationPreferences: data.notificationPreferences ?? {},
-    },
-  });
+    return NextResponse.json({
+      account: {
+        displayName: data.displayName ?? user.displayName ?? "",
+        email: data.email ?? user.email ?? "",
+        photoUrl: data.photoUrl ?? user.photoUrl ?? null,
+        phone: data.phone ?? null,
+        preferredLocale: data.preferredLocale ?? null,
+        role: data.role ?? user.role,
+        profileComplete: Boolean(data.profileComplete),
+        notificationPreferences: data.notificationPreferences ?? {},
+      },
+    });
+  } catch (error) {
+    console.error("account_get_degraded", error);
+    // Session is valid — return actor fields so My account is not blank.
+    return NextResponse.json({
+      account: {
+        displayName: user.displayName ?? "",
+        email: user.email ?? "",
+        photoUrl: user.photoUrl ?? null,
+        phone: null,
+        preferredLocale: null,
+        role: user.role,
+        profileComplete: false,
+        notificationPreferences: {},
+      },
+      warning: "account_degraded",
+    });
+  }
 }
 
 const patchSchema = z.object({

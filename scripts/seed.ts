@@ -757,6 +757,8 @@ const OPERATIONAL_SITE_SETTINGS = {
       "Sign in is temporarily unavailable. Please try again in a moment.",
     session_failed: "Could not start your session. Please try again.",
     rate_limited: "Too many attempts. Please wait a minute and try again.",
+    load_failed: "Could not load data — showing defaults where possible.",
+    load_degraded: "Live data is temporarily unavailable — showing defaults.",
     register_failed: "Registration failed. Please try again.",
     email_exists: "An account with that email already exists.",
     invalid_request: "Please check the form and try again.",

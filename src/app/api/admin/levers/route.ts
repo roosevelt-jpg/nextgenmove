@@ -4,6 +4,7 @@ import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProgramLevers, defaultProgramLevers } from "@/lib/collections/pages";
 import { serializeTimestamp } from "@/lib/firestore-utils";
+import { withTimeout } from "@/lib/async/with-timeout";
 import {
   getAdminSession,
   logActivity,
@@ -22,7 +23,9 @@ export async function GET() {
   }
 
   try {
-    const levers = (await getProgramLevers()) ?? defaultProgramLevers();
+    const levers =
+      (await withTimeout(getProgramLevers(), 5000, "program_levers")) ??
+      defaultProgramLevers();
     return NextResponse.json(
       { levers },
       { headers: { "Cache-Control": "no-store" } },
@@ -30,7 +33,7 @@ export async function GET() {
   } catch (error) {
     console.error("levers_get_failed", error);
     return NextResponse.json(
-      { levers: defaultProgramLevers() },
+      { levers: defaultProgramLevers(), warning: "levers_degraded" },
       { headers: { "Cache-Control": "no-store" } },
     );
   }
