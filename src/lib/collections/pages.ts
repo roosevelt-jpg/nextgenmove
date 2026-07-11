@@ -18,7 +18,26 @@ import type {
 export async function getPageHome(): Promise<PageHomeDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_home").doc("default").get();
-    return (snapshot.data() as PageHomeDocument | undefined) ?? null;
+    const data = snapshot.data() as PageHomeDocument | undefined;
+    if (!data) return null;
+
+    // Admin repeatable fields may store { chip: "…" } — always expose strings to UI.
+    const corridorChips = Array.isArray(data.corridorChips)
+      ? data.corridorChips
+          .map((item) => {
+            if (typeof item === "string") return item.trim();
+            if (item && typeof item === "object" && "chip" in item) {
+              return String(item.chip ?? "").trim();
+            }
+            return "";
+          })
+          .filter(Boolean)
+      : undefined;
+
+    return {
+      ...data,
+      ...(corridorChips ? { corridorChips } : {}),
+    };
   } catch {
     return null;
   }
