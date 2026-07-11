@@ -5,6 +5,7 @@ import {
   getSiteSettings,
   listFooterCmsPages,
 } from "@/lib/collections/site-settings";
+import { resolveBrandLogoUrl } from "@/lib/brand";
 import { resolveFooterGroups } from "@/lib/public/nav";
 
 export async function SiteFooter() {
@@ -14,8 +15,8 @@ export async function SiteFooter() {
   ]);
   const navLabels = settings.navLabels ?? {};
   const groups = resolveFooterGroups(settings.footerLinks, navLabels, cmsPages);
-  const siteName = settings.siteName ?? navLabels.siteName;
-  const brandMark = settings.brandMark ?? "";
+  const siteName = settings.siteName ?? navLabels.siteName ?? "Venturo";
+  const logoUrl = resolveBrandLogoUrl(settings.logoUrl);
   const socialLinks = settings.socialLinks ?? [];
   const contactEmail = settings.contactEmail?.trim() ?? "";
   const description =
@@ -26,25 +27,13 @@ export async function SiteFooter() {
       <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
-            {settings.logoUrl ? (
-              <Image
-                src={settings.logoUrl}
-                alt={siteName ?? ""}
-                width={120}
-                height={36}
-                className="h-8 w-auto object-contain"
-              />
-            ) : brandMark ? (
-              <span
-                aria-hidden
-                className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
-              >
-                {brandMark}
-              </span>
-            ) : null}
-            {siteName ? (
-              <span className="font-serif text-lg text-text-primary">{siteName}</span>
-            ) : null}
+            <Image
+              src={logoUrl}
+              alt={siteName}
+              width={120}
+              height={36}
+              className="h-8 w-auto object-contain"
+            />
           </div>
           {description ? (
             <p className="text-sm text-text-secondary">{description}</p>

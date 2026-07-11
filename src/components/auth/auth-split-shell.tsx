@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { resolveBrandLogoUrl } from "@/lib/brand";
 
 export type AuthPanel = "signIn" | "signUpTalent" | "signUpCompany";
 
@@ -15,7 +16,6 @@ export interface AuthSplitShellProps {
 
 function BrandMark({
   siteName,
-  brandMark,
   logoUrl,
   variant,
 }: {
@@ -25,42 +25,21 @@ function BrandMark({
   variant: "light" | "dark";
 }) {
   const name = siteName || "Venturo";
-  const mark = brandMark || "V";
-
-  if (logoUrl) {
-    return (
-      <>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={logoUrl}
-          alt={name}
-          className="h-9 w-auto max-w-[10rem] object-contain"
-        />
-        <span className="sr-only">{name}</span>
-      </>
-    );
-  }
+  const src = resolveBrandLogoUrl(logoUrl);
 
   return (
     <>
-      <span
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={name}
         className={
           variant === "light"
-            ? "flex h-8 w-8 items-center justify-center rounded-radius-sm bg-white/20 text-[12px] font-bold tracking-tight"
-            : "flex h-8 w-8 items-center justify-center rounded-radius-sm bg-bg-purple text-[12px] font-bold text-fill-accent"
+            ? "h-9 w-auto max-w-[10rem] object-contain brightness-0 invert"
+            : "h-9 w-auto max-w-[10rem] object-contain"
         }
-      >
-        {mark}
-      </span>
-      <span
-        className={
-          variant === "light"
-            ? "font-serif text-[1.125rem] font-semibold"
-            : "font-serif text-[1.125rem] font-semibold text-text-primary"
-        }
-      >
-        {name}
-      </span>
+      />
+      <span className="sr-only">{name}</span>
     </>
   );
 }

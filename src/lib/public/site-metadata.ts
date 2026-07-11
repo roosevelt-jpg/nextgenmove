@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { CmsPageDocument, SiteSettingsDocument } from "@/types/cms";
+import { resolveBrandFaviconUrl } from "@/lib/brand";
 
 export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
   const siteName = settings.siteName?.trim() || undefined;
@@ -14,9 +15,7 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
     settings.tagline?.trim() ||
     undefined;
 
-  const icons = settings.faviconUrl
-    ? { icon: [{ url: settings.faviconUrl }] }
-    : undefined;
+  const favicon = resolveBrandFaviconUrl(settings.faviconUrl);
 
   return {
     title: title
@@ -26,7 +25,10 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
         }
       : undefined,
     description,
-    icons,
+    icons: {
+      icon: [{ url: favicon }],
+      apple: [{ url: favicon }],
+    },
     openGraph: {
       title: title || undefined,
       description,

@@ -1,6 +1,10 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { appBaseUrl } from "@/lib/billing/stripe";
+import {
+  absoluteBrandAssetUrl,
+  resolveBrandLogoUrl,
+} from "@/lib/brand";
 
 export interface EmailTemplateDocument {
   id: string;
@@ -57,8 +61,8 @@ export async function buildBrandVars(request?: Request): Promise<EmailVars> {
   return {
     siteName: settings.siteName || "Venturo",
     tagline: settings.tagline || "",
-    logoUrl: settings.logoUrl || "",
-    brandMark: settings.brandMark || "NG",
+    logoUrl: absoluteBrandAssetUrl(resolveBrandLogoUrl(settings.logoUrl)),
+    brandMark: settings.brandMark || "V",
     contactEmail: settings.contactEmail || "",
     appUrl: base,
     signInUrl: `${base}/sign-in`,

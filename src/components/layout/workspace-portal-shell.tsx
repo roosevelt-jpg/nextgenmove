@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearSession } from "@/lib/auth-client";
+import { resolveBrandIconUrl } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
@@ -128,9 +129,13 @@ export function WorkspacePortalShell({
   const sidebar = (
     <aside className="flex h-full w-[240px] flex-col border-r border-border bg-surface-1">
       <div className="flex items-center gap-2.5 border-b border-border px-4 py-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-bg-purple text-[11px] font-bold text-fill-accent">
-          {brandMark || "NG"}
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={resolveBrandIconUrl()}
+          alt=""
+          className="h-8 w-8 rounded-radius-sm object-cover"
+          aria-hidden
+        />
         <span className="font-serif text-[15px] font-semibold text-text-primary">
           {siteName || "Venturo"}
         </span>
