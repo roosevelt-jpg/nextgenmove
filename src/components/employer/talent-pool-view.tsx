@@ -23,6 +23,7 @@ interface TalentPoolRow extends Record<string, unknown> {
 
 export interface TalentPoolViewProps {
   labels: Record<string, string>;
+  canBrowse?: boolean;
 }
 
 const VALUE_TONES = [
@@ -33,9 +34,20 @@ const VALUE_TONES = [
 
 const INTERVIEW_STAGE_HINT = "interview";
 
-export function TalentPoolView({ labels }: TalentPoolViewProps) {
+interface BrowseRow {
+  studentId: string;
+  fullName: string;
+  sector: string;
+  seniority: string;
+  currentCity: string;
+  skills: string[];
+  matchScore: number;
+}
+
+export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProps) {
   const { taxonomies } = useTaxonomies();
   const [rows, setRows] = useState<TalentPoolRow[]>([]);
+  const [browseRows, setBrowseRows] = useState<BrowseRow[]>([]);
   const [sector, setSector] = useState("");
   const [seniority, setSeniority] = useState("");
   const [location, setLocation] = useState("");
@@ -54,8 +66,21 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
     const response = await fetch(`/api/employer/talent-pool?${params.toString()}`);
     const data = (await response.json()) as { rows: TalentPoolRow[] };
     setRows(data.rows ?? []);
+
+    if (canBrowse) {
+      const browseRes = await fetch(
+        `/api/employer/talent-pool/browse?${params.toString()}`,
+      );
+      if (browseRes.ok) {
+        const browseData = (await browseRes.json()) as { rows: BrowseRow[] };
+        setBrowseRows(browseData.rows ?? []);
+      }
+    } else {
+      setBrowseRows([]);
+    }
+
     setIsLoading(false);
-  }, [location, search, sector, seniority]);
+  }, [canBrowse, location, search, sector, seniority]);
 
   useEffect(() => {
     void loadRows();
@@ -86,6 +111,24 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shortlisted }),
       });
+      await loadRows();
+    },
+    [loadRows],
+  );
+
+  const openBrowsed = useCallback(
+    async (studentId: string) => {
+      const response = await fetch("/api/employer/talent-pool/browse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId }),
+      });
+      if (!response.ok) return;
+      const data = (await response.json()) as { matchId?: string };
+      if (data.matchId) {
+        window.location.href = `/employer/talent-pool/${data.matchId}`;
+        return;
+      }
       await loadRows();
     },
     [loadRows],
@@ -277,6 +320,66 @@ export function TalentPoolView({ labels }: TalentPoolViewProps) {
         </ul>
       ) : labels.emptyState ? (
         <EmptyState title={labels.emptyState} />
+      ) : null}
+
+      {canBrowse ? (
+        <section className="space-y-3 border-t border-border pt-6">
+          {labels.browseTitle ? (
+            <h2 className="font-serif text-xl text-text-primary">
+              {labels.browseTitle}
+            </h2>
+          ) : null}
+          {labels.browseIntro ? (
+            <p className="text-sm text-text-secondary">{labels.browseIntro}</p>
+          ) : null}
+          {browseRows.length ? (
+            <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {browseRows.map((row) => (
+                <li
+                  key={row.studentId}
+                  className="rounded-radius border border-dashed border-border bg-surface-1 p-4"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-serif text-lg text-text-primary">
+                        {row.fullName}
+                      </p>
+                      <p className="text-sm text-text-secondary">
+                        {[row.seniority, row.sector, row.currentCity]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-bg-purple px-2 py-0.5 font-mono text-[10px] text-text-label">
+                      {row.matchScore}%
+                    </span>
+                  </div>
+                  {row.skills.length ? (
+                    <ul className="mt-2 flex flex-wrap gap-1">
+                      {row.skills.map((skill) => (
+                        <li
+                          key={skill}
+                          className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs text-text-tag"
+                        >
+                          {skill}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => void openBrowsed(row.studentId)}
+                  >
+                    {labels.browseOpenAction ?? "Open profile"}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : labels.browseEmpty ? (
+            <p className="text-sm text-text-muted">{labels.browseEmpty}</p>
+          ) : null}
+        </section>
       ) : null}
     </div>
   );

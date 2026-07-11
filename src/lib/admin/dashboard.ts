@@ -198,11 +198,28 @@ export async function getPendingRequests(): Promise<PendingRequestItem[]> {
     for (const doc of requestsSnap.docs) {
       const data = doc.data();
       const payload = (data.payload ?? {}) as Record<string, unknown>;
+      const type = String(data.type ?? "");
+      let title = String(payload.roleTitleNeeded ?? payload.type ?? type ?? doc.id);
+      let subtitle = String(payload.companyName ?? payload.contactName ?? type ?? "");
+
+      if (type === "plan_request") {
+        title = `Plan → ${String(payload.requestedPlan ?? "")}`;
+        subtitle = String(payload.companyName ?? payload.contactEmail ?? "");
+      }
+      if (type === "credit_topup") {
+        title = `Top-up · ${String(payload.label ?? "")}`;
+        subtitle = String(payload.studentEmail ?? payload.studentName ?? "");
+      }
+      if (type === "placement_fee") {
+        title = `Placement fee · €${String(payload.placementFeeEur ?? "")}`;
+        subtitle = String(payload.companyName ?? payload.studentId ?? "");
+      }
+
       items.push({
         id: doc.id,
         source: "requests",
-        title: String(payload.roleTitleNeeded ?? payload.type ?? data.type ?? doc.id),
-        subtitle: String(payload.companyName ?? payload.contactName ?? data.type ?? ""),
+        title,
+        subtitle,
         status: data.status ?? "pending",
         createdAt: serializeTimestamp(data.createdAt),
         payload,

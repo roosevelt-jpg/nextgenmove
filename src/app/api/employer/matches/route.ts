@@ -41,6 +41,10 @@ export async function GET(request: Request) {
         studentId: match.studentId,
         stageId: match.stageId ?? "",
         shortlisted: Boolean(match.shortlisted),
+        shortlistRank:
+          typeof match.shortlistRank === "number" ? match.shortlistRank : null,
+        matchScore:
+          typeof match.matchScore === "number" ? match.matchScore : null,
         source: match.source ?? "",
         notes: match.notes ?? [],
         createdAt: match.createdAt?.toDate?.()?.toISOString?.() ?? null,
@@ -54,6 +58,14 @@ export async function GET(request: Request) {
               currentCity: studentSnapshot.data()?.currentCity ?? "",
             }
           : null,
+      });
+    }
+
+    if (shortlistedOnly) {
+      matches.sort((a, b) => {
+        const aRank = a.shortlistRank ?? Number.MAX_SAFE_INTEGER;
+        const bRank = b.shortlistRank ?? Number.MAX_SAFE_INTEGER;
+        return aRank - bRank;
       });
     }
 

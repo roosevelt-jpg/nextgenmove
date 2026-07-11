@@ -101,6 +101,8 @@ export async function PATCH(
       return forbiddenResponse();
     }
 
+    let stageIsTerminal = false;
+
     if (body.stageId) {
       const stageSnapshot = await adminDb
         .collection("pipeline_stages")
@@ -110,6 +112,8 @@ export async function PATCH(
       if (!stageSnapshot.exists) {
         return NextResponse.json({ error: "invalid_stage" }, { status: 400 });
       }
+
+      stageIsTerminal = Boolean(stageSnapshot.data()?.isTerminal);
     }
 
     await adminDb
@@ -119,9 +123,61 @@ export async function PATCH(
         stripUndefined({
           ...(body.shortlisted !== undefined ? { shortlisted: body.shortlisted } : {}),
           ...(body.stageId ? { stageId: body.stageId } : {}),
+          ...(body.shortlisted === true && match.shortlistRank == null
+            ? { shortlistRank: Date.now() }
+            : {}),
           updatedAt: FieldValue.serverTimestamp(),
         }),
       );
+
+    // Placement fee tracking when a match reaches a terminal stage.
+    if (body.stageId && stageIsTerminal) {
+      const leversSnap = await adminDb
+        .collection("program_levers")
+        .doc("default")
+        .get();
+      const placementFeeEur = Number(leversSnap.data()?.placementFeeEur ?? 350);
+      const existingFee = await adminDb
+        .collection("requests")
+        .where("type", "==", "placement_fee")
+        .where("matchId", "==", id)
+        .limit(1)
+        .get()
+        .catch(() => null);
+
+      if (!existingFee || existingFee.empty) {
+        const feeRef = adminDb.collection("requests").doc();
+        await feeRef.set(
+          stripUndefined({
+            id: feeRef.id,
+            type: "placement_fee",
+            matchId: id,
+            companyId: session.companyId,
+            studentId: match.studentId,
+            payload: {
+              matchId: id,
+              placementFeeEur,
+              companyName: session.company.name,
+              studentId: match.studentId,
+            },
+            status: "pending",
+            createdAt: FieldValue.serverTimestamp(),
+          }),
+        );
+
+        await adminDb
+          .collection("students")
+          .doc(String(match.studentId))
+          .update(
+            stripUndefined({
+              status: "placed",
+              placementFeeEur,
+              placementFeeStatus: "pending",
+              updatedAt: FieldValue.serverTimestamp(),
+            }),
+          );
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

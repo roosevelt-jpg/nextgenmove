@@ -230,13 +230,16 @@ export interface PublicRoleDocument {
 export interface ContentItemDocument {
   id: string;
   title: string;
-  type: "video" | "pdf" | "course" | "download";
+  type: "video" | "pdf" | "course" | "download" | "coaching" | "webinar" | "premium";
   description: string;
   thumbnailUrl: string;
   fileUrl: string;
   costCredits: number;
+  priceEur?: number;
+  emojiIcon?: string;
+  linkUrl?: string;
   category: string;
-  status: "draft" | "live";
+  status: "draft" | "live" | "archived";
   createdAt: string | null;
 }
 
@@ -247,10 +250,20 @@ export interface WayToEarn {
   description: string;
 }
 
+export interface CreditTopUpPackage {
+  id: string;
+  label: string;
+  credits: number;
+  priceEur: number;
+}
+
 export interface ProgramLeversDocument {
   trackAMonthly: number;
   trackAMatchFee: number;
   trackBMonthly: number;
+  placementFeeEur: number;
+  creditsPerEuro: number;
+  creditTopUpPackages: CreditTopUpPackage[];
   waysToEarn: WayToEarn[];
   updatedAt: string | null;
 }

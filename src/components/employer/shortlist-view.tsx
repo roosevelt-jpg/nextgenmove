@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button, EmptyState, Textarea } from "@/components/ui";
 
@@ -11,6 +12,7 @@ interface MatchNote {
 
 interface ShortlistMatch {
   id: string;
+  shortlistRank: number | null;
   notes: MatchNote[];
   student: {
     fullName: string;
@@ -30,6 +32,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const loadMatches = useCallback(async () => {
     setIsLoading(true);
@@ -43,12 +46,35 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
     void loadMatches();
   }, [loadMatches]);
 
-  const submitNote = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const persistOrder = async (next: ShortlistMatch[]) => {
+    setMatches(next);
+    await fetch("/api/employer/matches/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderedMatchIds: next.map((match) => match.id) }),
+    });
+  };
 
-    if (!activeMatchId || !noteText.trim()) {
+  const move = async (from: number, to: number) => {
+    if (to < 0 || to >= matches.length || from === to) return;
+    const next = [...matches];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item!);
+    await persistOrder(next);
+  };
+
+  const onDrop = async (toIndex: number) => {
+    if (dragIndex == null || dragIndex === toIndex) {
+      setDragIndex(null);
       return;
     }
+    await move(dragIndex, toIndex);
+    setDragIndex(null);
+  };
+
+  const submitNote = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!activeMatchId || !noteText.trim()) return;
 
     await fetch(`/api/employer/matches/${activeMatchId}/notes`, {
       method: "POST",
@@ -60,9 +86,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
     await loadMatches();
   };
 
-  if (isLoading) {
-    return null;
-  }
+  if (isLoading) return null;
 
   if (!matches.length) {
     return labels.emptyState ? <EmptyState title={labels.emptyState} /> : null;
@@ -70,24 +94,67 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-      <ul className="space-y-3">
-        {matches.map((match) => (
-          <li key={match.id}>
-            <button
-              type="button"
-              onClick={() => setActiveMatchId(match.id)}
-              className="w-full rounded-radius border border-border bg-surface-1 p-4 text-left hover:bg-surface-2"
+      <div className="space-y-2">
+        {labels.reorderHint ? (
+          <p className="text-xs text-text-muted">{labels.reorderHint}</p>
+        ) : null}
+        <ul className="space-y-2">
+          {matches.map((match, index) => (
+            <li
+              key={match.id}
+              draggable
+              onDragStart={() => setDragIndex(index)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => void onDrop(index)}
+              className="rounded-radius border border-border bg-surface-1"
             >
-              <p className="font-medium text-text-primary">
-                {match.student?.fullName ?? match.id}
-              </p>
-              {match.student?.email ? (
-                <p className="mt-1 text-sm text-text-muted">{match.student.email}</p>
-              ) : null}
-            </button>
-          </li>
-        ))}
-      </ul>
+              <div className="flex items-stretch gap-1">
+                <div className="flex flex-col border-r border-border">
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-xs text-text-muted hover:text-text-primary"
+                    aria-label={labels.moveUp ?? "Move up"}
+                    onClick={() => void move(index, index - 1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-xs text-text-muted hover:text-text-primary"
+                    aria-label={labels.moveDown ?? "Move down"}
+                    onClick={() => void move(index, index + 1)}
+                  >
+                    ↓
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveMatchId(match.id)}
+                  className="flex-1 p-3 text-left hover:bg-surface-2"
+                >
+                  <p className="font-mono text-[10px] text-text-muted">
+                    #{index + 1}
+                  </p>
+                  <p className="font-medium text-text-primary">
+                    {match.student?.fullName ?? match.id}
+                  </p>
+                  {match.student?.email ? (
+                    <p className="mt-0.5 text-sm text-text-muted">
+                      {match.student.email}
+                    </p>
+                  ) : null}
+                </button>
+                <Link
+                  href={`/employer/talent-pool/${match.id}`}
+                  className="flex items-center px-3 text-xs font-medium text-text-label"
+                >
+                  {labels.viewProfile ?? "View"}
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {activeMatchId ? (
         <section className="rounded-radius border border-border bg-surface-1 p-4">

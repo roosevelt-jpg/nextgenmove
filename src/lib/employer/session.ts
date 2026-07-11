@@ -14,6 +14,8 @@ export interface CompanyDocument {
   plan: "track_a" | "track_b" | null;
   subscriptionStatus: "active" | "inactive" | "pending";
   requirements: CompanyRequirement[];
+  preferredLocations?: string[];
+  requirementTags?: string[];
   notificationPreferences?: Record<string, boolean>;
   createdAt: unknown;
 }
@@ -60,6 +62,8 @@ export async function getEmployerSession(): Promise<EmployerSession | null> {
       plan: data.plan ?? null,
       subscriptionStatus: data.subscriptionStatus ?? "pending",
       requirements: data.requirements ?? [],
+      preferredLocations: data.preferredLocations ?? [],
+      requirementTags: data.requirementTags ?? [],
       notificationPreferences: data.notificationPreferences ?? {},
       createdAt: data.createdAt,
     },

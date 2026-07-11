@@ -324,11 +324,11 @@ nextgenmove/
 
 ## 9. Open Questions to Resolve Before Building
 
-1. What does the 3-way content-item toggle (**Default | Live | Default**) actually control? (§5.4)
-2. Is the credit-to-EUR ratio fixed platform-wide (~4 credits = €1), and do students ever *purchase* credits, or only earn them?
-3. Does "match %" need to be real-time/explainable to the company, or is a black-box score acceptable for v1?
-4. Are Track A and Track B mutually exclusive per company, or can a company run both simultaneously for different hires?
-5. Who can see a student's identity before shortlisting — is there an anonymized-until-shortlist mode (common in similar marketplaces), or is full name always visible as shown?
+1. ~~What does the 3-way content-item toggle control?~~ → Implemented as **Draft / Live / Archived**.
+2. ~~Credit-to-EUR ratio / purchase?~~ → `creditsPerEuro` (~4) + admin-approved top-up packages (no Stripe in v1).
+3. ~~Match % explainable?~~ → v1 weighted formula on `matches.matchScore`.
+4. ~~Track A vs B exclusive?~~ → Single `companies.plan` (`track_a` | `track_b` | null); Track A unlocks self-serve browse.
+5. ~~Anonymized until shortlist?~~ → Full name visible once matched (as in screenshots); revisit if needed.
 
 ---
 

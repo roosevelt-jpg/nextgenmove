@@ -30,10 +30,20 @@ const waySchema = z.object({
   description: z.string(),
 });
 
+const packageSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  credits: z.number(),
+  priceEur: z.number(),
+});
+
 const patchSchema = z.object({
   trackAMonthly: z.number().optional(),
   trackAMatchFee: z.number().optional(),
   trackBMonthly: z.number().optional(),
+  placementFeeEur: z.number().optional(),
+  creditsPerEuro: z.number().optional(),
+  creditTopUpPackages: z.array(packageSchema).optional(),
   waysToEarn: z.array(waySchema).optional(),
 });
 
@@ -77,6 +87,9 @@ export async function PATCH(request: Request) {
         trackAMonthly: data.trackAMonthly ?? 0,
         trackAMatchFee: data.trackAMatchFee ?? 0,
         trackBMonthly: data.trackBMonthly ?? 0,
+        placementFeeEur: data.placementFeeEur ?? 350,
+        creditsPerEuro: data.creditsPerEuro ?? 4,
+        creditTopUpPackages: data.creditTopUpPackages ?? [],
         waysToEarn: data.waysToEarn ?? [],
         updatedAt: serializeTimestamp(data.updatedAt),
       },

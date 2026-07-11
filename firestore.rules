@@ -104,7 +104,7 @@ service cloud.firestore {
       allow update: if isAdmin()
         || (isCompany() && isActiveUser()
           && resource.data.companyId == uid()
-          && onlyKeysChanged(['stageId', 'shortlisted', 'notes', 'updatedAt']));
+          && onlyKeysChanged(['stageId', 'shortlisted', 'notes', 'updatedAt', 'shortlistRank', 'viewedAt', 'matchScore']));
       allow delete: if isAdmin();
     }
 
@@ -136,6 +136,10 @@ service cloud.firestore {
     }
 
     match /credit_transactions/{docId} {
+      allow read, write: if false;
+    }
+
+    match /referral_redemptions/{docId} {
       allow read, write: if false;
     }
 

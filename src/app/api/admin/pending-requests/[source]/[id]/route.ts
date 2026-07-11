@@ -7,6 +7,7 @@ import {
   logActivity,
   unauthorizedResponse,
 } from "@/lib/admin/session";
+import { applyCreditDelta } from "@/lib/credits/ledger";
 import { computeMatchScore } from "@/lib/matching/score";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
@@ -90,6 +91,24 @@ export async function POST(
                 updatedAt: FieldValue.serverTimestamp(),
               }),
             );
+        }
+      }
+
+      // Credit top-up requests grant credits on approve (no Stripe in v1).
+      if (
+        body.action === "approve" &&
+        data.type === "credit_topup" &&
+        data.studentId
+      ) {
+        const payload = (data.payload ?? {}) as Record<string, unknown>;
+        const credits = Number(payload.credits ?? 0);
+        if (credits > 0) {
+          await applyCreditDelta({
+            studentId: String(data.studentId),
+            amount: credits,
+            source: `topup:${id}`,
+            once: true,
+          });
         }
       }
     }

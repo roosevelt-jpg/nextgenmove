@@ -74,6 +74,9 @@ export async function getProgramLevers(): Promise<ProgramLeversDocument | null> 
       trackAMonthly: data.trackAMonthly ?? 0,
       trackAMatchFee: data.trackAMatchFee ?? 0,
       trackBMonthly: data.trackBMonthly ?? 0,
+      placementFeeEur: data.placementFeeEur ?? 350,
+      creditsPerEuro: data.creditsPerEuro ?? 4,
+      creditTopUpPackages: data.creditTopUpPackages ?? [],
       waysToEarn: data.waysToEarn ?? [],
       updatedAt: serializeTimestamp(data.updatedAt),
     };

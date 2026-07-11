@@ -12,6 +12,9 @@ interface StoreItem {
   thumbnailUrl: string;
   downloadHref: string | null;
   costCredits: number;
+  priceEur: number | null;
+  emojiIcon: string;
+  linkUrl: string | null;
   category: string;
   purchased: boolean;
 }
@@ -115,10 +118,10 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
               <CardBody className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-start gap-4">
                   <span
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-radius bg-brand-lavender font-serif text-base font-semibold text-fill-accent"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-radius bg-brand-lavender text-lg"
                     aria-hidden="true"
                   >
-                    {initialsFromTitle(item.title)}
+                    {item.emojiIcon || initialsFromTitle(item.title)}
                   </span>
                   <div className="min-w-0 space-y-1">
                     <p className="font-medium text-text-primary">{item.title}</p>
@@ -137,6 +140,9 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
                             "{credits}",
                             String(item.costCredits),
                           )}
+                          {typeof item.priceEur === "number"
+                            ? ` · €${item.priceEur}`
+                            : ""}
                         </p>
                       ) : null}
                       {item.purchased && labels.unlockedLabel ? (
@@ -148,14 +154,26 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
 
                 <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                   {item.purchased ? (
-                    item.downloadHref && labels.openContent ? (
-                      <a
-                        href={item.downloadHref}
-                        className="inline-flex items-center justify-center rounded-radius border border-fill-primary px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-2"
-                      >
-                        {labels.openContent}
-                      </a>
-                    ) : null
+                    <>
+                      {item.linkUrl ? (
+                        <a
+                          href={item.linkUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+                        >
+                          {labels.openLink ?? labels.openContent}
+                        </a>
+                      ) : null}
+                      {item.downloadHref && labels.openContent ? (
+                        <a
+                          href={item.downloadHref}
+                          className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+                        >
+                          {labels.openContent}
+                        </a>
+                      ) : null}
+                    </>
                   ) : labels.purchaseAction ? (
                     <Button
                       disabled={loadingItemId === item.id}

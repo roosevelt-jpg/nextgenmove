@@ -20,6 +20,8 @@ export interface StudentDocument {
   availability: string;
   credits: number;
   status: "active" | "placed" | "inactive";
+  referralCode?: string | null;
+  referredBy?: string | null;
   notificationPreferences?: Record<string, boolean>;
 }
 
@@ -48,6 +50,8 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     availability: (data.availability as string | undefined) ?? "",
     credits: (data.credits as number | undefined) ?? 0,
     status: (data.status as StudentDocument["status"] | undefined) ?? "active",
+    referralCode: (data.referralCode as string | null | undefined) ?? null,
+    referredBy: (data.referredBy as string | null | undefined) ?? null,
     notificationPreferences:
       (data.notificationPreferences as Record<string, boolean> | undefined) ?? {},
   };

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { applyCreditDelta, getWayToEarnCredits } from "@/lib/credits/ledger";
+import { ensureStudentReferralCode } from "@/lib/credits/referrals";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const registerSchema = z.object({
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
           once: true,
         });
       }
+      await ensureStudentReferralCode(uid);
     }
 
     return NextResponse.json({ uid });

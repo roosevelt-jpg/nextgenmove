@@ -138,7 +138,127 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               }
             />
           </div>
+          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
+            <Input
+              id="placementFeeEur"
+              type="number"
+              label={labels.placementFeeEur}
+              value={String(levers.placementFeeEur ?? 350)}
+              onChange={(event) =>
+                setLevers({
+                  ...levers,
+                  placementFeeEur: Number(event.target.value),
+                })
+              }
+            />
+          </div>
+          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
+            <Input
+              id="creditsPerEuro"
+              type="number"
+              label={labels.creditsPerEuro}
+              value={String(levers.creditsPerEuro ?? 4)}
+              onChange={(event) =>
+                setLevers({
+                  ...levers,
+                  creditsPerEuro: Number(event.target.value),
+                })
+              }
+            />
+          </div>
         </div>
+      </section>
+
+      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-serif text-xl text-text-primary">
+            {labels.topUpPackagesTitle ?? "Credit top-up packages"}
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setLevers({
+                ...levers,
+                creditTopUpPackages: [
+                  ...(levers.creditTopUpPackages ?? []),
+                  {
+                    id: crypto.randomUUID(),
+                    label: "",
+                    credits: 0,
+                    priceEur: 0,
+                  },
+                ],
+              })
+            }
+          >
+            {labels.addRow}
+          </Button>
+        </div>
+        {(levers.creditTopUpPackages ?? []).map((pack, index) => (
+          <div
+            key={pack.id || index}
+            className="grid gap-3 rounded-radius border border-border bg-bg p-4 md:grid-cols-[1.2fr_0.6fr_0.6fr_auto]"
+          >
+            <Input
+              id={`pack-label-${index}`}
+              label={labels.packageLabel ?? "Label"}
+              value={pack.label}
+              onChange={(event) => {
+                const creditTopUpPackages = [...(levers.creditTopUpPackages ?? [])];
+                creditTopUpPackages[index] = {
+                  ...pack,
+                  label: event.target.value,
+                };
+                setLevers({ ...levers, creditTopUpPackages });
+              }}
+            />
+            <Input
+              id={`pack-credits-${index}`}
+              type="number"
+              label={labels.credits}
+              value={String(pack.credits)}
+              onChange={(event) => {
+                const creditTopUpPackages = [...(levers.creditTopUpPackages ?? [])];
+                creditTopUpPackages[index] = {
+                  ...pack,
+                  credits: Number(event.target.value),
+                };
+                setLevers({ ...levers, creditTopUpPackages });
+              }}
+            />
+            <Input
+              id={`pack-price-${index}`}
+              type="number"
+              label={labels.priceEur ?? "€"}
+              value={String(pack.priceEur)}
+              onChange={(event) => {
+                const creditTopUpPackages = [...(levers.creditTopUpPackages ?? [])];
+                creditTopUpPackages[index] = {
+                  ...pack,
+                  priceEur: Number(event.target.value),
+                };
+                setLevers({ ...levers, creditTopUpPackages });
+              }}
+            />
+            <div className="flex items-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setLevers({
+                    ...levers,
+                    creditTopUpPackages: (levers.creditTopUpPackages ?? []).filter(
+                      (_, rowIndex) => rowIndex !== index,
+                    ),
+                  })
+                }
+              >
+                {labels.removeRow}
+              </Button>
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">

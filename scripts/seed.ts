@@ -658,6 +658,22 @@ const OPERATIONAL_SITE_SETTINGS = {
       portfolioLabel: "Portfolio",
       cvLabel: "CV",
       notFound: "Candidate not found",
+      browseTitle: "Browse the full pool",
+      browseIntro: "Track A self-serve — open a profile to add them to your pipeline.",
+      browseOpenAction: "Open profile",
+      browseEmpty: "No unmatched candidates right now.",
+    },
+    shortlist: {
+      emptyState: "Star candidates from the talent pool to build your shortlist.",
+      notesTitle: "Notes",
+      noteLabel: "Add a note",
+      notePlaceholder: "Interview feedback, next steps…",
+      addNote: "Save note",
+      selectCandidate: "Select a candidate to view notes.",
+      reorderHint: "Drag or use arrows to rank your shortlist.",
+      moveUp: "Move up",
+      moveDown: "Move down",
+      viewProfile: "View",
     },
   },
   studentNavLabels: {
@@ -665,6 +681,28 @@ const OPERATIONAL_SITE_SETTINGS = {
     store: "Content store",
     profile: "Profile",
     settings: "Settings",
+  },
+  studentPageLabels: {
+    settings: {
+      accountTitle: "Account",
+      emailLabel: "Email",
+      referralTitle: "Refer a friend",
+      referralIntro: "Share your code. You earn {credits} credits when they join.",
+      copyCode: "Copy code",
+      applyReferralLabel: "Have a code?",
+      applyReferralPlaceholder: "Enter referral code",
+      applyReferralAction: "Apply",
+      referralApplied: "Referral applied.",
+      alreadyReferred: "You already used a referral code.",
+      topUpTitle: "Buy credits",
+      topUpIntro: "Request a top-up package. Lemoni confirms payment, then credits land in your balance.",
+      topUpAction: "Request",
+      topUpRequested: "Request sent — pending admin approval.",
+      topUpFailed: "Could not submit top-up request.",
+      invalid_code: "That code is not valid.",
+      already_referred: "You already used a referral code.",
+      self_referral: "You cannot use your own code.",
+    },
   },
   adminNavLabels: {
     dashboard: "Dashboard",
@@ -852,11 +890,24 @@ async function seedProgramLevers(db: Firestore) {
     ? existing.waysToEarn
     : [];
 
+  const existingPackages = Array.isArray(existing.creditTopUpPackages)
+    ? existing.creditTopUpPackages
+    : [];
+
   const base = {
     id: "default",
     trackAMonthly: 50,
     trackAMatchFee: 200,
     trackBMonthly: 125,
+    placementFeeEur: existing.placementFeeEur ?? 350,
+    creditsPerEuro: existing.creditsPerEuro ?? 4,
+    creditTopUpPackages: existingPackages.length
+      ? existingPackages
+      : [
+          { id: "pack_400", label: "Starter pack", credits: 400, priceEur: 100 },
+          { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },
+          { id: "pack_1600", label: "Premium pack", credits: 1600, priceEur: 400 },
+        ],
     waysToEarn: existingWays.length ? existingWays : DEFAULT_WAYS_TO_EARN,
     updatedAt: FieldValue.serverTimestamp(),
   };
