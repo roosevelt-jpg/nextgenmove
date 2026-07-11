@@ -5,7 +5,7 @@ import {
   getSiteSettings,
   listNavCmsPages,
 } from "@/lib/collections/site-settings";
-import { BRAND_ICON_PATH, resolveBrandLogoUrl } from "@/lib/brand";
+import { BRAND_ICON_PATH } from "@/lib/brand";
 import { buildHeaderPrimaryLinks } from "@/lib/public/nav";
 
 export async function SiteHeader() {
@@ -25,7 +25,6 @@ export async function SiteHeader() {
     })),
   ];
   const siteName = settings.siteName ?? navLabels.siteName ?? "Venturo";
-  const cmsLogo = settings.logoUrl?.trim();
   const ctaLabel = navLabels.headerCta;
   const ctaHref = navLabels.headerCtaHref || "/sign-up";
 
@@ -33,31 +32,18 @@ export async function SiteHeader() {
     <header className="border-b border-border bg-bg">
       <div className="page-container mx-auto flex w-full max-w-page items-center justify-between gap-4 py-3">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          {cmsLogo ? (
-            <Image
-              src={resolveBrandLogoUrl(cmsLogo)}
-              alt={siteName}
-              width={140}
-              height={40}
-              className="h-9 w-auto object-contain"
-              priority
-            />
-          ) : (
-            <>
-              <Image
-                src={BRAND_ICON_PATH}
-                alt=""
-                width={36}
-                height={36}
-                className="h-9 w-9 rounded-radius-sm object-cover"
-                priority
-                aria-hidden
-              />
-              <span className="font-serif text-lg font-semibold text-text-primary">
-                {siteName}
-              </span>
-            </>
-          )}
+          <Image
+            src={BRAND_ICON_PATH}
+            alt=""
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-radius-sm object-cover"
+            priority
+            aria-hidden
+          />
+          <span className="font-serif text-lg font-semibold text-text-primary">
+            {siteName}
+          </span>
         </Link>
 
         <nav

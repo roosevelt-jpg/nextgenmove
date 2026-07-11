@@ -5,7 +5,7 @@ import {
   getSiteSettings,
   listFooterCmsPages,
 } from "@/lib/collections/site-settings";
-import { BRAND_ICON_PATH, resolveBrandLogoUrl } from "@/lib/brand";
+import { BRAND_ICON_PATH } from "@/lib/brand";
 import { resolveFooterGroups } from "@/lib/public/nav";
 
 export async function SiteFooter() {
@@ -16,7 +16,6 @@ export async function SiteFooter() {
   const navLabels = settings.navLabels ?? {};
   const groups = resolveFooterGroups(settings.footerLinks, navLabels, cmsPages);
   const siteName = settings.siteName ?? navLabels.siteName ?? "Venturo";
-  const cmsLogo = settings.logoUrl?.trim();
   const socialLinks = settings.socialLinks ?? [];
   const contactEmail = settings.contactEmail?.trim() ?? "";
   const description =
@@ -27,29 +26,17 @@ export async function SiteFooter() {
       <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
-            {cmsLogo ? (
-              <Image
-                src={resolveBrandLogoUrl(cmsLogo)}
-                alt={siteName}
-                width={120}
-                height={36}
-                className="h-8 w-auto object-contain"
-              />
-            ) : (
-              <>
-                <Image
-                  src={BRAND_ICON_PATH}
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 rounded-radius-sm object-cover"
-                  aria-hidden
-                />
-                <span className="font-serif text-lg font-semibold text-text-primary">
-                  {siteName}
-                </span>
-              </>
-            )}
+            <Image
+              src={BRAND_ICON_PATH}
+              alt=""
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-radius-sm object-cover"
+              aria-hidden
+            />
+            <span className="font-serif text-lg font-semibold text-text-primary">
+              {siteName}
+            </span>
           </div>
           {description ? (
             <p className="text-sm text-text-secondary">{description}</p>
