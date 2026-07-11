@@ -1730,6 +1730,9 @@ const OPERATIONAL_SITE_SETTINGS = {
       youtubeApiKey: "YouTube Data API key",
       youtubeHelp:
         "Create a key in Google Cloud Console → APIs & Services → Credentials, enable YouTube Data API v3, then paste the key here. Playlist URL is set under Admin → Homepage Content.",
+      loadError: "Could not load integrations.",
+      degradedWarning:
+        "Live status may be outdated — Firestore is slow or over quota. Cards still show so you can reconnect.",
     },
     users: {
       title: "Team & users",

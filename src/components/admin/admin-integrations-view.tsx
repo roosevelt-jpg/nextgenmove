@@ -39,12 +39,29 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     const response = await fetch("/api/admin/integrations", {
       cache: "no-store",
     });
-    if (response.ok) {
-      const payload = (await response.json()) as { items: IntegrationItem[] };
-      setItems(payload.items ?? []);
-    } else {
+    const payload = (await response.json().catch(() => null)) as {
+      items?: IntegrationItem[];
+      warning?: string;
+      error?: string;
+    } | null;
+
+    const nextItems = payload?.items ?? [];
+    setItems(nextItems);
+
+    if (!response.ok && nextItems.length === 0) {
       setActionMessage(labels.loadError ?? "Could not load integrations.");
+      return;
     }
+
+    if (payload?.warning === "integrations_degraded") {
+      setActionMessage(
+        labels.degradedWarning ??
+          "Live status may be outdated — Firestore is slow or over quota. Cards still show so you can reconnect.",
+      );
+      return;
+    }
+
+    setActionMessage(null);
   };
 
   useEffect(() => {
