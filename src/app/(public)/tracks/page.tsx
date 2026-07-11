@@ -1,3 +1,4 @@
+import { SectionEyebrow } from "@/components/ui";
 import { RichText } from "@/components/public/rich-text";
 import { getPageTracks } from "@/lib/collections/pages";
 import { getSiteSettings } from "@/lib/collections/site-settings";
@@ -8,14 +9,34 @@ export default async function TracksPage() {
 
   return (
     <div className="page-section space-y-8">
-      {pageLabels.tracksTitle ? (
-        <h1 className="font-serif text-3xl text-text-primary">{pageLabels.tracksTitle}</h1>
-      ) : null}
+      <header className="max-w-2xl space-y-3">
+        {pageLabels.tracksEyebrow || pageLabels.tracksTitle ? (
+          <SectionEyebrow>
+            {pageLabels.tracksEyebrow ?? pageLabels.tracksTitle}
+          </SectionEyebrow>
+        ) : null}
+        {pageLabels.tracksHeadline ? (
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
+            {pageLabels.tracksHeadline}
+          </h1>
+        ) : pageLabels.tracksTitle ? (
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
+            {pageLabels.tracksTitle}
+          </h1>
+        ) : null}
+        {pageLabels.tracksIntro ? (
+          <p className="text-sm text-text-secondary sm:text-base">
+            {pageLabels.tracksIntro}
+          </p>
+        ) : null}
+      </header>
 
       {page?.trackABody ? (
         <section>
           {pageLabels.trackATitle ? (
-            <h2 className="mb-4 font-serif text-2xl text-text-primary">{pageLabels.trackATitle}</h2>
+            <h2 className="mb-4 font-serif text-2xl text-text-primary">
+              {pageLabels.trackATitle}
+            </h2>
           ) : null}
           <RichText html={page.trackABody} />
         </section>
@@ -24,7 +45,9 @@ export default async function TracksPage() {
       {page?.trackBBody ? (
         <section>
           {pageLabels.trackBTitle ? (
-            <h2 className="mb-4 font-serif text-2xl text-text-primary">{pageLabels.trackBTitle}</h2>
+            <h2 className="mb-4 font-serif text-2xl text-text-primary">
+              {pageLabels.trackBTitle}
+            </h2>
           ) : null}
           <RichText html={page.trackBBody} />
         </section>
@@ -72,6 +95,11 @@ export default async function TracksPage() {
 
       {page?.caseStudyQuote ? (
         <blockquote className="rounded-radius-lg border border-border bg-surface-1 p-8">
+          {pageLabels.caseStudyEyebrow ? (
+            <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-accent">
+              {pageLabels.caseStudyEyebrow}
+            </p>
+          ) : null}
           {page.caseStudyQuote.quote ? (
             <p className="font-serif text-2xl text-text-primary">
               {page.caseStudyQuote.quote}

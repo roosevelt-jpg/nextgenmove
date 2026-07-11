@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { getPagePricing, getProgramLevers } from "@/lib/collections/pages";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { syncLinkedProfile } from "@/lib/auth/profile-sync";
 import {
   getEmployerSession,
   unauthorizedResponse,
@@ -30,8 +31,13 @@ export async function GET() {
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).optional(),
+  contactName: z.string().trim().min(1).max(120).optional(),
   contactEmail: z.string().email().optional(),
   logoUrl: z.string().url().nullable().optional(),
+  industry: z.string().trim().max(80).optional(),
+  website: z.string().url().nullable().optional().or(z.literal("").transform(() => null)),
+  preferredLocations: z.array(z.string().trim()).optional(),
+  hiringNeeds: z.string().trim().max(2000).optional(),
   notificationPreferences: z.record(z.string(), z.boolean()).optional(),
   requirements: z
     .array(
@@ -58,7 +64,21 @@ export async function PATCH(request: Request) {
     await adminDb
       .collection("companies")
       .doc(session.companyId)
-      .update(stripUndefined(body));
+      .update(
+        stripUndefined({
+          ...body,
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+      );
+
+    await syncLinkedProfile({
+      uid: session.companyId,
+      role: "company",
+      companyName: body.name,
+      contactName: body.contactName,
+      photoUrl: body.logoUrl,
+      email: body.contactEmail,
+    });
 
     const updated = await adminDb.collection("companies").doc(session.companyId).get();
 

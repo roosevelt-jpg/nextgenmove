@@ -1,13 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getSiteSettings } from "@/lib/collections/site-settings";
+import {
+  getSiteSettings,
+  listNavCmsPages,
+} from "@/lib/collections/site-settings";
 import { buildHeaderPrimaryLinks } from "@/lib/public/nav";
 
 export async function SiteHeader() {
-  const settings = await getSiteSettings();
+  const [settings, cmsPages] = await Promise.all([
+    getSiteSettings(),
+    listNavCmsPages(),
+  ]);
   const navLabels = settings.navLabels ?? {};
-  const links = buildHeaderPrimaryLinks(navLabels);
+  const links = [
+    ...buildHeaderPrimaryLinks(navLabels),
+    ...cmsPages.map((page) => ({
+      key: `cms-${page.slug}`,
+      href: `/pages/${page.slug}`,
+      label: page.navLabel || page.title,
+    })),
+  ];
   const siteName = settings.siteName ?? navLabels.siteName;
+  const brandMark = settings.brandMark ?? "";
   const ctaLabel = navLabels.headerCta;
   const ctaHref = navLabels.headerCtaHref || "/sign-up";
 
@@ -18,19 +32,21 @@ export async function SiteHeader() {
           {settings.logoUrl ? (
             <Image
               src={settings.logoUrl}
-              alt={siteName ?? "site-logo"}
+              alt={siteName ?? ""}
               width={140}
               height={40}
               className="h-9 w-auto object-contain"
             />
           ) : (
             <>
-              <span
-                aria-hidden
-                className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
-              >
-                NG
-              </span>
+              {brandMark ? (
+                <span
+                  aria-hidden
+                  className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
+                >
+                  {brandMark}
+                </span>
+              ) : null}
               {siteName ? (
                 <span className="font-serif text-lg text-text-primary">
                   {siteName}

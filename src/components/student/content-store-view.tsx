@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { YoutubeEmbed } from "@/components/media/youtube-embed";
 import { Badge, Button, Card, CardBody } from "@/components/ui";
+import { parseYoutubeVideoId } from "@/lib/media/youtube";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface StoreItem {
@@ -30,6 +32,7 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
   const [category, setCategory] = useState("");
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
+  const [watchingId, setWatchingId] = useState<string | null>(null);
 
   const loadStore = useCallback(async () => {
     const response = await fetch("/api/student/store");
@@ -60,7 +63,10 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
 
     const response = await fetch("/api/student/store/purchase", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": crypto.randomUUID(),
+      },
       body: JSON.stringify({ contentItemId }),
     });
 
@@ -75,6 +81,12 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
     }
 
     await loadStore();
+  };
+
+  const priceSuffix = (item: StoreItem) => {
+    if (typeof item.priceEur !== "number") return "";
+    const template = labels.priceEurSuffix ?? " · €{amount}";
+    return template.replace("{amount}", String(item.priceEur));
   };
 
   return (
@@ -112,81 +124,111 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
       ) : null}
 
       <ul className="space-y-3">
-        {filteredItems.map((item) => (
-          <li key={item.id}>
-            <Card>
-              <CardBody className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-start gap-4">
-                  <span
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-radius bg-brand-lavender text-lg"
-                    aria-hidden="true"
-                  >
-                    {item.emojiIcon || initialsFromTitle(item.title)}
-                  </span>
-                  <div className="min-w-0 space-y-1">
-                    <p className="font-medium text-text-primary">{item.title}</p>
-                    {item.description ? (
-                      <p className="text-sm text-text-secondary">{item.description}</p>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      {item.category ? (
-                        <span className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag">
-                          {item.category}
-                        </span>
-                      ) : null}
-                      {labels.costCreditsLabel ? (
-                        <p className="font-mono text-xs text-text-accent">
-                          {labels.costCreditsLabel.replace(
-                            "{credits}",
-                            String(item.costCredits),
-                          )}
-                          {typeof item.priceEur === "number"
-                            ? ` · €${item.priceEur}`
-                            : ""}
-                        </p>
-                      ) : null}
-                      {item.purchased && labels.unlockedLabel ? (
-                        <Badge variant="success">{labels.unlockedLabel}</Badge>
+        {filteredItems.map((item) => {
+          const isVideo =
+            item.type === "video" ||
+            item.type === "webinar" ||
+            Boolean(parseYoutubeVideoId(item.linkUrl));
+          const showPlayer = item.purchased && watchingId === item.id && item.linkUrl;
+
+          return (
+            <li key={item.id}>
+              <Card>
+                <CardBody className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <span
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-radius bg-brand-lavender text-lg"
+                        aria-hidden="true"
+                      >
+                        {item.emojiIcon || initialsFromTitle(item.title)}
+                      </span>
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-medium text-text-primary">{item.title}</p>
+                        {item.description ? (
+                          <p className="text-sm text-text-secondary">{item.description}</p>
+                        ) : null}
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          {item.category ? (
+                            <span className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag">
+                              {item.category}
+                            </span>
+                          ) : null}
+                          {labels.costCreditsLabel ? (
+                            <p className="font-mono text-xs text-text-accent">
+                              {labels.costCreditsLabel.replace(
+                                "{credits}",
+                                String(item.costCredits),
+                              )}
+                              {priceSuffix(item)}
+                            </p>
+                          ) : null}
+                          {item.purchased && labels.unlockedLabel ? (
+                            <Badge variant="success">{labels.unlockedLabel}</Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                      {item.purchased ? (
+                        <>
+                          {isVideo && item.linkUrl ? (
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                setWatchingId((current) =>
+                                  current === item.id ? null : item.id,
+                                )
+                              }
+                            >
+                              {watchingId === item.id
+                                ? labels.hideVideo ?? labels.openLink
+                                : labels.watchVideo ?? labels.openLink}
+                            </Button>
+                          ) : null}
+                          {item.linkUrl && !isVideo ? (
+                            <a
+                              href={item.linkUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+                            >
+                              {labels.openLink ?? labels.openContent}
+                            </a>
+                          ) : null}
+                          {item.downloadHref && labels.openContent ? (
+                            <a
+                              href={item.downloadHref}
+                              className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+                            >
+                              {labels.openContent}
+                            </a>
+                          ) : null}
+                        </>
+                      ) : labels.purchaseAction ? (
+                        <Button
+                          disabled={loadingItemId === item.id}
+                          onClick={() => purchase(item.id)}
+                        >
+                          {labels.purchaseAction}
+                        </Button>
                       ) : null}
                     </div>
                   </div>
-                </div>
 
-                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                  {item.purchased ? (
-                    <>
-                      {item.linkUrl ? (
-                        <a
-                          href={item.linkUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
-                        >
-                          {labels.openLink ?? labels.openContent}
-                        </a>
-                      ) : null}
-                      {item.downloadHref && labels.openContent ? (
-                        <a
-                          href={item.downloadHref}
-                          className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
-                        >
-                          {labels.openContent}
-                        </a>
-                      ) : null}
-                    </>
-                  ) : labels.purchaseAction ? (
-                    <Button
-                      disabled={loadingItemId === item.id}
-                      onClick={() => purchase(item.id)}
-                    >
-                      {labels.purchaseAction}
-                    </Button>
+                  {showPlayer ? (
+                    <YoutubeEmbed
+                      url={item.linkUrl!}
+                      title={item.title}
+                      watchLabel={labels.watchVideo}
+                    />
                   ) : null}
-                </div>
-              </CardBody>
-            </Card>
-          </li>
-        ))}
+                </CardBody>
+              </Card>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

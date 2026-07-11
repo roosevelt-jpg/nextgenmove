@@ -12,7 +12,7 @@ export interface StudentNavLabels {
 }
 
 const NAV_ITEMS = [
-  { key: "dashboard" as const, href: "/student" },
+  { key: "dashboard" as const, href: "/student/dashboard" },
   { key: "store" as const, href: "/student/store" },
   { key: "profile" as const, href: "/student/profile" },
   { key: "settings" as const, href: "/student/settings" },
@@ -33,8 +33,8 @@ export function StudentNav({ labels }: { labels: StudentNavLabels }) {
         }
 
         const isActive =
-          item.href === "/student"
-            ? pathname === "/student"
+          item.href === "/student/dashboard"
+            ? pathname === "/student/dashboard" || pathname === "/student"
             : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (

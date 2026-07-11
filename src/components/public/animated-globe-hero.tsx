@@ -116,6 +116,54 @@ export function AnimatedGlobeHero({ content }: AnimatedGlobeHeroProps) {
               </Link>
             ) : null}
           </div>
+
+          {content?.boardingPass?.routeLabel ||
+          content?.boardingPass?.passengerValue ? (
+            <div className={styles.boardingPass} aria-label="Boarding pass">
+              {content.boardingPass.routeLabel ? (
+                <p className={styles.boardingRoute}>
+                  {content.boardingPass.routeLabel}
+                </p>
+              ) : null}
+              <dl className={styles.boardingGrid}>
+                {content.boardingPass.passengerLabel &&
+                content.boardingPass.passengerValue ? (
+                  <div>
+                    <dt>{content.boardingPass.passengerLabel}</dt>
+                    <dd>{content.boardingPass.passengerValue}</dd>
+                  </div>
+                ) : null}
+                {content.boardingPass.coachLabel &&
+                content.boardingPass.coachValue ? (
+                  <div>
+                    <dt>{content.boardingPass.coachLabel}</dt>
+                    <dd>{content.boardingPass.coachValue}</dd>
+                  </div>
+                ) : null}
+                {content.boardingPass.statusLabel &&
+                content.boardingPass.statusValue ? (
+                  <div>
+                    <dt>{content.boardingPass.statusLabel}</dt>
+                    <dd>{content.boardingPass.statusValue}</dd>
+                  </div>
+                ) : null}
+                {content.boardingPass.classLabel &&
+                content.boardingPass.classValue ? (
+                  <div>
+                    <dt>{content.boardingPass.classLabel}</dt>
+                    <dd>{content.boardingPass.classValue}</dd>
+                  </div>
+                ) : null}
+                {content.boardingPass.refLabel &&
+                content.boardingPass.refValue ? (
+                  <div>
+                    <dt>{content.boardingPass.refLabel}</dt>
+                    <dd>{content.boardingPass.refValue}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.globeWrap} aria-hidden>

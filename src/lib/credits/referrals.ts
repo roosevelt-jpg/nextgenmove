@@ -82,12 +82,20 @@ export async function applyReferralCode(options: {
 
   const bonus = await getWayToEarnCredits("referral");
   if (bonus > 0) {
-    await applyCreditDelta({
+    const grant = await applyCreditDelta({
       studentId: referrerId,
       amount: bonus,
       source: `referral:${options.studentId}`,
       once: true,
     });
+    if (grant.applied) {
+      const { notifyReferralBonus } = await import("@/lib/email/notify");
+      void notifyReferralBonus({
+        referrerId,
+        credits: bonus,
+        balance: grant.credits,
+      });
+    }
   }
 
   await adminDb.collection("referral_redemptions").doc().set(

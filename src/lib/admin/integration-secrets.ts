@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
-import { FieldValue } from "firebase-admin/firestore";
 
 const ALGORITHM = "aes-256-gcm";
 
@@ -60,7 +60,10 @@ export function decryptIntegrationSecret(payload: string): string {
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 }
 
-export async function storeIntegrationSecret(integrationId: string, secrets: Record<string, string>) {
+export async function storeIntegrationSecret(
+  integrationId: string,
+  secrets: Record<string, string>,
+) {
   const encryptedEntries = Object.fromEntries(
     Object.entries(secrets).map(([key, value]) => [key, encryptIntegrationSecret(value)]),
   );
@@ -76,4 +79,35 @@ export async function storeIntegrationSecret(integrationId: string, secrets: Rec
       }),
       { merge: true },
     );
+}
+
+export async function getIntegrationSecrets(
+  integrationId: string,
+): Promise<Record<string, string>> {
+  const snap = await adminDb
+    .collection("integration_secrets")
+    .doc(integrationId)
+    .get();
+
+  if (!snap.exists) {
+    return {};
+  }
+
+  const encrypted = (snap.data()?.secrets ?? {}) as Record<string, string>;
+  const decrypted: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(encrypted)) {
+    try {
+      decrypted[key] = decryptIntegrationSecret(value);
+    } catch {
+      // Skip undecryptable entries
+    }
+  }
+
+  return decrypted;
+}
+
+export async function isIntegrationConnected(integrationId: string): Promise<boolean> {
+  const snap = await adminDb.collection("integrations").doc(integrationId).get();
+  return snap.exists && snap.data()?.status === "connected";
 }

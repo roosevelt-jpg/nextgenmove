@@ -38,9 +38,36 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
     setIsSubmittingPlan(true);
     setPlanMessage(null);
 
+    const checkoutResponse = await fetch("/api/employer/billing/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": crypto.randomUUID(),
+      },
+      body: JSON.stringify({ plan: requestedPlan }),
+    });
+
+    if (checkoutResponse.ok) {
+      const payload = (await checkoutResponse.json()) as { url?: string };
+      if (payload.url) {
+        window.location.href = payload.url;
+        return;
+      }
+    }
+
+    if (checkoutResponse.status !== 503) {
+      setIsSubmittingPlan(false);
+      setPlanMessage(labels.planRequestError ?? "");
+      return;
+    }
+
+    // Stripe not connected — fall back to admin plan request
     const response = await fetch("/api/employer/plan-request", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": crypto.randomUUID(),
+      },
       body: JSON.stringify({ requestedPlan }),
     });
 
@@ -50,6 +77,17 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
       setPlanMessage(labels.planRequestSuccess ?? "");
     } else {
       setPlanMessage(labels.planRequestError ?? "");
+    }
+  };
+
+  const openBillingPortal = async () => {
+    const response = await fetch("/api/employer/billing/checkout", {
+      method: "PUT",
+    });
+    if (!response.ok) return;
+    const payload = (await response.json()) as { url?: string };
+    if (payload.url) {
+      window.location.href = payload.url;
     }
   };
 
@@ -108,6 +146,17 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
               <span className="inline-flex items-center rounded-full bg-surface-1 px-2.5 py-0.5 text-xs font-medium text-fill-accent">
                 {labels.currentPriceLabel.replace("{amount}", String(currentPrice))}
               </span>
+            ) : null}
+            {company.stripeCustomerId && labels.manageBilling ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-on-accent text-on-accent"
+                onClick={() => void openBillingPortal()}
+              >
+                {labels.manageBilling}
+              </Button>
             ) : null}
           </div>
         </CardBody>

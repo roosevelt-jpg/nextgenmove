@@ -71,11 +71,18 @@ export function CareersList({ jobs, labels }: CareersListProps) {
                   .join(" · ")}
               </p>
             </div>
-            <Link href={`/careers/${job.id}`}>
-              <Button variant="outline" size="sm">
-                {labels.viewRole ?? labels.apply}
-              </Button>
-            </Link>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link href={`/careers/${job.id}`}>
+                <Button variant="outline" size="sm">
+                  {labels.viewRole ?? labels.apply}
+                </Button>
+              </Link>
+              <a href="#apply">
+                <Button variant="ghost" size="sm">
+                  {labels.applyHere ?? labels.apply}
+                </Button>
+              </a>
+            </div>
           </li>
         ))}
       </ul>

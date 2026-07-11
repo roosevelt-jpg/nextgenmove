@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NextGen Move
 
-## Getting Started
+Next.js App Router + TypeScript + Tailwind + Firebase (Auth, Firestore, Storage).
 
-First, run the development server:
+Canonical product docs (project root):
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- `NextGenMove_Master_Blueprint.md` — product / engineering blueprint
+- `NextGenMove_Production_Readiness_Audit.md` — production readiness bar (always refer before shipping)
+- `NextGenMove_Brand_Guidelines.html` — design tokens source of truth
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Copy `.env.local.example` → `.env.local` and fill Firebase + `SESSION_SECRET`.
+2. `npm install`
+3. `npm run seed` — operational config only (taxonomies, program levers, one super-admin). Never seeds demo companies/students.
+4. `npm run dev` — http://localhost:3002
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Dev server on port 3002 |
+| `npm run build` / `npm start` | Production build |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest (match score, credits, RBAC tenant boundaries, idempotency) |
+| `npm run verify:rbac` | Static portal route → role map |
+| `npm run seed` | Seed operational Firestore config |
 
-To learn more about Next.js, take a look at the following resources:
+## Environments
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Use **separate** Firebase projects (and Stripe keys when live) for `dev` / `staging` / `production`. Do not point staging at production data.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Production secrets (Stripe, DocuSign, SendGrid, etc.) must be injected from a secrets manager into the host env — never committed. See `docs/ops/secrets.md`.
 
-## Deploy on Vercel
+## Production floor (audit § non-negotiables)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Implemented against the live Firebase stack (not the blueprint’s Postgres sketch):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Auth / role-boundary tests (`src/lib/security/tenant-boundary.test.ts`)
+2. Structured JSON request logging + optional Sentry (`SENTRY_DSN`)
+3. Rate limits on login / register / redeem / plan-request; Dependabot; secrets runbook
+4. Backup / restore runbook for Firestore (`docs/ops/backup-restore.md`)
+5. CI: lint → typecheck → test → build (`.github/workflows/ci.yml`)
+6. Idempotency keys on redeem + plan-request
+
+Ops: `docs/ops/` (SLOs, incident runbook, backup, secrets).

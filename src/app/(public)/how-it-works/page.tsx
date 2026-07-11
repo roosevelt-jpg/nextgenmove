@@ -38,12 +38,20 @@ export default async function HowItWorksPage() {
           ) : null}
           <div className="divide-y divide-border">
             {page.faqItems.map((item, index) => (
-              <div key={`faq-${index}`} className="py-5">
-                <h3 className="font-serif text-xl text-text-primary">
-                  {item.question}
-                </h3>
+              <details key={`faq-${index}`} className="group py-5">
+                <summary className="cursor-pointer list-none font-serif text-xl text-text-primary marker:content-none [&::-webkit-details-marker]:hidden">
+                  <span className="flex items-center justify-between gap-4">
+                    {item.question}
+                    <span
+                      aria-hidden
+                      className="text-text-muted transition group-open:rotate-45"
+                    >
+                      +
+                    </span>
+                  </span>
+                </summary>
                 <p className="mt-2 text-sm text-text-secondary">{item.answer}</p>
-              </div>
+              </details>
             ))}
           </div>
         </section>

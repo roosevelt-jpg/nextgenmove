@@ -14,6 +14,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore, type Firestore } from "firebase-admin/firestore";
 import { stripUndefined } from "../src/lib/stripUndefined";
+import { EMAIL_TEMPLATES } from "./email-templates";
 
 loadEnv({ path: resolve(process.cwd(), ".env.local") });
 
@@ -69,9 +70,25 @@ const NAV_LABEL_KEYS = [
   "headerCtaHref",
 ];
 
-const EMPLOYER_NAV_KEYS = ["talentPool", "pipeline", "shortlist", "profile", "settings"];
+const EMPLOYER_NAV_KEYS = [
+  "dashboard",
+  "talentPool",
+  "pipeline",
+  "shortlist",
+  "profile",
+  "settings",
+];
 const STUDENT_NAV_KEYS = ["dashboard", "store", "profile", "settings"];
-const ADMIN_NAV_KEYS = ["dashboard", "levers", "crm", "content", "integrations", "users"];
+const ADMIN_NAV_KEYS = [
+  "dashboard",
+  "levers",
+  "crm",
+  "content",
+  "settings",
+  "account",
+  "integrations",
+  "users",
+];
 
 const TAXONOMIES = {
   sector: [
@@ -167,6 +184,18 @@ const PAGE_HOME = {
   ctaSecondaryHref: "/request-talent",
   hubLabel: "DXB",
   currentRoutesLabel: "Current routes",
+  globalReachEyebrow: "Global reach",
+  globalReachHeadline: "Six corridors. One arrival city.",
+  globalReachBody:
+    "Every route on this map is live — a coach on one end, a vetted employer on the other, and a candidate somewhere mid-flight.",
+  corridorChips: [
+    "AMS → DXB",
+    "BER → DXB",
+    "CAI → DXB",
+    "WAW → DXB",
+    "PAR → DXB",
+    "LIS → DXB",
+  ],
   originCities: [
     {
       code: "AMS",
@@ -226,7 +255,7 @@ const PAGE_HOME = {
   boardingPass: {
     routeLabel: "AMS → DXB",
     passengerLabel: "Passenger",
-    passengerValue: "S. Kowalski",
+    passengerValue: "You",
     coachLabel: "Coach",
     coachValue: "Lemoni",
     statusLabel: "Status",
@@ -238,6 +267,12 @@ const PAGE_HOME = {
   },
   itineraryEyebrow: "The itinerary",
   itineraryHeadline: "Three legs. One arrival.",
+  storiesEyebrow: "Stories",
+  storiesHeadline: "Hear it from them.",
+  storiesManagedLabel: "Managed in admin · Homepage content",
+  podcastEyebrow: "The Move Podcast",
+  podcastHeadline: "Conversations from the route.",
+  podcastManagedLabel: "Managed in admin · Homepage content",
   testimonialQuote:
     "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai — and my coach was in my corner for every leg of it.",
   testimonialAttribution: "Sara K. · Marketing lead · Placed via NextGen Move",
@@ -453,6 +488,53 @@ const AUTH_LABEL_KEYS = [
   "genericErrorLabel",
   "sign_in_failed",
   "register_failed",
+  "email_exists",
+  "invalid_request",
+  "consent_required",
+  "photo_required",
+  "logo_required",
+  "upload_failed",
+  "complete_failed",
+  "stepAccount",
+  "stepDetails",
+  "stepMedia",
+  "continueLabel",
+  "backLabel",
+  "createAccountLabel",
+  "finishLabel",
+  "consentRequiredLabel",
+  "consentMarketingLabel",
+  "fullNameLabel",
+  "phoneLabel",
+  "sectorLabel",
+  "seniorityLabel",
+  "currentCityLabel",
+  "targetCitiesLabel",
+  "bioLabel",
+  "skillsLabel",
+  "availabilityLabel",
+  "linkedinLabel",
+  "portfolioLabel",
+  "referralCodeLabel",
+  "companyNameLabel",
+  "contactNameLabel",
+  "industryLabel",
+  "websiteLabel",
+  "preferredLocationsLabel",
+  "hiringNeedsLabel",
+  "mediaIntro",
+  "photoUploadLabel",
+  "photoDropzone",
+  "cvUploadLabel",
+  "cvDropzone",
+  "logoUploadLabel",
+  "logoDropzone",
+  "uploadProgress",
+  "forgotPasswordTitle",
+  "forgotPasswordIntro",
+  "forgotPasswordSubmit",
+  "forgotPasswordSent",
+  "forgotPasswordLinkLabel",
 ];
 
 function mergeEmptyFields(
@@ -496,8 +578,16 @@ const OPERATIONAL_SITE_SETTINGS = {
   siteName: "NextGen Move",
   tagline: "Relocation, engineered.",
   logoUrl: "",
+  brandMark: "NG",
   contactEmail: "",
-  socialLinks: {},
+  timezone: "Europe/Amsterdam",
+  defaultCurrency: "EUR",
+  require2fa: false,
+  sessionExpireDays: 5,
+  operatorPlanLabel: "Operator plan",
+  operatorPlanDetail: "Unlimited students · billed monthly",
+  billingManageUrl: "",
+  socialLinks: [] as Array<{ key: string; label: string; url: string }>,
   navLabels: {
     siteName: "NextGen Move",
     companySection: "Company",
@@ -533,6 +623,57 @@ const OPERATIONAL_SITE_SETTINGS = {
     genericErrorLabel: "Something went wrong. Please try again.",
     sign_in_failed: "Sign in failed. Check your email and password.",
     register_failed: "Registration failed. Please try again.",
+    email_exists: "An account with that email already exists.",
+    invalid_request: "Please check the form and try again.",
+    consent_required: "Please accept the required terms to continue.",
+    photo_required: "Upload a profile photo to finish.",
+    logo_required: "Upload your company logo to finish.",
+    upload_failed: "Upload failed. Try again.",
+    complete_failed: "Could not finish signup. Try again.",
+    stepAccount: "1 · Account",
+    stepDetails: "2 · Profile details",
+    stepMedia: "3 · Photo / logo",
+    continueLabel: "Continue",
+    backLabel: "Back",
+    createAccountLabel: "Create account",
+    finishLabel: "Finish & go to dashboard",
+    consentRequiredLabel:
+      "I agree to NextGen Move processing my account data to run the platform.",
+    consentMarketingLabel: "Send me occasional product updates (optional).",
+    fullNameLabel: "Full name",
+    phoneLabel: "Phone",
+    sectorLabel: "Sector",
+    seniorityLabel: "Seniority",
+    currentCityLabel: "Current city",
+    targetCitiesLabel: "Target cities (comma-separated)",
+    bioLabel: "Short bio",
+    skillsLabel: "Skills (comma-separated)",
+    availabilityLabel: "Availability",
+    linkedinLabel: "LinkedIn URL",
+    portfolioLabel: "Portfolio URL",
+    referralCodeLabel: "Referral code (optional)",
+    companyNameLabel: "Company name",
+    contactNameLabel: "Your name (contact)",
+    industryLabel: "Industry",
+    websiteLabel: "Company website",
+    preferredLocationsLabel: "Hiring locations (comma-separated)",
+    hiringNeedsLabel: "What roles are you hiring for?",
+    mediaIntro:
+      "Almost done — add a face to your profile (students) or your company logo (employers). This stays linked to your account.",
+    photoUploadLabel: "Profile photo (required)",
+    photoDropzone: "JPG or PNG. Square works best.",
+    cvUploadLabel: "CV (optional)",
+    cvDropzone: "Upload PDF",
+    logoUploadLabel: "Company logo (required)",
+    logoDropzone: "JPG, PNG, or SVG",
+    uploadProgress: "Uploading…",
+    forgotPasswordTitle: "Reset password",
+    forgotPasswordIntro:
+      "Enter your email and we will send a secure reset link if an account exists.",
+    forgotPasswordSubmit: "Send reset link",
+    forgotPasswordSent:
+      "If an account exists for that email, a reset link is on its way.",
+    forgotPasswordLinkLabel: "Forgot password?",
   },
   formLabels: {
     save: "Save",
@@ -545,6 +686,16 @@ const OPERATIONAL_SITE_SETTINGS = {
     loading: "Loading…",
     submit: "Submit request",
     successMessage: "Request received. We'll be in touch shortly.",
+    formSuccess: "Thanks — we received your submission.",
+    missing_required: "Please fill in all required fields.",
+    submit_failed: "Could not submit. Please try again.",
+    watchVideo: "Watch",
+    hideVideo: "Hide video",
+    openLink: "Open link",
+    openContent: "Open",
+    priceEurSuffix: " · €{amount}",
+    generalApplication: "General application",
+    applyHere: "Apply",
     companyName: "Company name",
     companyNamePlaceholder: "Acme Corp",
     contactName: "Contact name",
@@ -623,8 +774,20 @@ const OPERATIONAL_SITE_SETTINGS = {
     faqTitle: "Questions",
     trackATitle: "Track A",
     trackBTitle: "Track B",
+    tracksEyebrow: "Track A / Track B",
+    tracksHeadline: "Which track fits how you hire?",
+    tracksIntro: "A side-by-side of what each track actually does for your team.",
+    comparisonTitle: "Compare tracks",
+    comparisonFeatureColumn: "Feature",
+    comparisonTrackAColumn: "Track A · Self service",
+    comparisonTrackBColumn: "Track B · Full service",
+    caseStudyEyebrow: "Result",
+    careersApplyEyebrow: "Apply",
+    cmsPageEyebrow: "Page",
+    cmsFormEyebrow: "Form",
   },
   employerNavLabels: {
+    dashboard: "Dashboard",
     talentPool: "Talent pool",
     pipeline: "Pipeline",
     shortlist: "Shortlist",
@@ -632,6 +795,21 @@ const OPERATIONAL_SITE_SETTINGS = {
     settings: "Settings",
   },
   employerPageLabels: {
+    dashboard: {
+      title: "Employer dashboard",
+      planTrackA: "Track A",
+      planTrackB: "Track B",
+      planNone: "No plan yet",
+      subscription_active: "Active",
+      subscription_pending: "Pending",
+      subscription_inactive: "Inactive",
+      statTalentPool: "Talent pool",
+      statShortlisted: "Shortlisted",
+      statPipeline: "In pipeline",
+      openTalentPool: "Open talent pool →",
+      openPipeline: "Open pipeline →",
+      openProfile: "Manage plan & profile →",
+    },
     talentPool: {
       statCandidates: "Available",
       statShortlisted: "Shortlisted",
@@ -675,7 +853,59 @@ const OPERATIONAL_SITE_SETTINGS = {
       moveDown: "Move down",
       viewProfile: "View",
     },
+    profile: {
+      choosePlanTitle: "Choose a plan",
+      currentPlanBadge: "Current",
+      currentPriceLabel: "€{amount}/mo",
+      trackAMonthlyLabel: "€{amount}/mo",
+      trackAMatchFeeLabel: "+ €{amount} per match, one-time",
+      trackBMonthlyLabel: "€{amount}/mo",
+      requestTrackA: "Subscribe · Track A",
+      requestTrackB: "Subscribe · Track B",
+      manageBilling: "Manage billing",
+      planRequestSuccess: "Plan request sent — pending approval.",
+      planRequestError: "Could not start checkout. Try again.",
+      subscription_active: "Active",
+      subscription_pending: "Pending",
+      subscription_inactive: "Inactive",
+      requirementsTitle: "Requirements",
+      requirementsEmpty: "No requirements uploaded yet.",
+      requirementTitle: "Requirement title",
+      requirementUpload: "Upload file",
+      requirementDropzone: "PDF or DOCX",
+      uploadProgress: "Uploading…",
+    },
+    account: {
+      accountEyebrow: "My profile",
+      accountTitle: "Account & profile.",
+      accountSubtitle: "This is what you see, not what candidates see.",
+      uploadPhoto: "Upload photo",
+      removePhoto: "Remove",
+      photoDropzone: "JPG or PNG. Square works best.",
+      personalDetailsTitle: "Personal details",
+      fullName: "Full name",
+      roleLabel: "Role",
+      roleCompany: "Company",
+      email: "Email",
+      phone: "Phone",
+      passwordTitle: "Password",
+      currentPassword: "Current password",
+      newPassword: "New password",
+      notificationsTitle: "Notifications",
+      notification_match_updates: "Match updates",
+      notification_plan_approvals: "Plan approvals",
+      saveChanges: "Save changes",
+      saveSuccess: "Saved.",
+      saveError: "Could not save.",
+      uploadProgress: "Uploading…",
+    },
   },
+  employerNotificationKeys: [
+    "match_updates",
+    "plan_approvals",
+    "login_alerts",
+    "product_updates",
+  ],
   studentNavLabels: {
     dashboard: "Dashboard",
     store: "Content store",
@@ -683,6 +913,18 @@ const OPERATIONAL_SITE_SETTINGS = {
     settings: "Settings",
   },
   studentPageLabels: {
+    dashboard: {
+      creditsLabel: "Credits",
+      profileCompletenessLabel: "Profile",
+      profileCompletenessValue: "{percent}%",
+      matchesLabel: "Matches",
+      pipelineTitle: "Your journey",
+      shortlistedBadge: "Shortlisted",
+      recommendedTitle: "Recommended for you",
+      costCreditsLabel: "{credits} cr",
+      unlockedLabel: "Unlocked",
+      viewInStore: "View in store",
+    },
     settings: {
       accountTitle: "Account",
       emailLabel: "Email",
@@ -695,24 +937,63 @@ const OPERATIONAL_SITE_SETTINGS = {
       referralApplied: "Referral applied.",
       alreadyReferred: "You already used a referral code.",
       topUpTitle: "Buy credits",
-      topUpIntro: "Request a top-up package. Lemoni confirms payment, then credits land in your balance.",
-      topUpAction: "Request",
+      topUpIntro:
+        "Buy a credit pack. When Stripe is connected you pay by card at Checkout; otherwise Lemoni confirms payment manually.",
+      topUpAction: "Buy / request",
       topUpRequested: "Request sent — pending admin approval.",
-      topUpFailed: "Could not submit top-up request.",
+      topUpFailed: "Could not start top-up. Try again.",
       invalid_code: "That code is not valid.",
       already_referred: "You already used a referral code.",
       self_referral: "You cannot use your own code.",
     },
+    account: {
+      accountEyebrow: "My profile",
+      accountTitle: "Account & profile.",
+      accountSubtitle: "This is what you see, not what companies see.",
+      uploadPhoto: "Upload photo",
+      removePhoto: "Remove",
+      photoDropzone: "JPG or PNG. Square works best.",
+      personalDetailsTitle: "Personal details",
+      fullName: "Full name",
+      roleLabel: "Role",
+      roleStudent: "Student",
+      email: "Email",
+      phone: "Phone",
+      passwordTitle: "Password",
+      currentPassword: "Current password",
+      newPassword: "New password",
+      notificationsTitle: "Notifications",
+      notification_match_updates: "Match & pipeline updates",
+      notification_credit_receipts: "Credit receipts",
+      notification_low_balance: "Low credit balance alerts",
+      notification_referral: "Referral bonuses",
+      notification_login_alerts: "Login alerts",
+      notification_product_updates: "Product updates",
+      saveChanges: "Save changes",
+      saveSuccess: "Saved.",
+      saveError: "Could not save.",
+      uploadProgress: "Uploading…",
+    },
   },
+  studentNotificationKeys: [
+    "match_updates",
+    "credit_receipts",
+    "low_balance",
+    "referral",
+    "login_alerts",
+    "product_updates",
+  ],
   adminNavLabels: {
     dashboard: "Dashboard",
     levers: "Levers",
     crm: "CRM",
     content: "Content",
     settings: "Site settings",
+    account: "My account",
     integrations: "Integrations",
     users: "Users",
   },
+  adminNotificationKeys: ["pending_requests", "weekly_digest", "sms_alerts"],
   adminPageLabels: {
     dashboard: {
       title: "Admin dashboard",
@@ -740,15 +1021,85 @@ const OPERATIONAL_SITE_SETTINGS = {
       sourceApplications: "Applications",
       sourceInterest: "Role interest",
     },
+    crm: {
+      eyebrow: "CRM",
+      title: "All relationships, one place.",
+      subtitle:
+        "Every company, candidate, and inbound lead — tracked from first touch to placement.",
+      contactsTab: "All contacts",
+      companiesTab: "Companies",
+      studentsTab: "Interns",
+      search: "Search",
+      empty: "No contacts yet",
+      name: "Name",
+      email: "Email",
+      plan: "Plan",
+      status: "Status",
+      sector: "Sector",
+      typeColumn: "Type",
+      stageColumn: "Stage",
+      ownerColumn: "Owner",
+      lastActivityColumn: "Last activity",
+      valueColumn: "Value",
+      detailTitle: "Contact",
+      noPlan: "No plan",
+      planTrackA: "Set Track A",
+      planTrackB: "Set Track B",
+      suspend: "Suspend",
+      activate: "Activate",
+      edit: "Edit",
+      addNote: "Add note",
+      saveNote: "Save note",
+      activityTitle: "Activity",
+      activityEmpty: "No activity yet",
+      statTotalContacts: "Total contacts",
+      statOpenDeals: "Open deals",
+      statActiveCompanies: "Active companies",
+      statNewLeads: "New leads (7d)",
+      dealPipelineTitle: "Deal pipeline",
+      contactsTableTitle: "All contacts",
+      dealStage_new: "New",
+      dealStage_contacted: "Contacted",
+      dealStage_qualified: "Qualified",
+      dealStage_won: "Won",
+    },
+    account: {
+      accountEyebrow: "My profile",
+      accountTitle: "Account & profile.",
+      accountSubtitle: "This is what you see, not what companies or candidates see.",
+      uploadPhoto: "Upload photo",
+      removePhoto: "Remove",
+      photoDropzone: "JPG or PNG. Square works best.",
+      personalDetailsTitle: "Personal details",
+      fullName: "Full name",
+      roleLabel: "Role",
+      roleAdmin: "Admin",
+      email: "Email",
+      phone: "Phone",
+      passwordTitle: "Password",
+      currentPassword: "Current password",
+      newPassword: "New password",
+      notificationsTitle: "Notifications",
+      notification_pending_requests: "New pending requests",
+      notification_weekly_digest: "Weekly digest",
+      notification_sms_alerts: "SMS alerts",
+      saveChanges: "Save changes",
+      saveSuccess: "Saved.",
+      saveError: "Could not save.",
+      uploadProgress: "Uploading…",
+    },
     content: {
       library: "Content library",
       home: "Homepage",
       about: "About page",
       careers: "Careers",
+      roles: "Browse roles",
       journal: "Journal",
       howItWorks: "How it works",
       pricing: "Pricing copy",
       tracks: "Tracks copy",
+      pages: "Custom pages",
+      forms: "Custom forms",
       edit: "Edit",
       create: "Create",
       empty: "No items yet",
@@ -756,10 +1107,128 @@ const OPERATIONAL_SITE_SETTINGS = {
       statusColumn: "Status",
       actionsColumn: "Actions",
       homeTitle: "Homepage",
+      videos: "Video cards",
+      videosTitle: "Video cards",
+      podcast: "Podcast",
+      podcastTitle: "Podcast episodes",
       aboutTitle: "About",
       howItWorksTitle: "How it works",
       pricingTitle: "Pricing",
       tracksTitle: "Tracks",
+      rolesTitle: "Browse roles",
+      pagesTitle: "Custom pages",
+      formsTitle: "Custom forms",
+      journalTitle: "Journal",
+    },
+    settings: {
+      settingsTitle: "Workspace settings.",
+      workspaceEyebrow: "Admin · Settings",
+      workspaceSubtitle: "General configuration for the NextGen Move workspace.",
+      teamMembersTitle: "Team members",
+      teamMembersBody: "Invite and manage admin users.",
+      manageTeam: "Manage team →",
+      securityTitle: "Security",
+      require2fa: "Require two-factor authentication",
+      require2faHelp: "Applies to all team members with admin access",
+      sessionExpireDays: "Auto-expire sessions after N days",
+      sessionExpireHelp: "Forces re-login on all devices (1–14 days)",
+      securityEditHint: "Edit require2fa and sessionExpireDays in the workspace editor below.",
+      billingTitle: "Billing",
+      operatorPlanLabel: "Operator plan",
+      operatorPlanDetail: "Unlimited students · billed monthly",
+      manageBilling: "Manage billing",
+      toggleOn: "On",
+      toggleOff: "Off",
+      editWorkspace: "Edit workspace fields",
+      timezone: "Timezone",
+      defaultCurrency: "Default currency",
+      billingManageUrl: "Billing manage URL",
+      siteName: "Site name",
+      tagline: "Tagline",
+      logoUrl: "Logo",
+      brandMark: "Brand mark",
+      contactEmail: "Contact email",
+      socialLinks: "Social links",
+      socialKey: "Key",
+      socialLabel: "Label",
+      socialUrl: "URL",
+      navLabels: "Navigation labels",
+      footerLinks: "Footer link groups",
+      footerGroupKey: "Group key",
+      footerGroupLabel: "Group label",
+      footerGroupLinks: "Links",
+      footerLinkKey: "Link key",
+      footerLinkHref: "Href",
+      footerLinkLabel: "Link label",
+      pageLabels: "Page labels",
+      formLabels: "Form labels",
+      authLabels: "Auth labels",
+      keyLabel: "Key",
+      valueLabel: "Value",
+      addRow: "Add row",
+      removeRow: "Remove",
+      howItWorks: "How it works",
+      forCompanies: "For companies",
+      pricing: "Pricing",
+      signIn: "Sign in",
+      headerCta: "Header CTA",
+      headerCtaHref: "Header CTA link",
+      about: "About",
+      careers: "Careers",
+      journal: "Journal",
+      browseRoles: "Browse roles",
+      credits: "Credits",
+      tracks: "Tracks",
+      requestTalent: "Request talent",
+      companySection: "Company section",
+      talentSection: "Talent section",
+      employersSection: "Employers section",
+      slug: "Slug",
+      eyebrow: "Eyebrow",
+      headline: "Headline",
+      body: "Body",
+      navLabel: "Nav label",
+      showInNav: "Show in nav",
+      description: "Description",
+      submitLabel: "Submit label",
+      successMessage: "Success message",
+      formFields: "Form fields",
+      fieldKey: "Field key",
+      fieldLabel: "Field label",
+      fieldType: "Field type",
+      fieldRequired: "Required",
+      fieldPlaceholder: "Placeholder",
+      fieldOptions: "Options (comma-separated)",
+      caseStudyQuote: "Case study quote",
+      caseStudyQuoteText: "Quote",
+      caseStudyCompany: "Company name",
+      caseStudyStat: "Result stat",
+    },
+    integrations: {
+      title: "Integrations",
+      empty: "No integrations configured",
+      connect: "Connect",
+      disconnect: "Disconnect",
+      connectTitle: "Connect integration",
+      cancel: "Cancel",
+      host: "Host",
+      apiKey: "API key",
+      stripeHint:
+        "Connect Stripe with live or test keys. Employer plans use monthly subscriptions with automatic card debit; student credit packs use one-time Checkout.",
+      stripeSecretKey: "Secret key (sk_…)",
+      stripePublishableKey: "Publishable key (pk_…)",
+      stripeWebhookSecret: "Webhook signing secret (whsec_…)",
+      stripeWebhookHelp:
+        "In Stripe Dashboard → Developers → Webhooks, add endpoint: {APP_URL}/api/webhooks/stripe — events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed",
+      stripeWebhookPath: "/api/webhooks/stripe",
+      sendgridHint:
+        "Connect SendGrid to send branded transactional email (signup, security, credits, billing).",
+      sendgridApiKey: "API key (SG.…)",
+      sendgridFromEmail: "From email (verified sender)",
+      sendgridFromName: "From name",
+      sendgridDefaultFromName: "NextGen Move",
+      sendgridHelp:
+        "Verify the from-address in SendGrid. Templates live in email_templates and use site branding from Site settings.",
     },
   },
 };
@@ -768,8 +1237,16 @@ const SITE_SETTINGS = {
   siteName: "",
   tagline: "",
   logoUrl: "",
+  brandMark: "",
   contactEmail: "",
-  socialLinks: {},
+  timezone: "",
+  defaultCurrency: "",
+  require2fa: false,
+  sessionExpireDays: 5,
+  operatorPlanLabel: "",
+  operatorPlanDetail: "",
+  billingManageUrl: "",
+  socialLinks: [] as unknown[],
   navLabels: emptyStrings(NAV_LABEL_KEYS),
   footerLinks: [] as unknown[],
   formLabels: {},
@@ -901,6 +1378,7 @@ async function seedProgramLevers(db: Firestore) {
     trackBMonthly: 125,
     placementFeeEur: existing.placementFeeEur ?? 350,
     creditsPerEuro: existing.creditsPerEuro ?? 4,
+    lowCreditThreshold: existing.lowCreditThreshold ?? 50,
     creditTopUpPackages: existingPackages.length
       ? existingPackages
       : [
@@ -953,6 +1431,81 @@ async function seedSiteSettings(db: Firestore) {
   console.log("  upserted site_settings/default (filled empty UI labels)");
 }
 
+async function seedIntegrations(db: Firestore) {
+  const integrations = [
+    {
+      id: "stripe",
+      name: "Stripe",
+      description:
+        "Subscriptions with automatic monthly debit + one-time credit top-ups. Paste sk_/pk_/whsec keys to go live.",
+      iconUrl: "",
+      status: "not_connected",
+      connectedAt: null,
+      config: {},
+    },
+    {
+      id: "sendgrid",
+      name: "SendGrid",
+      description:
+        "Branded transactional email — paste SG. API key + verified from address to go live.",
+      iconUrl: "",
+      status: "not_connected",
+      connectedAt: null,
+      config: {},
+    },
+    {
+      id: "twilio",
+      name: "Twilio",
+      description: "SMS alerts for urgent notifications.",
+      iconUrl: "",
+      status: "not_connected",
+      connectedAt: null,
+      config: {},
+    },
+  ];
+
+  for (const item of integrations) {
+    const ref = db.collection("integrations").doc(item.id);
+    const snap = await ref.get();
+    if (snap.exists) {
+      console.log(`  skip integrations/${item.id} (already exists)`);
+      continue;
+    }
+    await ref.set(stripUndefined(item));
+    console.log(`  created integrations/${item.id}`);
+  }
+}
+
+async function seedEmailTemplates(db: Firestore) {
+  for (const template of EMAIL_TEMPLATES) {
+    const ref = db.collection("email_templates").doc(template.id);
+    const snap = await ref.get();
+    if (snap.exists) {
+      // Fill empty subject/body only — do not overwrite admin edits
+      const existing = snap.data() ?? {};
+      const patch: Record<string, unknown> = {};
+      if (!existing.subject) patch.subject = template.subject;
+      if (!existing.htmlBody) patch.htmlBody = template.htmlBody;
+      if (!existing.textBody) patch.textBody = template.textBody;
+      if (existing.preferenceKey === undefined) {
+        patch.preferenceKey = template.preferenceKey;
+      }
+      if (!existing.category) patch.category = template.category;
+      if (existing.enabled === undefined) patch.enabled = true;
+      if (!existing.name) patch.name = template.name;
+      if (Object.keys(patch).length) {
+        await ref.set(stripUndefined(patch), { merge: true });
+        console.log(`  filled email_templates/${template.id}`);
+      } else {
+        console.log(`  skip email_templates/${template.id}`);
+      }
+      continue;
+    }
+    await ref.set(stripUndefined({ ...template }));
+    console.log(`  created email_templates/${template.id}`);
+  }
+}
+
 async function seedPipelineStages(db: Firestore) {
   for (const stage of PIPELINE_STAGES) {
     const ref = db.collection("pipeline_stages").doc(stage.id);
@@ -993,7 +1546,13 @@ async function main() {
   console.log("\n5. Site settings (UI labels)");
   await seedSiteSettings(db);
 
-  console.log("\n6. Pipeline stages");
+  console.log("\n6. Integrations shells");
+  await seedIntegrations(db);
+
+  console.log("\n7. Email templates");
+  await seedEmailTemplates(db);
+
+  console.log("\n8. Pipeline stages");
   await seedPipelineStages(db);
 
   console.log("\nSeed complete.");

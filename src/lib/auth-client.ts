@@ -9,6 +9,31 @@ export interface SessionResponse {
   redirectTo: string;
 }
 
+export interface RegisterStudentProfile {
+  fullName: string;
+  phone?: string;
+  sector: string;
+  seniority: string;
+  currentCity: string;
+  targetCities: string[];
+  bio?: string;
+  skills?: string[];
+  availability?: string;
+  linkedinUrl?: string;
+  portfolioUrl?: string;
+  referralCode?: string;
+}
+
+export interface RegisterCompanyProfile {
+  companyName: string;
+  contactName: string;
+  phone?: string;
+  industry: string;
+  website?: string;
+  preferredLocations: string[];
+  hiringNeeds?: string;
+}
+
 export async function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
 }
@@ -41,8 +66,12 @@ export async function registerAccount(input: {
   email: string;
   password: string;
   role: "company" | "student";
-  displayName?: string;
-}): Promise<{ uid: string }> {
+  consentRequired: true;
+  consentMarketing?: boolean;
+  consentRequiredAt?: string;
+  student?: RegisterStudentProfile;
+  company?: RegisterCompanyProfile;
+}): Promise<{ uid: string; role: "company" | "student"; nextStep: string }> {
   const response = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -56,5 +85,9 @@ export async function registerAccount(input: {
     throw new Error(payload?.error ?? "register_failed");
   }
 
-  return response.json() as Promise<{ uid: string }>;
+  return response.json() as Promise<{
+    uid: string;
+    role: "company" | "student";
+    nextStep: string;
+  }>;
 }

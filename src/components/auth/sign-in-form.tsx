@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button, Input } from "@/components/ui";
 import { establishSession, signInWithEmail } from "@/lib/auth-client";
+import { resolvePostAuthRedirect } from "@/lib/auth/constants";
 import type { AuthLabels } from "@/types/user";
 
 export interface SignInFormProps {
@@ -29,8 +30,7 @@ export function SignInForm({ labels }: SignInFormProps) {
       const idToken = await credential.user.getIdToken();
       const session = await establishSession(idToken);
       const nextPath = searchParams.get("next");
-
-      router.push(nextPath ?? session.redirectTo);
+      router.push(resolvePostAuthRedirect(session.role, nextPath));
       router.refresh();
     } catch {
       setErrorCode("sign_in_failed");
@@ -77,6 +77,19 @@ export function SignInForm({ labels }: SignInFormProps) {
           {labels.signInSubmitLabel}
         </Button>
       </form>
+
+      {labels.forgotPasswordLinkLabel ? (
+        <Link
+          href="/forgot-password"
+          className="text-sm text-text-secondary hover:text-text-primary"
+        >
+          {labels.forgotPasswordLinkLabel}
+        </Link>
+      ) : (
+        <Link href="/forgot-password" className="text-sm text-text-secondary">
+          Forgot password?
+        </Link>
+      )}
 
       {labels.signUpLinkLabel ? (
         <Link href="/sign-up" className="text-sm text-text-secondary hover:text-text-primary">

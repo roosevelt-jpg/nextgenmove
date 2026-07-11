@@ -233,14 +233,25 @@ export function StudentSettingsView({
                     setTopUpStatus(null);
                     const response = await fetch("/api/student/credits/top-up", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Idempotency-Key": crypto.randomUUID(),
+                      },
                       body: JSON.stringify({ packageId: pack.id }),
                     });
-                    setTopUpStatus(
-                      response.ok
-                        ? (labels.topUpRequested ?? "")
-                        : (labels.topUpFailed ?? ""),
-                    );
+                    if (!response.ok) {
+                      setTopUpStatus(labels.topUpFailed ?? "");
+                      return;
+                    }
+                    const payload = (await response.json()) as {
+                      mode?: string;
+                      url?: string;
+                    };
+                    if (payload.mode === "stripe" && payload.url) {
+                      window.location.href = payload.url;
+                      return;
+                    }
+                    setTopUpStatus(labels.topUpRequested ?? "");
                   }}
                 >
                   {labels.topUpAction ?? "Request"}

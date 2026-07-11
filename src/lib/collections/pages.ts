@@ -11,6 +11,8 @@ import type {
   PageTracksDocument,
   ProgramLeversDocument,
   PublicRoleDocument,
+  PodcastEpisodeDocument,
+  VideoCardDocument,
 } from "@/types/cms";
 
 export async function getPageHome(): Promise<PageHomeDocument | null> {
@@ -19,6 +21,56 @@ export async function getPageHome(): Promise<PageHomeDocument | null> {
     return (snapshot.data() as PageHomeDocument | undefined) ?? null;
   } catch {
     return null;
+  }
+}
+
+export async function getLiveVideoCards(): Promise<VideoCardDocument[]> {
+  try {
+    const snapshot = await adminDb
+      .collection("video_cards")
+      .where("status", "==", "live")
+      .get();
+    const items = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: String(data.title ?? ""),
+        subtitle: String(data.subtitle ?? ""),
+        videoUrl: String(data.videoUrl ?? ""),
+        duration: String(data.duration ?? ""),
+        thumbnailUrl: String(data.thumbnailUrl ?? ""),
+        position: Number(data.position ?? 0),
+        status: (data.status as VideoCardDocument["status"]) ?? "draft",
+      };
+    });
+    return items.sort((a, b) => a.position - b.position);
+  } catch {
+    return [];
+  }
+}
+
+export async function getLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]> {
+  try {
+    const snapshot = await adminDb
+      .collection("podcast_episodes")
+      .where("status", "==", "live")
+      .get();
+    const items = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        episodeNumber: Number(data.episodeNumber ?? 0),
+        title: String(data.title ?? ""),
+        guestName: String(data.guestName ?? ""),
+        duration: String(data.duration ?? ""),
+        audioUrl: String(data.audioUrl ?? ""),
+        description: String(data.description ?? ""),
+        status: (data.status as PodcastEpisodeDocument["status"]) ?? "draft",
+      };
+    });
+    return items.sort((a, b) => b.episodeNumber - a.episodeNumber);
+  } catch {
+    return [];
   }
 }
 

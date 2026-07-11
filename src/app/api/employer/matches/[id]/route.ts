@@ -102,6 +102,7 @@ export async function PATCH(
     }
 
     let stageIsTerminal = false;
+    let stageName = "";
 
     if (body.stageId) {
       const stageSnapshot = await adminDb
@@ -114,6 +115,7 @@ export async function PATCH(
       }
 
       stageIsTerminal = Boolean(stageSnapshot.data()?.isTerminal);
+      stageName = String(stageSnapshot.data()?.name ?? body.stageId);
     }
 
     await adminDb
@@ -129,6 +131,14 @@ export async function PATCH(
           updatedAt: FieldValue.serverTimestamp(),
         }),
       );
+
+    if (body.stageId && stageName) {
+      const { notifyMatchUpdate } = await import("@/lib/email/notify");
+      void notifyMatchUpdate({
+        studentId: String(match.studentId),
+        stageName,
+      });
+    }
 
     // Placement fee tracking when a match reaches a terminal stage.
     if (body.stageId && stageIsTerminal) {

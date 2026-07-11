@@ -6,7 +6,8 @@ import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Button, DataTable, EmptyState, Input, Modal, Tabs, Textarea } from "@/components/ui";
 
-type CrmTab = "companies" | "students";
+type CrmTab = "contacts" | "companies" | "students";
+type DealStage = "new" | "contacted" | "qualified" | "won";
 
 interface CrmRow extends Record<string, unknown> {
   id: string;
@@ -18,6 +19,13 @@ interface CrmRow extends Record<string, unknown> {
   subscriptionStatus?: string;
   status?: string;
   sector?: string;
+  type?: string;
+  stage?: string;
+  owner?: string;
+  lastActivity?: string | null;
+  value?: string;
+  sourceId?: string;
+  sourceCollection?: string;
 }
 
 interface ActivityItem {
@@ -27,23 +35,59 @@ interface ActivityItem {
   createdAt: string | null;
 }
 
+interface CrmStats {
+  totalContacts: number;
+  openDeals: number;
+  activeCompanies: number;
+  newLeads7d: number;
+}
+
 interface AdminCrmViewProps {
   labels: Record<string, string>;
   formLabels: Record<string, string>;
   taxonomies: TaxonomiesDocument;
 }
 
+const DEAL_STAGES: DealStage[] = ["new", "contacted", "qualified", "won"];
+
 export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewProps) {
-  const [tab, setTab] = useState<CrmTab>("companies");
+  const [tab, setTab] = useState<CrmTab>("contacts");
   const [rows, setRows] = useState<CrmRow[]>([]);
+  const [contacts, setContacts] = useState<CrmRow[]>([]);
+  const [deals, setDeals] = useState<Record<DealStage, CrmRow[]>>({
+    new: [],
+    contacted: [],
+    qualified: [],
+    won: [],
+  });
+  const [stats, setStats] = useState<CrmStats>({
+    totalContacts: 0,
+    openDeals: 0,
+    activeCompanies: 0,
+    newLeads7d: 0,
+  });
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CrmRow | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [note, setNote] = useState("");
   const [editOpen, setEditOpen] = useState(false);
+  const [entityTab, setEntityTab] = useState<"companies" | "students">("companies");
 
-  const loadRows = async (nextTab: CrmTab) => {
+  const loadOverview = async () => {
+    const response = await fetch("/api/admin/crm/overview");
+    if (!response.ok) return;
+    const payload = (await response.json()) as {
+      stats: CrmStats;
+      deals: Record<DealStage, CrmRow[]>;
+      contacts: CrmRow[];
+    };
+    setStats(payload.stats);
+    setDeals(payload.deals);
+    setContacts(payload.contacts);
+  };
+
+  const loadRows = async (nextTab: "companies" | "students") => {
     const response = await fetch(`/api/admin/crm/${nextTab}`);
     if (response.ok) {
       const payload = (await response.json()) as { items: CrmRow[] };
@@ -52,17 +96,21 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   };
 
   useEffect(() => {
-    void loadRows(tab);
+    if (tab === "contacts") {
+      void loadOverview();
+    } else {
+      setEntityTab(tab);
+      void loadRows(tab);
+    }
   }, [tab]);
+
+  const tableRows = tab === "contacts" ? contacts : rows;
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
+    if (!query) return tableRows;
 
-    if (!query) {
-      return rows;
-    }
-
-    return rows.filter((row) => {
+    return tableRows.filter((row) => {
       const haystack = [
         row.name,
         row.fullName,
@@ -71,6 +119,10 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         row.plan,
         row.status,
         row.subscriptionStatus,
+        row.type,
+        row.stage,
+        row.owner,
+        row.value,
       ]
         .filter(Boolean)
         .join(" ")
@@ -78,11 +130,13 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
 
       return haystack.includes(query);
     });
-  }, [rows, search]);
+  }, [tableRows, search]);
 
-  const openDetail = async (id: string) => {
+  const openDetail = async (id: string, collection?: "companies" | "students") => {
+    const target = collection ?? entityTab;
     setSelectedId(id);
-    const response = await fetch(`/api/admin/crm/${tab}/${id}`);
+    setEntityTab(target);
+    const response = await fetch(`/api/admin/crm/${target}/${id}`);
 
     if (response.ok) {
       const payload = (await response.json()) as {
@@ -94,25 +148,46 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
     }
   };
 
-  const runAction = async (action: string, extra?: Record<string, unknown>) => {
-    if (!selectedId) {
+  const openContact = (row: CrmRow) => {
+    if (row.sourceCollection === "companies" && row.sourceId) {
+      void openDetail(row.sourceId, "companies");
       return;
     }
+    if (row.sourceCollection === "students" && row.sourceId) {
+      void openDetail(row.sourceId, "students");
+    }
+  };
 
-    const response = await fetch(`/api/admin/crm/${tab}/${selectedId}`, {
+  const runAction = async (action: string, extra?: Record<string, unknown>) => {
+    if (!selectedId) return;
+
+    const response = await fetch(`/api/admin/crm/${entityTab}/${selectedId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, ...extra }),
     });
 
     if (response.ok) {
-      await openDetail(selectedId);
-      await loadRows(tab);
+      await openDetail(selectedId, entityTab);
+      if (tab === "contacts") {
+        await loadOverview();
+      } else {
+        await loadRows(tab);
+      }
     }
   };
 
+  const moveDeal = async (companyId: string, dealStage: DealStage) => {
+    await fetch(`/api/admin/crm/companies/${companyId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "set_deal_stage", dealStage }),
+    });
+    await loadOverview();
+  };
+
   const columns =
-    tab === "companies"
+    tab === "contacts"
       ? [
           {
             key: "name" as const,
@@ -121,55 +196,161 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
             render: (row: CrmRow) => (
               <button
                 type="button"
-                className="text-left text-text-accent hover:underline"
-                onClick={() => openDetail(row.id)}
+                className="text-left font-medium text-text-accent hover:underline"
+                onClick={() => openContact(row)}
               >
                 {String(row.name ?? row.id)}
               </button>
             ),
           },
-          { key: "contactEmail" as const, header: labels.email, sortable: true },
-          { key: "plan" as const, header: labels.plan, sortable: true },
+          { key: "type" as const, header: labels.typeColumn, sortable: true },
+          { key: "stage" as const, header: labels.stageColumn, sortable: true },
+          { key: "owner" as const, header: labels.ownerColumn, sortable: true },
           {
-            key: "subscriptionStatus" as const,
-            header: labels.status,
+            key: "lastActivity" as const,
+            header: labels.lastActivityColumn,
             sortable: true,
           },
+          { key: "value" as const, header: labels.valueColumn, sortable: true },
         ]
-      : [
-          {
-            key: "fullName" as const,
-            header: labels.name,
-            sortable: true,
-            render: (row: CrmRow) => (
-              <button
-                type="button"
-                className="text-left text-text-accent hover:underline"
-                onClick={() => openDetail(row.id)}
-              >
-                {String(row.fullName ?? row.id)}
-              </button>
-            ),
-          },
-          { key: "email" as const, header: labels.email, sortable: true },
-          { key: "sector" as const, header: labels.sector, sortable: true },
-          { key: "status" as const, header: labels.status, sortable: true },
-        ];
+      : tab === "companies"
+        ? [
+            {
+              key: "name" as const,
+              header: labels.name,
+              sortable: true,
+              render: (row: CrmRow) => (
+                <button
+                  type="button"
+                  className="text-left text-text-accent hover:underline"
+                  onClick={() => openDetail(row.id, "companies")}
+                >
+                  {String(row.name ?? row.id)}
+                </button>
+              ),
+            },
+            { key: "contactEmail" as const, header: labels.email, sortable: true },
+            { key: "plan" as const, header: labels.plan, sortable: true },
+            {
+              key: "subscriptionStatus" as const,
+              header: labels.status,
+              sortable: true,
+            },
+          ]
+        : [
+            {
+              key: "fullName" as const,
+              header: labels.name,
+              sortable: true,
+              render: (row: CrmRow) => (
+                <button
+                  type="button"
+                  className="text-left text-text-accent hover:underline"
+                  onClick={() => openDetail(row.id, "students")}
+                >
+                  {String(row.fullName ?? row.id)}
+                </button>
+              ),
+            },
+            { key: "email" as const, header: labels.email, sortable: true },
+            { key: "sector" as const, header: labels.sector, sortable: true },
+            { key: "status" as const, header: labels.status, sortable: true },
+          ];
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="space-y-2">
+        {labels.eyebrow ? (
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-accent">
+            {labels.eyebrow}
+          </p>
+        ) : null}
         <h1 className="font-serif text-3xl text-text-primary">{labels.title}</h1>
+        {labels.subtitle ? (
+          <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>
+        ) : null}
       </header>
 
       <Tabs
         activeTabId={tab}
         onTabChange={(nextTab) => setTab(nextTab as CrmTab)}
         tabs={[
+          { id: "contacts", label: labels.contactsTab, content: null },
           { id: "companies", label: labels.companiesTab, content: null },
           { id: "students", label: labels.studentsTab, content: null },
         ]}
       />
+
+      {tab === "contacts" ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label={labels.statTotalContacts}
+              value={String(stats.totalContacts)}
+            />
+            <StatCard label={labels.statOpenDeals} value={String(stats.openDeals)} />
+            <StatCard
+              label={labels.statActiveCompanies}
+              value={String(stats.activeCompanies)}
+            />
+            <StatCard label={labels.statNewLeads} value={String(stats.newLeads7d)} />
+          </div>
+
+          {labels.dealPipelineTitle ? (
+            <h2 className="font-medium text-text-primary">{labels.dealPipelineTitle}</h2>
+          ) : null}
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {DEAL_STAGES.map((stage) => (
+              <div
+                key={stage}
+                className="rounded-radius border border-border bg-surface-2 p-3"
+              >
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  {(labels[`dealStage_${stage}`] ?? stage).toUpperCase()} ·{" "}
+                  {deals[stage].length}
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {deals[stage].map((deal) => (
+                    <li
+                      key={deal.id}
+                      className="rounded-radius border border-border bg-surface-1 p-3"
+                    >
+                      <button
+                        type="button"
+                        className="w-full text-left"
+                        onClick={() => openContact(deal)}
+                      >
+                        <p className="text-sm font-semibold text-text-primary">
+                          {deal.name}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {deal.value}
+                        </p>
+                      </button>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {DEAL_STAGES.filter((s) => s !== stage).map((next) => (
+                          <button
+                            key={next}
+                            type="button"
+                            className="rounded-radius-sm bg-bg px-2 py-0.5 text-[10px] uppercase text-text-muted hover:text-text-primary"
+                            onClick={() => void moveDeal(deal.id, next)}
+                          >
+                            → {labels[`dealStage_${next}`] ?? next}
+                          </button>
+                        ))}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {labels.contactsTableTitle ? (
+            <h2 className="font-medium text-text-primary">{labels.contactsTableTitle}</h2>
+          ) : null}
+        </>
+      ) : null}
 
       <Input
         id="crm-search"
@@ -207,7 +388,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 <dt className="text-text-muted">{labels.status}</dt>
                 <dd>{String(detail.subscriptionStatus ?? detail.status ?? "")}</dd>
               </div>
-              {tab === "companies" ? (
+              {entityTab === "companies" ? (
                 <div>
                   <dt className="text-text-muted">{labels.plan}</dt>
                   <dd>{String(detail.plan ?? labels.noPlan)}</dd>
@@ -216,7 +397,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
             </dl>
 
             <div className="flex flex-wrap gap-2">
-              {tab === "companies" ? (
+              {entityTab === "companies" ? (
                 <>
                   <Button
                     variant="outline"
@@ -287,19 +468,35 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         <AdminEntityModal
           open={editOpen}
           onClose={() => setEditOpen(false)}
-          schema={ENTITY_SCHEMAS[tab]!}
+          schema={ENTITY_SCHEMAS[entityTab]!}
           entityId={detail.id}
           initialValues={detail}
           labels={formLabels}
           taxonomies={taxonomies}
           onSaved={() => {
-            void loadRows(tab);
+            if (tab === "contacts") {
+              void loadOverview();
+            } else {
+              void loadRows(tab);
+            }
             if (selectedId) {
-              void openDetail(selectedId);
+              void openDetail(selectedId, entityTab);
             }
           }}
         />
       ) : null}
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label?: string; value: string }) {
+  if (!label) return null;
+  return (
+    <div className="rounded-radius border border-border bg-surface-1 p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-text-muted">
+        {label}
+      </p>
+      <p className="mt-1 font-serif text-2xl text-text-primary">{value}</p>
     </div>
   );
 }

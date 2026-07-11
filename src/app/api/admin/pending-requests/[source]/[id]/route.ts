@@ -8,6 +8,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/admin/session";
 import { applyCreditDelta } from "@/lib/credits/ledger";
+import { canTransitionPlanRequest } from "@/lib/credits/pure";
 import { computeMatchScore } from "@/lib/matching/score";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
@@ -61,6 +62,14 @@ export async function POST(
           : body.action === "reject"
             ? "dismissed"
             : "reviewed";
+
+      const currentStatus = String(data.status ?? "pending");
+      if (!canTransitionPlanRequest(currentStatus, nextStatus)) {
+        return NextResponse.json(
+          { error: "invalid_status_transition" },
+          { status: 409 },
+        );
+      }
 
       await ref.update(
         stripUndefined({

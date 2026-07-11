@@ -7,9 +7,9 @@ export const ROLE_COOKIE_NAME = "__ngm_role";
 export const SESSION_EXPIRES_IN_MS = 60 * 60 * 24 * 5 * 1000;
 
 export const PORTAL_HOME: Record<UserRole, string> = {
-  admin: "/admin",
-  company: "/employer",
-  student: "/student",
+  admin: "/admin/dashboard",
+  company: "/employer/dashboard",
+  student: "/student/dashboard",
 };
 
 export const ROUTE_ROLE: Record<string, UserRole> = {
@@ -35,5 +35,28 @@ export function getRequiredRoleForPath(pathname: string): UserRole | null {
 }
 
 export function isAuthPath(pathname: string): boolean {
-  return pathname === "/sign-in" || pathname === "/sign-up";
+  return (
+    pathname === "/sign-in" ||
+    pathname === "/sign-up" ||
+    pathname === "/forgot-password"
+  );
+}
+
+/** Only allow post-login `next` paths that belong to the signed-in role. */
+export function resolvePostAuthRedirect(
+  role: UserRole,
+  nextPath: string | null | undefined,
+): string {
+  const home = PORTAL_HOME[role];
+  if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
+    return home;
+  }
+
+  const pathname = nextPath.split("?")[0] ?? nextPath;
+  const required = getRequiredRoleForPath(pathname);
+  if (required !== role) {
+    return home;
+  }
+
+  return nextPath;
 }

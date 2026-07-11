@@ -12,7 +12,8 @@ export type AdminFieldType =
   | "image"
   | "file"
   | "object"
-  | "repeatable";
+  | "repeatable"
+  | "keyvalue";
 
 export interface AdminFieldSchema {
   key: string;
@@ -45,6 +46,11 @@ export const ADMIN_COLLECTIONS = [
   "page_pricing",
   "page_tracks",
   "site_settings",
+  "cms_pages",
+  "cms_forms",
+  "email_templates",
+  "video_cards",
+  "podcast_episodes",
 ] as const;
 
 export type AdminCollection = (typeof ADMIN_COLLECTIONS)[number];
@@ -58,10 +64,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
     collection: "companies",
     fields: [
       { key: "name", type: "text", labelKey: "name", required: true },
+      { key: "contactName", type: "text", labelKey: "contactName" },
       { key: "contactEmail", type: "text", labelKey: "contactEmail", required: true },
       { key: "industry", type: "text", labelKey: "industry" },
       { key: "website", type: "text", labelKey: "website" },
       { key: "logoUrl", type: "image", labelKey: "logoUrl" },
+      { key: "hiringNeeds", type: "textarea", labelKey: "hiringNeeds" },
       {
         key: "plan",
         type: "select",
@@ -167,6 +175,9 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "ctaSecondaryHref", type: "text", labelKey: "ctaSecondaryHref" },
       { key: "hubLabel", type: "text", labelKey: "hubLabel" },
       { key: "currentRoutesLabel", type: "text", labelKey: "currentRoutesLabel" },
+      { key: "globalReachEyebrow", type: "text", labelKey: "globalReachEyebrow" },
+      { key: "globalReachHeadline", type: "text", labelKey: "globalReachHeadline" },
+      { key: "globalReachBody", type: "textarea", labelKey: "globalReachBody" },
       {
         key: "boardingPass",
         type: "object",
@@ -201,6 +212,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       },
       { key: "itineraryEyebrow", type: "text", labelKey: "itineraryEyebrow" },
       { key: "itineraryHeadline", type: "text", labelKey: "itineraryHeadline" },
+      { key: "storiesEyebrow", type: "text", labelKey: "storiesEyebrow" },
+      { key: "storiesHeadline", type: "text", labelKey: "storiesHeadline" },
+      { key: "storiesManagedLabel", type: "text", labelKey: "storiesManagedLabel" },
+      { key: "podcastEyebrow", type: "text", labelKey: "podcastEyebrow" },
+      { key: "podcastHeadline", type: "text", labelKey: "podcastHeadline" },
+      { key: "podcastManagedLabel", type: "text", labelKey: "podcastManagedLabel" },
       {
         key: "steps",
         type: "repeatable",
@@ -346,6 +363,16 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
           { key: "trackBValue", type: "text", labelKey: "trackBValue" },
         ],
       },
+      {
+        key: "caseStudyQuote",
+        type: "object",
+        labelKey: "caseStudyQuote",
+        fields: [
+          { key: "quote", type: "textarea", labelKey: "caseStudyQuoteText" },
+          { key: "companyName", type: "text", labelKey: "caseStudyCompany" },
+          { key: "resultStat", type: "text", labelKey: "caseStudyStat" },
+        ],
+      },
     ],
   },
   site_settings: {
@@ -355,7 +382,25 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "siteName", type: "text", labelKey: "siteName" },
       { key: "tagline", type: "text", labelKey: "tagline" },
       { key: "logoUrl", type: "image", labelKey: "logoUrl" },
+      { key: "brandMark", type: "text", labelKey: "brandMark" },
       { key: "contactEmail", type: "text", labelKey: "contactEmail" },
+      { key: "timezone", type: "text", labelKey: "timezone" },
+      { key: "defaultCurrency", type: "text", labelKey: "defaultCurrency" },
+      { key: "require2fa", type: "boolean", labelKey: "require2fa" },
+      { key: "sessionExpireDays", type: "number", labelKey: "sessionExpireDays" },
+      { key: "operatorPlanLabel", type: "text", labelKey: "operatorPlanLabel" },
+      { key: "operatorPlanDetail", type: "text", labelKey: "operatorPlanDetail" },
+      { key: "billingManageUrl", type: "text", labelKey: "billingManageUrl" },
+      {
+        key: "socialLinks",
+        type: "repeatable",
+        labelKey: "socialLinks",
+        fields: [
+          { key: "key", type: "text", labelKey: "socialKey" },
+          { key: "label", type: "text", labelKey: "socialLabel" },
+          { key: "url", type: "text", labelKey: "socialUrl" },
+        ],
+      },
       {
         key: "navLabels",
         type: "object",
@@ -380,6 +425,102 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
           { key: "employersSection", type: "text", labelKey: "employersSection" },
         ],
       },
+      {
+        key: "footerLinks",
+        type: "repeatable",
+        labelKey: "footerLinks",
+        fields: [
+          { key: "key", type: "text", labelKey: "footerGroupKey" },
+          { key: "label", type: "text", labelKey: "footerGroupLabel" },
+          {
+            key: "links",
+            type: "repeatable",
+            labelKey: "footerGroupLinks",
+            fields: [
+              { key: "key", type: "text", labelKey: "footerLinkKey" },
+              { key: "href", type: "text", labelKey: "footerLinkHref" },
+              { key: "label", type: "text", labelKey: "footerLinkLabel" },
+            ],
+          },
+        ],
+      },
+      { key: "pageLabels", type: "keyvalue", labelKey: "pageLabels" },
+      { key: "formLabels", type: "keyvalue", labelKey: "formLabels" },
+      { key: "authLabels", type: "keyvalue", labelKey: "authLabels" },
+    ],
+  },
+  cms_pages: {
+    collection: "cms_pages",
+    fields: [
+      { key: "title", type: "text", labelKey: "title", required: true },
+      { key: "slug", type: "text", labelKey: "slug", required: true },
+      { key: "eyebrow", type: "text", labelKey: "eyebrow" },
+      { key: "headline", type: "text", labelKey: "headline" },
+      { key: "body", type: "richtext", labelKey: "body" },
+      { key: "navLabel", type: "text", labelKey: "navLabel" },
+      { key: "showInNav", type: "boolean", labelKey: "showInNav" },
+      { key: "status", type: "select", labelKey: "status" },
+    ],
+  },
+  cms_forms: {
+    collection: "cms_forms",
+    fields: [
+      { key: "title", type: "text", labelKey: "title", required: true },
+      { key: "slug", type: "text", labelKey: "slug", required: true },
+      { key: "description", type: "textarea", labelKey: "description" },
+      { key: "submitLabel", type: "text", labelKey: "submitLabel" },
+      { key: "successMessage", type: "text", labelKey: "successMessage" },
+      {
+        key: "fields",
+        type: "repeatable",
+        labelKey: "formFields",
+        fields: [
+          { key: "key", type: "text", labelKey: "fieldKey", required: true },
+          { key: "label", type: "text", labelKey: "fieldLabel", required: true },
+          { key: "type", type: "select", labelKey: "fieldType" },
+          { key: "required", type: "boolean", labelKey: "fieldRequired" },
+          { key: "placeholder", type: "text", labelKey: "fieldPlaceholder" },
+          { key: "options", type: "text", labelKey: "fieldOptions" },
+        ],
+      },
+      { key: "status", type: "select", labelKey: "status" },
+    ],
+  },
+  email_templates: {
+    collection: "email_templates",
+    fields: [
+      { key: "name", type: "text", labelKey: "name", required: true },
+      { key: "description", type: "textarea", labelKey: "description" },
+      { key: "subject", type: "text", labelKey: "subject", required: true },
+      { key: "htmlBody", type: "textarea", labelKey: "htmlBody", required: true },
+      { key: "textBody", type: "textarea", labelKey: "textBody", required: true },
+      { key: "preferenceKey", type: "text", labelKey: "preferenceKey" },
+      { key: "category", type: "text", labelKey: "category" },
+      { key: "enabled", type: "boolean", labelKey: "enabled" },
+    ],
+  },
+  video_cards: {
+    collection: "video_cards",
+    fields: [
+      { key: "title", type: "text", labelKey: "title", required: true },
+      { key: "subtitle", type: "text", labelKey: "subtitle" },
+      { key: "videoUrl", type: "text", labelKey: "videoUrl", required: true },
+      { key: "duration", type: "text", labelKey: "duration" },
+      { key: "thumbnailUrl", type: "image", labelKey: "thumbnailUrl" },
+      { key: "position", type: "number", labelKey: "position" },
+      { key: "status", type: "select", labelKey: "status" },
+    ],
+  },
+  podcast_episodes: {
+    collection: "podcast_episodes",
+    fields: [
+      { key: "episodeNumber", type: "number", labelKey: "episodeNumber", required: true },
+      { key: "title", type: "text", labelKey: "title", required: true },
+      { key: "guestName", type: "text", labelKey: "guestName" },
+      { key: "duration", type: "text", labelKey: "duration" },
+      { key: "audioUrl", type: "text", labelKey: "audioUrl", required: true },
+      { key: "description", type: "textarea", labelKey: "description" },
+      { key: "status", type: "select", labelKey: "status" },
     ],
   },
 };
@@ -394,6 +535,10 @@ export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
   articles: { status: "status_article" },
   public_roles: { status: "status_role" },
   content_items: { status: "status_content", type: "type_content" },
+  cms_pages: { status: "status_cms" },
+  cms_forms: { status: "status_cms" },
+  video_cards: { status: "status_content" },
+  podcast_episodes: { status: "status_content" },
 };
 
 export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
@@ -423,6 +568,16 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
     { value: "draft", label: "draft" },
     { value: "live", label: "live" },
     { value: "archived", label: "archived" },
+  ],
+  status_cms: [
+    { value: "draft", label: "draft" },
+    { value: "published", label: "published" },
+  ],
+  fieldType: [
+    { value: "text", label: "text" },
+    { value: "email", label: "email" },
+    { value: "textarea", label: "textarea" },
+    { value: "select", label: "select" },
   ],
   type_content: [
     { value: "video", label: "video" },

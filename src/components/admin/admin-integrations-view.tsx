@@ -21,6 +21,11 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [connectItem, setConnectItem] = useState<IntegrationItem | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [configHost, setConfigHost] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [publishableKey, setPublishableKey] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [fromEmail, setFromEmail] = useState("");
+  const [fromName, setFromName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const load = async () => {
@@ -35,6 +40,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     void load();
   }, []);
 
+  const isStripe = connectItem?.id === "stripe";
+  const isSendGrid = connectItem?.id === "sendgrid";
+
   const connect = async () => {
     if (!connectItem) {
       return;
@@ -42,13 +50,38 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
 
     setIsSaving(true);
 
+    const body = isStripe
+      ? {
+          config: {
+            publishableKey,
+            webhookUrl: labels.stripeWebhookPath ?? "/api/webhooks/stripe",
+          },
+          secrets: {
+            ...(secretKey ? { secretKey } : {}),
+            ...(webhookSecret ? { webhookSecret } : {}),
+            ...(publishableKey ? { publishableKey } : {}),
+          },
+        }
+      : isSendGrid
+        ? {
+            config: {
+              fromEmail,
+              fromName: fromName || labels.sendgridDefaultFromName || "NextGen Move",
+            },
+            secrets: {
+              ...(apiKey ? { apiKey } : {}),
+              ...(fromEmail ? { fromEmail } : {}),
+            },
+          }
+        : {
+            config: { host: configHost },
+            secrets: apiKey ? { apiKey } : undefined,
+          };
+
     const response = await fetch(`/api/admin/integrations/${connectItem.id}/connect`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        config: { host: configHost },
-        secrets: apiKey ? { apiKey } : undefined,
-      }),
+      body: JSON.stringify(body),
     });
 
     setIsSaving(false);
@@ -57,6 +90,11 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       setConnectItem(null);
       setApiKey("");
       setConfigHost("");
+      setSecretKey("");
+      setPublishableKey("");
+      setWebhookSecret("");
+      setFromEmail("");
+      setFromName("");
       await load();
     }
   };
@@ -70,6 +108,12 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     <div className="space-y-6">
       <header>
         <h1 className="font-serif text-3xl text-text-primary">{labels.title}</h1>
+        {labels.stripeHint ? (
+          <p className="mt-2 max-w-2xl text-sm text-text-secondary">{labels.stripeHint}</p>
+        ) : null}
+        {labels.sendgridHint ? (
+          <p className="mt-2 max-w-2xl text-sm text-text-secondary">{labels.sendgridHint}</p>
+        ) : null}
       </header>
 
       {items.length === 0 ? (
@@ -114,19 +158,75 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
         }
       >
         <div className="space-y-4">
-          <Input
-            id="integration-host"
-            label={labels.host}
-            value={configHost}
-            onChange={(event) => setConfigHost(event.target.value)}
-          />
-          <Input
-            id="integration-api-key"
-            type="password"
-            label={labels.apiKey}
-            value={apiKey}
-            onChange={(event) => setApiKey(event.target.value)}
-          />
+          {isStripe ? (
+            <>
+              <Input
+                id="stripe-secret"
+                type="password"
+                label={labels.stripeSecretKey ?? "Secret key (sk_…)"}
+                value={secretKey}
+                onChange={(event) => setSecretKey(event.target.value)}
+              />
+              <Input
+                id="stripe-publishable"
+                label={labels.stripePublishableKey ?? "Publishable key (pk_…)"}
+                value={publishableKey}
+                onChange={(event) => setPublishableKey(event.target.value)}
+              />
+              <Input
+                id="stripe-webhook"
+                type="password"
+                label={labels.stripeWebhookSecret ?? "Webhook signing secret (whsec_…)"}
+                value={webhookSecret}
+                onChange={(event) => setWebhookSecret(event.target.value)}
+              />
+              {labels.stripeWebhookHelp ? (
+                <p className="text-xs text-text-muted">{labels.stripeWebhookHelp}</p>
+              ) : null}
+            </>
+          ) : isSendGrid ? (
+            <>
+              <Input
+                id="sendgrid-api-key"
+                type="password"
+                label={labels.sendgridApiKey ?? "API key (SG.…)"}
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+              />
+              <Input
+                id="sendgrid-from-email"
+                type="email"
+                label={labels.sendgridFromEmail ?? "From email"}
+                value={fromEmail}
+                onChange={(event) => setFromEmail(event.target.value)}
+              />
+              <Input
+                id="sendgrid-from-name"
+                label={labels.sendgridFromName ?? "From name"}
+                value={fromName}
+                onChange={(event) => setFromName(event.target.value)}
+              />
+              {labels.sendgridHelp ? (
+                <p className="text-xs text-text-muted">{labels.sendgridHelp}</p>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Input
+                id="integration-host"
+                label={labels.host}
+                value={configHost}
+                onChange={(event) => setConfigHost(event.target.value)}
+              />
+              <Input
+                id="integration-api-key"
+                type="password"
+                label={labels.apiKey}
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+              />
+            </>
+          )}
         </div>
       </Modal>
     </div>

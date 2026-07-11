@@ -5,7 +5,8 @@ import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const applySchema = z.object({
-  jobPostingId: z.string().min(1),
+  jobPostingId: z.string().min(1).nullable().optional(),
+  isGeneral: z.boolean().optional(),
   fullName: z.string().trim().min(1),
   email: z.string().email(),
   linkedinUrl: z.string().trim().optional().nullable(),
@@ -16,13 +17,17 @@ const applySchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = applySchema.parse(await request.json());
-    const jobSnapshot = await adminDb
-      .collection("job_postings")
-      .doc(body.jobPostingId)
-      .get();
+    const isGeneral = Boolean(body.isGeneral) || !body.jobPostingId;
 
-    if (!jobSnapshot.exists || jobSnapshot.data()?.status !== "open") {
-      return NextResponse.json({ error: "job_not_found" }, { status: 404 });
+    if (!isGeneral && body.jobPostingId) {
+      const jobSnapshot = await adminDb
+        .collection("job_postings")
+        .doc(body.jobPostingId)
+        .get();
+
+      if (!jobSnapshot.exists || jobSnapshot.data()?.status !== "open") {
+        return NextResponse.json({ error: "job_not_found" }, { status: 404 });
+      }
     }
 
     const applicationRef = adminDb.collection("job_applications").doc();
@@ -30,7 +35,8 @@ export async function POST(request: Request) {
     await applicationRef.set(
       stripUndefined({
         id: applicationRef.id,
-        jobPostingId: body.jobPostingId,
+        jobPostingId: isGeneral ? null : body.jobPostingId,
+        isGeneral,
         fullName: body.fullName,
         email: body.email,
         linkedinUrl: body.linkedinUrl ?? null,

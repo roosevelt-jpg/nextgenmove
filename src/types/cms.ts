@@ -62,8 +62,18 @@ export interface PageHomeDocument {
   originCities?: OriginCity[];
   currentRoutesLabel?: string;
   boardingPass?: BoardingPassFields;
+  globalReachEyebrow?: string;
+  globalReachHeadline?: string;
+  globalReachBody?: string;
+  corridorChips?: string[];
   itineraryEyebrow?: string;
   itineraryHeadline?: string;
+  storiesEyebrow?: string;
+  storiesHeadline?: string;
+  storiesManagedLabel?: string;
+  podcastEyebrow?: string;
+  podcastHeadline?: string;
+  podcastManagedLabel?: string;
   testimonialQuote?: string;
   testimonialAttribution?: string;
   testimonialBadge?: string;
@@ -71,6 +81,28 @@ export interface PageHomeDocument {
   companyCta?: AudienceCtaBand;
   statBlocks?: StatBlock[];
   steps?: StepItem[];
+}
+
+export interface VideoCardDocument {
+  id: string;
+  title: string;
+  subtitle: string;
+  videoUrl: string;
+  duration: string;
+  thumbnailUrl: string;
+  position: number;
+  status: "draft" | "live" | "archived";
+}
+
+export interface PodcastEpisodeDocument {
+  id: string;
+  episodeNumber: number;
+  title: string;
+  guestName: string;
+  duration: string;
+  audioUrl: string;
+  description: string;
+  status: "draft" | "live" | "archived";
 }
 
 export interface PageAboutDocument {
@@ -151,12 +183,63 @@ export interface FooterGroup {
   links: FooterLink[];
 }
 
+export interface SocialLink {
+  key: string;
+  label?: string;
+  url: string;
+}
+
+export interface CmsPageDocument {
+  id: string;
+  slug: string;
+  title: string;
+  eyebrow?: string;
+  headline?: string;
+  body?: string;
+  status: "draft" | "published";
+  showInNav?: boolean;
+  navLabel?: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface CmsFormField {
+  key: string;
+  label: string;
+  type: "text" | "email" | "textarea" | "select";
+  required?: boolean;
+  options?: string;
+  placeholder?: string;
+}
+
+export interface CmsFormDocument {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  submitLabel?: string;
+  successMessage?: string;
+  fields?: CmsFormField[];
+  status: "draft" | "published";
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
 export interface SiteSettingsDocument {
   siteName?: string;
   tagline?: string;
   logoUrl?: string;
   contactEmail?: string;
-  socialLinks?: Record<string, string>;
+  /** Brand mark when logo image is empty — e.g. "NG" */
+  brandMark?: string;
+  timezone?: string;
+  defaultCurrency?: string;
+  require2fa?: boolean;
+  sessionExpireDays?: number;
+  operatorPlanLabel?: string;
+  operatorPlanDetail?: string;
+  billingManageUrl?: string;
+  socialLinks?: SocialLink[];
   navLabels?: NavLabels;
   footerLinks?: FooterGroup[];
   formLabels?: Record<string, string>;
@@ -170,6 +253,7 @@ export interface SiteSettingsDocument {
   studentNotificationKeys?: string[];
   adminNavLabels?: Record<string, string>;
   adminPageLabels?: Record<string, Record<string, string>>;
+  adminNotificationKeys?: string[];
 }
 
 export interface TaxonomyOption {

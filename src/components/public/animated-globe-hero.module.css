@@ -99,6 +99,45 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+.boardingPass {
+  margin-top: 1.25rem;
+  max-width: 20rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(255, 253, 248, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.85rem 1rem;
+}
+
+.boardingRoute {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--brand-amber-1);
+  margin: 0 0 0.65rem;
+}
+
+.boardingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.75rem;
+  margin: 0;
+}
+
+.boardingGrid dt {
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-hero-muted);
+  margin: 0;
+}
+
+.boardingGrid dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
 /* —— Animated globe —— */
 
 .globeWrap {

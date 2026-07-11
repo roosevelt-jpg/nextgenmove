@@ -95,6 +95,94 @@ export function AdminFieldRenderer({
     );
   }
 
+  if (field.type === "keyvalue") {
+    const record =
+      value && typeof value === "object" && !Array.isArray(value)
+        ? (value as Record<string, string>)
+        : {};
+    const rows = Object.entries(record).map(([entryKey, entryValue]) => ({
+      key: entryKey,
+      value: entryValue,
+    }));
+
+    return (
+      <fieldset className="space-y-3 rounded-radius border border-border p-3">
+        {label ? (
+          <legend className="text-sm font-medium text-text-secondary">{label}</legend>
+        ) : null}
+        {rows.map((row, index) => (
+          <div
+            key={`${row.key}-${index}`}
+            className="grid gap-2 rounded-radius bg-surface-2 p-3 sm:grid-cols-[1fr_1fr_auto]"
+          >
+            <Input
+              id={`${field.key}-key-${index}`}
+              label={labels.keyLabel ?? "key"}
+              value={row.key}
+              onChange={(event) => {
+                const nextRows = [...rows];
+                nextRows[index] = { ...row, key: event.target.value };
+                const nextRecord: Record<string, string> = {};
+                for (const item of nextRows) {
+                  if (item.key.trim()) {
+                    nextRecord[item.key.trim()] = item.value ?? "";
+                  }
+                }
+                onChange(setNestedValue(values, field.key, nextRecord));
+              }}
+            />
+            <Input
+              id={`${field.key}-value-${index}`}
+              label={labels.valueLabel ?? "value"}
+              value={row.value}
+              onChange={(event) => {
+                const nextRows = [...rows];
+                nextRows[index] = { ...row, value: event.target.value };
+                const nextRecord: Record<string, string> = {};
+                for (const item of nextRows) {
+                  if (item.key.trim()) {
+                    nextRecord[item.key.trim()] = item.value ?? "";
+                  }
+                }
+                onChange(setNestedValue(values, field.key, nextRecord));
+              }}
+            />
+            <button
+              type="button"
+              className="self-end text-xs text-text-warning"
+              onClick={() => {
+                const nextRows = rows.filter((_, rowIndex) => rowIndex !== index);
+                const nextRecord: Record<string, string> = {};
+                for (const item of nextRows) {
+                  if (item.key.trim()) {
+                    nextRecord[item.key.trim()] = item.value ?? "";
+                  }
+                }
+                onChange(setNestedValue(values, field.key, nextRecord));
+              }}
+            >
+              {labels.removeRow}
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="text-xs text-text-accent"
+          onClick={() => {
+            onChange(
+              setNestedValue(values, field.key, {
+                ...record,
+                [`new_key_${rows.length + 1}`]: "",
+              }),
+            );
+          }}
+        >
+          {labels.addRow}
+        </button>
+      </fieldset>
+    );
+  }
+
   if (field.type === "repeatable" && field.fields) {
     const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 

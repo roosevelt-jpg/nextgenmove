@@ -8,6 +8,8 @@ import {
 } from "@/lib/admin/session";
 import { z } from "zod";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { revokeUserSessions } from "@/lib/security/session-revoke";
+import { logger } from "@/lib/observability/logger";
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   const output: Record<string, unknown> = { id: id === data.uid ? id : id };
@@ -67,6 +69,7 @@ export async function PATCH(request: Request) {
 
     if (body.action === "suspend") {
       await ref.update(stripUndefined({ status: "suspended" }));
+      await revokeUserSessions(body.userId, "admin_suspend");
     }
 
     if (body.action === "activate") {
@@ -89,7 +92,9 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
 
-    console.error("users_patch_failed", error);
+    logger.error("users_patch_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json({ error: "update_failed" }, { status: 500 });
   }
 }

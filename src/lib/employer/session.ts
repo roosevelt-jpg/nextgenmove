@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+import {
+  assertCompanyOwnsResource,
+  TenantBoundaryError,
+} from "@/lib/security/tenant-boundary";
 import type { CurrentUser } from "@/types/user";
 
 export interface CompanyDocument {
@@ -13,6 +17,11 @@ export interface CompanyDocument {
   website: string | null;
   plan: "track_a" | "track_b" | null;
   subscriptionStatus: "active" | "inactive" | "pending";
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  billingProvider?: string | null;
+  contactName?: string | null;
+  hiringNeeds?: string | null;
   requirements: CompanyRequirement[];
   preferredLocations?: string[];
   requirementTags?: string[];
@@ -61,6 +70,11 @@ export async function getEmployerSession(): Promise<EmployerSession | null> {
       website: data.website ?? null,
       plan: data.plan ?? null,
       subscriptionStatus: data.subscriptionStatus ?? "pending",
+      stripeCustomerId: data.stripeCustomerId ?? null,
+      stripeSubscriptionId: data.stripeSubscriptionId ?? null,
+      billingProvider: data.billingProvider ?? null,
+      contactName: data.contactName ?? null,
+      hiringNeeds: data.hiringNeeds ?? null,
       requirements: data.requirements ?? [],
       preferredLocations: data.preferredLocations ?? [],
       requirementTags: data.requirementTags ?? [],
@@ -90,8 +104,13 @@ export async function verifyMatchOwnership(
 
   const data = matchSnapshot.data()!;
 
-  if (data.companyId !== companyId) {
-    return null;
+  try {
+    assertCompanyOwnsResource(String(data.companyId ?? ""), companyId);
+  } catch (error) {
+    if (error instanceof TenantBoundaryError) {
+      return null;
+    }
+    throw error;
   }
 
   return { id: matchSnapshot.id, ...data };

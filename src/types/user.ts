@@ -10,6 +10,8 @@ export interface UserDocument {
   role: UserRole;
   displayName: string;
   photoUrl: string | null;
+  phone?: string | null;
+  notificationPreferences?: Record<string, boolean>;
   createdAt: Timestamp;
   lastLoginAt: Timestamp | null;
   status: UserStatus;

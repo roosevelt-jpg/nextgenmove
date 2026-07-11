@@ -1,16 +1,33 @@
 import Link from "next/link";
 import { AnimatedGlobeHero } from "@/components/public/animated-globe-hero";
+import { HomeGlobalReachSection } from "@/components/public/home-global-reach-section";
+import { HomePodcastSection } from "@/components/public/home-podcast-section";
+import { HomeStoriesSection } from "@/components/public/home-stories-section";
 import { StatBlocksSection } from "@/components/public/stat-blocks-section";
 import { StepsSection } from "@/components/public/steps-section";
 import { SectionEyebrow } from "@/components/ui";
-import { getPageHome } from "@/lib/collections/pages";
+import {
+  getLivePodcastEpisodes,
+  getLiveVideoCards,
+  getPageHome,
+} from "@/lib/collections/pages";
 
 export default async function HomePage() {
-  const page = await getPageHome();
+  const [page, videoCards, podcastEpisodes] = await Promise.all([
+    getPageHome(),
+    getLiveVideoCards(),
+    getLivePodcastEpisodes(),
+  ]);
 
   return (
     <div>
       <AnimatedGlobeHero content={page} />
+
+      <section className="page-container pb-2 pt-6">
+        <StatBlocksSection statBlocks={page?.statBlocks} valueTone />
+      </section>
+
+      <HomeGlobalReachSection page={page} />
 
       {(page?.itineraryEyebrow ||
         page?.itineraryHeadline ||
@@ -30,12 +47,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="page-container pb-8">
-        <StatBlocksSection
-          statBlocks={page?.statBlocks}
-          valueTone
-        />
-      </section>
+      <HomeStoriesSection page={page} cards={videoCards} />
+      <HomePodcastSection page={page} episodes={podcastEpisodes} />
 
       {(page?.testimonialQuote || page?.testimonialAttribution) && (
         <section className="bg-surface-2">

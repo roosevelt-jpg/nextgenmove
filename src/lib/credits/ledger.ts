@@ -1,5 +1,6 @@
 import { FieldValue, type Firestore } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import { notifyLowCreditBalance } from "@/lib/email/notify";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 export type CreditDirection = "earn" | "spend";
@@ -12,6 +13,7 @@ export interface CreditGrantOptions {
   /** Skip if a transaction with this source already exists for the student */
   once?: boolean;
   db?: Firestore;
+  request?: Request;
 }
 
 /**
@@ -33,7 +35,7 @@ export async function applyCreditDelta(options: CreditGrantOptions): Promise<{
   const direction: CreditDirection = amount >= 0 ? "earn" : "spend";
   const absAmount = Math.abs(amount);
 
-  return db.runTransaction(async (transaction) => {
+  const result = await db.runTransaction(async (transaction) => {
     const studentRef = db.collection("students").doc(options.studentId);
     const studentSnap = await transaction.get(studentRef);
 
@@ -84,11 +86,36 @@ export async function applyCreditDelta(options: CreditGrantOptions): Promise<{
 
     return { applied: true, credits: next };
   });
+
+  if (result.applied && amount < 0) {
+    void maybeNotifyLowBalance(options.studentId, result.credits, options.request);
+  }
+
+  return result;
+}
+
+async function maybeNotifyLowBalance(
+  studentId: string,
+  credits: number,
+  request?: Request,
+) {
+  const snap = await adminDb.collection("program_levers").doc("default").get();
+  const threshold = Number(snap.data()?.lowCreditThreshold ?? 50);
+  if (!Number.isFinite(threshold) || credits > threshold) return;
+
+  await notifyLowCreditBalance({
+    studentId,
+    credits,
+    threshold,
+    request,
+  });
 }
 
 export async function getWayToEarnCredits(wayId: string): Promise<number> {
   const snap = await adminDb.collection("program_levers").doc("default").get();
-  const ways = (snap.data()?.waysToEarn as Array<{ id?: string; credits?: number }> | undefined) ?? [];
+  const ways =
+    (snap.data()?.waysToEarn as Array<{ id?: string; credits?: number }> | undefined) ??
+    [];
   const way = ways.find((item) => item.id === wayId);
   return typeof way?.credits === "number" ? way.credits : 0;
 }

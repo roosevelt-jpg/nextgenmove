@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    # Block merge on critical CVEs via GitHub Dependabot alerts + branch protection
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

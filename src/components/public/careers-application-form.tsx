@@ -6,44 +6,75 @@ import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload
 import type { JobPostingDocument } from "@/types/cms";
 
 export interface CareersApplicationFormProps {
-  job: JobPostingDocument;
+  jobs?: JobPostingDocument[];
+  /** When set, role is fixed (detail page). */
+  job?: JobPostingDocument;
   labels: Record<string, string>;
+  allowGeneral?: boolean;
 }
 
-export function CareersApplicationForm({ job, labels }: CareersApplicationFormProps) {
+const GENERAL_ID = "__general__";
+
+export function CareersApplicationForm({
+  jobs = [],
+  job,
+  labels,
+  allowGeneral = false,
+}: CareersApplicationFormProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [coverNote, setCoverNote] = useState("");
   const [cvUrl, setCvUrl] = useState("");
+  const [selectedJobId, setSelectedJobId] = useState(
+    job?.id ?? (allowGeneral ? GENERAL_ID : jobs[0]?.id ?? ""),
+  );
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const coverNoteLength = coverNote.length;
   const coverNoteMax = 500;
+  const roleLocked = Boolean(job);
 
-  const roleLabel = useMemo(
-    () => labels.roleApplyingFor ?? job.title,
-    [job.title, labels.roleApplyingFor],
-  );
+  const roleOptions = useMemo(() => {
+    const options = jobs.map((item) => ({
+      value: item.id,
+      label: item.title,
+    }));
+    if (allowGeneral) {
+      options.unshift({
+        value: GENERAL_ID,
+        label: labels.generalApplication ?? "General application",
+      });
+    }
+    return options;
+  }, [allowGeneral, jobs, labels.generalApplication]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorCode(null);
     setIsSubmitting(true);
 
+    const jobPostingId =
+      roleLocked && job
+        ? job.id
+        : selectedJobId === GENERAL_ID
+          ? null
+          : selectedJobId;
+
     try {
       const response = await fetch("/api/careers/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          jobPostingId: job.id,
+          jobPostingId,
           fullName,
           email,
           linkedinUrl,
           cvUrl,
           coverNote,
+          isGeneral: jobPostingId === null,
         }),
       });
 
@@ -68,6 +99,8 @@ export function CareersApplicationForm({ job, labels }: CareersApplicationFormPr
     ) : null;
   }
 
+  const storagePath = `careers/applications/${job?.id ?? (selectedJobId || "general")}`;
+
   return (
     <form className="flex max-w-xl flex-col gap-4" onSubmit={handleSubmit}>
       <Input
@@ -87,13 +120,24 @@ export function CareersApplicationForm({ job, labels }: CareersApplicationFormPr
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
-      <Input
-        id="careers-role"
-        readOnly
-        aria-label={roleLabel}
-        label={labels.roleApplyingFor}
-        value={job.title}
-      />
+      {roleLocked && job ? (
+        <Input
+          id="careers-role"
+          readOnly
+          aria-label={labels.roleApplyingFor ?? job.title}
+          label={labels.roleApplyingFor}
+          value={job.title}
+        />
+      ) : (
+        <Select
+          id="careers-role-select"
+          label={labels.roleApplyingFor}
+          required
+          value={selectedJobId}
+          options={roleOptions}
+          onChange={(event) => setSelectedJobId(event.target.value)}
+        />
+      )}
       <Input
         id="careers-linkedin"
         type="url"
@@ -103,7 +147,7 @@ export function CareersApplicationForm({ job, labels }: CareersApplicationFormPr
         onChange={(event) => setLinkedinUrl(event.target.value)}
       />
       <FileUpload
-        storagePath={`careers/applications/${job.id}`}
+        storagePath={storagePath}
         accept=".pdf,application/pdf"
         label={labels.cvUpload}
         dropzoneContent={labels.cvDropzone}

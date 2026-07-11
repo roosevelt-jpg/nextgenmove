@@ -11,6 +11,7 @@ import {
 import { computeMatchScore } from "@/lib/matching/score";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { revokeUserSessions } from "@/lib/security/session-revoke";
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   const output: Record<string, unknown> = { id };
@@ -33,10 +34,12 @@ const actionSchema = z.object({
     "activate",
     "add_note",
     "create_match",
+    "set_deal_stage",
   ]),
   plan: z.enum(["track_a", "track_b"]).nullable().optional(),
   note: z.string().optional(),
   companyId: z.string().min(1).optional(),
+  dealStage: z.enum(["new", "contacted", "qualified", "won"]).optional(),
   studentId: z.string().min(1).optional(),
   stageId: z.string().min(1).optional(),
 });
@@ -125,6 +128,15 @@ export async function POST(
       await ref.update(stripUndefined({ plan: body.plan ?? null }));
     }
 
+    if (body.action === "set_deal_stage" && type === "companies" && body.dealStage) {
+      await ref.update(
+        stripUndefined({
+          crmDealStage: body.dealStage,
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+      );
+    }
+
     if (body.action === "suspend") {
       const data = snapshot.data()!;
       const userId = data.userId as string | undefined;
@@ -134,6 +146,7 @@ export async function POST(
           .collection("users")
           .doc(userId)
           .update(stripUndefined({ status: "suspended" }));
+        await revokeUserSessions(userId, "crm_suspend");
       }
 
       if (type === "students") {

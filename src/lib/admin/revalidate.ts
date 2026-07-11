@@ -4,6 +4,8 @@ import { ENTITY_SCHEMAS, isAdminCollection } from "@/lib/admin/entity-schemas";
 const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
   program_levers: ["/pricing", "/tracks", "/credits", "/employer/profile"],
   page_home: ["/"],
+  video_cards: ["/"],
+  podcast_episodes: ["/"],
   page_about: ["/about"],
   page_how_it_works: ["/how-it-works"],
   page_pricing: ["/pricing"],
@@ -13,7 +15,22 @@ const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
   content_items: ["/credits", "/student/store"],
   public_roles: ["/careers-talent"],
   companies: ["/employer/profile"],
-  site_settings: ["/", "/about", "/pricing", "/how-it-works", "/credits", "/request-talent", "/careers-talent", "/journal", "/careers"],
+  site_settings: [
+    "/",
+    "/about",
+    "/pricing",
+    "/how-it-works",
+    "/credits",
+    "/request-talent",
+    "/careers-talent",
+    "/journal",
+    "/careers",
+    "/tracks",
+    "/sign-in",
+    "/sign-up",
+  ],
+  cms_pages: ["/pages"],
+  cms_forms: ["/forms"],
 };
 
 export function revalidateAdminCollection(collection: string) {

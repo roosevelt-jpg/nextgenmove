@@ -1,3 +1,4 @@
+import { CareersApplicationForm } from "@/components/public/careers-application-form";
 import { CareersList } from "@/components/public/careers-list";
 import { SectionEyebrow } from "@/components/ui";
 import { getOpenJobPostings } from "@/lib/collections/pages";
@@ -9,7 +10,7 @@ export default async function CareersPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="page-section space-y-6">
+    <div className="page-section space-y-10">
       <header className="max-w-2xl space-y-3">
         {pageLabels.careersEyebrow || pageLabels.careersTitle ? (
           <SectionEyebrow>
@@ -31,6 +32,19 @@ export default async function CareersPage() {
       </header>
 
       <CareersList jobs={jobs} labels={formLabels} />
+
+      <section id="apply" className="scroll-mt-24 space-y-4 border-t border-border pt-10">
+        {formLabels.applicationSectionTitle || pageLabels.careersApplyEyebrow ? (
+          <SectionEyebrow>
+            {formLabels.applicationSectionTitle ?? pageLabels.careersApplyEyebrow}
+          </SectionEyebrow>
+        ) : null}
+        <CareersApplicationForm
+          jobs={jobs}
+          labels={formLabels}
+          allowGeneral
+        />
+      </section>
     </div>
   );
 }

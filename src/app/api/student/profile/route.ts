@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import { syncLinkedProfile } from "@/lib/auth/profile-sync";
 import { applyCreditDelta, getWayToEarnCredits } from "@/lib/credits/ledger";
 import { stripUndefined } from "@/lib/stripUndefined";
 import {
@@ -74,7 +76,19 @@ export async function PATCH(request: Request) {
     await adminDb
       .collection("students")
       .doc(session.studentId)
-      .update(stripUndefined(body));
+      .update(
+        stripUndefined({
+          ...body,
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+      );
+
+    await syncLinkedProfile({
+      uid: session.studentId,
+      role: "student",
+      displayName: body.fullName,
+      photoUrl: body.photoUrl,
+    });
 
     const updated = await adminDb.collection("students").doc(session.studentId).get();
     const student = mapStudent(updated.id, updated.data()! as Record<string, unknown>);

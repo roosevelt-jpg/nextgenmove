@@ -1,0 +1,14 @@
+---
+description: Always refer to the Production Readiness Audit before shipping production-impacting work
+globs:
+alwaysApply: true
+---
+
+# Production readiness
+
+Before implementing or shipping work that touches auth, credits, payments, visas, PII, or admin levers:
+
+1. Read and follow `NextGenMove_Production_Readiness_Audit.md` at the project root.
+2. Prefer upgrading existing live paths — no duplicate demo systems, no fake seed entities.
+3. Keep the non-negotiable floor green: RBAC tests, structured logging, rate limits, secrets hygiene, CI, idempotent redeem/plan-request, backup runbook.
+4. Status checklist: `docs/ops/production-floor.md`.

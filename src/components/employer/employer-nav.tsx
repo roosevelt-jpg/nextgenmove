@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export interface EmployerNavLabels {
+  dashboard?: string;
   talentPool?: string;
   pipeline?: string;
   shortlist?: string;
@@ -13,6 +14,7 @@ export interface EmployerNavLabels {
 }
 
 const NAV_ITEMS = [
+  { key: "dashboard" as const, href: "/employer/dashboard" },
   { key: "talentPool" as const, href: "/employer/talent-pool" },
   { key: "pipeline" as const, href: "/employer/pipeline" },
   { key: "shortlist" as const, href: "/employer/shortlist" },
@@ -37,7 +39,9 @@ export function EmployerNav({ labels }: { labels: EmployerNavLabels }) {
         }
 
         const isActive =
-          pathname === item.href || pathname.startsWith(`${item.href}/`);
+          item.href === "/employer/dashboard"
+            ? pathname === "/employer/dashboard" || pathname === "/employer"
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
         return (
           <Link

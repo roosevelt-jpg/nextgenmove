@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { resolveFooterGroups } from "@/lib/public/nav";
@@ -7,26 +8,61 @@ export async function SiteFooter() {
   const navLabels = settings.navLabels ?? {};
   const groups = resolveFooterGroups(settings.footerLinks, navLabels);
   const siteName = settings.siteName ?? navLabels.siteName;
+  const brandMark = settings.brandMark ?? "";
+  const socialLinks = settings.socialLinks ?? [];
+  const contactEmail = settings.contactEmail?.trim() ?? "";
 
   return (
     <footer className="mt-auto border-t border-border bg-bg">
       <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
-            <span
-              aria-hidden
-              className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
-            >
-              NG
-            </span>
-            {siteName ? (
-              <span className="font-serif text-lg text-text-primary">
-                {siteName}
+            {settings.logoUrl ? (
+              <Image
+                src={settings.logoUrl}
+                alt={siteName ?? ""}
+                width={120}
+                height={36}
+                className="h-8 w-auto object-contain"
+              />
+            ) : brandMark ? (
+              <span
+                aria-hidden
+                className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-fill-accent font-sans text-xs font-semibold text-on-accent"
+              >
+                {brandMark}
               </span>
+            ) : null}
+            {siteName ? (
+              <span className="font-serif text-lg text-text-primary">{siteName}</span>
             ) : null}
           </div>
           {settings.tagline ? (
             <p className="text-sm text-text-secondary">{settings.tagline}</p>
+          ) : null}
+          {contactEmail ? (
+            <a
+              href={`mailto:${contactEmail}`}
+              className="block text-sm text-text-secondary hover:text-text-primary"
+            >
+              {contactEmail}
+            </a>
+          ) : null}
+          {socialLinks.length > 0 ? (
+            <ul className="flex flex-wrap gap-3 pt-1">
+              {socialLinks.map((link) => (
+                <li key={link.key}>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-medium text-text-accent hover:text-text-primary"
+                  >
+                    {link.label || link.key}
+                  </a>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
 

@@ -151,6 +151,44 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /idempotency_keys/{docId} {
+      allow read, write: if false;
+    }
+
+    match /rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
+    match /consent_records/{docId} {
+      allow read, write: if false;
+    }
+
+    match /form_submissions/{docId} {
+      allow read, write: if false;
+    }
+
+    match /stripe_webhook_events/{docId} {
+      allow read, write: if false;
+    }
+
+    match /email_templates/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /email_sends/{docId} {
+      allow read, write: if false;
+    }
+
+    match /cms_pages/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'published';
+      allow write: if isAdmin();
+    }
+
+    match /cms_forms/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'published';
+      allow write: if isAdmin();
+    }
+
     // ── integrations ──────────────────────────────────────────────────────
 
     match /integrations/{docId} {
@@ -170,6 +208,16 @@ service cloud.firestore {
     }
 
     match /content_items/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'live';
+      allow write: if isAdmin();
+    }
+
+    match /video_cards/{docId} {
+      allow read: if isAdmin() || resource.data.status == 'live';
+      allow write: if isAdmin();
+    }
+
+    match /podcast_episodes/{docId} {
       allow read: if isAdmin() || resource.data.status == 'live';
       allow write: if isAdmin();
     }
