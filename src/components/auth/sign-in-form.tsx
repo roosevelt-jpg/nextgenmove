@@ -26,14 +26,27 @@ export function SignInForm({ labels }: SignInFormProps) {
     setIsSubmitting(true);
 
     try {
-      const credential = await signInWithEmail(email, password);
+      const credential = await signInWithEmail(email.trim(), password);
       const idToken = await credential.user.getIdToken();
       const session = await establishSession(idToken);
       const nextPath = searchParams.get("next");
       router.push(resolvePostAuthRedirect(session.role, nextPath));
       router.refresh();
-    } catch {
-      setErrorCode("sign_in_failed");
+    } catch (error) {
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? String((error as { code?: string }).code ?? "")
+          : "";
+      const message =
+        error instanceof Error ? error.message : "sign_in_failed";
+      // Surface Firebase / session codes so production failures are diagnosable.
+      if (code.startsWith("auth/")) {
+        setErrorCode(code);
+      } else if (message && message !== "sign_in_failed") {
+        setErrorCode(message);
+      } else {
+        setErrorCode("sign_in_failed");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -48,8 +61,9 @@ export function SignInForm({ labels }: SignInFormProps) {
       <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <Input
           id="sign-in-email"
-          type="email"
-          autoComplete="email"
+          type="text"
+          inputMode="email"
+          autoComplete="username"
           required
           aria-label={labels.emailLabel ?? "email"}
           label={labels.emailLabel}
@@ -69,7 +83,9 @@ export function SignInForm({ labels }: SignInFormProps) {
 
         {errorCode ? (
           <p className="text-sm text-text-warning" role="alert">
-            {labels[errorCode as keyof AuthLabels] ?? labels.genericErrorLabel}
+            {labels[errorCode as keyof AuthLabels] ??
+              errorCode ??
+              labels.genericErrorLabel}
           </p>
         ) : null}
 

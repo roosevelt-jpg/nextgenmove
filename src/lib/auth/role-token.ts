@@ -18,10 +18,13 @@ function getSessionSecret(): Uint8Array {
 }
 
 export async function signRoleToken(payload: RoleTokenPayload): Promise<string> {
+  const expiresAtSec =
+    Math.floor(Date.now() / 1000) + Math.floor(SESSION_EXPIRES_IN_MS / 1000);
+
   return new SignJWT({ uid: payload.uid, role: payload.role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_EXPIRES_IN_MS}ms`)
+    .setExpirationTime(expiresAtSec)
     .sign(getSessionSecret());
 }
 
