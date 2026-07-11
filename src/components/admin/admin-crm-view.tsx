@@ -20,6 +20,7 @@ interface CrmRow extends Record<string, unknown> {
   subscriptionStatus?: string;
   status?: string;
   sector?: string;
+  credits?: number;
   type?: string;
   stage?: string;
   owner?: string;
@@ -33,6 +34,16 @@ interface ActivityItem {
   id: string;
   action: string;
   actorId: string;
+  createdAt: string | null;
+}
+
+interface CreditTxItem {
+  id: string;
+  direction: string;
+  amount: number;
+  source: string;
+  sourceKey: string;
+  sourceLabel: string;
   createdAt: string | null;
 }
 
@@ -71,6 +82,9 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CrmRow | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [creditTransactions, setCreditTransactions] = useState<CreditTxItem[]>(
+    [],
+  );
   const [note, setNote] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [entityTab, setEntityTab] = useState<"companies" | "students">("companies");
@@ -184,9 +198,11 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
       const payload = (await response.json()) as {
         item: CrmRow;
         activity: ActivityItem[];
+        creditTransactions?: CreditTxItem[];
       };
       setDetail(payload.item);
       setActivity(payload.activity);
+      setCreditTransactions(payload.creditTransactions ?? []);
     }
   };
 
@@ -531,6 +547,15 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 formatJoined(row.dateJoined ?? row.createdAt),
             },
             { key: "sector" as const, header: labels.sector, sortable: true },
+            {
+              key: "credits" as const,
+              header: labels.credits ?? "Credits",
+              sortable: true,
+              render: (row: CrmRow) =>
+                Number.isFinite(Number(row.credits))
+                  ? Number(row.credits).toLocaleString()
+                  : "0",
+            },
             { key: "status" as const, header: labels.status, sortable: true },
           ];
 
@@ -656,6 +681,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
           setSelectedId(null);
           setDetail(null);
           setActivity([]);
+          setCreditTransactions([]);
           setNote("");
           setLeadMode(false);
           setActionMessage(null);
@@ -719,6 +745,16 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 <div>
                   <dt className="text-text-muted">{labels.plan}</dt>
                   <dd>{String(detail.plan ?? labels.noPlan)}</dd>
+                </div>
+              ) : null}
+              {entityTab === "students" && !leadMode ? (
+                <div>
+                  <dt className="text-text-muted">{labels.credits ?? "Credits"}</dt>
+                  <dd className="font-mono font-semibold text-fill-accent">
+                    {Number.isFinite(Number(detail.credits))
+                      ? Number(detail.credits).toLocaleString()
+                      : "0"}
+                  </dd>
                 </div>
               ) : null}
               {entityTab === "students" && !leadMode && detail.workExperience ? (
@@ -1002,6 +1038,49 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 {labels.saveNote}
               </Button>
             </div>
+
+            {entityTab === "students" && !leadMode ? (
+              <div>
+                <h3 className="mb-2 font-medium text-text-primary">
+                  {labels.creditHistoryTitle ?? "Credit history"}
+                </h3>
+                {creditTransactions.length === 0 ? (
+                  <EmptyState
+                    title={labels.creditHistoryEmpty ?? "No credit transactions"}
+                  />
+                ) : (
+                  <ul className="divide-y divide-border overflow-hidden rounded-radius border border-border text-sm">
+                    {creditTransactions.map((tx) => (
+                      <li
+                        key={tx.id}
+                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-text-primary">
+                            {labels[tx.sourceKey] ?? tx.sourceLabel}
+                          </p>
+                          {tx.createdAt ? (
+                            <p className="text-xs text-text-muted">
+                              {new Date(tx.createdAt).toLocaleString()}
+                            </p>
+                          ) : null}
+                        </div>
+                        <p
+                          className={
+                            tx.direction === "earn"
+                              ? "font-mono font-semibold text-text-success"
+                              : "font-mono font-semibold text-fill-accent"
+                          }
+                        >
+                          {tx.direction === "earn" ? "+" : "−"}
+                          {tx.amount.toLocaleString()}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : null}
 
             <div>
               <h3 className="mb-2 font-medium text-text-primary">{labels.activityTitle}</h3>

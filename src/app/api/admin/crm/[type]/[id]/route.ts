@@ -12,6 +12,10 @@ import { computeMatchScore } from "@/lib/matching/score";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { revokeUserSessions } from "@/lib/security/session-revoke";
+import {
+  creditSourceLabelKey,
+  defaultCreditSourceLabel,
+} from "@/lib/credits/source-labels";
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   const output: Record<string, unknown> = { id };
@@ -83,6 +87,9 @@ export async function GET(
     item.contactPhone = userPhone;
   }
   item.dateJoined = item.createdAt ?? null;
+  if (type === "students" && item.credits === undefined) {
+    item.credits = 0;
+  }
 
   const activitySnapshot = await adminDb
     .collection("activity_log")
@@ -105,9 +112,50 @@ export async function GET(
       };
     }) ?? [];
 
+  let creditTransactions: Array<{
+    id: string;
+    direction: string;
+    amount: number;
+    source: string;
+    sourceKey: string;
+    sourceLabel: string;
+    createdAt: string | null;
+  }> = [];
+
+  if (type === "students") {
+    const txSnap = await adminDb
+      .collection("credit_transactions")
+      .where("studentId", "==", id)
+      .get()
+      .catch(() => null);
+
+    creditTransactions =
+      txSnap?.docs
+        .map((doc) => {
+          const data = doc.data();
+          const source = String(data.source ?? "");
+          return {
+            id: doc.id,
+            direction: data.direction === "spend" ? "spend" : "earn",
+            amount: Number(data.amount ?? 0),
+            source,
+            sourceKey: creditSourceLabelKey(source),
+            sourceLabel: defaultCreditSourceLabel(source),
+            createdAt: serializeTimestamp(data.createdAt),
+          };
+        })
+        .sort((a, b) => {
+          const at = a.createdAt ? Date.parse(a.createdAt) : 0;
+          const bt = b.createdAt ? Date.parse(b.createdAt) : 0;
+          return bt - at;
+        })
+        .slice(0, 20) ?? [];
+  }
+
   return NextResponse.json({
     item,
     activity,
+    creditTransactions,
   });
 }
 
