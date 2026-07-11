@@ -17,7 +17,7 @@ import {
   resolveHomeStatBlocks,
 } from "@/lib/public/home-stats";
 
-export const revalidate = 60;
+export const revalidate = 30;
 
 export default async function HomePage() {
   const [page, videoCards, podcastEpisodes] = await Promise.all([
@@ -26,9 +26,9 @@ export default async function HomePage() {
     getLivePodcastEpisodes(),
   ]);
 
-  const metrics = await getPublicHomeMetrics(page?.originCities?.length ?? 0);
-  const statBlocks = resolveHomeStatBlocks(page?.statBlocks, metrics);
-  const testimonialBadge = applyCurrentYearToken(page?.testimonialBadge);
+  const metrics = await getPublicHomeMetrics(page.originCities?.length ?? 0);
+  const statBlocks = resolveHomeStatBlocks(page.statBlocks, metrics);
+  const testimonialBadge = applyCurrentYearToken(page.testimonialBadge);
 
   return (
     <div className="overflow-x-hidden">
@@ -40,28 +40,28 @@ export default async function HomePage() {
 
       <HomeGlobalReachSection page={page} />
 
-      {(page?.itineraryEyebrow ||
-        page?.itineraryHeadline ||
-        page?.steps?.length) && (
+      {(page.itineraryEyebrow ||
+        page.itineraryHeadline ||
+        page.steps?.length) && (
         <section className="page-section space-y-5">
           <div className="space-y-2">
-            {page?.itineraryEyebrow ? (
+            {page.itineraryEyebrow ? (
               <SectionEyebrow>{page.itineraryEyebrow}</SectionEyebrow>
             ) : null}
-            {page?.itineraryHeadline ? (
+            {page.itineraryHeadline ? (
               <h2 className="font-serif text-2xl text-text-primary md:text-3xl">
                 {page.itineraryHeadline}
               </h2>
             ) : null}
           </div>
-          <StepsSection steps={page?.steps} />
+          <StepsSection steps={page.steps} />
         </section>
       )}
 
       <HomeStoriesSection page={page} cards={videoCards} />
       <HomePodcastSection page={page} episodes={podcastEpisodes} />
 
-      {(page?.testimonialQuote || page?.testimonialAttribution) && (
+      {(page.testimonialQuote || page.testimonialAttribution) && (
         <section className="bg-surface-2">
           <div className="page-container py-8 sm:py-10">
             <blockquote className="relative pr-0 sm:pr-28">
@@ -70,12 +70,12 @@ export default async function HomePage() {
                   {testimonialBadge}
                 </span>
               ) : null}
-              {page?.testimonialQuote ? (
+              {page.testimonialQuote ? (
                 <p className="max-w-3xl font-serif text-lg leading-snug text-text-primary sm:text-xl md:text-2xl">
                   “{page.testimonialQuote}”
                 </p>
               ) : null}
-              {page?.testimonialAttribution ? (
+              {page.testimonialAttribution ? (
                 <footer className="mt-4 text-sm text-text-secondary">
                   {page.testimonialAttribution}
                 </footer>
@@ -86,9 +86,9 @@ export default async function HomePage() {
       )}
 
       <HomeAudienceCtaSection
-        talentCta={page?.talentCta}
-        companyCta={page?.companyCta}
-        rolesCta={page?.rolesCta}
+        talentCta={page.talentCta}
+        companyCta={page.companyCta}
+        rolesCta={page.rolesCta}
       />
     </div>
   );

@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import { serializeTimestamp } from "@/lib/firestore-utils";
@@ -16,115 +15,111 @@ import type {
   PodcastEpisodeDocument,
   VideoCardDocument,
 } from "@/types/cms";
+import { cachedPublicCms } from "@/lib/public/cms-cache";
+import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
 
-const PUBLIC_REVALIDATE_SECONDS = 60;
+async function loadPageHome(): Promise<PageHomeDocument> {
+  const snapshot = await adminDb.collection("page_home").doc("default").get();
+  const data = snapshot.data() as PageHomeDocument | undefined;
+  if (!data) {
+    throw new Error("page_home_missing");
+  }
 
-async function readPageHome(): Promise<PageHomeDocument | null> {
-  try {
-    const snapshot = await adminDb.collection("page_home").doc("default").get();
-    const data = snapshot.data() as PageHomeDocument | undefined;
-    if (!data) return null;
+  // Admin repeatable fields may store { chip: "…" } — always expose strings to UI.
+  const corridorChips = Array.isArray(data.corridorChips)
+    ? data.corridorChips
+        .map((item) => {
+          if (typeof item === "string") return item.trim();
+          if (item && typeof item === "object" && "chip" in item) {
+            return String(item.chip ?? "").trim();
+          }
+          return "";
+        })
+        .filter(Boolean)
+    : undefined;
 
-    // Admin repeatable fields may store { chip: "…" } — always expose strings to UI.
-    const corridorChips = Array.isArray(data.corridorChips)
-      ? data.corridorChips
-          .map((item) => {
-            if (typeof item === "string") return item.trim();
-            if (item && typeof item === "object" && "chip" in item) {
-              return String(item.chip ?? "").trim();
-            }
-            return "";
-          })
-          .filter(Boolean)
-      : undefined;
+  return {
+    ...data,
+    ...(corridorChips ? { corridorChips } : {}),
+  };
+}
 
+function isValidPageHome(value: PageHomeDocument): boolean {
+  return Boolean(
+    value.headline?.trim() ||
+      value.headlineEmphasis?.trim() ||
+      value.eyebrowText?.trim(),
+  );
+}
+
+export const getPageHome = cache(async () =>
+  cachedPublicCms({
+    key: ["page-home-default"],
+    tags: ["page_home", "public-cms"],
+    load: loadPageHome,
+    isValid: isValidPageHome,
+    fallback: FALLBACK_PAGE_HOME,
+  }),
+);
+
+async function loadLiveVideoCards(): Promise<VideoCardDocument[]> {
+  const snapshot = await adminDb
+    .collection("video_cards")
+    .where("status", "==", "live")
+    .get();
+  const items = snapshot.docs.map((doc) => {
+    const data = doc.data();
     return {
-      ...data,
-      ...(corridorChips ? { corridorChips } : {}),
+      id: doc.id,
+      title: String(data.title ?? ""),
+      subtitle: String(data.subtitle ?? ""),
+      videoUrl: String(data.videoUrl ?? ""),
+      duration: String(data.duration ?? ""),
+      thumbnailUrl: String(data.thumbnailUrl ?? ""),
+      position: Number(data.position ?? 0),
+      status: (data.status as VideoCardDocument["status"]) ?? "draft",
     };
-  } catch {
-    return null;
-  }
+  });
+  return items.sort((a, b) => a.position - b.position);
 }
 
-const getPageHomeCached = unstable_cache(
-  async () => readPageHome(),
-  ["page-home-default"],
-  { revalidate: PUBLIC_REVALIDATE_SECONDS, tags: ["page_home", "public-cms"] },
-);
-
-export const getPageHome = cache(async () => getPageHomeCached());
-
-async function readLiveVideoCards(): Promise<VideoCardDocument[]> {
+export const getLiveVideoCards = cache(async () => {
   try {
-    const snapshot = await adminDb
-      .collection("video_cards")
-      .where("status", "==", "live")
-      .get();
-    const items = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: String(data.title ?? ""),
-        subtitle: String(data.subtitle ?? ""),
-        videoUrl: String(data.videoUrl ?? ""),
-        duration: String(data.duration ?? ""),
-        thumbnailUrl: String(data.thumbnailUrl ?? ""),
-        position: Number(data.position ?? 0),
-        status: (data.status as VideoCardDocument["status"]) ?? "draft",
-      };
-    });
-    return items.sort((a, b) => a.position - b.position);
+    return await loadLiveVideoCards();
   } catch {
     return [];
   }
+});
+
+async function loadLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]> {
+  const snapshot = await adminDb
+    .collection("podcast_episodes")
+    .where("status", "==", "live")
+    .get();
+  const items = snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      episodeNumber: Number(data.episodeNumber ?? 0),
+      title: String(data.title ?? ""),
+      guestName: String(data.guestName ?? ""),
+      duration: String(data.duration ?? ""),
+      audioUrl: String(data.audioUrl ?? ""),
+      description: String(data.description ?? ""),
+      status: (data.status as PodcastEpisodeDocument["status"]) ?? "draft",
+    };
+  });
+  return items.sort((a, b) => b.episodeNumber - a.episodeNumber);
 }
 
-const getLiveVideoCardsCached = unstable_cache(
-  async () => readLiveVideoCards(),
-  ["video-cards-live"],
-  { revalidate: PUBLIC_REVALIDATE_SECONDS, tags: ["video_cards", "public-cms"] },
-);
-
-export const getLiveVideoCards = cache(async () => getLiveVideoCardsCached());
-
-async function readLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]> {
+export const getLivePodcastEpisodes = cache(async () => {
   try {
-    const snapshot = await adminDb
-      .collection("podcast_episodes")
-      .where("status", "==", "live")
-      .get();
-    const items = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        episodeNumber: Number(data.episodeNumber ?? 0),
-        title: String(data.title ?? ""),
-        guestName: String(data.guestName ?? ""),
-        duration: String(data.duration ?? ""),
-        audioUrl: String(data.audioUrl ?? ""),
-        description: String(data.description ?? ""),
-        status: (data.status as PodcastEpisodeDocument["status"]) ?? "draft",
-      };
-    });
-    return items.sort((a, b) => b.episodeNumber - a.episodeNumber);
+    return await loadLivePodcastEpisodes();
   } catch {
     return [];
   }
-}
+});
 
-const getLivePodcastEpisodesCached = unstable_cache(
-  async () => readLivePodcastEpisodes(),
-  ["podcast-episodes-live"],
-  {
-    revalidate: PUBLIC_REVALIDATE_SECONDS,
-    tags: ["podcast_episodes", "public-cms"],
-  },
-);
-
-export const getLivePodcastEpisodes = cache(async () =>
-  getLivePodcastEpisodesCached(),
-);
 
 export async function getPageAbout(): Promise<PageAboutDocument | null> {
   try {
