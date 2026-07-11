@@ -9,11 +9,44 @@ export interface RateLimitResult {
   retryAfterSec: number;
 }
 
+/** Don't let Firestore quota/outages hang auth and payments forever. */
+const RATE_LIMIT_TIMEOUT_MS = 2500;
+
 /**
  * Sliding fixed-window rate limit backed by Firestore (works across serverless instances).
  * Key format examples: `auth:login:ip:1.2.3.4`, `redeem:uid:abc`.
+ *
+ * Fail-open: if Firestore is slow/unavailable, allow the request so sign-in
+ * and other critical paths are not stuck during quota exhaustion.
  */
 export async function enforceRateLimit(options: {
+  key: string;
+  limit: number;
+  windowSec: number;
+}): Promise<RateLimitResult> {
+  try {
+    return await Promise.race([
+      enforceRateLimitFirestore(options),
+      new Promise<RateLimitResult>((resolve) => {
+        setTimeout(() => {
+          resolve({
+            allowed: true,
+            remaining: options.limit,
+            retryAfterSec: 0,
+          });
+        }, RATE_LIMIT_TIMEOUT_MS);
+      }),
+    ]);
+  } catch {
+    return {
+      allowed: true,
+      remaining: options.limit,
+      retryAfterSec: 0,
+    };
+  }
+}
+
+async function enforceRateLimitFirestore(options: {
   key: string;
   limit: number;
   windowSec: number;
@@ -25,7 +58,7 @@ export async function enforceRateLimit(options: {
     .slice(0, 40);
   const ref = adminDb.collection("rate_limits").doc(docId);
 
-  const result = await adminDb.runTransaction(async (tx) => {
+  return adminDb.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const count = (snap.data()?.count as number | undefined) ?? 0;
 
@@ -56,8 +89,6 @@ export async function enforceRateLimit(options: {
       retryAfterSec: options.windowSec,
     };
   });
-
-  return result;
 }
 
 export function clientIpFromRequest(request: Request): string {

@@ -107,7 +107,9 @@ export function SignInForm({ labels }: SignInFormProps) {
         ) : null}
 
         <Button type="submit" disabled={isSubmitting} className="h-11 w-full">
-          {labels.signInSubmitLabel ?? "Sign in"}
+          {isSubmitting
+            ? (labels.signInSubmittingLabel ?? "Signing in…")
+            : (labels.signInSubmitLabel ?? "Sign in")}
         </Button>
       </form>
 

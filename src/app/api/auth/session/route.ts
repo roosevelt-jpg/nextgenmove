@@ -36,6 +36,24 @@ function buildCookieOptions(maxAgeMs: number) {
   };
 }
 
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}_timeout`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function POST(request: Request) {
   return withRequestLog(request, { route: "/api/auth/session" }, async () => {
     const ip = clientIpFromRequest(request);
@@ -50,8 +68,16 @@ export async function POST(request: Request) {
 
     try {
       const { idToken } = sessionSchema.parse(await request.json());
-      const decoded = await adminAuth.verifyIdToken(idToken);
-      const userSnapshot = await adminDb.collection("users").doc(decoded.uid).get();
+      const decoded = await withTimeout(
+        adminAuth.verifyIdToken(idToken),
+        10000,
+        "verify_id_token",
+      );
+      const userSnapshot = await withTimeout(
+        adminDb.collection("users").doc(decoded.uid).get(),
+        8000,
+        "user_lookup",
+      );
 
       if (!userSnapshot.exists) {
         return NextResponse.json({ error: "user_not_found" }, { status: 404 });
@@ -63,28 +89,33 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "account_suspended" }, { status: 403 });
       }
 
-      const settingsSnap = await adminDb
-        .collection("site_settings")
-        .doc("default")
-        .get();
-      const settingsData = settingsSnap.data() ?? {};
+      let expireDays = 5;
+      let require2fa = false;
+      try {
+        const settingsSnap = await adminDb
+          .collection("site_settings")
+          .doc("default")
+          .get();
+        const settingsData = settingsSnap.data() ?? {};
+        expireDays = Number(settingsData.sessionExpireDays ?? 5);
+        require2fa = Boolean(settingsData.require2fa);
+      } catch (settingsError) {
+        logger.error("session_settings_unavailable", {
+          error:
+            settingsError instanceof Error
+              ? settingsError.message
+              : String(settingsError),
+        });
+      }
 
-      if (settingsData.require2fa && !decoded.email_verified) {
+      if (require2fa && !decoded.email_verified) {
         return NextResponse.json(
           { error: "email_verification_required" },
           { status: 403 },
         );
       }
 
-      const expireDays = Number(settingsData.sessionExpireDays ?? 5);
-      const expiresInMs = Math.min(
-        Math.max(expireDays, 1),
-        14,
-      ) *
-        24 *
-        60 *
-        60 *
-        1000;
+      const expiresInMs = Math.min(Math.max(expireDays, 1), 14) * 24 * 60 * 60 * 1000;
 
       const sessionCookie = await adminAuth.createSessionCookie(idToken, {
         expiresIn: expiresInMs,
@@ -98,7 +129,8 @@ export async function POST(request: Request) {
       const previousIp = String(userSnapshot.data()?.lastLoginIp ?? "");
       const when = new Date().toISOString();
 
-      await adminDb
+      // Best-effort audit write — never block cookie issuance on Firestore quota.
+      void adminDb
         .collection("users")
         .doc(user.uid)
         .update(
@@ -107,28 +139,37 @@ export async function POST(request: Request) {
             lastLoginIp: ip,
             lastLoginUserAgent: userAgent.slice(0, 300),
           }),
-        );
-
-      const { notifyLoginAlert, notifySuspiciousLogin } = await import(
-        "@/lib/email/notify"
-      );
-      void notifyLoginAlert({
-        userId: user.uid,
-        ip,
-        userAgent,
-        when,
-        request,
-      });
-      if (previousIp && previousIp !== ip && previousIp !== "unknown") {
-        void notifySuspiciousLogin({
-          userId: user.uid,
-          ip,
-          previousIp,
-          userAgent,
-          when,
-          request,
+        )
+        .catch((auditError) => {
+          logger.error("session_login_audit_failed", {
+            error:
+              auditError instanceof Error
+                ? auditError.message
+                : String(auditError),
+          });
         });
-      }
+
+      void import("@/lib/email/notify")
+        .then(({ notifyLoginAlert, notifySuspiciousLogin }) => {
+          void notifyLoginAlert({
+            userId: user.uid,
+            ip,
+            userAgent,
+            when,
+            request,
+          });
+          if (previousIp && previousIp !== ip && previousIp !== "unknown") {
+            void notifySuspiciousLogin({
+              userId: user.uid,
+              ip,
+              previousIp,
+              userAgent,
+              when,
+              request,
+            });
+          }
+        })
+        .catch(() => undefined);
 
       const response = NextResponse.json({
         role: user.role,
@@ -154,9 +195,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "invalid_request" }, { status: 400 });
       }
 
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("timeout") || message.includes("RESOURCE_EXHAUSTED")) {
+        await captureException(error, { route: "/api/auth/session" });
+        logger.error("session_unavailable", { error: message });
+        return NextResponse.json({ error: "service_unavailable" }, { status: 503 });
+      }
+
       await captureException(error, { route: "/api/auth/session" });
       logger.error("session_failed", {
-        error: error instanceof Error ? error.message : String(error),
+        error: message,
       });
       return NextResponse.json({ error: "session_failed" }, { status: 401 });
     }
