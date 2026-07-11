@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminSecurityControls } from "@/components/admin/admin-security-controls";
 import { AdminSingletonEditor } from "@/components/admin/admin-singleton-editor";
+import { AdminSocialLinksEditor } from "@/components/admin/admin-social-links-editor";
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { getTaxonomies } from "@/lib/collections/taxonomies";
@@ -81,6 +82,16 @@ export default async function AdminSiteSettingsPage() {
             </a>
           ) : null}
         </div>
+      </section>
+
+      <section className="rounded-radius border border-border bg-grad-card p-4">
+        {labels.socialMediaTitle ? (
+          <h2 className="mb-2 font-medium text-text-primary">{labels.socialMediaTitle}</h2>
+        ) : null}
+        <AdminSocialLinksEditor
+          labels={labels}
+          initialLinks={settings.socialLinks ?? []}
+        />
       </section>
 
       <AdminSingletonEditor

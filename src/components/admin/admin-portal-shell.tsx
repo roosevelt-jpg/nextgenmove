@@ -225,7 +225,7 @@ export function AdminPortalShell({
             <circle cx="8" cy="8" r="2.25" />
             <path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06" />
           </svg>
-          {labels.globalSettings ?? "Global Settings"}
+          {labels.myAccount ?? labels.account ?? "My account"}
         </Link>
         <Link
           href="/"

@@ -10,6 +10,7 @@ export const PUBLIC_ROUTES = {
   pricing: "/pricing",
   tracks: "/tracks",
   requestTalent: "/request-talent",
+  contact: "/contact",
 } as const;
 
 export function buildDefaultFooterGroups(navLabels: NavLabels = {}): FooterGroup[] {
@@ -21,6 +22,7 @@ export function buildDefaultFooterGroups(navLabels: NavLabels = {}): FooterGroup
         { key: "about", href: PUBLIC_ROUTES.about, label: navLabels.about },
         { key: "careers", href: PUBLIC_ROUTES.careers, label: navLabels.careers },
         { key: "journal", href: PUBLIC_ROUTES.journal, label: navLabels.journal },
+        { key: "contact", href: PUBLIC_ROUTES.contact, label: navLabels.contact },
       ],
     },
     {

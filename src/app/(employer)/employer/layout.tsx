@@ -37,7 +37,8 @@ export default async function EmployerPortalLayout({
     workspaceStudent: "Student",
     workspaceEmployer: "Employer",
     workspaceAdmin: "Admin",
-    globalSettings: "Global Settings",
+    globalSettings: "Settings",
+    settings: "Settings",
     publicSite: "Public site",
     signOut: "Sign out",
     workspacePreviewBanner:

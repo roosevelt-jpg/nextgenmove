@@ -470,16 +470,6 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "operatorPlanDetail", type: "text", labelKey: "operatorPlanDetail" },
       { key: "billingManageUrl", type: "text", labelKey: "billingManageUrl" },
       {
-        key: "socialLinks",
-        type: "repeatable",
-        labelKey: "socialLinks",
-        fields: [
-          { key: "key", type: "text", labelKey: "socialKey" },
-          { key: "label", type: "text", labelKey: "socialLabel" },
-          { key: "url", type: "text", labelKey: "socialUrl" },
-        ],
-      },
-      {
         key: "navLabels",
         type: "object",
         labelKey: "navLabels",

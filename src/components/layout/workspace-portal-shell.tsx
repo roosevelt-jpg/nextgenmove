@@ -201,7 +201,7 @@ export function WorkspacePortalShell({
           href={settingsHref}
           className="flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs text-text-secondary hover:bg-surface-2"
         >
-          {labels.globalSettings ?? "Global Settings"}
+          {labels.settings ?? "Settings"}
         </Link>
         <Link
           href="/"

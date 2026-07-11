@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SocialLinks } from "@/components/public/social-links";
 import {
   getSiteSettings,
   listFooterCmsPages,
@@ -56,22 +57,11 @@ export async function SiteFooter() {
               {contactEmail}
             </a>
           ) : null}
-          {socialLinks.length > 0 ? (
-            <ul className="flex flex-wrap gap-3 pt-1">
-              {socialLinks.map((link) => (
-                <li key={link.key}>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-medium text-text-accent hover:text-text-primary"
-                  >
-                    {link.label || link.key}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <SocialLinks
+            links={socialLinks}
+            platformLabels={settings.formLabels ?? {}}
+            className="pt-1"
+          />
         </div>
 
         <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3 md:max-w-xl">
