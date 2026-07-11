@@ -5,8 +5,13 @@ import {
   PORTAL_HOME,
   ROLE_COOKIE_NAME,
   SESSION_COOKIE_NAME,
+  roleMayAccessPortalPath,
 } from "@/lib/auth/constants";
 import { verifyRoleToken } from "@/lib/auth/role-token";
+import {
+  IMPERSONATE_COOKIE_NAME,
+  verifyImpersonationToken,
+} from "@/lib/auth/impersonation-token";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -49,8 +54,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  if (payload.role !== requiredRole) {
-    return NextResponse.redirect(new URL(PORTAL_HOME[payload.role], request.url));
+  let subjectRole: typeof payload.role | null = null;
+  const impersonateCookie = request.cookies.get(IMPERSONATE_COOKIE_NAME)?.value;
+  if (impersonateCookie && payload.role === "admin") {
+    const imp = await verifyImpersonationToken(impersonateCookie);
+    if (imp && imp.actorUid === payload.uid) {
+      subjectRole = imp.subjectRole;
+    }
+  }
+
+  // Admin routes always require the real admin actor (not the impersonated subject).
+  if (requiredRole === "admin") {
+    if (payload.role !== "admin") {
+      return NextResponse.redirect(
+        new URL(PORTAL_HOME[payload.role], request.url),
+      );
+    }
+    return NextResponse.next();
+  }
+
+  const allowed = roleMayAccessPortalPath(payload.role, pathname, {
+    subjectRole,
+  });
+
+  if (!allowed) {
+    // Impersonating: send subject to their own home; otherwise actor home.
+    const homeRole = subjectRole ?? payload.role;
+    return NextResponse.redirect(new URL(PORTAL_HOME[homeRole], request.url));
   }
 
   return NextResponse.next();

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   getEmployerSession,
   unauthorizedResponse,
@@ -39,6 +40,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await getEmployerSession();
   if (!session) return unauthorizedResponse();
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   return withRequestLog(
     request,
@@ -113,6 +117,9 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   const session = await getEmployerSession();
   if (!session) return unauthorizedResponse();
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const companyData = session.company;

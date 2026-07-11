@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionActor } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+import type { PortalSessionMode } from "@/lib/auth/portal-session";
 
 export interface StudentDocument {
   id: string;
@@ -38,6 +39,7 @@ export interface StudentSession {
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
   studentId: string;
   student: StudentDocument;
+  mode: PortalSessionMode;
 }
 
 function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocument {
@@ -72,27 +74,87 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
   };
 }
 
+function emptyPreviewStudent(user: {
+  uid: string;
+  email: string | null;
+  displayName: string;
+  photoUrl: string | null;
+}): StudentDocument {
+  return {
+    id: user.uid,
+    userId: user.uid,
+    fullName: user.displayName || "Admin preview",
+    email: user.email ?? "",
+    phone: null,
+    nationality: null,
+    workExperience: null,
+    education: [],
+    photoUrl: user.photoUrl,
+    sector: "",
+    seniority: "",
+    currentCity: "",
+    targetCities: [],
+    cvUrl: null,
+    linkedinUrl: null,
+    portfolioUrl: null,
+    bio: "",
+    skills: [],
+    availability: "",
+    credits: 0,
+    status: "active",
+    referralCode: null,
+    referredBy: null,
+    notificationPreferences: {},
+  };
+}
+
 export async function getStudentSession(): Promise<StudentSession | null> {
   const user = await getCurrentUser();
 
-  if (!user || user.role !== "student") {
+  if (!user) {
     return null;
   }
 
-  const studentSnapshot = await adminDb.collection("students").doc(user.uid).get();
+  if (user.role === "student") {
+    const studentSnapshot = await adminDb.collection("students").doc(user.uid).get();
 
-  if (!studentSnapshot.exists) {
-    return null;
+    if (!studentSnapshot.exists) {
+      return null;
+    }
+
+    const mode: PortalSessionMode =
+      user.sessionMode === "impersonation" ? "impersonation" : "live";
+
+    return {
+      user,
+      studentId: studentSnapshot.id,
+      student: mapStudentDoc(
+        studentSnapshot.id,
+        studentSnapshot.data()! as Record<string, unknown>,
+      ),
+      mode,
+    };
   }
 
-  return {
-    user,
-    studentId: studentSnapshot.id,
-    student: mapStudentDoc(
-      studentSnapshot.id,
-      studentSnapshot.data()! as Record<string, unknown>,
-    ),
-  };
+  // Admin preview (not impersonating a student).
+  if (user.role === "admin") {
+    const actor = await getSessionActor();
+    if (!actor || actor.role !== "admin") {
+      return null;
+    }
+
+    return {
+      user: {
+        ...user,
+        sessionMode: "preview",
+      },
+      studentId: actor.uid,
+      student: emptyPreviewStudent(actor),
+      mode: "preview",
+    };
+  }
+
+  return null;
 }
 
 export function unauthorizedResponse() {

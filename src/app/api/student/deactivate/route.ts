@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import { getStudentSession, unauthorizedResponse } from "@/lib/student/session";
 import { anonymizeAndSuspendAccount } from "@/lib/security/anonymize-account";
 import { withRequestLog } from "@/lib/observability/api-handler";
@@ -10,6 +11,9 @@ export async function POST(request: Request) {
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   return withRequestLog(
     request,

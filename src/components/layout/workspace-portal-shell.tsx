@@ -24,6 +24,14 @@ export interface WorkspacePortalShellProps {
   siteName: string;
   brandMark: string;
   children: React.ReactNode;
+  /** Admin browsing portal without impersonation. */
+  previewMode?: boolean;
+  /** Admin viewing as a real student/company. */
+  impersonation?: {
+    displayName: string;
+    email?: string | null;
+    role: string;
+  } | null;
 }
 
 function isActivePath(pathname: string, item: PortalNavItem) {
@@ -48,10 +56,13 @@ export function WorkspacePortalShell({
   siteName,
   brandMark,
   children,
+  previewMode = false,
+  impersonation = null,
 }: WorkspacePortalShellProps) {
   const pathname = usePathname();
   const [dark, setDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("ngm-theme");
@@ -80,12 +91,39 @@ export function WorkspacePortalShell({
     window.location.href = "/sign-in";
   };
 
+  const exitImpersonation = async () => {
+    setExiting(true);
+    const response = await fetch("/api/admin/impersonate", { method: "DELETE" });
+    const payload = (await response.json().catch(() => null)) as {
+      redirectTo?: string;
+    } | null;
+    window.location.href = payload?.redirectTo ?? "/admin/dashboard";
+  };
+
+  const goAdmin = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!impersonation) return;
+    event.preventDefault();
+    await exitImpersonation();
+  };
+
   const settingsHref =
     workspace === "admin"
       ? "/admin/settings"
       : workspace === "employer"
         ? "/employer/settings"
         : "/student/settings";
+
+  const workspaceLinks = (
+    [
+      ["student", "/student/dashboard", labels.workspaceStudent ?? "Student"],
+      [
+        "employer",
+        "/employer/dashboard",
+        labels.workspaceEmployer ?? "Employer",
+      ],
+      ["admin", "/admin/dashboard", labels.workspaceAdmin ?? "Admin"],
+    ] as const
+  );
 
   const sidebar = (
     <aside className="flex h-full w-[240px] flex-col border-r border-border bg-surface-1">
@@ -103,20 +141,11 @@ export function WorkspacePortalShell({
           {labels.workspaceSection ?? "Workspace"}
         </p>
         <div className="flex gap-1 rounded-full bg-surface-2 p-1">
-          {(
-            [
-              ["student", "/student/dashboard", labels.workspaceStudent ?? "Student"],
-              [
-                "employer",
-                "/employer/talent-pool",
-                labels.workspaceEmployer ?? "Employer",
-              ],
-              ["admin", "/admin/dashboard", labels.workspaceAdmin ?? "Admin"],
-            ] as const
-          ).map(([key, href, label]) => (
+          {workspaceLinks.map(([key, href, label]) => (
             <Link
               key={key}
               href={href}
+              onClick={key === "admin" ? goAdmin : undefined}
               className={cn(
                 "flex min-h-7 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient transition-opacity",
                 workspace === key
@@ -259,6 +288,45 @@ export function WorkspacePortalShell({
         </header>
 
         <main className="flex-1 px-4 py-6 min-[860px]:px-8 min-[860px]:py-7">
+          {previewMode || impersonation ? (
+            <div
+              className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-radius border border-border bg-surface-2 px-3 py-2 text-sm text-text-secondary"
+              role="status"
+            >
+              <p>
+                {impersonation
+                  ? (
+                      labels.workspaceImpersonationBanner ??
+                      "Viewing as {name}."
+                    ).replace(
+                      "{name}",
+                      impersonation.displayName ||
+                        impersonation.email ||
+                        impersonation.role,
+                    )
+                  : labels.workspacePreviewBanner ??
+                    "Admin preview — read-only shell. Open CRM for live student and employer records."}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href="/admin/crm"
+                  className="btn-brand inline-flex min-h-5 items-center whitespace-nowrap px-1.5 py-0.5 text-[10px]"
+                >
+                  {labels.openCrm ?? "Open CRM"}
+                </Link>
+                {impersonation ? (
+                  <button
+                    type="button"
+                    disabled={exiting}
+                    onClick={() => void exitImpersonation()}
+                    className="btn-brand inline-flex min-h-5 items-center whitespace-nowrap px-1.5 py-0.5 text-[10px]"
+                  >
+                    {labels.exitImpersonation ?? "Exit view-as"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           {children}
         </main>
       </div>

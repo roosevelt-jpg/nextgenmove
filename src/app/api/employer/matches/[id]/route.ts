@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   forbiddenResponse,
   getEmployerSession,
@@ -90,6 +91,9 @@ export async function PATCH(
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   const { id } = await params;
 

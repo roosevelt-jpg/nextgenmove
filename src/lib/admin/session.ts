@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
-import { getCurrentUser } from "@/lib/auth";
+import { getSessionActor } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
 
+/**
+ * Admin APIs always resolve the real signed-in admin (actor), never an
+ * impersonation subject overlay.
+ */
 export async function getAdminSession() {
-  const user = await getCurrentUser();
+  const user = await getSessionActor();
 
   if (!user || user.role !== "admin") {
     return null;

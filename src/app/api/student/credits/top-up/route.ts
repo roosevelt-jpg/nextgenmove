@@ -4,6 +4,7 @@ import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProgramLevers } from "@/lib/collections/pages";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   getStudentSession,
   unauthorizedResponse,
@@ -43,6 +44,9 @@ const requestSchema = z.object({
 export async function POST(request: Request) {
   const session = await getStudentSession();
   if (!session) return unauthorizedResponse();
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const { packageId } = requestSchema.parse(await request.json());

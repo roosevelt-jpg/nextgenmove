@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionActor } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+import type { PortalSessionMode } from "@/lib/auth/portal-session";
 import {
   assertCompanyOwnsResource,
   TenantBoundaryError,
@@ -42,50 +43,101 @@ export interface EmployerSession {
   user: CurrentUser;
   companyId: string;
   company: CompanyDocument;
+  mode: PortalSessionMode;
+}
+
+function emptyPreviewCompany(user: CurrentUser): CompanyDocument {
+  return {
+    id: user.uid,
+    userId: user.uid,
+    name: user.displayName || "Admin preview",
+    contactEmail: user.email ?? "",
+    contactPhone: null,
+    nationality: null,
+    logoUrl: user.photoUrl,
+    industry: "",
+    website: null,
+    plan: null,
+    subscriptionStatus: "pending",
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    billingProvider: null,
+    contactName: user.displayName || null,
+    hiringNeeds: null,
+    requirements: [],
+    preferredLocations: [],
+    requirementTags: [],
+    notificationPreferences: {},
+    createdAt: null,
+  };
 }
 
 export async function getEmployerSession(): Promise<EmployerSession | null> {
   const user = await getCurrentUser();
 
-  if (!user || user.role !== "company") {
+  if (!user) {
     return null;
   }
 
-  const companySnapshot = await adminDb.collection("companies").doc(user.uid).get();
+  if (user.role === "company") {
+    const companySnapshot = await adminDb.collection("companies").doc(user.uid).get();
 
-  if (!companySnapshot.exists) {
-    return null;
+    if (!companySnapshot.exists) {
+      return null;
+    }
+
+    const data = companySnapshot.data()!;
+    const mode: PortalSessionMode =
+      user.sessionMode === "impersonation" ? "impersonation" : "live";
+
+    return {
+      user,
+      companyId: companySnapshot.id,
+      company: {
+        id: companySnapshot.id,
+        userId: data.userId ?? user.uid,
+        name: data.name ?? "",
+        contactEmail: data.contactEmail ?? "",
+        contactPhone: data.contactPhone ?? null,
+        nationality: data.nationality ?? null,
+        logoUrl: data.logoUrl ?? null,
+        industry: data.industry ?? "",
+        website: data.website ?? null,
+        plan: data.plan ?? null,
+        subscriptionStatus: data.subscriptionStatus ?? "pending",
+        stripeCustomerId: data.stripeCustomerId ?? null,
+        stripeSubscriptionId: data.stripeSubscriptionId ?? null,
+        billingProvider: data.billingProvider ?? null,
+        contactName: data.contactName ?? null,
+        hiringNeeds: data.hiringNeeds ?? null,
+        requirements: data.requirements ?? [],
+        preferredLocations: data.preferredLocations ?? [],
+        requirementTags: data.requirementTags ?? [],
+        notificationPreferences: data.notificationPreferences ?? {},
+        createdAt: data.createdAt,
+      },
+      mode,
+    };
   }
 
-  const data = companySnapshot.data()!;
+  if (user.role === "admin") {
+    const actor = await getSessionActor();
+    if (!actor || actor.role !== "admin") {
+      return null;
+    }
 
-  return {
-    user,
-    companyId: companySnapshot.id,
-    company: {
-      id: companySnapshot.id,
-      userId: data.userId ?? user.uid,
-      name: data.name ?? "",
-      contactEmail: data.contactEmail ?? "",
-      contactPhone: data.contactPhone ?? null,
-      nationality: data.nationality ?? null,
-      logoUrl: data.logoUrl ?? null,
-      industry: data.industry ?? "",
-      website: data.website ?? null,
-      plan: data.plan ?? null,
-      subscriptionStatus: data.subscriptionStatus ?? "pending",
-      stripeCustomerId: data.stripeCustomerId ?? null,
-      stripeSubscriptionId: data.stripeSubscriptionId ?? null,
-      billingProvider: data.billingProvider ?? null,
-      contactName: data.contactName ?? null,
-      hiringNeeds: data.hiringNeeds ?? null,
-      requirements: data.requirements ?? [],
-      preferredLocations: data.preferredLocations ?? [],
-      requirementTags: data.requirementTags ?? [],
-      notificationPreferences: data.notificationPreferences ?? {},
-      createdAt: data.createdAt,
-    },
-  };
+    return {
+      user: {
+        ...user,
+        sessionMode: "preview",
+      },
+      companyId: actor.uid,
+      company: emptyPreviewCompany(actor),
+      mode: "preview",
+    };
+  }
+
+  return null;
 }
 
 export function unauthorizedResponse() {

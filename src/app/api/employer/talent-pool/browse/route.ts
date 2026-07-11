@@ -6,6 +6,7 @@ import { computeMatchScore } from "@/lib/matching/score";
 import { matchDocId } from "@/lib/matching/recompute";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   getEmployerSession,
   unauthorizedResponse,
@@ -122,6 +123,9 @@ const openSchema = z.object({
 export async function POST(request: Request) {
   const session = await getEmployerSession();
   if (!session) return unauthorizedResponse();
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   if (!canBrowsePool(session)) {
     return NextResponse.json({ error: "track_a_required" }, { status: 403 });

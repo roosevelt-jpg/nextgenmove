@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import { getStudentSession, unauthorizedResponse } from "@/lib/student/session";
 import { withRequestLog } from "@/lib/observability/api-handler";
 import { captureException, logger } from "@/lib/observability/logger";
@@ -32,6 +33,9 @@ export async function POST(request: Request) {
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   return withRequestLog(
     request,

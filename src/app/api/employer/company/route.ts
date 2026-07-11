@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { getPagePricing, getProgramLevers } from "@/lib/collections/pages";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import { syncLinkedProfile } from "@/lib/auth/profile-sync";
 import {
   getEmployerSession,
@@ -58,6 +59,9 @@ export async function PATCH(request: Request) {
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const body = patchSchema.parse(await request.json());
@@ -116,6 +120,9 @@ export async function POST(request: Request) {
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const body = requirementSchema.parse(await request.json());

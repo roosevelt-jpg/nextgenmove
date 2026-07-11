@@ -164,7 +164,7 @@ export function AdminPortalShell({
             {labels.workspaceStudent ?? "Student"}
           </Link>
           <Link
-            href="/employer/pipeline"
+            href="/employer/dashboard"
             className="flex min-h-7 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient opacity-70 transition-opacity hover:opacity-100"
           >
             {labels.workspaceEmployer ?? "Employer"}

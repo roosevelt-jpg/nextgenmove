@@ -6,6 +6,7 @@ import {
   PORTAL_HOME,
   ROLE_COOKIE_NAME,
   SESSION_COOKIE_NAME,
+  IMPERSONATE_COOKIE_NAME,
 } from "@/lib/auth/constants";
 import { signRoleToken } from "@/lib/auth/role-token";
 import { stripUndefined } from "@/lib/stripUndefined";
@@ -144,6 +145,8 @@ export async function POST(request: Request) {
         roleToken,
         buildCookieOptions(expiresInMs),
       );
+      // Never carry a prior admin view-as into a fresh login.
+      response.cookies.set(IMPERSONATE_COOKIE_NAME, "", buildCookieOptions(0));
 
       return response;
     } catch (error) {

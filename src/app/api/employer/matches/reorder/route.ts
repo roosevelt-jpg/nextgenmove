@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   getEmployerSession,
   unauthorizedResponse,
@@ -15,6 +16,9 @@ const reorderSchema = z.object({
 export async function PATCH(request: Request) {
   const session = await getEmployerSession();
   if (!session) return unauthorizedResponse();
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const { orderedMatchIds } = reorderSchema.parse(await request.json());

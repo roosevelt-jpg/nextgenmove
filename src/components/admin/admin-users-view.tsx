@@ -52,6 +52,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [viewAsLoading, setViewAsLoading] = useState(false);
 
   const load = async () => {
     const response = await fetch("/api/admin/users");
@@ -93,6 +94,31 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
     }
     const payload = (await response.json()) as ProfilePayload;
     setProfile(payload);
+  };
+
+  const viewAsUser = async (uid: string) => {
+    setViewAsLoading(true);
+    setActionMessage(null);
+    const response = await fetch("/api/admin/impersonate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: uid }),
+    });
+    setViewAsLoading(false);
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setActionMessage(
+        labels[payload?.error ?? ""] ??
+          labels.viewAsError ??
+          payload?.error ??
+          "Could not open portal.",
+      );
+      return;
+    }
+    const payload = (await response.json()) as { redirectTo?: string };
+    window.location.href = payload.redirectTo ?? "/admin/dashboard";
   };
 
   const runAction = async (userId: string, action: "promote_admin" | "suspend" | "activate") => {
@@ -229,6 +255,17 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
         title={labels.profileTitle ?? "User profile"}
         footer={
           <div className="flex flex-wrap items-center justify-end gap-2">
+            {user &&
+            (user.role === "student" || user.role === "company") &&
+            String(user.status ?? "active") !== "suspended" ? (
+              <Button
+                size="sm"
+                disabled={viewAsLoading}
+                onClick={() => void viewAsUser(String(user.uid))}
+              >
+                {labels.viewAsUser ?? "View as user"}
+              </Button>
+            ) : null}
             {kind === "student" || kind === "company" ? (
               <Link
                 href="/admin/crm"

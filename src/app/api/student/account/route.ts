@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import { getStudentSession, unauthorizedResponse } from "@/lib/student/session";
 
 export async function GET() {
@@ -27,6 +28,9 @@ export async function PATCH(request: Request) {
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const body = accountSchema.parse(await request.json());

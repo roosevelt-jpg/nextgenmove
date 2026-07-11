@@ -5,6 +5,7 @@ import { adminDb } from "@/lib/firebase-admin";
 import { syncLinkedProfile } from "@/lib/auth/profile-sync";
 import { applyCreditDelta, getWayToEarnCredits } from "@/lib/credits/ledger";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   calculateProfileCompleteness,
   getStudentSession,
@@ -68,6 +69,9 @@ export async function PATCH(request: Request) {
   if (!session) {
     return unauthorizedResponse();
   }
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const body = profileSchema.parse(await request.json());

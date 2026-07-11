@@ -46,5 +46,10 @@ export function roleMayAccessApiPath(
 ): boolean {
   const required = getRequiredRoleForApiPath(pathname);
   if (!required) return true;
-  return role === required;
+  if (role === required) return true;
+  // Admins may call student/employer APIs (preview or impersonation overlay).
+  if (role === "admin" && (required === "student" || required === "company")) {
+    return true;
+  }
+  return false;
 }

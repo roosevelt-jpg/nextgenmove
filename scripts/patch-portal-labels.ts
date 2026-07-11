@@ -51,6 +51,7 @@ async function main() {
   };
 
   adminPageLabels.shell = {
+    ...((adminPageLabels.shell as Record<string, string>) || {}),
     workspaceSection: "Workspace",
     workspaceStudent: "Student",
     workspaceEmployer: "Employer",
@@ -59,6 +60,13 @@ async function main() {
     globalSettings: "Global Settings",
     publicSite: "Public site",
     signOut: "Sign out",
+    workspacePreviewBanner:
+      "Admin preview — read-only shell. Open CRM for live student and employer records.",
+    workspaceImpersonationBanner: "Viewing as {name}.",
+    openCrm: "Open CRM",
+    exitImpersonation: "Exit view-as",
+    viewAsUser: "View as user",
+    previewReadonly: "Preview is read-only.",
   };
 
   adminPageLabels.levers = {

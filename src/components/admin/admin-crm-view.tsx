@@ -85,6 +85,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   const [messageBody, setMessageBody] = useState("");
   const [messageSending, setMessageSending] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [viewAsLoading, setViewAsLoading] = useState(false);
 
   const loadOverview = async () => {
     const response = await fetch("/api/admin/crm/overview");
@@ -267,6 +268,33 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
     }
     setActionMessage(labels.matchCreated ?? "Match created.");
     await openDetail(selectedId, "students");
+  };
+
+  const viewAsUser = async () => {
+    if (!selectedId || leadMode) return;
+    if (entityTab !== "students" && entityTab !== "companies") return;
+    setViewAsLoading(true);
+    setActionMessage(null);
+    const response = await fetch("/api/admin/impersonate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: selectedId }),
+    });
+    setViewAsLoading(false);
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setActionMessage(
+        labels[payload?.error ?? ""] ??
+          labels.viewAsError ??
+          payload?.error ??
+          "Could not open portal.",
+      );
+      return;
+    }
+    const payload = (await response.json()) as { redirectTo?: string };
+    window.location.href = payload.redirectTo ?? "/admin/dashboard";
   };
 
   const runAction = async (action: string, extra?: Record<string, unknown>) => {
@@ -843,6 +871,14 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                   </Button>
                 </>
               ) : null}
+              <Button
+                size="xs"
+                variant="outline"
+                disabled={viewAsLoading || String(detail.status ?? "active") === "suspended"}
+                onClick={() => void viewAsUser()}
+              >
+                {labels.viewAsUser ?? "View as user"}
+              </Button>
               <Button size="xs" variant="outline" onClick={() => runAction("suspend")}>
                 {labels.suspend}
               </Button>

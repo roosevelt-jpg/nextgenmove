@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getRequiredRoleForPath } from "@/lib/auth/constants";
+import {
+  getRequiredRoleForPath,
+  roleMayAccessPortalPath,
+  resolvePostAuthRedirect,
+} from "@/lib/auth/constants";
 import {
   assertCompanyOwnsResource,
   assertStudentOwnsResource,
@@ -15,6 +19,42 @@ describe("portal route RBAC map", () => {
     expect(getRequiredRoleForPath("/student/store")).toBe("student");
     expect(getRequiredRoleForPath("/pricing")).toBeNull();
   });
+
+  it("allows admin to preview student and employer portals", () => {
+    expect(roleMayAccessPortalPath("admin", "/student/dashboard")).toBe(true);
+    expect(roleMayAccessPortalPath("admin", "/employer/dashboard")).toBe(true);
+    expect(roleMayAccessPortalPath("student", "/employer/dashboard")).toBe(
+      false,
+    );
+    expect(
+      roleMayAccessPortalPath("admin", "/admin/crm"),
+    ).toBe(true);
+    expect(
+      roleMayAccessPortalPath("student", "/admin/crm"),
+    ).toBe(false);
+  });
+
+  it("allows impersonated subject role via options", () => {
+    expect(
+      roleMayAccessPortalPath("admin", "/student/dashboard", {
+        subjectRole: "student",
+      }),
+    ).toBe(true);
+    expect(
+      roleMayAccessPortalPath("admin", "/employer/pipeline", {
+        subjectRole: "student",
+      }),
+    ).toBe(true); // admin preview still allowed even if subject is student
+  });
+
+  it("resolves admin next into student portal", () => {
+    expect(resolvePostAuthRedirect("admin", "/student/dashboard")).toBe(
+      "/student/dashboard",
+    );
+    expect(resolvePostAuthRedirect("student", "/employer/dashboard")).toBe(
+      "/student/dashboard",
+    );
+  });
 });
 
 describe("API path RBAC map", () => {
@@ -24,6 +64,11 @@ describe("API path RBAC map", () => {
     expect(roleMayAccessApiPath("student", "/api/employer/matches")).toBe(false);
     expect(roleMayAccessApiPath("company", "/api/admin/users")).toBe(false);
     expect(roleMayAccessApiPath("admin", "/api/admin/users")).toBe(true);
+  });
+
+  it("allows admin preview access to student and employer APIs", () => {
+    expect(roleMayAccessApiPath("admin", "/api/student/dashboard")).toBe(true);
+    expect(roleMayAccessApiPath("admin", "/api/employer/matches")).toBe(true);
   });
 });
 

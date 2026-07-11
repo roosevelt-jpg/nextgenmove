@@ -25,6 +25,9 @@ export interface CurrentUser {
   displayName: string;
   photoUrl: string | null;
   status: UserStatus;
+  /** Present when an admin is viewing as another user. */
+  actorUid?: string;
+  sessionMode?: "live" | "preview" | "impersonation";
 }
 
 export type SignUpRole = "company" | "student";

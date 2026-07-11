@@ -5,6 +5,7 @@ import {
   ensureStudentReferralCode,
 } from "@/lib/credits/referrals";
 import { getWayToEarnCredits } from "@/lib/credits/ledger";
+import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   getStudentSession,
   unauthorizedResponse,
@@ -31,6 +32,9 @@ const applySchema = z.object({
 export async function POST(request: Request) {
   const session = await getStudentSession();
   if (!session) return unauthorizedResponse();
+
+  const previewBlock = assertNotPreviewMode(session.mode);
+  if (previewBlock) return previewBlock;
 
   try {
     const body = applySchema.parse(await request.json());
