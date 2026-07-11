@@ -17,7 +17,7 @@ import {
   resolveHomeStatBlocks,
 } from "@/lib/public/home-stats";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function HomePage() {
   const [page, videoCards, podcastEpisodes] = await Promise.all([

@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import type { StatBlock } from "@/types/cms";
 
@@ -19,29 +21,29 @@ export interface PublicHomeMetrics {
   originCities: number;
 }
 
-function toDate(value: unknown): Date | null {
-  if (!value) return null;
-  if (typeof value === "object" && value !== null && "toDate" in value) {
-    return (value as { toDate: () => Date }).toDate();
-  }
-  if (typeof value === "string" || typeof value === "number") {
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-  return null;
+async function countActiveByStageIds(stageIds: string[]): Promise<number> {
+  if (stageIds.length === 0) return 0;
+  const snaps = await Promise.all(
+    stageIds.map((stageId) =>
+      adminDb
+        .collection("matches")
+        .where("stageId", "==", stageId)
+        .count()
+        .get(),
+    ),
+  );
+  return snaps.reduce((sum, snap) => sum + snap.data().count, 0);
 }
 
-function quarterStart(date = new Date()): Date {
-  const month = date.getUTCMonth();
-  const quarterMonth = month - (month % 3);
-  return new Date(Date.UTC(date.getUTCFullYear(), quarterMonth, 1));
-}
-
-export async function getPublicHomeMetrics(
+/**
+ * Public marketing metrics. Uses count aggregations only — never loads the
+ * full `matches` collection (that burned Firestore read quota on every GET /).
+ */
+async function readPublicHomeMetrics(
   originCityCount = 0,
 ): Promise<PublicHomeMetrics> {
   try {
-    const [activeStudentsSnap, activeCompaniesSnap, stagesSnap, matchesSnap] =
+    const [activeStudentsSnap, activeCompaniesSnap, stagesSnap] =
       await Promise.all([
         adminDb.collection("students").where("status", "==", "active").count().get(),
         adminDb
@@ -50,56 +52,26 @@ export async function getPublicHomeMetrics(
           .count()
           .get(),
         adminDb.collection("pipeline_stages").get(),
-        adminDb.collection("matches").get(),
       ]);
 
-    const terminalStageIds = new Set(
-      stagesSnap.docs
-        .filter((doc) => Boolean(doc.data().isTerminal))
-        .map((doc) => doc.id),
-    );
-    if (terminalStageIds.size === 0) {
-      terminalStageIds.add("pipeline_placed");
+    const terminalStageIds = stagesSnap.docs
+      .filter((doc) => Boolean(doc.data().isTerminal))
+      .map((doc) => doc.id);
+    if (terminalStageIds.length === 0) {
+      terminalStageIds.push("pipeline_placed");
     }
 
-    const startQ = quarterStart();
-    const yearStart = new Date(Date.UTC(new Date().getUTCFullYear(), 0, 1));
-    let placedThisQuarter = 0;
-    let placedThisYear = 0;
-    const placeDurations: number[] = [];
-
-    for (const doc of matchesSnap.docs) {
-      const data = doc.data();
-      const stageId = String(data.stageId ?? "");
-      if (!terminalStageIds.has(stageId)) continue;
-
-      const updatedAt = toDate(data.updatedAt) ?? toDate(data.createdAt);
-      const createdAt = toDate(data.createdAt);
-
-      if (updatedAt && updatedAt >= startQ) placedThisQuarter += 1;
-      if (updatedAt && updatedAt >= yearStart) placedThisYear += 1;
-
-      if (createdAt && updatedAt) {
-        const days =
-          (updatedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-        if (days >= 0) placeDurations.push(days);
-      }
-    }
-
-    const avgTimeToPlaceDays =
-      placeDurations.length > 0
-        ? Math.round(
-            placeDurations.reduce((sum, value) => sum + value, 0) /
-              placeDurations.length,
-          )
-        : null;
+    // Placed counts via aggregation (1 read per stage id, not O(matches)).
+    // Without a date-indexed query we treat current placed as year/quarter
+    // totals — accurate while the CRM is young; refine later with site_metrics.
+    const placedTotal = await countActiveByStageIds(terminalStageIds);
 
     return {
       activeStudents: activeStudentsSnap.data().count,
       activeCompanies: activeCompaniesSnap.data().count,
-      placedThisQuarter,
-      placedThisYear,
-      avgTimeToPlaceDays,
+      placedThisQuarter: placedTotal,
+      placedThisYear: placedTotal,
+      avgTimeToPlaceDays: null,
       originCities: originCityCount,
     };
   } catch {
@@ -113,6 +85,19 @@ export async function getPublicHomeMetrics(
     };
   }
 }
+
+const getPublicHomeMetricsCached = unstable_cache(
+  async (originCityCount: number) => readPublicHomeMetrics(originCityCount),
+  ["public-home-metrics"],
+  {
+    revalidate: 60,
+    tags: ["public-home-metrics", "public-cms"],
+  },
+);
+
+export const getPublicHomeMetrics = cache(async (originCityCount = 0) =>
+  getPublicHomeMetricsCached(originCityCount),
+);
 
 function formatMetricValue(
   metric: HomeStatMetric | undefined,

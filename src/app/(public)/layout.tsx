@@ -1,7 +1,8 @@
 import { SiteFooter } from "@/components/public/site-footer";
 import { SiteHeader } from "@/components/public/site-header";
 
-export const dynamic = "force-dynamic";
+/** Cache public shell for 60s — pairs with Firestore TTL caches. */
+export const revalidate = 60;
 
 export default function PublicLayout({
   children,

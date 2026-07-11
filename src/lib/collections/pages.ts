@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
 import { serializeTimestamp } from "@/lib/firestore-utils";
 import type {
@@ -15,7 +17,9 @@ import type {
   VideoCardDocument,
 } from "@/types/cms";
 
-export async function getPageHome(): Promise<PageHomeDocument | null> {
+const PUBLIC_REVALIDATE_SECONDS = 60;
+
+async function readPageHome(): Promise<PageHomeDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_home").doc("default").get();
     const data = snapshot.data() as PageHomeDocument | undefined;
@@ -43,7 +47,15 @@ export async function getPageHome(): Promise<PageHomeDocument | null> {
   }
 }
 
-export async function getLiveVideoCards(): Promise<VideoCardDocument[]> {
+const getPageHomeCached = unstable_cache(
+  async () => readPageHome(),
+  ["page-home-default"],
+  { revalidate: PUBLIC_REVALIDATE_SECONDS, tags: ["page_home", "public-cms"] },
+);
+
+export const getPageHome = cache(async () => getPageHomeCached());
+
+async function readLiveVideoCards(): Promise<VideoCardDocument[]> {
   try {
     const snapshot = await adminDb
       .collection("video_cards")
@@ -68,7 +80,15 @@ export async function getLiveVideoCards(): Promise<VideoCardDocument[]> {
   }
 }
 
-export async function getLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]> {
+const getLiveVideoCardsCached = unstable_cache(
+  async () => readLiveVideoCards(),
+  ["video-cards-live"],
+  { revalidate: PUBLIC_REVALIDATE_SECONDS, tags: ["video_cards", "public-cms"] },
+);
+
+export const getLiveVideoCards = cache(async () => getLiveVideoCardsCached());
+
+async function readLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]> {
   try {
     const snapshot = await adminDb
       .collection("podcast_episodes")
@@ -92,6 +112,19 @@ export async function getLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]
     return [];
   }
 }
+
+const getLivePodcastEpisodesCached = unstable_cache(
+  async () => readLivePodcastEpisodes(),
+  ["podcast-episodes-live"],
+  {
+    revalidate: PUBLIC_REVALIDATE_SECONDS,
+    tags: ["podcast_episodes", "public-cms"],
+  },
+);
+
+export const getLivePodcastEpisodes = cache(async () =>
+  getLivePodcastEpisodesCached(),
+);
 
 export async function getPageAbout(): Promise<PageAboutDocument | null> {
   try {
