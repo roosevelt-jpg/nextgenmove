@@ -158,6 +158,15 @@ async function main() {
     youtubeSourceBadge: "YouTube",
   };
 
+  adminPageLabels.integrations = {
+    ...((adminPageLabels.integrations as Record<string, string>) || {}),
+    youtubeHint:
+      "Connect a YouTube Data API key so Venturo can sync your playlist into homepage Stories and paid portal libraries.",
+    youtubeApiKey: "YouTube Data API key",
+    youtubeHelp:
+      "Create a key in Google Cloud Console → APIs & Services → Credentials, enable YouTube Data API v3, then paste the key here. Playlist URL is set under Admin → Homepage Content.",
+  };
+
   const studentPageLabels = {
     ...((existing.studentPageLabels as Record<string, unknown>) || {}),
   };

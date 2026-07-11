@@ -55,6 +55,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const isResend = connectItem?.id === "resend";
   const isSendGrid = connectItem?.id === "sendgrid";
   const isTwilio = connectItem?.id === "twilio";
+  const isYoutube = connectItem?.id === "youtube";
 
   const connect = async () => {
     if (!connectItem) {
@@ -105,10 +106,19 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 ...(fromWhatsApp ? { fromWhatsApp } : {}),
               },
             }
-          : {
-              config: { host: configHost },
-              secrets: apiKey ? { apiKey } : undefined,
-            };
+          : isYoutube
+            ? {
+                config: {
+                  category: "Media",
+                },
+                secrets: {
+                  ...(apiKey ? { apiKey } : {}),
+                },
+              }
+            : {
+                config: { host: configHost },
+                secrets: apiKey ? { apiKey } : undefined,
+              };
 
     const response = await fetch(`/api/admin/integrations/${connectItem.id}/connect`, {
       method: "POST",
@@ -402,6 +412,22 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               />
               {labels.twilioHelp ? (
                 <p className="text-xs text-text-muted">{labels.twilioHelp}</p>
+              ) : null}
+            </>
+          ) : isYoutube ? (
+            <>
+              {labels.youtubeHint ? (
+                <p className="text-sm text-text-secondary">{labels.youtubeHint}</p>
+              ) : null}
+              <Input
+                id="youtube-api-key"
+                type="password"
+                label={labels.youtubeApiKey ?? "YouTube Data API key"}
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+              />
+              {labels.youtubeHelp ? (
+                <p className="text-xs text-text-muted">{labels.youtubeHelp}</p>
               ) : null}
             </>
           ) : (

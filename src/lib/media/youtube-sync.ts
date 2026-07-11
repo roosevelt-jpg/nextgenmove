@@ -1,3 +1,7 @@
+import {
+  getIntegrationSecrets,
+  isIntegrationConnected,
+} from "@/lib/admin/integration-secrets";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { revalidateAdminCollection } from "@/lib/admin/revalidate";
@@ -10,6 +14,16 @@ import {
 
 const DEFAULT_LIBRARY_LIMIT = 12;
 const YOUTUBE_API = "https://www.googleapis.com/youtube/v3";
+export const YOUTUBE_INTEGRATION_ID = "youtube";
+
+async function resolveYoutubeApiKey(): Promise<string | null> {
+  if (await isIntegrationConnected(YOUTUBE_INTEGRATION_ID)) {
+    const secrets = await getIntegrationSecrets(YOUTUBE_INTEGRATION_ID);
+    const fromSecret = secrets.apiKey?.trim();
+    if (fromSecret) return fromSecret;
+  }
+  return process.env.YOUTUBE_API_KEY?.trim() || null;
+}
 
 export interface YoutubeSyncResult {
   ok: boolean;
@@ -184,7 +198,7 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
     return { ok: false, upserted: 0, archived: 0, error };
   }
 
-  const apiKey = process.env.YOUTUBE_API_KEY?.trim();
+  const apiKey = await resolveYoutubeApiKey();
   if (!apiKey) {
     const error = "missing_youtube_api_key";
     await settingsRef.set(

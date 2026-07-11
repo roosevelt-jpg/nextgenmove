@@ -1719,6 +1719,11 @@ const OPERATIONAL_SITE_SETTINGS = {
       twilioFromWhatsApp: "WhatsApp from number",
       twilioHelp:
         "Used for CRM outreach only. Signup phone verification uses Firebase Phone Auth OTP.",
+      youtubeHint:
+        "Connect a YouTube Data API key so Venturo can sync your playlist into homepage Stories and paid portal libraries.",
+      youtubeApiKey: "YouTube Data API key",
+      youtubeHelp:
+        "Create a key in Google Cloud Console → APIs & Services → Credentials, enable YouTube Data API v3, then paste the key here. Playlist URL is set under Admin → Homepage Content.",
     },
     users: {
       title: "Team & users",
@@ -2020,6 +2025,17 @@ async function seedIntegrations(db: Firestore) {
       status: "not_connected",
       connectedAt: null,
       config: { category: "SMS" },
+    },
+    {
+      id: "youtube",
+      name: "YouTube",
+      category: "Media",
+      description:
+        "YouTube Data API — sync a playlist into homepage Stories and paid portal video libraries.",
+      iconUrl: "",
+      status: "not_connected",
+      connectedAt: null,
+      config: { category: "Media" },
     },
   ];
 
