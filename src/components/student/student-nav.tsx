@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 export interface StudentNavLabels {
   dashboard?: string;
+  wallet?: string;
   store?: string;
   profile?: string;
   settings?: string;
@@ -13,6 +14,7 @@ export interface StudentNavLabels {
 
 const NAV_ITEMS = [
   { key: "dashboard" as const, href: "/student/dashboard" },
+  { key: "wallet" as const, href: "/student/wallet" },
   { key: "store" as const, href: "/student/store" },
   { key: "profile" as const, href: "/student/profile" },
   { key: "settings" as const, href: "/student/settings" },
@@ -28,22 +30,18 @@ export function StudentNav({ labels }: { labels: StudentNavLabels }) {
     >
       {NAV_ITEMS.map((item) => {
         const label = labels[item.key];
-        if (!label) {
-          return null;
-        }
-
-        const isActive =
-          item.href === "/student/dashboard"
-            ? pathname === "/student/dashboard" || pathname === "/student"
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
-
+        if (!label) return null;
+        const active =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
             key={item.key}
             href={item.href}
             className={cn(
-              "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
-              isActive && "border-fill-primary font-bold text-text-primary",
+              "shrink-0 border-b-2 pb-2 font-medium transition-colors",
+              active
+                ? "border-fill-accent text-fill-accent"
+                : "border-transparent text-text-secondary hover:text-text-primary",
             )}
           >
             {label}

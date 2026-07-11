@@ -4,6 +4,7 @@ import { getSiteSettings } from "@/lib/collections/site-settings";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/student/dashboard" },
+  { key: "wallet", href: "/student/wallet" },
   { key: "store", href: "/student/store" },
   { key: "profile", href: "/student/profile" },
   { key: "settings", href: "/student/settings" },
@@ -31,6 +32,7 @@ export default async function StudentPortalLayout({
     ...(settings.studentNavLabels ?? {}),
     ...(settings.adminPageLabels?.shell ?? {}),
     profile: settings.studentNavLabels?.profile ?? "My Profile",
+    wallet: settings.studentNavLabels?.wallet ?? "Wallet",
     workspaceStudent: "Student",
     workspaceEmployer: "Employer",
     workspaceAdmin: "Admin",

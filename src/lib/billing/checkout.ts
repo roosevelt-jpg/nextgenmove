@@ -110,8 +110,8 @@ export async function createCreditTopUpCheckout(options: {
     mode: "payment",
     customer_email: options.studentEmail,
     client_reference_id: options.studentId,
-    success_url: `${base}/student/settings?topup=success`,
-    cancel_url: `${base}/student/settings?topup=cancelled`,
+    success_url: `${base}/student/wallet?topup=success`,
+    cancel_url: `${base}/student/wallet?topup=cancelled`,
     metadata: {
       kind: "credit_topup",
       studentId: options.studentId,
