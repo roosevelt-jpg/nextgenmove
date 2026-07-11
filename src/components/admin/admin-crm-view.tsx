@@ -5,7 +5,22 @@ import { AdminEntityModal } from "@/components/admin/admin-entity-modal";
 import { AdminCrmImportModal } from "@/components/admin/admin-crm-import-modal";
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
-import { Button, DataTable, EmptyState, Input, Modal, Tabs, Textarea } from "@/components/ui";
+import {
+  AdvancedFilters,
+  Button,
+  DataTable,
+  EmptyState,
+  Input,
+  Modal,
+  Tabs,
+  Textarea,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import {
+  applyClientFilters,
+  uniqueOptionValues,
+} from "@/lib/filters/apply-client-filters";
 
 type CrmTab = "contacts" | "companies" | "students";
 type DealStage = "new" | "contacted" | "qualified" | "won";
@@ -20,6 +35,8 @@ interface CrmRow extends Record<string, unknown> {
   subscriptionStatus?: string;
   status?: string;
   sector?: string;
+  seniority?: string;
+  nationality?: string;
   credits?: number;
   type?: string;
   stage?: string;
@@ -78,7 +95,18 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
     activeCompanies: 0,
     newLeads7d: 0,
   });
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    type: "",
+    stage: "",
+    plan: "",
+    status: "",
+    nationality: "",
+    sector: "",
+    seniority: "",
+    creditsMin: "",
+    creditsMax: "",
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CrmRow | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -160,31 +188,186 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
 
   const tableRows = tab === "contacts" ? contacts : rows;
 
+  const filterFields = useMemo<AdvancedFilterField[]>(() => {
+    const base: AdvancedFilterField[] = [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+    ];
+
+    if (tab === "contacts") {
+      const types = uniqueOptionValues(contacts.map((row) => row.type));
+      return [
+        ...base,
+        {
+          id: "type",
+          type: "select",
+          labelKey: "filterType",
+          allKey: "filterAll",
+          options: types.map((opt) => ({
+            value: opt.value,
+            label: labels[`contactType_${opt.value}`] ?? opt.label,
+          })),
+        },
+        {
+          id: "stage",
+          type: "select",
+          labelKey: "filterStage",
+          allKey: "filterAll",
+          options: DEAL_STAGES.map((stage) => ({
+            value: stage,
+            label: labels[`dealStage_${stage}`] ?? stage,
+          })),
+        },
+      ];
+    }
+
+    if (tab === "companies") {
+      return [
+        ...base,
+        {
+          id: "plan",
+          type: "select",
+          labelKey: "filterPlan",
+          allKey: "filterAll",
+          options: uniqueOptionValues(rows.map((row) => row.plan)),
+        },
+        {
+          id: "status",
+          type: "select",
+          labelKey: "filterStatus",
+          allKey: "filterAll",
+          options: uniqueOptionValues(
+            rows.map((row) => row.subscriptionStatus ?? row.status),
+          ),
+        },
+        {
+          id: "nationality",
+          type: "select",
+          labelKey: "filterNationality",
+          allKey: "filterAll",
+          options: (taxonomies.nationality ?? []).map((option) => ({
+            value: option.value,
+            label: option.label,
+          })),
+        },
+      ];
+    }
+
+    return [
+      ...base,
+      {
+        id: "sector",
+        type: "select",
+        labelKey: "filterSector",
+        allKey: "filterAll",
+        options: (taxonomies.sector ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        })),
+      },
+      {
+        id: "seniority",
+        type: "select",
+        labelKey: "filterSeniority",
+        allKey: "filterAll",
+        options: (taxonomies.seniority ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        })),
+      },
+      {
+        id: "status",
+        type: "select",
+        labelKey: "filterStatus",
+        allKey: "filterAll",
+        options: uniqueOptionValues(rows.map((row) => row.status)),
+      },
+      {
+        id: "nationality",
+        type: "select",
+        labelKey: "filterNationality",
+        allKey: "filterAll",
+        options: (taxonomies.nationality ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        })),
+      },
+      {
+        id: "credits",
+        type: "numberRange",
+        labelKey: "filterCredits",
+        minKey: "creditsMin",
+        maxKey: "creditsMax",
+      },
+    ];
+  }, [contacts, labels, rows, tab, taxonomies.nationality, taxonomies.sector, taxonomies.seniority]);
+
   const filteredRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return tableRows;
-
-    return tableRows.filter((row) => {
-      const haystack = [
-        row.name,
-        row.fullName,
-        row.email,
-        row.contactEmail,
-        row.plan,
-        row.status,
-        row.subscriptionStatus,
-        row.type,
-        row.stage,
-        row.owner,
-        row.value,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(query);
+    const minRaw = filters.creditsMin?.trim();
+    const maxRaw = filters.creditsMax?.trim();
+    return applyClientFilters(tableRows, {
+      search: {
+        value: filters.search,
+        accessors: [
+          (row) => row.name,
+          (row) => row.fullName,
+          (row) => row.email,
+          (row) => row.contactEmail,
+          (row) => row.plan,
+          (row) => row.status,
+          (row) => row.subscriptionStatus,
+          (row) => row.type,
+          (row) => row.stage,
+          (row) => row.owner,
+          (row) => row.value,
+          (row) => row.sector,
+          (row) => row.nationality,
+        ],
+      },
+      equals: [
+        { value: filters.type, accessor: (row) => row.type },
+        { value: filters.stage, accessor: (row) => row.stage },
+        { value: filters.plan, accessor: (row) => row.plan },
+        {
+          value: filters.status,
+          accessor: (row) => row.subscriptionStatus ?? row.status,
+        },
+        { value: filters.nationality, accessor: (row) => row.nationality },
+        { value: filters.sector, accessor: (row) => row.sector },
+        { value: filters.seniority, accessor: (row) => row.seniority },
+      ],
+      numberRanges:
+        tab === "students"
+          ? [
+              {
+                min: minRaw ? Number(minRaw) : null,
+                max: maxRaw ? Number(maxRaw) : null,
+                accessor: (row) => row.credits,
+              },
+            ]
+          : undefined,
     });
-  }, [tableRows, search]);
+  }, [filters, tab, tableRows]);
+
+  // Reset facet values that don't apply when switching tabs
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      type: "",
+      stage: "",
+      plan: "",
+      status: "",
+      nationality: "",
+      sector: "",
+      seniority: "",
+      creditsMin: "",
+      creditsMax: "",
+    }));
+  }, [tab]);
 
   const openDetail = async (id: string, collection?: "companies" | "students") => {
     const target = collection ?? entityTab;
@@ -661,11 +844,12 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         </>
       ) : null}
 
-      <Input
-        id="crm-search"
-        label={labels.search}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
+      <AdvancedFilters
+        labels={labels}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
       />
 
       <DataTable

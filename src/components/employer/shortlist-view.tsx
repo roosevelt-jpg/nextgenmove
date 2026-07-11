@@ -1,8 +1,14 @@
-"use client";
-
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { Button, EmptyState, Textarea } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AdvancedFilters,
+  Button,
+  EmptyState,
+  Textarea,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { applyClientFilters } from "@/lib/filters/apply-client-filters";
 
 interface MatchNote {
   authorId: string;
@@ -29,6 +35,9 @@ export interface ShortlistViewProps {
 
 export function ShortlistView({ labels }: ShortlistViewProps) {
   const [matches, setMatches] = useState<ShortlistMatch[]>([]);
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+  });
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +55,34 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
   useEffect(() => {
     void loadMatches();
   }, [loadMatches]);
+
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+    ],
+    [],
+  );
+
+  const filteredMatches = useMemo(
+    () =>
+      applyClientFilters(matches, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (match) => match.student?.fullName,
+            (match) => match.student?.email,
+            (match) => match.student?.sector,
+            (match) => match.student?.currentCity,
+          ],
+        },
+      }),
+    [filters.search, matches],
+  );
 
   const persistOrder = async (next: ShortlistMatch[]) => {
     setMatches(next);
@@ -69,12 +106,21 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
     await persistOrder(next);
   };
 
+  const moveFiltered = async (filteredFrom: number, filteredTo: number) => {
+    const fromId = filteredMatches[filteredFrom]?.id;
+    const toId = filteredMatches[filteredTo]?.id;
+    if (!fromId || !toId) return;
+    const from = matches.findIndex((match) => match.id === fromId);
+    const to = matches.findIndex((match) => match.id === toId);
+    await move(from, to);
+  };
+
   const onDrop = async (toIndex: number) => {
     if (dragIndex == null || dragIndex === toIndex) {
       setDragIndex(null);
       return;
     }
-    await move(dragIndex, toIndex);
+    await moveFiltered(dragIndex, toIndex);
     setDragIndex(null);
   };
 
@@ -123,12 +169,23 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
           {actionMessage}
         </p>
       ) : null}
+
+      <div className="space-y-3 lg:col-span-2">
+        <AdvancedFilters
+          labels={labels}
+          fields={filterFields}
+          values={filters}
+          onChange={setFilters}
+          clearKey="clearFilters"
+        />
+      </div>
+
       <div className="space-y-2">
         {labels.reorderHint ? (
           <p className="text-xs text-text-muted">{labels.reorderHint}</p>
         ) : null}
         <ul className="space-y-2">
-          {matches.map((match, index) => (
+          {filteredMatches.map((match, index) => (
             <li
               key={match.id}
               draggable
@@ -143,7 +200,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
                     type="button"
                     className="px-2 py-1 text-xs text-text-muted hover:text-text-primary"
                     aria-label={labels.moveUp ?? "Move up"}
-                    onClick={() => void move(index, index - 1)}
+                    onClick={() => void moveFiltered(index, index - 1)}
                   >
                     ↑
                   </button>
@@ -151,7 +208,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
                     type="button"
                     className="px-2 py-1 text-xs text-text-muted hover:text-text-primary"
                     aria-label={labels.moveDown ?? "Move down"}
-                    onClick={() => void move(index, index + 1)}
+                    onClick={() => void moveFiltered(index, index + 1)}
                   >
                     ↓
                   </button>

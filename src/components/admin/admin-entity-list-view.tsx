@@ -1,10 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminEntityModal } from "@/components/admin/admin-entity-modal";
 import type { AdminEntitySchema } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
-import { Button, DataTable, EmptyState } from "@/components/ui";
+import {
+  AdvancedFilters,
+  Button,
+  DataTable,
+  EmptyState,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import {
+  applyClientFilters,
+  uniqueOptionValues,
+} from "@/lib/filters/apply-client-filters";
 
 interface AdminEntityListViewProps {
   labels: Record<string, string>;
@@ -14,6 +25,8 @@ interface AdminEntityListViewProps {
   title: string;
 }
 
+const FACET_KEYS = ["category", "sector", "department", "type"] as const;
+
 export function AdminEntityListView({
   labels,
   formLabels,
@@ -22,6 +35,14 @@ export function AdminEntityListView({
   title,
 }: AdminEntityListViewProps) {
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    status: "",
+    category: "",
+    sector: "",
+    department: "",
+    type: "",
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -40,6 +61,87 @@ export function AdminEntityListView({
   useEffect(() => {
     void load();
   }, [schema.collection]);
+
+  const schemaKeys = useMemo(
+    () => new Set(schema.fields.map((field) => field.key)),
+    [schema.fields],
+  );
+
+  const filterFields = useMemo<AdvancedFilterField[]>(() => {
+    const fields: AdvancedFilterField[] = [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "status",
+        type: "select",
+        labelKey: "filterStatus",
+        allKey: "filterAll",
+        options: uniqueOptionValues(
+          items.map((item) =>
+            String(item.status ?? item.subscriptionStatus ?? ""),
+          ),
+        ),
+      },
+    ];
+
+    for (const key of FACET_KEYS) {
+      if (!schemaKeys.has(key)) continue;
+      const taxonomy =
+        key === "category"
+          ? taxonomies.category
+          : key === "sector"
+            ? taxonomies.sector
+            : undefined;
+      fields.push({
+        id: key,
+        type: "select",
+        labelKey: `filter${key.charAt(0).toUpperCase()}${key.slice(1)}`,
+        allKey: "filterAll",
+        options: taxonomy?.length
+          ? taxonomy.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))
+          : uniqueOptionValues(items.map((item) => String(item[key] ?? ""))),
+      });
+    }
+
+    return fields;
+  }, [items, schemaKeys, taxonomies.category, taxonomies.sector]);
+
+  const filteredItems = useMemo(
+    () =>
+      applyClientFilters(items, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (item) => item.title,
+            (item) => item.name,
+            (item) => item.id,
+            (item) => item.status,
+            (item) => item.category,
+            (item) => item.sector,
+            (item) => item.department,
+            (item) => item.type,
+          ],
+        },
+        equals: [
+          {
+            value: filters.status,
+            accessor: (item) => item.status ?? item.subscriptionStatus,
+          },
+          { value: filters.category, accessor: (item) => item.category },
+          { value: filters.sector, accessor: (item) => item.sector },
+          { value: filters.department, accessor: (item) => item.department },
+          { value: filters.type, accessor: (item) => item.type },
+        ],
+      }),
+    [filters, items],
+  );
 
   const columns = [
     {
@@ -112,9 +214,17 @@ export function AdminEntityListView({
         </p>
       ) : null}
 
+      <AdvancedFilters
+        labels={labels}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
+
       <DataTable
         columns={columns}
-        data={items}
+        data={filteredItems}
         rowKey={(row) => String(row.id)}
         emptyState={<EmptyState title={labels.empty} />}
       />

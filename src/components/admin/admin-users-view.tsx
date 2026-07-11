@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Button, DataTable, EmptyState, Input, Modal } from "@/components/ui";
+import {
+  AdvancedFilters,
+  Button,
+  DataTable,
+  EmptyState,
+  Modal,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { applyClientFilters } from "@/lib/filters/apply-client-filters";
 
 interface UserRow extends Record<string, unknown> {
   uid: string;
@@ -45,7 +54,11 @@ function field(
 
 export function AdminUsersView({ labels }: AdminUsersViewProps) {
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    role: "",
+    status: "",
+  });
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -66,20 +79,59 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
     void load();
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) {
-      return users;
-    }
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "role",
+        type: "select",
+        labelKey: "filterRole",
+        allKey: "filterAll",
+        options: [
+          { value: "student", label: labels.roleStudent ?? "student" },
+          { value: "company", label: labels.roleCompany ?? "company" },
+          { value: "admin", label: labels.roleAdmin ?? "admin" },
+        ],
+      },
+      {
+        id: "status",
+        type: "select",
+        labelKey: "filterStatus",
+        allKey: "filterAll",
+        options: [
+          { value: "active", label: labels.statusActive ?? "active" },
+          { value: "suspended", label: labels.statusSuspended ?? "suspended" },
+        ],
+      },
+    ],
+    [labels.roleAdmin, labels.roleCompany, labels.roleStudent, labels.statusActive, labels.statusSuspended],
+  );
 
-    return users.filter((user) =>
-      [user.email, user.displayName, user.role, user.status]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [search, users]);
+  const filteredUsers = useMemo(
+    () =>
+      applyClientFilters(users, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (user) => user.email,
+            (user) => user.displayName,
+            (user) => user.phone,
+            (user) => user.role,
+            (user) => user.status,
+          ],
+        },
+        equals: [
+          { value: filters.role, accessor: (user) => user.role },
+          { value: filters.status, accessor: (user) => user.status },
+        ],
+      }),
+    [filters.role, filters.search, filters.status, users],
+  );
 
   const openProfile = async (uid: string) => {
     setProfileOpen(true);
@@ -235,11 +287,12 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
         </p>
       ) : null}
 
-      <Input
-        id="users-search"
-        label={labels.search}
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
+      <AdvancedFilters
+        labels={labels}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
       />
 
       <DataTable

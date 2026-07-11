@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, EmptyState, Input } from "@/components/ui";
+import {
+  AdvancedFilters,
+  Button,
+  EmptyState,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { toSearchParams } from "@/lib/filters/apply-client-filters";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface TalentPoolRow extends Record<string, unknown> {
@@ -42,21 +49,23 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
   const { taxonomies } = useTaxonomies();
   const [rows, setRows] = useState<TalentPoolRow[]>([]);
   const [browseRows, setBrowseRows] = useState<BrowseRow[]>([]);
-  const [sector, setSector] = useState("");
-  const [seniority, setSeniority] = useState("");
-  const [location, setLocation] = useState("");
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    sector: "",
+    seniority: "",
+    location: "",
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const loadRows = useCallback(async () => {
     setIsLoading(true);
-    const params = new URLSearchParams();
-
-    if (sector) params.set("sector", sector);
-    if (seniority) params.set("seniority", seniority);
-    if (location) params.set("location", location);
-    if (search.trim()) params.set("search", search.trim());
+    const params = toSearchParams(filters, [
+      "search",
+      "sector",
+      "seniority",
+      "location",
+    ]);
 
     const response = await fetch(`/api/employer/talent-pool?${params.toString()}`);
     const data = (await response.json()) as { rows: TalentPoolRow[] };
@@ -75,15 +84,58 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
     }
 
     setIsLoading(false);
-  }, [canBrowse, location, search, sector, seniority]);
+  }, [canBrowse, filters]);
 
   useEffect(() => {
     void loadRows();
   }, [loadRows]);
 
   const locationOptions = useMemo(
-    () => [...new Set(rows.map((row) => row.currentCity).filter(Boolean))],
+    () =>
+      [...new Set(rows.map((row) => row.currentCity).filter(Boolean))].map(
+        (value) => ({ value, label: value }),
+      ),
     [rows],
+  );
+
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "searchLabel",
+        placeholderKey: "searchPlaceholder",
+        debounceMs: 350,
+      },
+      {
+        id: "sector",
+        type: "select",
+        labelKey: "filterSector",
+        allKey: "all",
+        options: (taxonomies.sector ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        })),
+      },
+      {
+        id: "seniority",
+        type: "select",
+        labelKey: "filterSeniority",
+        allKey: "all",
+        options: (taxonomies.seniority ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        })),
+      },
+      {
+        id: "location",
+        type: "select",
+        labelKey: "filterLocation",
+        allKey: "all",
+        options: locationOptions,
+      },
+    ],
+    [locationOptions, taxonomies.sector, taxonomies.seniority],
   );
 
   const shortlistedCount = useMemo(
@@ -195,69 +247,18 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
         ) : null}
       </div>
 
-      <div className="rounded-radius border border-border bg-grad-card p-3">
-        {labels.searchPlaceholder ? (
-          <Input
-            label={labels.searchLabel ?? labels.searchPlaceholder}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={labels.searchPlaceholder}
-          />
-        ) : null}
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-        {labels.filterSector ? (
-          <label className="flex flex-col gap-1 text-sm text-text-secondary">
-            {labels.filterSector}
-            <select
-              className="min-h-11 rounded-radius-sm border border-border bg-bg px-2.5 py-2.5 text-sm"
-              value={sector}
-              onChange={(event) => setSector(event.target.value)}
-            >
-              <option value="">{labels.all}</option>
-              {(taxonomies.sector ?? []).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        {labels.filterSeniority ? (
-          <label className="flex flex-col gap-1 text-sm text-text-secondary">
-            {labels.filterSeniority}
-            <select
-              className="min-h-11 rounded-radius-sm border border-border bg-bg px-2.5 py-2.5 text-sm"
-              value={seniority}
-              onChange={(event) => setSeniority(event.target.value)}
-            >
-              <option value="">{labels.all}</option>
-              {(taxonomies.seniority ?? []).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        {labels.filterLocation ? (
-          <label className="flex flex-col gap-1 text-sm text-text-secondary">
-            {labels.filterLocation}
-            <select
-              className="min-h-11 rounded-radius-sm border border-border bg-bg px-2.5 py-2.5 text-sm"
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-            >
-              <option value="">{labels.all}</option>
-              {locationOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        </div>
-      </div>
+      <AdvancedFilters
+        labels={{
+          ...labels,
+          searchLabel: labels.searchLabel ?? labels.searchPlaceholder ?? "",
+          clearFilters: labels.clearFilters ?? "",
+          filterAll: labels.all ?? "",
+        }}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
 
       {rows.length ? (
         <ul className="space-y-2">

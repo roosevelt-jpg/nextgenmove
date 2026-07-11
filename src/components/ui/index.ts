@@ -1,4 +1,10 @@
 export { Accordion, type AccordionItem, type AccordionProps } from "./accordion";
+export {
+  AdvancedFilters,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+  type AdvancedFiltersProps,
+} from "./advanced-filters";
 export { Badge, type BadgeProps, type BadgeVariant } from "./badge";
 export { Button, type ButtonProps, type ButtonVariant } from "./button";
 export {

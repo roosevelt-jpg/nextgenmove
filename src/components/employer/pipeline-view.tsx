@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EmptyState, KanbanBoard } from "@/components/ui";
+import {
+  AdvancedFilters,
+  EmptyState,
+  KanbanBoard,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import {
+  applyClientFilters,
+  uniqueOptionValues,
+} from "@/lib/filters/apply-client-filters";
 import { cn } from "@/lib/utils";
 
 interface PipelineStage {
@@ -32,6 +42,12 @@ export interface PipelineViewProps {
 export function PipelineView({ labels }: PipelineViewProps) {
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [matches, setMatches] = useState<EmployerMatch[]>([]);
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    stage: "",
+    sector: "",
+    shortlisted: "",
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [moveError, setMoveError] = useState<string | null>(null);
 
@@ -121,6 +137,88 @@ export function PipelineView({ labels }: PipelineViewProps) {
 
   const maxFunnel = Math.max(1, ...funnel.map((f) => f.value));
 
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "stage",
+        type: "select",
+        labelKey: "filterStage",
+        allKey: "filterAll",
+        options: stages.map((stage) => ({
+          value: stage.id,
+          label: stage.name,
+        })),
+      },
+      {
+        id: "sector",
+        type: "select",
+        labelKey: "filterSector",
+        allKey: "filterAll",
+        options: uniqueOptionValues(
+          matches.map((match) => match.student?.sector),
+        ),
+      },
+      {
+        id: "shortlisted",
+        type: "select",
+        labelKey: "filterShortlisted",
+        allKey: "filterAll",
+        options: [
+          {
+            value: "yes",
+            label: labels.shortlistedYes ?? "Shortlisted",
+          },
+          {
+            value: "no",
+            label: labels.shortlistedNo ?? "Not shortlisted",
+          },
+        ],
+      },
+    ],
+    [labels.shortlistedNo, labels.shortlistedYes, matches, stages],
+  );
+
+  const filteredMatches = useMemo(
+    () =>
+      applyClientFilters(matches, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (match) => match.student?.fullName,
+            (match) => match.student?.email,
+            (match) => match.student?.sector,
+            (match) => match.student?.seniority,
+            (match) => match.student?.currentCity,
+          ],
+        },
+        equals: [
+          { value: filters.stage, accessor: (match) => match.stageId },
+          {
+            value: filters.sector,
+            accessor: (match) => match.student?.sector,
+          },
+        ],
+        booleans: [
+          {
+            value:
+              filters.shortlisted === "yes"
+                ? true
+                : filters.shortlisted === "no"
+                  ? false
+                  : null,
+            accessor: (match) => Boolean(match.shortlisted),
+          },
+        ],
+      }),
+    [filters, matches],
+  );
+
   const columns = useMemo(
     () =>
       stages.map((stage) => ({
@@ -133,7 +231,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
 
   const items = useMemo(
     () =>
-      matches.map((match) => ({
+      filteredMatches.map((match) => ({
         id: match.id,
         columnId: match.stageId,
         content: (
@@ -149,7 +247,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
           </div>
         ),
       })),
-    [matches],
+    [filteredMatches],
   );
 
   const handleMove = async (itemId: string, toColumnId: string) => {
@@ -184,6 +282,14 @@ export function PipelineView({ labels }: PipelineViewProps) {
           {moveError}
         </p>
       ) : null}
+
+      <AdvancedFilters
+        labels={labels}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((card) => (

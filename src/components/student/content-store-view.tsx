@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { YoutubeEmbed } from "@/components/media/youtube-embed";
-import { Badge, Button, Card, CardBody } from "@/components/ui";
+import {
+  AdvancedFilters,
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 import { parseYoutubeVideoId } from "@/lib/media/youtube";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
@@ -29,7 +38,12 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
   const { taxonomies } = useTaxonomies();
   const [items, setItems] = useState<StoreItem[]>([]);
   const [credits, setCredits] = useState(0);
-  const [category, setCategory] = useState("");
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    category: "",
+    type: "",
+    access: "",
+  });
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [loadingItemId, setLoadingItemId] = useState<string | null>(null);
   const [watchingId, setWatchingId] = useState<string | null>(null);
@@ -49,13 +63,75 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
     void loadStore();
   }, [loadStore]);
 
-  const filteredItems = useMemo(() => {
-    if (!category) {
-      return items;
-    }
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "category",
+        type: "select",
+        labelKey: "filterCategory",
+        allKey: "allCategories",
+        options: (taxonomies.category ?? []).map((option) => ({
+          value: option.value,
+          label: option.label,
+        })),
+      },
+      {
+        id: "type",
+        type: "select",
+        labelKey: "filterType",
+        allKey: "filterAll",
+        options: uniqueOptionValues(items.map((item) => item.type)),
+      },
+      {
+        id: "access",
+        type: "select",
+        labelKey: "filterAccess",
+        allKey: "filterAll",
+        options: [
+          { value: "purchased", label: labels.accessPurchased ?? "Unlocked" },
+          { value: "locked", label: labels.accessLocked ?? "Locked" },
+        ],
+      },
+    ],
+    [items, labels.accessLocked, labels.accessPurchased, taxonomies.category],
+  );
 
-    return items.filter((item) => item.category === category);
-  }, [category, items]);
+  const filteredItems = useMemo(
+    () =>
+      applyClientFilters(items, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (item) => item.title,
+            (item) => item.description,
+            (item) => item.type,
+            (item) => item.category,
+          ],
+        },
+        equals: [
+          { value: filters.category, accessor: (item) => item.category },
+          { value: filters.type, accessor: (item) => item.type },
+        ],
+        booleans: [
+          {
+            value:
+              filters.access === "purchased"
+                ? true
+                : filters.access === "locked"
+                  ? false
+                  : null,
+            accessor: (item) => item.purchased,
+          },
+        ],
+      }),
+    [filters, items],
+  );
 
   const purchase = async (contentItemId: string) => {
     setErrorCode(null);
@@ -97,25 +173,15 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
             {labels.creditsBalance.replace("{credits}", String(credits))}
           </p>
         ) : null}
-
-        {labels.filterCategory ? (
-          <label className="flex max-w-xs flex-col gap-1 text-sm text-text-secondary sm:ml-auto">
-            {labels.filterCategory}
-            <select
-              className="rounded-radius border border-border bg-bg px-3 py-2"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-            >
-              <option value="">{labels.allCategories}</option>
-              {(taxonomies.category ?? []).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
       </div>
+
+      <AdvancedFilters
+        labels={labels}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
 
       {errorCode ? (
         <p className="text-sm text-text-warning" role="alert">
