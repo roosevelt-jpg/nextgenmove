@@ -73,13 +73,29 @@
   --grad-dusk: linear-gradient(135deg, #eeedfe 0%, #faeeda 100%);
   --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
 
-  /* Content column — leave excess side area on wide screens */
+  /* Content column — leave excess side area on wide screens (marketing) */
   --page-max: 56rem; /* 896px — visibly inset on laptop+ */
   --page-gutter: 1.25rem;
+
+  /* Portal / admin shell — matches prototype .shell (1180px) */
+  --shell-max: 73.75rem;
+  --shell-gutter: 1.75rem;
 }
 
 @media (min-width: 768px) {
   :root {
     --page-gutter: 1.75rem;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --shell-gutter: 1.125rem; /* 18px — prototype mobile shell */
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --shell-gutter: 0.875rem; /* 14px */
   }
 }

@@ -12,9 +12,9 @@ export default async function AdminLayout({
 
   return (
     <RoleGate allowedRoles={["admin"]}>
-      <div className="page-container mx-auto flex w-full max-w-page flex-1 flex-col py-6">
+      <div className="flex w-full flex-1 flex-col">
         <AdminNav labels={labels} />
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="portal-shell min-w-0 flex-1 pb-10 pt-2">{children}</div>
       </div>
     </RoleGate>
   );

@@ -30,6 +30,7 @@
   --radius-radius: var(--radius);
   --radius-radius-lg: var(--radius-lg);
   --max-width-page: var(--page-max);
+  --max-width-shell: var(--shell-max);
 }
 
 body {
@@ -70,6 +71,20 @@ video {
   padding-right: var(--page-gutter);
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
+  box-sizing: border-box;
+}
+
+/*
+  Portal / admin shell — matches prototype .shell (1180px).
+  Wider than marketing .page-container so dashboards use the full work area.
+*/
+.portal-shell {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--shell-gutter);
+  padding-right: var(--shell-gutter);
   box-sizing: border-box;
 }
 

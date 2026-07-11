@@ -51,6 +51,7 @@ const config: Config = {
       },
       maxWidth: {
         page: "var(--page-max)",
+        shell: "var(--shell-max)",
       },
     },
   },

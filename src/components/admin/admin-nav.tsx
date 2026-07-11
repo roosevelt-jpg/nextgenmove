@@ -20,33 +20,37 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
 
   return (
     <nav
-      className="mb-6 flex gap-4 overflow-x-auto border-b border-border text-sm sm:gap-6"
+      className="-mx-[var(--shell-gutter)] mb-6 border-b border-border bg-surface-2/60"
       aria-label="admin"
     >
-      {NAV_ITEMS.map((item) => {
-        const label = labels[item.key];
-        if (!label) {
-          return null;
-        }
+      <div className="portal-shell flex gap-1.5 overflow-x-auto py-2">
+        {NAV_ITEMS.map((item) => {
+          const label = labels[item.key];
+          if (!label) {
+            return null;
+          }
 
-        const isActive =
-          item.href === "/admin/dashboard"
-            ? pathname === "/admin/dashboard" || pathname === "/admin"
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive =
+            item.href === "/admin/dashboard"
+              ? pathname === "/admin/dashboard" || pathname === "/admin"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-        return (
-          <Link
-            key={item.key}
-            href={item.href}
-            className={cn(
-              "-mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent pb-3 text-text-secondary transition-colors hover:text-text-primary",
-              isActive && "border-fill-primary font-bold text-text-primary",
-            )}
-          >
-            {label}
-          </Link>
-        );
-      })}
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={cn(
+                "inline-flex shrink-0 items-center rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+                isActive
+                  ? "bg-surface-1 text-text-primary shadow-sm"
+                  : "text-text-secondary hover:bg-surface-1/70 hover:text-text-primary",
+              )}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

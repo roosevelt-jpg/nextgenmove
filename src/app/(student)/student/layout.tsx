@@ -10,7 +10,7 @@ export default async function StudentPortalLayout({
   const labels = settings.studentNavLabels ?? settings.formLabels ?? {};
 
   return (
-    <div className="page-container mx-auto w-full max-w-page flex-1 py-6">
+    <div className="portal-shell flex-1 py-6">
       <StudentNav labels={labels} />
       {children}
     </div>

@@ -145,12 +145,24 @@ export function AdminDashboardView({
   ];
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="font-serif text-3xl text-text-primary">{labels.title}</h1>
+    <div className="space-y-6">
+      <header className="space-y-1 pt-1">
+        {labels.eyebrow ? (
+          <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.8px] text-text-label">
+            {labels.eyebrow}
+          </p>
+        ) : null}
+        <h1 className="font-serif text-[1.75rem] leading-tight text-text-primary md:text-[2rem]">
+          {labels.title}
+        </h1>
+        {labels.subtitle ? (
+          <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
+            {labels.subtitle}
+          </p>
+        ) : null}
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         {statCards.map((card, index) =>
           labels[card.key] ? (
             <StatCard
