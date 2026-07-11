@@ -119,23 +119,46 @@ export function AccountProfileView({
             {(displayName || account.email || "?").slice(0, 1).toUpperCase()}
           </span>
         )}
-        <div className="space-y-2">
+        <div className="min-w-[12rem] flex-1 space-y-2">
           <FileUpload
             storagePath={storagePath}
             uploadEndpoint="/api/account/upload"
             accept="image/*"
-            label={labels.uploadPhoto}
-            dropzoneContent={labels.photoDropzone}
-            progressLabel={labels.uploadProgress}
-            onUploadComplete={(result: FileUploadMetadata) => {
+            label={labels.uploadPhoto || "Upload photo"}
+            dropzoneContent={
+              labels.photoDropzone || "JPG or PNG. Click or drop to upload."
+            }
+            progressLabel={labels.uploadProgress || "Uploading…"}
+            onUploadComplete={async (result: FileUploadMetadata) => {
               setPhotoUrl(result.url);
-              setStatusMessage(labels.photoReady ?? "Photo ready — click Save changes.");
+              setStatusMessage(null);
+              // Persist photo immediately so Save isn't required for the image.
+              const response = await fetch("/api/account", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ photoUrl: result.url }),
+              });
+              if (response.ok) {
+                setStatusMessage(
+                  labels.photoSaved ?? labels.photoReady ?? "Photo saved.",
+                );
+                await load();
+              } else {
+                setStatusMessage(
+                  labels.photoReady ??
+                    "Photo uploaded — click Save changes to keep it.",
+                );
+              }
             }}
             onError={(error) => {
               setStatusMessage(
                 labels[error.message] ??
                   labels.uploadError ??
-                  error.message ??
+                  (error.message === "storage_not_configured"
+                    ? "Storage is not configured."
+                    : error.message === "upload_failed"
+                      ? "Upload failed. Try a smaller JPG or PNG."
+                      : error.message) ??
                   "Upload failed.",
               );
             }}
@@ -147,7 +170,7 @@ export function AccountProfileView({
               size="sm"
               onClick={() => setPhotoUrl(null)}
             >
-              {labels.removePhoto}
+              {labels.removePhoto || "Remove"}
             </Button>
           ) : null}
         </div>

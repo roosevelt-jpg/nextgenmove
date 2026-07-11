@@ -18,8 +18,16 @@ export async function uploadFileViaAdmin(options: {
   buffer: Buffer;
   contentType: string;
   filename: string;
+  bucketName?: string;
 }): Promise<AdminUploadResult> {
-  const bucket = adminStorage.bucket();
+  const bucket = options.bucketName
+    ? adminStorage.bucket(options.bucketName)
+    : adminStorage.bucket();
+
+  if (!bucket.name) {
+    throw new Error("storage_bucket_missing");
+  }
+
   const file = bucket.file(options.path);
   const token = randomUUID();
 

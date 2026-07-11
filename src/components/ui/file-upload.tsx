@@ -218,7 +218,11 @@ export function FileUpload({
           (disabled || isUploading) && "cursor-not-allowed opacity-50",
         )}
       >
-        {dropzoneContent}
+        {dropzoneContent || (
+          <span className="text-sm text-text-secondary">
+            Click or drop a file to upload
+          </span>
+        )}
         <input
           ref={inputRef}
           type="file"

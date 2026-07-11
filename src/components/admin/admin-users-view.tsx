@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button, DataTable, EmptyState, Input } from "@/components/ui";
+import Link from "next/link";
+import { Button, DataTable, EmptyState, Input, Modal } from "@/components/ui";
 
 interface UserRow extends Record<string, unknown> {
   uid: string;
@@ -9,10 +10,37 @@ interface UserRow extends Record<string, unknown> {
   role: string;
   status: string;
   displayName?: string;
+  photoUrl?: string | null;
+  phone?: string | null;
+}
+
+interface ProfilePayload {
+  user: UserRow & Record<string, unknown>;
+  profile: Record<string, unknown> | null;
+  profileKind: "student" | "company" | null;
 }
 
 interface AdminUsersViewProps {
   labels: Record<string, string>;
+}
+
+function field(
+  labels: Record<string, string>,
+  key: string,
+  fallback: string,
+  value: unknown,
+) {
+  if (value === null || value === undefined || value === "") return null;
+  const display = Array.isArray(value) ? value.filter(Boolean).join(", ") : String(value);
+  if (!display) return null;
+  return (
+    <div key={key} className="space-y-0.5">
+      <dt className="font-mono text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
+        {labels[key] ?? fallback}
+      </dt>
+      <dd className="text-sm text-text-primary">{display}</dd>
+    </div>
+  );
 }
 
 export function AdminUsersView({ labels }: AdminUsersViewProps) {
@@ -20,6 +48,10 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
   const [search, setSearch] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const load = async () => {
     const response = await fetch("/api/admin/users");
@@ -47,6 +79,21 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
         .includes(query),
     );
   }, [search, users]);
+
+  const openProfile = async (uid: string) => {
+    setProfileOpen(true);
+    setProfileLoading(true);
+    setProfile(null);
+    setProfileError(null);
+    const response = await fetch(`/api/admin/users/${encodeURIComponent(uid)}/profile`);
+    setProfileLoading(false);
+    if (!response.ok) {
+      setProfileError(labels.profileLoadError ?? "Could not load profile.");
+      return;
+    }
+    const payload = (await response.json()) as ProfilePayload;
+    setProfile(payload);
+  };
 
   const runAction = async (userId: string, action: "promote_admin" | "suspend" | "activate") => {
     setActionLoadingId(userId);
@@ -89,6 +136,15 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
             variant="outline"
             className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
             disabled={actionLoadingId === row.uid}
+            onClick={() => void openProfile(row.uid)}
+          >
+            {labels.viewProfile ?? "View"}
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
+            disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "promote_admin")}
           >
             {labels.promoteAdmin ?? "Make admin"}
@@ -115,6 +171,21 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
       ),
     },
   ];
+
+  const user = profile?.user;
+  const linked = profile?.profile;
+  const kind = profile?.profileKind;
+  const displayName =
+    (user?.displayName as string | undefined) ||
+    (linked?.fullName as string | undefined) ||
+    (linked?.name as string | undefined) ||
+    (linked?.contactName as string | undefined) ||
+    (user?.email as string | undefined) ||
+    "";
+  const photoUrl =
+    (user?.photoUrl as string | null | undefined) ||
+    (linked?.photoUrl as string | null | undefined) ||
+    null;
 
   return (
     <div className="space-y-6">
@@ -151,6 +222,102 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
         rowKey={(row) => row.uid}
         emptyState={<EmptyState title={labels.empty ?? "No users yet"} />}
       />
+
+      <Modal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        title={labels.profileTitle ?? "User profile"}
+        footer={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {kind === "student" || kind === "company" ? (
+              <Link
+                href="/admin/crm"
+                className="btn-brand inline-flex min-h-5 items-center whitespace-nowrap px-1.5 py-0.5 text-[10px]"
+              >
+                {labels.openInCrm ?? "Open in CRM"}
+              </Link>
+            ) : null}
+            <Button size="sm" variant="ghost" onClick={() => setProfileOpen(false)}>
+              {labels.close ?? "Close"}
+            </Button>
+          </div>
+        }
+      >
+        {profileLoading ? (
+          <p className="text-sm text-text-secondary">{labels.loading ?? "Loading…"}</p>
+        ) : null}
+        {profileError ? (
+          <p className="text-sm text-text-warning" role="alert">
+            {profileError}
+          </p>
+        ) : null}
+        {user && !profileLoading ? (
+          <div className="space-y-5">
+            <div className="flex items-center gap-4">
+              {photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photoUrl}
+                  alt=""
+                  className="h-16 w-16 rounded-full object-cover"
+                />
+              ) : (
+                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-lavender text-lg font-semibold text-text-accent">
+                  {(displayName || "?").slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="truncate font-medium text-text-primary">{displayName}</p>
+                <p className="truncate text-sm text-text-secondary">
+                  {String(user.email ?? "")}
+                </p>
+              </div>
+            </div>
+
+            <dl className="grid gap-3 sm:grid-cols-2">
+              {field(labels, "role", "Role", user.role)}
+              {field(labels, "status", "Status", user.status)}
+              {field(
+                labels,
+                "phone",
+                "Phone",
+                user.phone ?? linked?.phone ?? linked?.contactPhone,
+              )}
+              {kind === "student"
+                ? [
+                    field(labels, "fullName", "Full name", linked?.fullName),
+                    field(labels, "university", "University", linked?.university),
+                    field(labels, "currentCity", "City", linked?.currentCity),
+                    field(labels, "sector", "Sector", linked?.sector),
+                    field(labels, "seniority", "Seniority", linked?.seniority),
+                    field(labels, "availability", "Availability", linked?.availability),
+                    field(labels, "skills", "Skills", linked?.skills),
+                  ]
+                : null}
+              {kind === "company"
+                ? [
+                    field(
+                      labels,
+                      "companyName",
+                      "Company",
+                      linked?.name ?? linked?.companyName,
+                    ),
+                    field(labels, "contactName", "Contact", linked?.contactName),
+                    field(labels, "industry", "Industry", linked?.industry ?? linked?.sector),
+                    field(labels, "city", "City", linked?.city ?? linked?.location),
+                    field(labels, "website", "Website", linked?.website),
+                  ]
+                : null}
+            </dl>
+
+            {!linked && (user.role === "student" || user.role === "company" || user.role === "employer") ? (
+              <p className="text-sm text-text-secondary">
+                {labels.noLinkedProfile ?? "No linked profile yet."}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }
