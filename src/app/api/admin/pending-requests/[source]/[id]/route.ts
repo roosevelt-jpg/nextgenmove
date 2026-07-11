@@ -7,6 +7,7 @@ import {
   logActivity,
   unauthorizedResponse,
 } from "@/lib/admin/session";
+import { computeMatchScore } from "@/lib/matching/score";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 
@@ -60,7 +61,37 @@ export async function POST(
             ? "dismissed"
             : "reviewed";
 
-      await ref.update(stripUndefined({ status: nextStatus }));
+      await ref.update(
+        stripUndefined({
+          status: nextStatus,
+          resolvedAt:
+            body.action === "approve" || body.action === "reject"
+              ? FieldValue.serverTimestamp()
+              : undefined,
+        }),
+      );
+
+      // Plan-change requests activate the company plan on approve (blueprint §5.3).
+      if (
+        body.action === "approve" &&
+        data.type === "plan_request" &&
+        data.companyId
+      ) {
+        const payload = (data.payload ?? {}) as Record<string, unknown>;
+        const requestedPlan = payload.requestedPlan;
+        if (requestedPlan === "track_a" || requestedPlan === "track_b") {
+          await adminDb
+            .collection("companies")
+            .doc(String(data.companyId))
+            .update(
+              stripUndefined({
+                plan: requestedPlan,
+                subscriptionStatus: "active",
+                updatedAt: FieldValue.serverTimestamp(),
+              }),
+            );
+        }
+      }
     }
 
     if (source === "job_applications") {
@@ -89,11 +120,37 @@ export async function POST(
           .limit(1)
           .get();
 
-        const studentId = studentSnapshot.docs[0]?.id;
+        const studentDoc = studentSnapshot.docs[0];
+        const studentId = studentDoc?.id;
 
-        if (!studentId) {
+        if (!studentId || !studentDoc) {
           return NextResponse.json({ error: "student_not_found" }, { status: 400 });
         }
+
+        const companySnap = await adminDb.collection("companies").doc(companyId).get();
+        const companyData = companySnap.data() ?? {};
+        const studentData = studentDoc.data();
+        const matchScore = computeMatchScore({
+          student: {
+            fullName: studentData.fullName ?? "",
+            sector: studentData.sector ?? "",
+            seniority: studentData.seniority ?? "",
+            currentCity: studentData.currentCity ?? "",
+            targetCities: studentData.targetCities ?? [],
+            bio: studentData.bio ?? "",
+            skills: studentData.skills ?? [],
+            availability: studentData.availability ?? "",
+            cvUrl: studentData.cvUrl ?? null,
+            linkedinUrl: studentData.linkedinUrl ?? null,
+            portfolioUrl: studentData.portfolioUrl ?? null,
+            photoUrl: studentData.photoUrl ?? null,
+          },
+          company: {
+            industry: companyData.industry ?? "",
+            preferredLocations: companyData.preferredLocations ?? [],
+            requirementTags: companyData.requirementTags ?? [],
+          },
+        });
 
         const matchRef = adminDb.collection("matches").doc();
 
@@ -104,7 +161,8 @@ export async function POST(
             studentId,
             stageId,
             shortlisted: false,
-            source: "role_interest_promoted",
+            matchScore,
+            source: "admin_curated",
             notes: [],
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),

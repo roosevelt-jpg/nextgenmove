@@ -8,6 +8,8 @@ import {
   logActivity,
   unauthorizedResponse,
 } from "@/lib/admin/session";
+import { computeMatchScore } from "@/lib/matching/score";
+import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
@@ -25,9 +27,18 @@ function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
 }
 
 const actionSchema = z.object({
-  action: z.enum(["change_plan", "suspend", "activate", "add_note"]),
+  action: z.enum([
+    "change_plan",
+    "suspend",
+    "activate",
+    "add_note",
+    "create_match",
+  ]),
   plan: z.enum(["track_a", "track_b"]).nullable().optional(),
   note: z.string().optional(),
+  companyId: z.string().min(1).optional(),
+  studentId: z.string().min(1).optional(),
+  stageId: z.string().min(1).optional(),
 });
 
 type EntityType = "companies" | "students";
@@ -164,6 +175,101 @@ export async function POST(
           }),
         }),
       );
+    }
+
+    if (body.action === "create_match") {
+      const companyId =
+        type === "companies" ? id : (body.companyId ?? "");
+      const studentId =
+        type === "students" ? id : (body.studentId ?? "");
+      const stageId = body.stageId ?? "pipeline_new_match";
+
+      if (!companyId || !studentId) {
+        return NextResponse.json({ error: "missing_match_pair" }, { status: 400 });
+      }
+
+      const [companySnap, studentSnap, stageSnap, existingSnap] =
+        await Promise.all([
+          adminDb.collection("companies").doc(companyId).get(),
+          adminDb.collection("students").doc(studentId).get(),
+          adminDb.collection("pipeline_stages").doc(stageId).get(),
+          adminDb
+            .collection("matches")
+            .where("companyId", "==", companyId)
+            .where("studentId", "==", studentId)
+            .limit(1)
+            .get(),
+        ]);
+
+      if (!companySnap.exists || !studentSnap.exists) {
+        return NextResponse.json({ error: "not_found" }, { status: 404 });
+      }
+
+      if (!stageSnap.exists) {
+        return NextResponse.json({ error: "invalid_stage" }, { status: 400 });
+      }
+
+      if (!existingSnap.empty) {
+        return NextResponse.json({
+          item: serializeDoc(existingSnap.docs[0]!.id, existingSnap.docs[0]!.data()),
+          alreadyExists: true,
+        });
+      }
+
+      const companyData = companySnap.data()!;
+      const studentData = studentSnap.data()!;
+      const matchScore = computeMatchScore({
+        student: {
+          fullName: studentData.fullName ?? "",
+          sector: studentData.sector ?? "",
+          seniority: studentData.seniority ?? "",
+          currentCity: studentData.currentCity ?? "",
+          targetCities: studentData.targetCities ?? [],
+          bio: studentData.bio ?? "",
+          skills: studentData.skills ?? [],
+          availability: studentData.availability ?? "",
+          cvUrl: studentData.cvUrl ?? null,
+          linkedinUrl: studentData.linkedinUrl ?? null,
+          portfolioUrl: studentData.portfolioUrl ?? null,
+          photoUrl: studentData.photoUrl ?? null,
+        },
+        company: {
+          industry: companyData.industry ?? "",
+          preferredLocations: companyData.preferredLocations ?? [],
+          requirementTags: companyData.requirementTags ?? [],
+        },
+      });
+
+      const matchRef = adminDb.collection("matches").doc();
+      await matchRef.set(
+        stripUndefined({
+          id: matchRef.id,
+          companyId,
+          studentId,
+          stageId,
+          shortlisted: false,
+          matchScore,
+          source: "admin_curated",
+          notes: [],
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+      );
+      await upsertMatchAccess(companyId, studentId);
+
+      await logActivity({
+        actorId: session.uid,
+        actorRole: session.role,
+        action: "crm_create_match",
+        targetType: "matches",
+        targetId: matchRef.id,
+        metadata: stripUndefined({ companyId, studentId }),
+      });
+
+      const created = await matchRef.get();
+      return NextResponse.json({
+        item: serializeDoc(created.id, created.data()!),
+      });
     }
 
     await logActivity({

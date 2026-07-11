@@ -7,6 +7,26 @@ export interface AdminDashboardStats {
   openPipelineMatches: number;
   pendingRequestsCount: number;
   liveContentItems: number;
+  placedThisQuarter: number;
+  avgTimeToPlaceDays: number | null;
+}
+
+function quarterStart(date = new Date()): Date {
+  const month = date.getUTCMonth();
+  const quarterMonth = month - (month % 3);
+  return new Date(Date.UTC(date.getUTCFullYear(), quarterMonth, 1));
+}
+
+function toDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    return (value as { toDate: () => Date }).toDate();
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
 }
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
@@ -19,6 +39,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       newApplicationsSnap,
       newInterestSnap,
       liveContentSnap,
+      stagesSnap,
+      matchesSnap,
     ] = await Promise.all([
       adminDb
         .collection("companies")
@@ -35,7 +57,53 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
         .count()
         .get(),
       adminDb.collection("content_items").where("status", "==", "live").count().get(),
+      adminDb.collection("pipeline_stages").get(),
+      adminDb.collection("matches").get(),
     ]);
+
+    const terminalStageIds = new Set(
+      stagesSnap.docs
+        .filter((doc) => Boolean(doc.data().isTerminal))
+        .map((doc) => doc.id),
+    );
+    if (terminalStageIds.size === 0) {
+      terminalStageIds.add("pipeline_placed");
+    }
+
+    const start = quarterStart();
+    let placedThisQuarter = 0;
+    const placeDurations: number[] = [];
+
+    for (const doc of matchesSnap.docs) {
+      const data = doc.data();
+      if (!terminalStageIds.has(String(data.stageId ?? ""))) {
+        continue;
+      }
+
+      const updatedAt = toDate(data.updatedAt) ?? toDate(data.createdAt);
+      const createdAt = toDate(data.createdAt);
+
+      if (updatedAt && updatedAt >= start) {
+        placedThisQuarter += 1;
+      }
+
+      if (createdAt && updatedAt) {
+        const days =
+          (updatedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+        if (days >= 0) {
+          placeDurations.push(days);
+        }
+      }
+    }
+
+    const avgTimeToPlaceDays =
+      placeDurations.length > 0
+        ? Math.round(
+            (placeDurations.reduce((sum, value) => sum + value, 0) /
+              placeDurations.length) *
+              10,
+          ) / 10
+        : null;
 
     return {
       activeCompanies: activeCompaniesSnap.data().count,
@@ -46,6 +114,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
         newApplicationsSnap.data().count +
         newInterestSnap.data().count,
       liveContentItems: liveContentSnap.data().count,
+      placedThisQuarter,
+      avgTimeToPlaceDays,
     };
   } catch {
     return {
@@ -54,6 +124,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       openPipelineMatches: 0,
       pendingRequestsCount: 0,
       liveContentItems: 0,
+      placedThisQuarter: 0,
+      avgTimeToPlaceDays: null,
     };
   }
 }

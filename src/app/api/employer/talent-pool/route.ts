@@ -5,6 +5,12 @@ import {
   unauthorizedResponse,
 } from "@/lib/employer/session";
 
+const TALENT_POOL_SOURCES = [
+  "admin_curated",
+  "company_browsed",
+  "role_interest_promoted",
+] as const;
+
 export async function GET(request: Request) {
   const session = await getEmployerSession();
 
@@ -16,12 +22,13 @@ export async function GET(request: Request) {
   const sector = searchParams.get("sector") ?? "";
   const seniority = searchParams.get("seniority") ?? "";
   const location = searchParams.get("location") ?? "";
+  const search = (searchParams.get("search") ?? "").trim().toLowerCase();
 
   try {
     const matchesSnapshot = await adminDb
       .collection("matches")
       .where("companyId", "==", session.companyId)
-      .where("source", "in", ["admin_curated", "company_browsed"])
+      .where("source", "in", [...TALENT_POOL_SOURCES])
       .get();
 
     const rows = [];
@@ -51,9 +58,29 @@ export async function GET(request: Request) {
         continue;
       }
 
+      if (search) {
+        const haystack = [
+          student.fullName,
+          student.email,
+          student.currentCity,
+          student.sector,
+          ...(student.skills ?? []),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!haystack.includes(search)) {
+          continue;
+        }
+      }
+
       rows.push({
         matchId: matchDoc.id,
         shortlisted: Boolean(match.shortlisted),
+        stageId: match.stageId ?? "",
+        matchScore:
+          typeof match.matchScore === "number" ? match.matchScore : null,
         studentId: studentSnapshot.id,
         fullName: student.fullName ?? "",
         email: student.email ?? "",
@@ -62,8 +89,11 @@ export async function GET(request: Request) {
         currentCity: student.currentCity ?? "",
         skills: student.skills ?? [],
         availability: student.availability ?? "",
+        bio: student.bio ?? "",
       });
     }
+
+    rows.sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
 
     return NextResponse.json({ rows });
   } catch (error) {

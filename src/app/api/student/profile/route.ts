@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
+import { applyCreditDelta, getWayToEarnCredits } from "@/lib/credits/ledger";
 import { stripUndefined } from "@/lib/stripUndefined";
 import {
   calculateProfileCompleteness,
   getStudentSession,
   unauthorizedResponse,
+  type StudentDocument,
 } from "@/lib/student/session";
 
 export async function GET() {
@@ -36,6 +38,28 @@ const profileSchema = z.object({
   photoUrl: z.string().url().nullable().optional(),
 });
 
+function mapStudent(id: string, student: Record<string, unknown>): StudentDocument {
+  return {
+    id,
+    userId: (student.userId as string | undefined) ?? id,
+    fullName: (student.fullName as string | undefined) ?? "",
+    email: (student.email as string | undefined) ?? "",
+    photoUrl: (student.photoUrl as string | null | undefined) ?? null,
+    sector: (student.sector as string | undefined) ?? "",
+    seniority: (student.seniority as string | undefined) ?? "",
+    currentCity: (student.currentCity as string | undefined) ?? "",
+    targetCities: (student.targetCities as string[] | undefined) ?? [],
+    cvUrl: (student.cvUrl as string | null | undefined) ?? null,
+    linkedinUrl: (student.linkedinUrl as string | null | undefined) ?? null,
+    portfolioUrl: (student.portfolioUrl as string | null | undefined) ?? null,
+    bio: (student.bio as string | undefined) ?? "",
+    skills: (student.skills as string[] | undefined) ?? [],
+    availability: (student.availability as string | undefined) ?? "",
+    credits: (student.credits as number | undefined) ?? 0,
+    status: (student.status as StudentDocument["status"] | undefined) ?? "active",
+  };
+}
+
 export async function PATCH(request: Request) {
   const session = await getStudentSession();
 
@@ -45,6 +69,7 @@ export async function PATCH(request: Request) {
 
   try {
     const body = profileSchema.parse(await request.json());
+    const beforeCompleteness = calculateProfileCompleteness(session.student);
 
     await adminDb
       .collection("students")
@@ -52,29 +77,25 @@ export async function PATCH(request: Request) {
       .update(stripUndefined(body));
 
     const updated = await adminDb.collection("students").doc(session.studentId).get();
-    const student = updated.data()!;
+    const student = mapStudent(updated.id, updated.data()! as Record<string, unknown>);
+    const profileCompleteness = calculateProfileCompleteness(student);
+
+    if (beforeCompleteness < 100 && profileCompleteness >= 100) {
+      const bonus = await getWayToEarnCredits("profile_complete");
+      if (bonus > 0) {
+        const result = await applyCreditDelta({
+          studentId: session.studentId,
+          amount: bonus,
+          source: "profile_complete",
+          once: true,
+        });
+        student.credits = result.credits;
+      }
+    }
 
     return NextResponse.json({
-      student: { id: updated.id, ...student },
-      profileCompleteness: calculateProfileCompleteness({
-        id: updated.id,
-        userId: student.userId ?? updated.id,
-        fullName: student.fullName ?? "",
-        email: student.email ?? "",
-        photoUrl: student.photoUrl ?? null,
-        sector: student.sector ?? "",
-        seniority: student.seniority ?? "",
-        currentCity: student.currentCity ?? "",
-        targetCities: student.targetCities ?? [],
-        cvUrl: student.cvUrl ?? null,
-        linkedinUrl: student.linkedinUrl ?? null,
-        portfolioUrl: student.portfolioUrl ?? null,
-        bio: student.bio ?? "",
-        skills: student.skills ?? [],
-        availability: student.availability ?? "",
-        credits: student.credits ?? 0,
-        status: student.status ?? "active",
-      }),
+      student,
+      profileCompleteness,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

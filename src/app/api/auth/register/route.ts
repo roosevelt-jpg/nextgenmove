@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
+import { applyCreditDelta, getWayToEarnCredits } from "@/lib/credits/ledger";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const registerSchema = z.object({
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
           plan: null,
           subscriptionStatus: "pending",
           requirements: [],
+          preferredLocations: [],
+          requirementTags: [],
           createdAt: now,
         }),
       );
@@ -86,6 +89,18 @@ export async function POST(request: Request) {
     }
 
     await batch.commit();
+
+    if (body.role === "student") {
+      const welcomeCredits = await getWayToEarnCredits("welcome");
+      if (welcomeCredits > 0) {
+        await applyCreditDelta({
+          studentId: uid,
+          amount: welcomeCredits,
+          source: "welcome",
+          once: true,
+        });
+      }
+    }
 
     return NextResponse.json({ uid });
   } catch (error) {

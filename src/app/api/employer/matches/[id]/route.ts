@@ -15,6 +15,72 @@ const patchSchema = z.object({
   stageId: z.string().min(1).optional(),
 });
 
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await getEmployerSession();
+
+  if (!session) {
+    return unauthorizedResponse();
+  }
+
+  const { id } = await params;
+  const match = await verifyMatchOwnership(id, session.companyId);
+
+  if (!match) {
+    return forbiddenResponse();
+  }
+
+  const studentSnap = await adminDb
+    .collection("students")
+    .doc(String(match.studentId))
+    .get();
+
+  if (!studentSnap.exists) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const student = studentSnap.data()!;
+
+  if (!match.viewedAt) {
+    await adminDb
+      .collection("matches")
+      .doc(id)
+      .update(
+        stripUndefined({
+          viewedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+      );
+  }
+
+  return NextResponse.json({
+    match: {
+      id,
+      stageId: String(match.stageId ?? ""),
+      shortlisted: Boolean(match.shortlisted),
+      matchScore: typeof match.matchScore === "number" ? match.matchScore : null,
+      notes: match.notes ?? [],
+    },
+    student: {
+      id: studentSnap.id,
+      fullName: student.fullName ?? "",
+      email: student.email ?? "",
+      sector: student.sector ?? "",
+      seniority: student.seniority ?? "",
+      currentCity: student.currentCity ?? "",
+      targetCities: student.targetCities ?? [],
+      skills: student.skills ?? [],
+      bio: student.bio ?? "",
+      availability: student.availability ?? "",
+      linkedinUrl: student.linkedinUrl ?? null,
+      portfolioUrl: student.portfolioUrl ?? null,
+      cvUrl: student.cvUrl ?? null,
+    },
+  });
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },

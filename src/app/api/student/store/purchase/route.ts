@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       }
 
       const purchaseRef = adminDb.collection("content_purchases").doc();
+      const creditTxRef = adminDb.collection("credit_transactions").doc();
 
       transaction.set(
         purchaseRef,
@@ -77,6 +78,21 @@ export async function POST(request: Request) {
           credits: currentCredits - cost,
         }),
       );
+
+      if (cost > 0) {
+        transaction.set(
+          creditTxRef,
+          stripUndefined({
+            id: creditTxRef.id,
+            studentId: session.studentId,
+            direction: "spend",
+            source: `redeem:${contentItemId}`,
+            amount: cost,
+            relatedContentId: contentItemId,
+            createdAt: FieldValue.serverTimestamp(),
+          }),
+        );
+      }
 
       return {
         alreadyPurchased: false,

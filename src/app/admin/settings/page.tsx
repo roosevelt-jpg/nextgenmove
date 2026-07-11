@@ -8,6 +8,7 @@ export default async function AdminSiteSettingsPage() {
   const labels = {
     ...(settings.formLabels ?? {}),
     ...(settings.adminPageLabels?.content ?? {}),
+    settingsTitle: "Site settings",
     siteName: "Site name",
     tagline: "Tagline",
     logoUrl: "Logo",

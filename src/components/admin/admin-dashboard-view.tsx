@@ -124,6 +124,14 @@ export function AdminDashboardView({
   const statCards = [
     { key: "activeCompanies", value: stats.activeCompanies },
     { key: "activeStudents", value: stats.activeStudents },
+    { key: "placedThisQuarter", value: stats.placedThisQuarter },
+    {
+      key: "avgTimeToPlaceDays",
+      value:
+        stats.avgTimeToPlaceDays == null
+          ? "—"
+          : `${stats.avgTimeToPlaceDays}${labels.daysSuffix ?? "d"}`,
+    },
     { key: "openPipelineMatches", value: stats.openPipelineMatches },
     { key: "pendingRequestsCount", value: stats.pendingRequestsCount },
     { key: "liveContentItems", value: stats.liveContentItems },
@@ -142,7 +150,7 @@ export function AdminDashboardView({
         <h1 className="font-serif text-3xl text-text-primary">{labels.title}</h1>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card, index) =>
           labels[card.key] ? (
             <StatCard

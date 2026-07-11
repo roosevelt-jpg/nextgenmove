@@ -74,7 +74,10 @@ export function forbiddenResponse() {
   return NextResponse.json({ error: "forbidden" }, { status: 403 });
 }
 
-export async function verifyMatchOwnership(matchId: string, companyId: string) {
+export async function verifyMatchOwnership(
+  matchId: string,
+  companyId: string,
+): Promise<(Record<string, unknown> & { id: string }) | null> {
   const matchSnapshot = await adminDb.collection("matches").doc(matchId).get();
 
   if (!matchSnapshot.exists) {
