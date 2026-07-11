@@ -45,12 +45,18 @@ async function main() {
     ...((adminPageLabels.settings as Record<string, string>) || {}),
     socialMediaTitle: "Social media",
     socialLinksHelp:
-      "These links show as icons in the site footer and on the contact page.",
+      "These links show as icons in the bottom-right of the site footer and on the contact page.",
     socialLinksEmpty: "No social links yet.",
     socialPlatform: "Platform",
     addSocialLink: "Add social link",
     saveSocialLinks: "Save social links",
     saving: "Saving…",
+    footerCopyright: "Footer copyright",
+    footerAttributionPrefix: "Footer attribution prefix",
+    footerAttributionName: "Footer attribution name",
+    footerAttributionUrl: "Footer attribution URL",
+    siteDescription: "Footer / SEO description",
+    tagline: "Tagline",
     platformLinkedin: "LinkedIn",
     platformInstagram: "Instagram",
     platformX: "X",
@@ -89,6 +95,10 @@ async function main() {
     platformWhatsapp: "WhatsApp",
     platformGithub: "GitHub",
     platformOther: "Other",
+    footerCopyright: "© {year} {siteName}",
+    footerAttributionPrefix: "Made with ❤️ by",
+    footerAttributionName: "FLYN.AI",
+    footerAttributionUrl: "https://myflynai.com/",
   };
 
   const employerPageLabels = {
@@ -115,6 +125,17 @@ async function main() {
       navLabels,
       pageLabels,
       formLabels,
+      footerCopyright:
+        (existing.footerCopyright as string | undefined) ||
+        "© {year} {siteName}",
+      footerAttributionPrefix:
+        (existing.footerAttributionPrefix as string | undefined) ||
+        "Made with ❤️ by",
+      footerAttributionName:
+        (existing.footerAttributionName as string | undefined) || "FLYN.AI",
+      footerAttributionUrl:
+        (existing.footerAttributionUrl as string | undefined) ||
+        "https://myflynai.com/",
       employerPageLabels,
       studentPageLabels,
       updatedAt: FieldValue.serverTimestamp(),
@@ -122,7 +143,7 @@ async function main() {
     { merge: true },
   );
 
-  console.log("Patched settings / social / contact labels");
+  console.log("Patched settings / social / contact / footer attribution labels");
 }
 
 main().catch((error) => {

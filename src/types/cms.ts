@@ -296,6 +296,14 @@ export interface SiteSettingsDocument {
   operatorPlanDetail?: string;
   billingManageUrl?: string;
   socialLinks?: SocialLink[];
+  /** Footer bottom bar — e.g. "© {year} {siteName}" */
+  footerCopyright?: string;
+  /** Text before the attribution link — e.g. "Made with ❤️ by" */
+  footerAttributionPrefix?: string;
+  /** Linked attribution name — e.g. "FLYN.AI" */
+  footerAttributionName?: string;
+  /** Attribution href — e.g. https://myflynai.com/ */
+  footerAttributionUrl?: string;
   navLabels?: NavLabels;
   footerLinks?: FooterGroup[];
   formLabels?: Record<string, string>;

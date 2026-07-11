@@ -462,6 +462,22 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "defaultMetaDescription", type: "textarea", labelKey: "defaultMetaDescription" },
       { key: "brandMark", type: "text", labelKey: "brandMark" },
       { key: "contactEmail", type: "text", labelKey: "contactEmail" },
+      { key: "footerCopyright", type: "text", labelKey: "footerCopyright" },
+      {
+        key: "footerAttributionPrefix",
+        type: "text",
+        labelKey: "footerAttributionPrefix",
+      },
+      {
+        key: "footerAttributionName",
+        type: "text",
+        labelKey: "footerAttributionName",
+      },
+      {
+        key: "footerAttributionUrl",
+        type: "text",
+        labelKey: "footerAttributionUrl",
+      },
       { key: "timezone", type: "text", labelKey: "timezone" },
       { key: "defaultCurrency", type: "text", labelKey: "defaultCurrency" },
       { key: "require2fa", type: "boolean", labelKey: "require2fa" },

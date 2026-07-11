@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import type { CmsPageDocument, SiteSettingsDocument } from "@/types/cms";
-import { resolveBrandFaviconUrl } from "@/lib/brand";
+import { BRAND_FAVICON_PATH } from "@/lib/brand";
+
+/**
+ * Prefer the brand PNG. Cache-bust so browsers drop the old Next/Vercel
+ * `/favicon.ico` that was generated from the default app icon.
+ */
+const FAVICON = `${BRAND_FAVICON_PATH}?v=20260712b`;
 
 export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
   const siteName = settings.siteName?.trim() || undefined;
@@ -15,8 +21,6 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
     settings.tagline?.trim() ||
     undefined;
 
-  const favicon = resolveBrandFaviconUrl(settings.faviconUrl);
-
   return {
     title: title
       ? {
@@ -26,8 +30,13 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
       : undefined,
     description,
     icons: {
-      icon: [{ url: favicon }],
-      apple: [{ url: favicon }],
+      icon: [
+        { url: FAVICON, type: "image/png", sizes: "32x32" },
+        { url: FAVICON, type: "image/png", sizes: "192x192" },
+        { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
+      ],
+      shortcut: [{ url: FAVICON, type: "image/png" }],
+      apple: [{ url: FAVICON, type: "image/png" }],
     },
     openGraph: {
       title: title || undefined,
