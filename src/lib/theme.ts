@@ -2,13 +2,15 @@ export const THEME_STORAGE_KEY = "ngm-theme";
 
 export type ThemeMode = "light" | "dark";
 
+/**
+ * Public marketing defaults to light so the branded hero stays readable.
+ * Dark is opt-in via the header toggle (or an explicit prior choice).
+ */
 export function getPreferredTheme(): ThemeMode {
   if (typeof window === "undefined") return "light";
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
   if (stored === "dark" || stored === "light") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return "light";
 }
 
 export function applyTheme(mode: ThemeMode): void {
@@ -17,4 +19,4 @@ export function applyTheme(mode: ThemeMode): void {
 }
 
 /** Inline script — runs before paint to avoid light/dark flash. */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var s=localStorage.getItem(k);var d=s==="dark"||(s!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var s=localStorage.getItem(k);var d=s==="dark";document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;

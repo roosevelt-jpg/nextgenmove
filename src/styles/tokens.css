@@ -73,6 +73,8 @@
   --brand-amber-1: #f4d9a8;
   --brand-amber-2: #c97a2e;
   --brand-gradient-mid: #9a6a3c;
+  /* Fixed light-on-hero ink — never follow portal --on-accent (dark mode flips that). */
+  --hero-on: #fffdf8;
   --brand-hero-muted: #e8d9be;
   --brand-hero-subtext: #e4dff0;
   --brand-lavender: #eeedfe; /* Purple 10 / Dusk start */
@@ -166,5 +168,9 @@ html.dark {
     #322a5c 100%
   );
   --on-gradient: #ffffff;
+  /* Keep horizon hero readable when the rest of the site is in dark mode */
+  --hero-on: #fffdf8;
+  --brand-hero-muted: #e8d9be;
+  --brand-hero-subtext: #e4dff0;
   color-scheme: dark;
 }

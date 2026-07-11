@@ -8,6 +8,11 @@ import {
 } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
+function readDomTheme(): ThemeMode {
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
 export function ThemeToggle({
   className,
   lightLabel,
@@ -17,14 +22,12 @@ export function ThemeToggle({
   lightLabel?: string;
   darkLabel?: string;
 }) {
-  const [mode, setMode] = useState<ThemeMode>("light");
-  const [ready, setReady] = useState(false);
+  const [mode, setMode] = useState<ThemeMode>(readDomTheme);
 
   useEffect(() => {
     const preferred = getPreferredTheme();
     setMode(preferred);
     applyTheme(preferred);
-    setReady(true);
   }, []);
 
   const toggle = () => {
@@ -48,8 +51,6 @@ export function ThemeToggle({
       )}
       aria-label={aria}
       title={aria}
-      suppressHydrationWarning
-      data-ready={ready ? "true" : "false"}
     >
       {mode === "dark" ? (
         <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden>

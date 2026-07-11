@@ -47,7 +47,7 @@
   font-family: var(--font-serif);
   font-size: clamp(2rem, 4.8vw, 3.1rem);
   line-height: 1.12;
-  color: var(--on-accent);
+  color: var(--hero-on);
   font-weight: 600;
 }
 
@@ -147,7 +147,7 @@
   margin: 0.15rem 0 0;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--on-accent);
+  color: var(--hero-on);
 }
 
 /* —— Animated globe —— */
