@@ -54,6 +54,8 @@ export function computeMatchScore(inputs: MatchScoreInputs): number {
       userId: "",
       email: "",
       credits: 0,
+      plan: null,
+      subscriptionStatus: "pending",
       status: "active",
       photoUrl: inputs.student.photoUrl ?? null,
       linkedinUrl: inputs.student.linkedinUrl ?? null,

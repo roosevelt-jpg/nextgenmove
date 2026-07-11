@@ -187,6 +187,8 @@ export async function POST(request: Request) {
             skills: student.skills ?? [],
             availability: student.availability?.trim() || "",
             credits: 0,
+            plan: null,
+            subscriptionStatus: "pending",
             status: "active",
             createdAt: now,
           }),

@@ -110,6 +110,17 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "skills", type: "multiselect", labelKey: "skills" },
       { key: "availability", type: "text", labelKey: "availability" },
       { key: "credits", type: "number", labelKey: "credits" },
+      {
+        key: "plan",
+        type: "select",
+        labelKey: "plan",
+        taxonomyKey: "preferredTrack",
+      },
+      {
+        key: "subscriptionStatus",
+        type: "select",
+        labelKey: "subscriptionStatus",
+      },
       { key: "cvUrl", type: "file", labelKey: "cvUrl" },
       { key: "photoUrl", type: "image", labelKey: "photoUrl" },
       { key: "linkedinUrl", type: "text", labelKey: "linkedinUrl" },
@@ -498,6 +509,36 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "operatorPlanDetail", type: "text", labelKey: "operatorPlanDetail" },
       { key: "billingManageUrl", type: "text", labelKey: "billingManageUrl" },
       {
+        key: "youtubePlaylistUrl",
+        type: "text",
+        labelKey: "youtubePlaylistUrl",
+      },
+      {
+        key: "youtubeSyncEnabled",
+        type: "boolean",
+        labelKey: "youtubeSyncEnabled",
+      },
+      {
+        key: "youtubeHomepageLimit",
+        type: "number",
+        labelKey: "youtubeHomepageLimit",
+      },
+      {
+        key: "youtubeLibraryLimit",
+        type: "number",
+        labelKey: "youtubeLibraryLimit",
+      },
+      {
+        key: "youtubeLastSyncedAt",
+        type: "text",
+        labelKey: "youtubeLastSyncedAt",
+      },
+      {
+        key: "youtubeLastSyncError",
+        type: "text",
+        labelKey: "youtubeLastSyncError",
+      },
+      {
         key: "navLabels",
         type: "object",
         labelKey: "navLabels",
@@ -629,7 +670,10 @@ export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
   Record<string, string>
 > = {
   companies: { subscriptionStatus: "subscriptionStatus" },
-  students: { status: "status_students" },
+  students: {
+    status: "status_students",
+    subscriptionStatus: "subscriptionStatus",
+  },
   job_postings: { status: "status_job" },
   articles: { status: "status_article" },
   public_roles: { status: "status_role" },

@@ -3,19 +3,14 @@
 import { useState } from "react";
 import type { PageHomeDocument, VideoCardDocument } from "@/types/cms";
 import { SectionEyebrow, Modal } from "@/components/ui";
+import { parseYoutubeVideoId, youtubeEmbedUrl } from "@/lib/media/youtube";
 
 function toEmbedUrl(url: string): string | null {
+  const youtubeId = parseYoutubeVideoId(url);
+  if (youtubeId) return youtubeEmbedUrl(youtubeId);
+
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) {
-      const id = parsed.pathname.replace("/", "");
-      return id ? `https://www.youtube.com/embed/${id}` : null;
-    }
-    if (parsed.hostname.includes("youtube.com")) {
-      const id = parsed.searchParams.get("v");
-      if (id) return `https://www.youtube.com/embed/${id}`;
-      if (parsed.pathname.startsWith("/embed/")) return url;
-    }
     if (parsed.hostname.includes("vimeo.com")) {
       const id = parsed.pathname.split("/").filter(Boolean).pop();
       return id ? `https://player.vimeo.com/video/${id}` : null;

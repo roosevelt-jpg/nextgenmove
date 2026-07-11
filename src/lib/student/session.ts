@@ -28,6 +28,8 @@ export interface StudentDocument {
   skills: string[];
   availability: string;
   credits: number;
+  plan: "track_a" | "track_b" | null;
+  subscriptionStatus: "active" | "inactive" | "pending";
   status: "active" | "placed" | "inactive";
   referralCode?: string | null;
   referredBy?: string | null;
@@ -65,6 +67,10 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     skills: (data.skills as string[] | undefined) ?? [],
     availability: (data.availability as string | undefined) ?? "",
     credits: (data.credits as number | undefined) ?? 0,
+    plan: (data.plan as StudentDocument["plan"] | undefined) ?? null,
+    subscriptionStatus:
+      (data.subscriptionStatus as StudentDocument["subscriptionStatus"] | undefined) ??
+      "pending",
     status: (data.status as StudentDocument["status"] | undefined) ?? "active",
     referralCode: (data.referralCode as string | null | undefined) ?? null,
     referredBy: (data.referredBy as string | null | undefined) ?? null,
@@ -101,6 +107,8 @@ function emptyPreviewStudent(user: {
     skills: [],
     availability: "",
     credits: 0,
+    plan: null,
+    subscriptionStatus: "pending",
     status: "active",
     referralCode: null,
     referredBy: null,

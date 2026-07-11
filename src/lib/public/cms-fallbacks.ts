@@ -14,6 +14,10 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
   footerAttributionPrefix: "Made with ❤️ by",
   footerAttributionName: "FLYN.AI",
   footerAttributionUrl: "https://myflynai.com/",
+  youtubePlaylistUrl: "",
+  youtubeSyncEnabled: true,
+  youtubeHomepageLimit: 3,
+  youtubeLibraryLimit: 12,
   navLabels: {
     siteName: "Venturo",
     companySection: "Company",

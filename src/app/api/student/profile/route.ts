@@ -59,6 +59,10 @@ function mapStudent(id: string, student: Record<string, unknown>): StudentDocume
     skills: (student.skills as string[] | undefined) ?? [],
     availability: (student.availability as string | undefined) ?? "",
     credits: (student.credits as number | undefined) ?? 0,
+    plan: (student.plan as StudentDocument["plan"] | undefined) ?? null,
+    subscriptionStatus:
+      (student.subscriptionStatus as StudentDocument["subscriptionStatus"] | undefined) ??
+      "pending",
     status: (student.status as StudentDocument["status"] | undefined) ?? "active",
   };
 }

@@ -132,9 +132,30 @@ async function main() {
     status_live: "Live",
     status_draft: "Draft",
     liveCount: "live",
+    videosTab: "Video cards",
+    podcastTab: "Podcast episodes",
     connectTitle: "How this connects to the public site",
     connectBody:
-      "The homepage Stories and The Move Podcast sections query video_cards and podcast_episodes filtered to status = live. Toggling Draft removes an item from the live site immediately.",
+      "Homepage Stories shows the latest synced cards (default 3). Paid student and employer dashboards unlock the fuller private library.",
+    youtubeSyncTitle: "YouTube playlist sync",
+    youtubeSyncBody:
+      "Paste a playlist URL. Daily sync (and Sync now) pulls videos into homepage Stories and paid portal libraries.",
+    youtubePlaylistUrl: "Playlist URL or ID",
+    youtubeSyncEnabled: "Sync enabled",
+    youtubeHomepageLimit: "Homepage cards",
+    youtubeLibraryLimit: "Library size",
+    youtubeLastSynced: "Last synced",
+    youtubeLastError: "Error",
+    youtubeSave: "Save playlist settings",
+    youtubeSaving: "Saving…",
+    youtubeSaveOk: "Playlist settings saved.",
+    youtubeSaveFailed: "Could not save settings.",
+    youtubeSyncNow: "Sync now",
+    youtubeSyncing: "Syncing…",
+    youtubeSyncOk: "Synced {count} videos",
+    youtubeSyncFailed: "Sync failed",
+    youtubeSyncSkipped: "Sync skipped",
+    youtubeSourceBadge: "YouTube",
   };
 
   const studentPageLabels = {
@@ -161,6 +182,14 @@ async function main() {
     recommendedTitle: "Recommended next step",
     redeem: "Redeem",
     unlockedLabel: "Unlocked",
+    videosTitle: "Private video materials",
+    videosSubtitle:
+      "Exclusive route briefings for active Track A and Track B members.",
+    videosLocked:
+      "Private video materials unlock with an active Track A or Track B subscription.",
+    videosUpgradeCta: "Ask your coach or admin to activate your paid track.",
+    videosEmpty: "No videos in the library yet.",
+    videosWatch: "Watch on YouTube",
   };
 
   const studentNavLabels = {
@@ -173,6 +202,17 @@ async function main() {
 
   const employerPageLabels = {
     ...((existing.employerPageLabels as Record<string, unknown>) || {}),
+  };
+  employerPageLabels.dashboard = {
+    ...((employerPageLabels.dashboard as Record<string, string>) || {}),
+    videosTitle: "Private video materials",
+    videosSubtitle:
+      "Exclusive route briefings for active Track A and Track B subscribers.",
+    videosLocked:
+      "Private video materials unlock with an active Track A or Track B subscription.",
+    videosUpgradeCta: "Activate your plan from Profile to watch.",
+    videosEmpty: "No videos in the library yet.",
+    videosWatch: "Watch on YouTube",
   };
   employerPageLabels.talentPool = {
     ...((employerPageLabels.talentPool as Record<string, string>) || {}),

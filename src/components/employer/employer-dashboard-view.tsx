@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, Card, CardBody, StatCard } from "@/components/ui";
+import { PortalVideosSection } from "@/components/portal/portal-videos-section";
 
 interface DashboardPayload {
   company: {
@@ -119,6 +120,8 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
           </Card>
         ) : null}
       </div>
+
+      <PortalVideosSection apiPath="/api/employer/videos" labels={labels} />
     </div>
   );
 }

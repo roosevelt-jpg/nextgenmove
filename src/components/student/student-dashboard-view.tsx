@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import { StudentWalletPanel } from "@/components/student/student-wallet-panel";
+import { PortalVideosSection } from "@/components/portal/portal-videos-section";
 import { cn } from "@/lib/utils";
 
 interface DashboardMatch {
@@ -167,6 +168,8 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
       </section>
 
       <StudentWalletPanel labels={labels} compact historyLimit={50} />
+
+      <PortalVideosSection apiPath="/api/student/videos" labels={labels} />
 
       <section className="rounded-radius border border-border bg-grad-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

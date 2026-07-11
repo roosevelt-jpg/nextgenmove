@@ -133,6 +133,11 @@ export interface VideoCardDocument {
   thumbnailUrl: string;
   position: number;
   status: "draft" | "live" | "archived";
+  /** YouTube video id when synced or pasted from YouTube */
+  youtubeVideoId?: string;
+  /** `youtube_playlist` for cron-synced cards; `manual` or omitted for admin CRUD */
+  source?: "youtube_playlist" | "manual";
+  syncedAt?: string | null;
 }
 
 export interface PodcastEpisodeDocument {
@@ -297,6 +302,16 @@ export interface SiteSettingsDocument {
   operatorPlanLabel?: string;
   operatorPlanDetail?: string;
   billingManageUrl?: string;
+  /** YouTube playlist URL or ID used by the daily video sync */
+  youtubePlaylistUrl?: string;
+  /** When false, cron / Sync now skip the YouTube pull */
+  youtubeSyncEnabled?: boolean;
+  /** How many live cards to show on the public homepage (default 3) */
+  youtubeHomepageLimit?: number;
+  /** Max synced live videos kept for paid dashboards (default 12) */
+  youtubeLibraryLimit?: number;
+  youtubeLastSyncedAt?: string | null;
+  youtubeLastSyncError?: string | null;
   socialLinks?: SocialLink[];
   /** Footer bottom bar — e.g. "© {year} {siteName}" */
   footerCopyright?: string;

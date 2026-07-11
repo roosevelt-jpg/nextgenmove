@@ -17,6 +17,16 @@ export default async function AdminHomepageVideosPage() {
       taxonomies={taxonomies}
       videoSchema={ENTITY_SCHEMAS.video_cards!}
       podcastSchema={ENTITY_SCHEMAS.podcast_episodes!}
+      initialYoutube={{
+        youtubePlaylistUrl: settings.youtubePlaylistUrl ?? "",
+        youtubeSyncEnabled: settings.youtubeSyncEnabled !== false,
+        youtubeHomepageLimit: settings.youtubeHomepageLimit ?? 3,
+        youtubeLibraryLimit: settings.youtubeLibraryLimit ?? 12,
+        youtubeLastSyncedAt: settings.youtubeLastSyncedAt
+          ? String(settings.youtubeLastSyncedAt)
+          : "",
+        youtubeLastSyncError: settings.youtubeLastSyncError ?? "",
+      }}
     />
   );
 }

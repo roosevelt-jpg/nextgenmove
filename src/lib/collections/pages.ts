@@ -18,6 +18,8 @@ import type {
 import { cachedPublicCms } from "@/lib/public/cms-cache";
 import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
 import { mergePageHome } from "@/lib/public/merge-page-home";
+import { listLiveVideoCards } from "@/lib/media/video-cards";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 
 async function loadPageHome(): Promise<PageHomeDocument> {
   const snapshot = await adminDb.collection("page_home").doc("default").get();
@@ -65,29 +67,28 @@ export const getPageHome = cache(async () =>
 );
 
 async function loadLiveVideoCards(): Promise<VideoCardDocument[]> {
-  const snapshot = await adminDb
-    .collection("video_cards")
-    .where("status", "==", "live")
-    .get();
-  const items = snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      title: String(data.title ?? ""),
-      subtitle: String(data.subtitle ?? ""),
-      videoUrl: String(data.videoUrl ?? ""),
-      duration: String(data.duration ?? ""),
-      thumbnailUrl: String(data.thumbnailUrl ?? ""),
-      position: Number(data.position ?? 0),
-      status: (data.status as VideoCardDocument["status"]) ?? "draft",
-    };
-  });
-  return items.sort((a, b) => a.position - b.position);
+  const settings = await getSiteSettings();
+  const limit = Math.max(1, Number(settings.youtubeHomepageLimit ?? 3) || 3);
+  return listLiveVideoCards(limit);
 }
 
 export const getLiveVideoCards = cache(async () => {
   try {
     return await loadLiveVideoCards();
+  } catch {
+    return [];
+  }
+});
+
+/** Full live library for paid portal dashboards (no homepage slice). */
+export const getPortalVideoLibrary = cache(async () => {
+  try {
+    const settings = await getSiteSettings();
+    const limit = Math.max(
+      1,
+      Number(settings.youtubeLibraryLimit ?? 12) || 12,
+    );
+    return listLiveVideoCards(limit);
   } catch {
     return [];
   }
