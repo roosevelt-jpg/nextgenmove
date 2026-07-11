@@ -222,6 +222,18 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         fields: [{ key: "chip", type: "text", labelKey: "chip" }],
       },
       {
+        key: "corridorChipsMarquee",
+        type: "object",
+        labelKey: "corridorChipsMarquee",
+        fields: [
+          { key: "enabled", type: "boolean", labelKey: "marqueeEnabled" },
+          { key: "speedSec", type: "number", labelKey: "marqueeSpeedSec" },
+          { key: "direction", type: "select", labelKey: "marqueeDirection" },
+          { key: "easing", type: "select", labelKey: "marqueeEasing" },
+          { key: "pauseOnHover", type: "boolean", labelKey: "marqueePauseOnHover" },
+        ],
+      },
+      {
         key: "boardingPass",
         type: "object",
         labelKey: "boardingPass",

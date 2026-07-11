@@ -215,6 +215,13 @@ const PAGE_HOME = {
     { chip: "PAR → DXB" },
     { chip: "LIS → DXB" },
   ],
+  corridorChipsMarquee: {
+    enabled: true,
+    speedSec: 24,
+    direction: "ltr",
+    easing: "linear",
+    pauseOnHover: true,
+  },
   originCities: [
     {
       code: "AMS",
@@ -1481,6 +1488,9 @@ const OPERATIONAL_SITE_SETTINGS = {
       marqueeEasing: "Transition / easing",
       marqueePauseOnHover: "Pause on hover",
       marqueeSeparator: "Separator between items",
+      corridorChips: "Corridor route chips",
+      chip: "Route (e.g. AMS → DXB)",
+      corridorChipsMarquee: "Corridor chips ticker",
       addRow: "Add route",
       removeRow: "Remove",
     },

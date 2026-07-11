@@ -103,6 +103,8 @@ export interface PageHomeDocument {
   globalReachHeadline?: string;
   globalReachBody?: string;
   corridorChips?: Array<string | { chip?: string }>;
+  /** Stock-ticker / board scroll for corridor chips in Global Reach */
+  corridorChipsMarquee?: RoutesMarqueeSettings;
   itineraryEyebrow?: string;
   itineraryHeadline?: string;
   storiesEyebrow?: string;
