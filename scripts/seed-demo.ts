@@ -601,6 +601,27 @@ async function main() {
       guestName: "Lemoni Grootkerk",
       duration: "28 min",
     },
+    {
+      id: "demo_pod_09",
+      episodeNumber: 9,
+      title: "Visa timelines that actually hold",
+      guestName: "Nadia Rahman",
+      duration: "32 min",
+    },
+    {
+      id: "demo_pod_08",
+      episodeNumber: 8,
+      title: "What employers look for in the pool",
+      guestName: "Omar Haddad",
+      duration: "36 min",
+    },
+    {
+      id: "demo_pod_07",
+      episodeNumber: 7,
+      title: "Credits, coaching, and your first ninety days",
+      guestName: "Sofia Mendes",
+      duration: "29 min",
+    },
   ];
   for (const p of pods) {
     await db

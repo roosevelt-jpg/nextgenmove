@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import type { PageHomeDocument, PodcastEpisodeDocument } from "@/types/cms";
 import { SectionEyebrow } from "@/components/ui";
 
+const HOME_PODCAST_LIMIT = 6;
+
 export function HomePodcastSection({
   page,
   episodes,
@@ -14,7 +16,9 @@ export function HomePodcastSection({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
 
-  if (!episodes.length) {
+  const visible = episodes.slice(0, HOME_PODCAST_LIMIT);
+
+  if (!visible.length) {
     return null;
   }
 
@@ -60,11 +64,11 @@ export function HomePodcastSection({
         ) : null}
       </div>
 
-      <div className="overflow-hidden rounded-radius border border-border bg-grad-card">
-        {episodes.map((episode) => (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {visible.map((episode) => (
           <div
             key={episode.id}
-            className="flex items-center gap-3 border-b border-border px-3.5 py-3 last:border-b-0"
+            className="flex items-center gap-3 rounded-radius border border-border bg-grad-card px-3.5 py-3"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-radius-sm bg-fill-accent font-mono text-[10px] font-bold text-on-accent">
               EP{episode.episodeNumber || ""}
@@ -81,7 +85,9 @@ export function HomePodcastSection({
                 </p>
               ) : null}
               {episode.guestName ? (
-                <p className="text-xs text-text-secondary">with {episode.guestName}</p>
+                <p className="truncate text-xs text-text-secondary">
+                  with {episode.guestName}
+                </p>
               ) : null}
             </div>
             <div
