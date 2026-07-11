@@ -39,10 +39,6 @@ export function HomeStoriesSection({
     return null;
   }
 
-  if (!cards.length) {
-    return null;
-  }
-
   const embed = active ? toEmbedUrl(active.videoUrl) : null;
 
   return (
@@ -65,6 +61,7 @@ export function HomeStoriesSection({
         ) : null}
       </div>
 
+      {cards.length ? (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card, index) => (
           <button
@@ -114,6 +111,7 @@ export function HomeStoriesSection({
           </button>
         ))}
       </div>
+      ) : null}
 
       <Modal
         open={Boolean(active)}

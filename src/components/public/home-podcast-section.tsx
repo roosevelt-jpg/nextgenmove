@@ -18,7 +18,11 @@ export function HomePodcastSection({
 
   const visible = episodes.slice(0, HOME_PODCAST_LIMIT);
 
-  if (!visible.length) {
+  if (
+    !visible.length &&
+    !page?.podcastEyebrow &&
+    !page?.podcastHeadline
+  ) {
     return null;
   }
 
@@ -64,6 +68,7 @@ export function HomePodcastSection({
         ) : null}
       </div>
 
+      {visible.length ? (
       <div className="grid gap-3 sm:grid-cols-2">
         {visible.map((episode) => (
           <div
@@ -124,6 +129,7 @@ export function HomePodcastSection({
           </div>
         ))}
       </div>
+      ) : null}
     </section>
   );
 }

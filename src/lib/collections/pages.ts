@@ -17,6 +17,7 @@ import type {
 } from "@/types/cms";
 import { cachedPublicCms } from "@/lib/public/cms-cache";
 import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
+import { mergePageHome } from "@/lib/public/merge-page-home";
 
 async function loadPageHome(): Promise<PageHomeDocument> {
   const snapshot = await adminDb.collection("page_home").doc("default").get();
@@ -38,10 +39,10 @@ async function loadPageHome(): Promise<PageHomeDocument> {
         .filter(Boolean)
     : undefined;
 
-  return {
+  return mergePageHome({
     ...data,
     ...(corridorChips ? { corridorChips } : {}),
-  };
+  });
 }
 
 function isValidPageHome(value: PageHomeDocument): boolean {
@@ -59,6 +60,7 @@ export const getPageHome = cache(async () =>
     load: loadPageHome,
     isValid: isValidPageHome,
     fallback: FALLBACK_PAGE_HOME,
+    revalidate: 30,
   }),
 );
 

@@ -155,6 +155,37 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   },
   itineraryEyebrow: "The itinerary",
   itineraryHeadline: "Three legs. One arrival.",
+  storiesEyebrow: "Stories",
+  storiesHeadline: "Hear it from them.",
+  storiesManagedLabel: "Managed in admin · Homepage content",
+  podcastEyebrow: "The Move Podcast",
+  podcastHeadline: "Conversations from the route.",
+  podcastManagedLabel: "Managed in admin · Homepage content",
+  testimonialQuote:
+    "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai — and my coach was in my corner for every leg of it.",
+  testimonialAttribution: "Sara K. · Marketing lead · Placed via Venturo",
+  testimonialBadge: "Placed {year}",
+  talentCta: {
+    eyebrow: "For talent",
+    title: "Your seat is waiting.",
+    body: "Free to join. Earn your first credits on welcome.",
+    ctaLabel: "Get started",
+    ctaHref: "/sign-up",
+  },
+  companyCta: {
+    eyebrow: "For companies",
+    title: "A pool, pre-flown.",
+    body: "Every candidate is pre-screened and coached before you see them.",
+    ctaLabel: "View plans",
+    ctaHref: "/pricing",
+  },
+  rolesCta: {
+    eyebrow: "Open seats",
+    title: "Roles, ready now.",
+    body: "Browse live openings across corridors — visa-ready paths included.",
+    ctaLabel: "Browse roles",
+    ctaHref: "/careers-talent",
+  },
   steps: [
     {
       legNumber: 1,

@@ -30,8 +30,8 @@ export async function cachedPublicCms<T>({
       }
       return value;
     },
-    // v3 busts poisoned empty entries written by the earlier catch→{} cache.
-    [...key, "v3"],
+    // v4: full homepage shell merge (stories / podcast / CTAs / testimonial).
+    [...key, "v4"],
     { revalidate, tags },
   );
 
