@@ -1,335 +1,577 @@
 # NextGen Move — Master Engineering Blueprint
 
 **Tagline:** "Your next step, engineered."
-
-> **Implementation stack (this repo):** Next.js App Router + TypeScript + Tailwind + Firebase (Auth, Firestore, Storage).  
-> The Express + PostgreSQL architecture below is the original product blueprint. Feature intent still applies; persistence and APIs are Firebase/Next route handlers instead of Prisma/Express.
-
-**Original blueprint stack sketch:** React (frontend) + Node/Express (API) + PostgreSQL (data)
+**Stack:** Next.js (App Router) · TypeScript · Firebase (Auth + Firestore + Storage + Cloud Functions) · Tailwind CSS
 
 ---
 
-## 1. Product Overview
+## 0. Read me first
 
-NextGen Move is a three-sided platform run by an agency (in your screenshots, the operator is "Lemoni") that helps students/young professionals relocate into jobs abroad (the "Dubai market deep-dive" webinar suggests a Gulf-relocation angle), while companies pay to access a pre-screened, coached talent pool.
+This replaces every earlier version of this document (the original React/Express/Postgres draft, the Production Readiness Audit, and the Sizing & Spacing Spec) with one clean spec, re-architected for **Next.js + TypeScript + Firebase/Firestore** — the same stack pattern as the Passive Blessings project (Next.js App Router, Firebase Auth/Firestore/Storage, Tailwind, role stored as a field on the user's own document, an `/admin` surface, an Integrations settings page). Where a convention isn't specified here, default to whatever Passive Blessings already does — same folder shape, same auth pattern, same "extend, don't duplicate" discipline.
 
-### 1.1 The three roles
+**For Cursor: read this whole document before writing code.** Section 14 is the build order. Everything before it is reference.
+
+---
+
+## 1. Product overview
+
+NextGen Move is a three-sided relocation-and-placement platform run by an agency ("Lemoni"). Students/candidates get coached and placed into jobs abroad (Dubai is the flagship destination corridor); companies pay to access a pre-screened, coached talent pool.
 
 | Role | Who they are | Core job to be done |
 |---|---|---|
-| **Student** | Job-seeker being coached/placed | Build profile, earn credits, redeem coaching services, get placed |
-| **Company** | Employer paying for access to talent | Browse/search vetted candidates, shortlist, track hiring pipeline, request full-service sourcing |
-| **Admin** (Lemoni ops) | The agency running the marketplace | Monitor KPIs, manage the coaching content catalog, tune program economics ("levers"), review pending requests |
+| **Student** | Job-seeker being coached/placed | Build profile, earn credits, redeem coaching content, track placement progress |
+| **Company** (Employer) | Pays for access to talent | Browse/search candidates, shortlist, track hiring pipeline, request full-service sourcing |
+| **Admin** (Lemoni ops) | Runs the marketplace | Monitor KPIs/analytics, manage content, tune platform economics, approve requests |
 
-### 1.2 The business model (inferred directly from your screenshots)
-
-- **Two company subscription tracks** (seen on "Our Profile"):
-  - **Track A — Self-service**: €50/mo + €200 one-time per successful match. Company browses the pool itself; Lemoni just makes the introduction.
-  - **Track B — Lemoni does everything**: €125/mo per placed student. Full-service sourcing, weekly updates, full placement support.
-- **Student-side monetization is credit-based**, funded partly by the agency and partly by paid top-ups:
-  - Welcome credit: 2,000 cr on signup
-  - Referral bonus: 150 cr
-  - Profile-complete bonus: 100 cr
-  - Placement fee charged to student on success: €350 (one-time)
-- **Content Library** (admin-managed catalog students spend credits on): Mock interview (200cr/€50), LinkedIn polish (80cr/€20), CV review (80cr/€20), Salary negotiation webinar (80cr/€20), Dubai market deep-dive webinar (80cr/€20), 1:1 coaching call (140cr/€35), Premium placement (1600cr/€400), Interview outfit consult (80cr/€20), Company research pack (80cr/€20).
-- Each catalog item has a **credit-to-EUR conversion** (visibly ~€0.25/credit across every item — confirm this ratio is fixed platform-wide before building the redemption engine).
+### Business model
+- **Two company tracks**: Track A — self-service (€50/mo + €200 one-time per match). Track B — full service (€125/mo per placed student).
+- **Student credit economy**: Welcome credit 2,000cr, referral bonus 150cr, profile-complete bonus 100cr, one-time placement fee €350. Credits spend on a Content Library (mock interviews, CV review, webinars, premium placement, etc.) at a fixed ~€0.25/credit ratio.
+- **Plan changes and sourcing requests are request-based**, not instant — they land in an Admin approval queue.
 
 ---
 
-## 2. Feature Inventory by Role
+## 2. Full page inventory (what's already designed — build to match)
 
-### 2.1 Company — Talent Pool
-- Hero stats: Available / Shortlisted / Interviewing counts
-- Search by name, skill, or location
-- Candidate row: avatar initials, name, sector · city, top 3 skill tags, match % badge, "View profile" CTA
-- Match % is a computed score (see §5.1)
+### Public site (no auth) — 10 pages
+Home, About, Careers, Journal, Browse Roles, How It Works, Credits, Pricing, Track A/B, Request Talent.
+Public homepage additionally includes: an animated "global reach" band (SVG route arcs between origin cities and Dubai), a **Video Cards** section, and a **Podcast** section — both admin-managed (Section 10.4).
 
-### 2.2 Company — Pipeline
-- Funnel KPIs: Viewed → Shortlisted → Interviews Planned → Placed
-- "Active candidates" list — empty state when no one has moved past "viewed"
-- This is effectively a lightweight ATS (applicant tracking) view scoped per company
+### Student dashboard — 3 pages
+Dashboard (stats + credit-activity chart + placement journey tracker), Content Store, My Profile.
 
-### 2.3 Company — Shortlist
-- Ranked list of starred candidates, drag-to-reorder
-- Empty state instructs the company to star candidates from Talent Pool
+### Employer (Company) dashboard — 4 pages
+Talent Pool, Pipeline (with hiring-funnel chart), Shortlist, Our Profile (plan picker + requirements uploads).
 
-### 2.4 Company — Our Profile
-- Company identity (name, email)
-- Subscription status badge + current monthly price
-- Plan picker (Track A vs Track B) with a "Request this plan →" CTA (plan changes go through an approval/request flow, not instant self-serve)
-- "Requirements & Uploads" panel — company can attach hiring requirements/docs
+### Admin dashboard — 8 pages
+Operations Dashboard (KPIs + placements/students trend chart + Track A/B donut + Content Library), CRM → All Contacts, CRM → Companies, CRM → Interns, Integrations, Homepage Content (manages the public site's video cards/podcast episodes), Program Levers, Settings (workspace, team, security, billing).
 
-### 2.5 Admin — Operations Dashboard
-- KPIs: Active Students, Open Requests, Placed This Quarter, Avg Time-to-Place
-- **Content Library** management: add/edit coaching products (title, type, description, credit cost, EUR price, external link, emoji icon), each with a 3-way status toggle (interpret as **Draft / Live / Archived** — confirm exact semantics; screenshots show "Default | Live | Default" which likely renders as a segmented control where the *currently selected* state is highlighted)
-- **Pending Requests** queue — company plan-change requests and sourcing requests land here for admin approval
-- **Program Levers** — a single editable config panel controlling all platform economics (bonuses, fees, track pricing, redemption costs). This should be a key-value settings table, not hardcoded.
+### Shared account — 1 page
+My Profile/Account (avatar, personal details, password, notifications) — reachable from every dashboard's navbar.
 
-### 2.6 Student (not captured in screenshots — must be designed)
-Given the credit/content model, the student side needs, at minimum:
-- Dashboard: credit balance, profile completeness %, current placement stage
-- Content Library storefront (mirrors admin catalog, filtered to `status = live`), redeem with credits
-- Profile builder (skills, sector, location, bio) — feeds the match score
-- Application/placement status tracker mirroring the company's pipeline view for that student
-- Referral flow (generate code, track bonus credits)
+**Total: 26 routes.** Every dashboard page (Student/Employer/Admin, 15 pages) shares one app shell: a **left sidebar** (role-aware nav + workspace switcher), a **top navbar** (breadcrumb, language switcher, dark/light toggle, global settings, profile dropdown), and a max-width content area. See Section 10.
 
 ---
 
-## 3. Data Model
+## 3. Tech stack
 
-```
-users
- ├─ id (pk)
- ├─ email (unique)
- ├─ password_hash
- ├─ role            enum: student | company | admin
- ├─ created_at
+| Layer | Choice |
+|---|---|
+| Framework | **Next.js 14+ App Router**, TypeScript throughout, no `any` |
+| Auth | **Firebase Auth** (email/password at minimum; Google sign-in optional) |
+| Database | **Firestore** (NoSQL — see data model in Section 4) |
+| File storage | **Firebase Storage** (CVs, requirement docs, job descriptions, video/podcast assets) |
+| Server logic | **Next.js Server Actions** for mutations; **Route Handlers** (`app/api/**`) reserved for third-party webhooks (Stripe, DocuSign) that need a stable public URL |
+| Scheduled jobs | **Cloud Functions** (2nd gen) on a Cloud Scheduler trigger — nightly match-score recompute, KPI aggregation |
+| Styling | **Tailwind CSS**, design tokens in `tailwind.config.ts` (Section 9) |
+| Charts | Inline SVG (bar/line/donut) as already built — no charting library dependency needed for the current scope |
+| Fonts | Playfair Display (display/serif), Inter (UI), JetBrains Mono (labels/data) — via `next/font/google` |
+| Hosting | Vercel (Next.js) + Firebase (Auth/Firestore/Storage/Functions) — same split as Passive Blessings |
 
-students
- ├─ id (pk)
- ├─ user_id (fk users)
- ├─ full_name
- ├─ sector
- ├─ city
- ├─ skills            text[]
- ├─ bio
- ├─ profile_complete  boolean
- ├─ credit_balance    int
- ├─ status            enum: available | shortlisted | interviewing | placed
- ├─ created_at
-
-companies
- ├─ id (pk)
- ├─ user_id (fk users)
- ├─ name
- ├─ contact_email
- ├─ track             enum: A | B | none
- ├─ subscription_status  enum: active | pending | cancelled
- ├─ monthly_fee_eur
- ├─ created_at
-
-matches                      -- one row per (company, student) pairing
- ├─ id (pk)
- ├─ company_id (fk)
- ├─ student_id (fk)
- ├─ match_score       numeric   -- see §5.1
- ├─ stage             enum: viewed | shortlisted | interview | placed
- ├─ shortlist_rank    int nullable
- ├─ created_at, updated_at
-
-content_items
- ├─ id (pk)
- ├─ title
- ├─ type              enum: coaching | profile | webinar | premium
- ├─ description
- ├─ credit_cost
- ├─ price_eur
- ├─ link_url
- ├─ emoji_icon
- ├─ status            enum: draft | live | archived
- ├─ created_at, updated_at
-
-credit_transactions
- ├─ id (pk)
- ├─ student_id (fk)
- ├─ direction         enum: earn | spend
- ├─ source            text        -- 'welcome' | 'referral' | 'profile_complete' | 'redeem:<content_id>'
- ├─ amount
- ├─ related_content_id (fk content_items, nullable)
- ├─ created_at
-
-program_levers            -- singleton config table, admin-editable
- ├─ key (pk)              -- 'welcome_credit', 'referral_bonus', 'profile_complete_bonus',
- │                           'placement_fee_eur', 'track_a_monthly', 'track_a_match_fee',
- │                           'track_b_monthly', 'mock_interview_credits', 'webinar_credits'
- ├─ value                 numeric
- ├─ updated_at
-
-requests                  -- company→admin asks: plan change, sourcing request, etc.
- ├─ id (pk)
- ├─ company_id (fk)
- ├─ type              enum: plan_change | sourcing_request | other
- ├─ payload           jsonb
- ├─ status            enum: pending | approved | rejected
- ├─ created_at, resolved_at
-
-requirements_uploads
- ├─ id (pk)
- ├─ company_id (fk)
- ├─ file_url
- ├─ label
- ├─ uploaded_at
-```
-
-**Relationships:** `users` 1—1 `students`/`companies` (role-specific profile tables). `matches` is the join table driving both the Talent Pool match %, Pipeline funnel, and Shortlist ranking — all three company screens read from the same table with different filters, which keeps state consistent (this matters: your screenshots show Talent Pool available=24, but Pipeline viewed=6 — meaning "viewed" is a subset triggered by opening a profile, not by appearing in the pool).
+**Role storage convention (matches Passive Blessings):** role lives as a field on the user's own Firestore document — `users/{uid}.role: 'student' | 'company' | 'admin'` — not a separate roles/claims collection. Mirror this exactly; don't introduce Firebase custom claims unless a specific rule genuinely requires them.
 
 ---
 
-## 4. API Specification (REST)
+## 4. Firestore data model
 
+Firestore is document-based, not relational — the original SQL schema is redesigned below with Firestore-idiomatic patterns: denormalize what's read together, subcollection what's owned-and-scoped, use `collectionGroup` queries for cross-cutting admin reads.
+
+```typescript
+// users/{uid}  — one doc per authenticated user, uid === Firebase Auth uid
+interface UserDoc {
+  email: string;
+  role: 'student' | 'company' | 'admin';
+  createdAt: Timestamp;
+}
+
+// students/{uid}  — same id as users/{uid}, 1:1
+interface StudentDoc {
+  fullName: string;
+  sector: string;
+  city: string;
+  skills: string[];
+  bio: string;
+  profileComplete: boolean;
+  creditBalance: number;
+  status: 'available' | 'shortlisted' | 'interviewing' | 'placed';
+  coachId: string | null;        // admin/coach uid assigned
+  avatarInitials: string;        // e.g. "SK" — no stock photos, per brand guidelines
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// students/{uid}/creditTransactions/{txId}  — subcollection: student can read only their own
+interface CreditTransactionDoc {
+  direction: 'earn' | 'spend';
+  source: string;                // 'welcome' | 'referral' | 'profile_complete' | 'redeem:<contentItemId>'
+  amount: number;
+  relatedContentItemId: string | null;
+  createdAt: Timestamp;
+}
+// Admin-wide reads use a Firestore `collectionGroup('creditTransactions')` query — never duplicate this data into a top-level collection.
+
+// companies/{uid}  — same id as users/{uid}, 1:1
+interface CompanyDoc {
+  name: string;
+  contactEmail: string;
+  track: 'A' | 'B' | 'none';
+  subscriptionStatus: 'active' | 'pending' | 'cancelled';
+  monthlyFeeEur: number;
+  createdAt: Timestamp;
+}
+
+// companies/{uid}/requirementsUploads/{uploadId}  — subcollection
+interface RequirementUploadDoc {
+  fileUrl: string;               // Firebase Storage download URL
+  label: string;
+  uploadedAt: Timestamp;
+}
+
+// matches/{matchId}  — top-level; the one join collection driving Talent Pool, Pipeline, Shortlist
+interface MatchDoc {
+  companyId: string;
+  studentId: string;
+  matchScore: number;            // 0–100, see Section 8.1
+  stage: 'viewed' | 'shortlisted' | 'interview' | 'placed';
+  shortlistRank: number | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+// Composite indexes required: (companyId, stage), (studentId, stage), (companyId, shortlistRank)
+// Enforce uniqueness of (companyId, studentId) in application logic — Firestore has no native unique-pair constraint; use a deterministic doc id: `${companyId}_${studentId}`.
+
+// contentItems/{itemId}  — admin-managed catalog, also powers the public /credits page (status == 'live' only)
+interface ContentItemDoc {
+  title: string;
+  type: 'coaching' | 'profile' | 'webinar' | 'premium';
+  description: string;
+  creditCost: number;
+  priceEur: number;
+  linkUrl: string;
+  emojiIcon: string;
+  status: 'draft' | 'live' | 'archived';
+  position: number;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// programLevers/{key}  — singleton config docs, admin-write-only
+// keys: welcomeCredit, referralBonus, profileCompleteBonus, placementFeeEur,
+//       trackAMonthly, trackAMatchFee, trackBMonthly, mockInterviewCredits, webinarCredits
+interface ProgramLeverDoc {
+  value: number;
+  updatedAt: Timestamp;
+  updatedBy: string;              // admin uid — audit trail, see Production Readiness §3
+}
+
+// requests/{requestId}  — company → admin asks
+interface RequestDoc {
+  companyId: string;
+  type: 'plan_change' | 'sourcing_request' | 'other';
+  payload: Record<string, unknown>;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Timestamp;
+  resolvedAt: Timestamp | null;
+  resolvedBy: string | null;
+}
+
+// crmContacts/{contactId}  — powers Admin → CRM (All/Companies/Interns tabs)
+// Derived/synced from students, companies, and job_applications/role_interest_submissions —
+// do not hand-maintain this separately from those source collections; write to it via
+// Cloud Function triggers (onCreate/onUpdate) on students, companies, jobApplications.
+interface CrmContactDoc {
+  refId: string;                  // points back to students/{id} or companies/{id}
+  kind: 'company' | 'candidate' | 'lead';
+  name: string;
+  stage: 'new' | 'contacted' | 'qualified' | 'won' | 'lost';
+  ownerId: string | null;         // admin/coach uid
+  lastActivityAt: Timestamp;
+  value: number | null;           // MRR for companies, null for candidates
+}
+
+// videoCards/{id} and podcastEpisodes/{id} — public homepage CMS content (Section 10.4)
+interface VideoCardDoc {
+  title: string;
+  subtitle: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  duration: string;
+  status: 'draft' | 'live' | 'archived';
+  position: number;
+}
+interface PodcastEpisodeDoc {
+  episodeNumber: number;
+  title: string;
+  guestName: string;
+  audioUrl: string;
+  coverImageUrl: string;
+  duration: string;
+  description: string;
+  status: 'draft' | 'live' | 'archived';
+  publishedAt: Timestamp;
+}
+
+// Marketing/CMS collections (see Section 10.5 for the full field-level spec per page):
+// pageAbout, jobPostings, articles (Journal), publicRoles (Browse Roles),
+// pageHowItWorks, pagePricing, pageTracks, newsletterSubscribers, jobApplications,
+// roleInterestSubmissions
 ```
-Auth
-POST   /api/auth/register          { email, password, role }
-POST   /api/auth/login             → { token }
-POST   /api/auth/logout
-GET    /api/auth/me
 
-Talent Pool (company-facing)
-GET    /api/students?search=&skill=&location=      -- paginated, includes match_score for :companyId
-GET    /api/students/:id
-
-Shortlist
-POST   /api/companies/:id/shortlist        { studentId }
-DELETE /api/companies/:id/shortlist/:studentId
-PATCH  /api/companies/:id/shortlist/reorder { orderedStudentIds: [] }
-GET    /api/companies/:id/shortlist
-
-Pipeline
-GET    /api/companies/:id/pipeline         -- returns funnel counts + active candidate list
-PATCH  /api/matches/:id/stage              { stage }   -- move a candidate through the funnel
-
-Company profile & plans
-GET    /api/companies/:id
-PATCH  /api/companies/:id
-POST   /api/companies/:id/plan-request     { track: 'A' | 'B' }   -- creates a `requests` row, admin approves
-POST   /api/companies/:id/requirements     (multipart upload)
-
-Student
-GET    /api/students/:id/dashboard         -- credits, profile %, stage
-PATCH  /api/students/:id/profile
-GET    /api/content-items?status=live
-POST   /api/students/:id/redeem            { contentItemId }   -- validates balance, writes credit_transactions
-
-Admin
-GET    /api/admin/dashboard                -- KPIs: active students, open requests, placed this Q, avg time-to-place
-GET    /api/admin/content-items
-POST   /api/admin/content-items
-PATCH  /api/admin/content-items/:id        (incl. status toggle)
-DELETE /api/admin/content-items/:id
-GET    /api/admin/levers
-PATCH  /api/admin/levers                   { key, value }
-GET    /api/admin/requests?status=pending
-PATCH  /api/admin/requests/:id             { status: 'approved' | 'rejected' }
-```
-
-Auth: JWT bearer tokens, role claim checked via Express middleware (`requireRole('admin')` etc.) on every route above the student/company's own resources.
+**Why subcollections for `creditTransactions` and `requirementsUploads`:** both are owned by exactly one parent and almost always read scoped to that parent (a student's own ledger, a company's own uploads) — subcollections make the Security Rule for "you can only read your own" a one-line rule instead of a query filter that must be trusted client-side. Use `collectionGroup` queries only for the rare admin-wide view.
 
 ---
 
-## 5. Business Logic
+## 5. Firestore Security Rules
 
-### 5.1 Match score
-Not specified in the UI, so this needs an explicit, documented formula rather than a black box. Recommended v1 (simple, explainable, tunable later):
+This is where the original spec's "auth/role-boundary tests" requirement gets enforced at the database layer instead of only in application code — a company reading another company's pipeline becomes structurally impossible, not just untested.
 
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function role() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
+    function isAdmin() { return isSignedIn() && role() == 'admin'; }
+    function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin(); // role changes are admin-only, never self-serve
+    }
+
+    match /students/{uid} {
+      allow read: if isOwner(uid) || isAdmin() || role() == 'company'; // companies browse the talent pool
+      allow write: if isOwner(uid) || isAdmin();
+
+      match /creditTransactions/{txId} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if isAdmin(); // credit ledger writes only via Server Action / Cloud Function, never client-direct
+      }
+    }
+
+    match /companies/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isOwner(uid) || isAdmin();
+
+      match /requirementsUploads/{uploadId} {
+        allow read, write: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    match /matches/{matchId} {
+      // a company may only touch matches where matches.companyId == their own uid
+      allow read: if isAdmin()
+        || (role() == 'company' && resource.data.companyId == request.auth.uid)
+        || (role() == 'student' && resource.data.studentId == request.auth.uid);
+      allow write: if isAdmin()
+        || (role() == 'company' && resource.data.companyId == request.auth.uid);
+    }
+
+    match /contentItems/{itemId} {
+      allow read: if resource.data.status == 'live' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /programLevers/{key} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /requests/{requestId} {
+      allow read: if isAdmin() || (role() == 'company' && resource.data.companyId == request.auth.uid);
+      allow create: if role() == 'company' && request.resource.data.companyId == request.auth.uid;
+      allow update: if isAdmin(); // approve/reject is admin-only
+    }
+
+    match /crmContacts/{contactId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /videoCards/{id} {
+      allow read: if resource.data.status == 'live' || isAdmin();
+      allow write: if isAdmin();
+    }
+    match /podcastEpisodes/{id} {
+      allow read: if resource.data.status == 'live' || isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}
 ```
-match_score = weighted_overlap(company.requirements_tags, student.skills)  × 0.6
-            + location_fit(company.preferred_locations, student.city)     × 0.2
-            + profile_completeness(student)                                × 0.2
-```
-Store the score on `matches` at creation time and recompute on a schedule (nightly job) rather than on every page load, so Talent Pool stays fast.
 
-### 5.2 Credit economy
-- All bonus/fee amounts live in `program_levers`, never hardcoded — this is exactly what the Admin "Program Levers" screen edits.
-- Redemption is transactional: check `credit_balance >= content_item.credit_cost`, decrement balance, insert a `credit_transactions` row, all inside one DB transaction to avoid race conditions on concurrent redemptions.
-- Credits and EUR are two separate ledgers — credits are internal currency; the €-figures next to catalog items are informational (what it would cost to buy credits), not a live payment. Confirm with stakeholders whether real payment (Stripe) is needed for credit top-ups, or whether credits are only ever earned, never purchased.
-
-### 5.3 Plan changes are request-based, not instant
-The "Request this plan →" button and the empty "Pending requests" panel on Admin confirm plan switches go through an approval workflow, not immediate self-serve billing changes. Model this explicitly as a `requests` row with `type = 'plan_change'`, not as a direct write to `companies.track`.
-
-### 5.4 Content item status toggle
-Before building, confirm with the client/PM what the 3-state toggle actually means — the two leading hypotheses:
-- **Visibility state**: Draft → Live → Archived (most likely, given "Live" is highlighted green)
-- **Default vs custom per-audience config**: "Default" bookending "Live" could mean per-track defaults (Track A default / Live override / Track B default)
-
-This is the single biggest open ambiguity in the spec — resolve it before writing the admin content-editing logic.
+**Non-negotiable before first real user:** write the Firebase emulator test suite that asserts these boundaries — a company account attempting to read a `matches` doc where `companyId != request.auth.uid` must fail. This is the single highest-priority test in the whole project (carried over from the original Production Readiness audit).
 
 ---
 
-## 6. Architecture
+## 6. Next.js App Router structure
 
 ```
-┌─────────────────────┐        ┌──────────────────────┐        ┌────────────────┐
-│  React SPA (Vite)   │  REST  │  Node/Express API     │  SQL   │  PostgreSQL    │
-│  role-based routing │ ─────► │  JWT auth, controllers│ ─────► │  (see §3)      │
-│  /company /admin     │        │  services, validators │        │                │
-│  /student            │ ◄───── │                       │ ◄───── │                │
-└─────────────────────┘        └──────────┬────────────┘        └────────────────┘
-                                            │
-                                    ┌───────▼────────┐
-                                    │ File storage    │  (S3-compatible, for
-                                    │ (requirements   │   requirement uploads)
-                                    │  uploads)       │
-                                    └────────────────┘
+app/
+├── (public)/                          # no auth required
+│   ├── layout.tsx                     # marketing nav + footer
+│   ├── page.tsx                       # Home (hero, global-reach band, video cards, podcast, stats)
+│   ├── about/page.tsx
+│   ├── careers/page.tsx
+│   ├── journal/page.tsx
+│   ├── browse-roles/page.tsx
+│   ├── how-it-works/page.tsx
+│   ├── credits/page.tsx
+│   ├── pricing/page.tsx
+│   ├── tracks/page.tsx
+│   └── request-talent/page.tsx
+│
+├── (app)/                             # authenticated — sidebar + navbar shell
+│   ├── layout.tsx                     # AppShell: <Sidebar/> + <Navbar/>, reads role from users/{uid}
+│   ├── student/
+│   │   ├── dashboard/page.tsx
+│   │   ├── content-store/page.tsx
+│   │   └── profile/page.tsx
+│   ├── company/
+│   │   ├── talent-pool/page.tsx
+│   │   ├── pipeline/page.tsx
+│   │   ├── shortlist/page.tsx
+│   │   └── profile/page.tsx
+│   ├── admin/
+│   │   ├── dashboard/page.tsx
+│   │   ├── crm/page.tsx
+│   │   ├── crm/companies/page.tsx
+│   │   ├── crm/interns/page.tsx
+│   │   ├── integrations/page.tsx
+│   │   ├── homepage-content/page.tsx
+│   │   ├── levers/page.tsx
+│   │   └── settings/page.tsx
+│   └── account/
+│       └── profile/page.tsx           # shared "my account" — linked from every navbar
+│
+├── api/
+│   ├── webhooks/stripe/route.ts       # signature-verified, idempotent
+│   ├── webhooks/docusign/route.ts
+│   └── auth/session/route.ts          # Firebase session cookie exchange
+│
+├── actions/                            # Server Actions — the primary mutation layer
+│   ├── students.ts                     # updateProfile, redeemCreditItem
+│   ├── companies.ts                    # updateProfile, requestPlanChange, uploadRequirement
+│   ├── matches.ts                      # shortlistStudent, reorderShortlist, advanceStage
+│   ├── admin.ts                        # upsertContentItem, updateLever, resolveRequest
+│   └── homepageContent.ts              # upsertVideoCard, upsertPodcastEpisode
+│
+├── components/
+│   ├── shell/  (Sidebar, Navbar, ThemeToggle, LanguageSwitcher, ProfileMenu)
+│   ├── charts/ (BarLineChart, DonutChart, FunnelChart — inline SVG, as already built)
+│   ├── ui/     (StatCard, Panel, Pill, Toggle, DataTable, MiniAvatar)
+│   └── marketing/ (Hero, VideoCard, PodcastRow, GlobalReachBand)
+│
+├── lib/
+│   ├── firebase/ (client.ts, admin.ts, converters.ts — Firestore <-> TS type converters)
+│   ├── matchScore.ts
+│   ├── creditLedger.ts
+│   └── auth.ts   (role guard helpers used in Server Components/Actions)
+│
+└── functions/                          # Firebase Cloud Functions (separate deploy target)
+    ├── recomputeMatchScores.ts         # scheduled, nightly
+    ├── aggregateKpis.ts                # scheduled, feeds Admin Dashboard chart data
+    ├── syncCrmContacts.ts              # Firestore triggers on students/companies/requests
+    └── stripeWebhookHandler.ts
 ```
 
-### 6.1 Tech choices
-- **Frontend**: React 18 + Vite, React Router (role-guarded routes), TanStack Query for server state, Tailwind for styling (matches the clean card/badge aesthetic in your screenshots)
-- **Backend**: Node + Express, layered as routes → controllers → services → data access (Prisma ORM recommended over raw SQL for this schema's relational complexity)
-- **Database**: PostgreSQL — enums as Postgres native enum types or check constraints; `matches` table needs a unique constraint on `(company_id, student_id)`
-- **Auth**: JWT + bcrypt password hashing; refresh tokens if you want long-lived sessions
-- **Background jobs**: a simple cron (node-cron or a scheduled Lambda) for nightly match-score recompute and `avg_time_to_place` KPI aggregation
-- **File uploads**: S3 or Cloudflare R2 with pre-signed URLs; don't proxy file bytes through Express
-
-### 6.2 Suggested repo structure
-```
-nextgenmove/
-├── apps/
-│   ├── web/                # React frontend
-│   │   └── src/
-│   │       ├── routes/
-│   │       │   ├── company/   (talent-pool, pipeline, shortlist, profile)
-│   │       │   ├── admin/     (dashboard, content-library, levers, requests)
-│   │       │   └── student/   (dashboard, content-store, profile)
-│   │       ├── components/
-│   │       ├── api/            # typed API client
-│   │       └── hooks/
-│   └── api/                 # Express backend
-│       └── src/
-│           ├── routes/
-│           ├── controllers/
-│           ├── services/       # matchScore.ts, creditLedger.ts, planRequests.ts
-│           ├── middleware/     # auth.ts, requireRole.ts
-│           ├── db/             # prisma schema + migrations
-│           └── jobs/           # nightly recompute
-├── packages/
-│   └── shared-types/         # TS types shared FE/BE (enums, DTOs)
-└── docker-compose.yml         # postgres + api + web for local dev
-```
+This maps 1:1 to the 26 pages in Section 2 — nothing in the earlier Express/REST spec needs to survive; Server Actions replace the REST endpoint table entirely (Section 7 gives the mapping for reference during migration).
 
 ---
 
-## 7. Security & Access Control
+## 7. Server Actions (replaces the old REST API table)
 
-- Every company-scoped route must verify `req.user.companyId === :id` (or admin override) — the Pipeline/Shortlist data is per-company and must never leak across tenants.
-- Same rule for students accessing their own credit balance/profile.
-- Admin routes require `role === 'admin'` middleware, no exceptions.
-- File uploads: validate MIME type and size server-side before generating a pre-signed URL; never trust client-declared content type alone.
-- Rate-limit `/api/auth/login` and `/api/students/:id/redeem` (credit redemption should be idempotent-safe against double-submits).
+| Old REST endpoint | Server Action equivalent |
+|---|---|
+| `GET /api/students?search=` | Client Component + Firestore query (`where`, `orderBy`) directly, or a Server Component fetch — no action needed for reads |
+| `POST /api/companies/:id/shortlist` | `shortlistStudent(companyId, studentId)` in `actions/matches.ts` |
+| `PATCH /api/companies/:id/shortlist/reorder` | `reorderShortlist(companyId, orderedStudentIds: string[])` |
+| `PATCH /api/matches/:id/stage` | `advanceStage(matchId, stage)` |
+| `POST /api/companies/:id/plan-request` | `requestPlanChange(companyId, track)` → writes `requests` doc |
+| `POST /api/companies/:id/requirements` | `uploadRequirement(companyId, file)` → Firebase Storage upload + subcollection write |
+| `PATCH /api/students/:id/profile` | `updateStudentProfile(uid, data)` |
+| `POST /api/students/:id/redeem` | `redeemCreditItem(uid, contentItemId)` — **must run inside `runTransaction`**, see Section 8.2 |
+| `POST /api/admin/content-items` | `upsertContentItem(data)` |
+| `PATCH /api/admin/levers` | `updateLever(key, value)` — writes `updatedBy` for the audit trail |
+| `PATCH /api/admin/requests/:id` | `resolveRequest(requestId, status)` |
+
+All Server Actions must: (1) verify the caller's Firebase session and role before touching data — never trust a client-passed `uid`/`companyId`, always read it from the verified session; (2) be idempotent on the money/credit-moving ones specifically (`redeemCreditItem`, `requestPlanChange`) per the Production Readiness carryover in Section 12.
 
 ---
 
-## 8. Build Roadmap
+## 8. Business logic
 
-| Phase | Scope | Notes |
+### 8.1 Match score
+```
+matchScore = weightedOverlap(company.requirementTags, student.skills) × 0.6
+           + locationFit(company.preferredLocations, student.city)   × 0.2
+           + profileCompleteness(student)                             × 0.2
+```
+Computed and stored on the `matches` doc at creation; recomputed nightly by the `recomputeMatchScores` Cloud Function, not on every page load.
+
+### 8.2 Credit redemption — must be a Firestore transaction
+```typescript
+// actions/students.ts
+export async function redeemCreditItem(uid: string, contentItemId: string) {
+  return runTransaction(db, async (tx) => {
+    const studentRef = doc(db, 'students', uid);
+    const itemRef = doc(db, 'contentItems', contentItemId);
+    const [studentSnap, itemSnap] = await Promise.all([tx.get(studentRef), tx.get(itemRef)]);
+
+    const student = studentSnap.data() as StudentDoc;
+    const item = itemSnap.data() as ContentItemDoc;
+    if (student.creditBalance < item.creditCost) throw new Error('Insufficient credits');
+
+    tx.update(studentRef, { creditBalance: student.creditBalance - item.creditCost });
+    tx.set(doc(collection(studentRef, 'creditTransactions')), {
+      direction: 'spend', source: `redeem:${contentItemId}`,
+      amount: item.creditCost, relatedContentItemId: contentItemId,
+      createdAt: serverTimestamp(),
+    });
+  });
+}
+```
+This is the Firestore-native equivalent of the original "one SQL transaction" requirement — `runTransaction` gives the same atomicity guarantee against concurrent redemption race conditions.
+
+### 8.3 Plan changes are request-based, not instant
+`requestPlanChange` never writes directly to `companies/{uid}.track` — it only creates a `requests` doc. Only `resolveRequest` (admin-only Server Action) updates the company doc, on approval.
+
+### 8.4 Content item status
+Confirmed semantics: **Draft → Live → Archived**, a three-state visibility field (`ContentItemDoc.status`), not a per-track default/override system. Public-facing queries (`/credits` page, Student Content Store) always filter `where('status', '==', 'live')`.
+
+---
+
+## 9. Design system (Tailwind tokens)
+
+Pulled directly from the Brand Guidelines — put these in `tailwind.config.ts`, don't hand-pick colors/spacing per component.
+
+```typescript
+// tailwind.config.ts (excerpt)
+export default {
+  theme: {
+    extend: {
+      colors: {
+        ink: '#1A1A18', bg: '#FAFAF7', surface: '#FFFFFF', 'surface-2': '#F1EFE8',
+        border: '#E7E4D9', muted: '#9B9A91', secondary: '#6B6A63',
+        purple: { DEFAULT: '#3C3489', bg: '#EEEDFE', strong: '#4B3F9C' },
+        amber: { DEFAULT: '#C97A2E', bg: '#FAEEDA' },
+        green: { DEFAULT: '#27500A', bg: '#EAF3DE' },
+        red: '#8B3A3A',
+      },
+      fontFamily: {
+        serif: ['var(--font-playfair)'], sans: ['var(--font-inter)'], mono: ['var(--font-jetbrains)'],
+      },
+      spacing: { /* 4px base scale — sp-1:4px through sp-8:32px, see Section 11 for the full table */ },
+      borderRadius: { DEFAULT: '10px', sm: '7px', hero: '16px' }, // one scale only — no ad hoc radius values
+      backgroundImage: {
+        horizon: 'linear-gradient(115deg, #2E2768 0%, #4B3F9C 38%, #9A6A3C 78%, #C97A2E 100%)',
+        dusk: 'linear-gradient(135deg, #EEEDFE 0%, #FAEEDA 100%)',
+        route: 'linear-gradient(90deg, #3C3489, #C97A2E)',
+      },
+    },
+  },
+  darkMode: ['class'], // toggled via a `dark` class on <html>, matching the shipped dark-mode implementation
+};
+```
+
+**Dark mode:** implement with Tailwind's `class` strategy (`html.dark`), not `media` — the shipped prototype has a manual toggle persisted to `localStorage`, not an OS-preference-only switch. Port the dark palette overrides (`--bg`, `--surface`, `--border` etc. all lighten/darken as already defined) as Tailwind CSS variables under `.dark`.
+
+**Gradient rule:** `bg-horizon` is reserved for one hero moment per screen — never on buttons, tags, or more than one section. This is a documented brand rule, not a style suggestion; consider a lint comment or Storybook note enforcing it.
+
+---
+
+## 10. Component architecture (build to match what's already designed)
+
+### 10.1 App shell (all 15 dashboard pages)
+`(app)/layout.tsx` renders `<Sidebar role={role} activePath={pathname} />` + a main column with `<Navbar />` on top. Sidebar: brand mark, Student/Employer/Admin workspace switcher (routes to each role's home), role-scoped nav items with active-state highlighting, footer with Global Settings + Public site links. Collapses to an off-canvas drawer under `900px` with a hamburger toggle.
+
+### 10.2 Navbar — three genuinely wired controls, not decorative icons
+- **Language switcher**: dropdown (EN/AR/NL/FR), persists selection to `localStorage` today; wire to `next-intl` or `next-i18next` when the i18n pass lands (Section 12 — this is currently UI-only, not full translation).
+- **Dark/light toggle**: toggles `dark` class on `<html>`, persists to `localStorage`, respects it on reload.
+- **Profile dropdown**: avatar (initials, never a stock photo), name/email header, links to My Profile / Settings / Public site / Sign out.
+
+### 10.3 Analytics charts — inline SVG, per dashboard
+- **Admin Dashboard**: bar+line combo (active students vs. placements, 6-month trend) + donut (Track A vs B split by company count).
+- **Employer Pipeline**: horizontal funnel bar (Viewed → Shortlisted → Interviewing → Placed).
+- **Student Dashboard**: grouped bar (credits earned vs. spent, 8-week trend).
+No charting library needed at this scale — keep them as typed React components that accept a small, explicit data prop (`{ labels: string[]; series: number[][] }`) rather than hardcoded SVG paths, so Cursor can wire real Firestore-aggregated data in without rebuilding the visual.
+
+### 10.4 Public homepage — Video Cards & Podcast (admin-managed)
+Both sections on `(public)/page.tsx` query `videoCards`/`podcastEpisodes` where `status == 'live'`, ordered by `position` / `episodeNumber`. Managed from `(app)/admin/homepage-content/page.tsx` — add/edit/reorder/status-toggle for both content types, using the same Draft/Live/Archived pattern as the Content Library. **Nothing on the public homepage should be hardcoded** — this was a specific requirement and should stay enforced structurally (the page component has no literal video/podcast data in it, only the Firestore query).
+
+### 10.5 Public-page CMS fields (unchanged from the original footer-pages spec)
+| Page | Firestore collection | Admin-managed fields |
 |---|---|---|
-| **0. Foundation** | Auth, roles, DB schema, empty shells for all 3 role dashboards | Get the skeleton and role-guarded routing working first |
-| **1. Company core** | Talent Pool (search/list), Candidate profile view, Shortlist (star + reorder) | This is the highest-visible surface in your screenshots |
-| **2. Pipeline & matching** | `matches` table, stage transitions, match score v1, Pipeline dashboard | Depends on Phase 1 data existing |
-| **3. Admin ops** | Dashboard KPIs, Content Library CRUD, Program Levers config | Levers must exist before credit logic in Phase 4 can be tuned live |
-| **4. Credit economy** | Student dashboard, content storefront, redemption transaction logic, credit_transactions ledger | Ties student side to the admin-managed catalog |
-| **5. Requests & plans** | Plan-change request flow, admin approval queue, requirements/uploads | Closes the loop on the "Our Profile" plan picker |
-| **6. Polish** | Empty states (already partly designed in your screenshots), notifications, KPI trend charts | |
+| About | `pageAbout` (singleton doc) | heroHeadline, missionBody, statBlocks[], teamMembers[] |
+| Careers | `jobPostings` | title, department, location, employmentType, description, status |
+| Journal | `articles` | title, slug, coverImage, excerpt, body, author, category, publishedAt, tags[] |
+| Browse Roles | `publicRoles` | title, employerLabel, sector, location, seniority, relocationSupport, description, status |
+| How It Works | `pageHowItWorks` (singleton) | steps[], faqItems[] |
+| Credits | *(no CMS — mirrors `contentItems` + `programLevers`, read-only)* | — |
+| Pricing | `pagePricing` (singleton) | trackACopy, trackBCopy, faqItems[] *(numbers still come from `programLevers`)* |
+| Track A/B | `pageTracks` (singleton) | comparisonRows[], caseStudyQuote |
+| Request Talent | *(pure form → `requests` with `type: 'sourcing_request'`)* | — |
+| Careers/Browse Roles forms | `jobApplications`, `roleInterestSubmissions` | visitor-submitted, surfaced in Admin CRM as leads |
 
 ---
 
-## 9. Open Questions to Resolve Before Building
+## 11. Sizing & spacing (condensed — enforce via Tailwind spacing scale, not inline styles)
 
-1. ~~What does the 3-way content-item toggle control?~~ → Implemented as **Draft / Live / Archived**.
-2. ~~Credit-to-EUR ratio / purchase?~~ → `creditsPerEuro` (~4) + admin-approved top-up packages (no Stripe in v1).
-3. ~~Match % explainable?~~ → v1 weighted formula on `matches.matchScore`.
-4. ~~Track A vs B exclusive?~~ → Single `companies.plan` (`track_a` | `track_b` | null); Track A unlocks self-serve browse.
-5. ~~Anonymized until shortlist?~~ → Full name visible once matched (as in screenshots); revisit if needed.
+| Token | Value | Use |
+|---|---|---|
+| `sp-1` | 4px | icon-to-label gaps |
+| `sp-2` | 8px | pill padding, dense-grid gaps |
+| `sp-3` | 10px | small card padding |
+| `sp-4` | 12px | **default** card/panel padding and grid gap |
+| `sp-5` | 16px | section internal padding |
+| `sp-6` | 20px | gaps between major blocks |
+| `sp-8` | 28–32px | section-to-section rhythm |
+
+Rules to bake into shared components (not left to per-page judgement):
+- One border-radius scale: `sm` (7px, buttons/inputs), `DEFAULT` (10px, cards/panels/tables), `hero` (16px, hero banners only).
+- One type scale: 12px (meta/caption), 14px (body default), 16px (lede). Display sizes (H1–H3) use Playfair Display per Section 9.
+- Nav height: **60px**, identical for the marketing nav and the app navbar — do not let these drift into two different heights.
+- Dense data grids (CRM, Integrations — anything with 6+ repeating cards) use `sp-2` gap / `sp-3` padding as a documented exception; everything else uses `sp-4`.
+- 44px minimum tap target on every interactive element for the mobile breakpoint.
+- Real breakpoints: `900px` (tablet — two-column layouts collapse, sidebar becomes a drawer), `600px` (mobile — stat grids go 2-col, card grids go 1-col, tables get horizontal scroll via a wrapping container).
 
 ---
 
-This blueprint is derived entirely from the UI states captured in your screenshots plus reasonable inference from the credit/subscription figures shown. The student-side screens weren't in your captures, so that section is designed to be consistent with the admin/company data model rather than reverse-engineered from a screenshot.
+## 12. Production readiness — the non-negotiable floor
+
+Carried over from the full audit; these six are what separate "looks done" from "survives the first incident," adapted to this stack:
+
+1. **Firestore Security Rules emulator tests** for every role boundary in Section 5 — a company reading another company's `matches` doc must fail, provably, in CI.
+2. **Structured logging + error tracking** (Sentry works fine with Next.js + Cloud Functions) + basic alerting on function errors and elevated Firestore permission-denied rates.
+3. **Secrets in Firebase Functions config / Vercel env vars**, never committed; dependency scanning (Dependabot) in CI; rate limiting on auth and `redeemCreditItem`.
+4. **Firestore scheduled exports to Cloud Storage** (automated backup) with an actually-rehearsed restore, not just a scheduled export nobody has tested restoring from.
+5. **CI/CD**: lint → typecheck → test → deploy, gated on every PR, with genuine staging/production Firebase project separation (two projects, not one project with a URL suffix).
+6. **Idempotency on `redeemCreditItem` and `requestPlanChange`** — a double-click or retried Server Action must not double-spend credits or create duplicate requests. Use a client-generated idempotency key stored alongside the transaction.
+
+Also worth carrying forward explicitly for this stack: **Firestore composite indexes must be defined in `firestore.indexes.json` and deployed** — several of the queries in Section 4 (`matches` by `companyId`+`stage`, `collectionGroup('creditTransactions')`) will fail in production without them even though they work fine against small emulator datasets. Do not discover this in production.
+
+---
+
+## 13. Roadmap priorities (condensed)
+
+Full detail in the original Gap Analysis; the two lines that matter most for sequencing:
+
+- **Before real users**: verification layer (candidate ID checks, company domain verification), real Stripe billing, a messaging thread on each `match` (currently nothing connects a shortlisted candidate to an actual conversation), and post-placement tracking (`matches.stage` currently treats "placed" as the finish line — add 30/60/90-day check-ins before building anything else post-MVP).
+- **The actual moat, once the above exists**: a placement guarantee backed by real 90-day data, and a public per-corridor success-rate view. Both require the post-placement tracking to be real and running for a few months first — don't build the guarantee messaging before the data exists to back it.
+
+---
+
+## 14. Build sequence for Cursor
+
+Work in this order — each phase should be a working, deployable slice, not a partial cross-cutting change:
+
+1. **Scaffold**: Next.js + TS + Tailwind + Firebase SDK wiring (client + admin), fonts, design tokens from Section 9.
+2. **Auth**: Firebase Auth email/password, session cookie exchange (`api/auth/session`), `users/{uid}` doc creation on signup with role selection.
+3. **App shell**: Sidebar + Navbar components (Section 10.1–10.2) wired to a fake/static role first, dark mode + language switcher working before any real data is connected.
+4. **Firestore rules + emulator tests**: write Section 5 rules and their tests *before* building pages against real data — this order matters, don't retrofit security.
+5. **Student flow**: profile CRUD, dashboard stats, content store + `redeemCreditItem` transaction, credit ledger subcollection.
+6. **Employer flow**: talent pool query + match creation, shortlist reorder, pipeline stage transitions, plan-change request.
+7. **Admin flow**: dashboard KPIs (static first, then wire the scheduled aggregation function), content library CRUD, program levers, request approval, CRM (build the Cloud Function triggers that populate `crmContacts` from students/companies/requests).
+8. **Public site**: all 10 marketing pages, CMS-driven per Section 10.5, video cards/podcast admin page.
+9. **Charts**: wire the three chart components (Section 10.3) to real aggregated Firestore data via the scheduled Cloud Functions, replacing placeholder series.
+10. **Integrations page + webhook handlers**: Stripe first (it's on the money path), then the rest.
+11. **Production readiness pass**: Section 12, in the listed order, before this goes anywhere near real user data.

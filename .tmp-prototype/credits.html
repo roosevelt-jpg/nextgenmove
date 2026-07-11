@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credits · NextGen Move</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #1A1A18;
+  --bg: #FAFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F1EFE8;
+  --border: #E7E4D9;
+  --muted: #9B9A91;
+  --secondary: #6B6A63;
+  --purple: #3C3489;
+  --purple-bg: #EEEDFE;
+  --purple-strong: #4B3F9C;
+  --amber: #C97A2E;
+  --amber-bg: #FAEEDA;
+  --green: #27500A;
+  --green-bg: #EAF3DE;
+  --red: #8B3A3A;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 10px; --sp-4: 12px; --sp-5: 16px; --sp-6: 20px; --sp-7: 24px; --sp-8: 32px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.45; font-size: 14px; }
+a { color: inherit; text-decoration: none; }
+.serif { font-family: 'Playfair Display', serif; }
+img { max-width: 100%; display: block; }
+
+.shell { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+.section { padding: 28px 0; }
+
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+.topbar-inner { max-width: 1180px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; height: 60px; flex-wrap: wrap; gap: 10px; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; }
+.brand-mark { width: 30px; height: 30px; border-radius: var(--radius-sm); background: var(--purple-bg); color: var(--purple); display: flex; align-items: center; justify-content: center; font-family: 'Inter'; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+.role-tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+.role-tabs a { padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--secondary); min-height: 30px; display: flex; align-items: center; }
+.role-tabs a.active { background: var(--ink); color: #fff; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.avatar-chip { width: 30px; height: 30px; border-radius: 50%; background: var(--purple-bg); color: var(--purple); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.signout-link { font-size: 12.5px; color: var(--secondary); }
+
+.subbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+.subbar-inner { max-width: 1180px; margin: 0 auto; padding: 8px 28px; display: flex; gap: 6px; flex-wrap: wrap; }
+.subbar a { padding: 6px 14px; border-radius: 999px; font-size: 12.5px; color: var(--secondary); min-height: 30px; display: flex; align-items: center; }
+.subbar a.active { background: var(--ink); color: #fff; font-weight: 600; }
+.crumbs { max-width: 1180px; margin: 0 auto; padding: 12px 28px 0; display: flex; gap: 8px; }
+.crumbs a { font-size: 12px; color: var(--muted); }
+.crumbs a.active { color: var(--secondary); }
+
+.marketing-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; flex-wrap: wrap; gap: 10px; min-height: 60px; }
+.marketing-links { display: flex; align-items: center; gap: 20px; font-size: 13px; color: var(--secondary); flex-wrap: wrap; }
+.marketing-links a:hover { color: var(--ink); }
+
+.pagehead { padding: 22px 0 4px; }
+.eyebrow { font-family: 'Inter', monospace; font-size: 11px; letter-spacing: 2px; color: var(--purple); font-weight: 700; margin-bottom: 6px; text-transform: uppercase; }
+h1.pagetitle { font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.6vw, 34px); font-weight: 600; margin: 0 0 6px; line-height: 1.15; }
+.pagesub { font-size: 14px; color: var(--secondary); max-width: 600px; line-height: 1.55; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: 1px solid var(--border); background: var(--surface); cursor: pointer; min-height: 38px; }
+.btn-primary { background: var(--ink); color: #fff; border: none; }
+.btn-purple { background: var(--purple); color: #fff; border: none; }
+.btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: #fff; }
+.btn-sm { padding: 7px 12px; font-size: 12px; min-height: 32px; }
+.btn:hover { opacity: 0.88; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--sp-4); margin: var(--sp-5) 0; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--sp-4); }
+.stat-label { font-size: 10px; letter-spacing: 1.2px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--sp-4); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); }
+.two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--sp-4); }
+.two-col-even { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.card-grid.dense { gap: var(--sp-2); }
+.card-grid.dense .panel { padding: var(--sp-3); }
+
+.pill { font-size: 10.5px; padding: 3px 9px; border-radius: 999px; display: inline-block; font-weight: 600; }
+.pill-purple { background: var(--purple-bg); color: var(--purple); }
+.pill-green { background: var(--green-bg); color: var(--green); }
+.pill-amber { background: var(--amber-bg); color: var(--amber); }
+.pill-gray { background: var(--surface-2); color: var(--secondary); }
+
+table.datatable { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.table-scroll { overflow-x: auto; border-radius: var(--radius); }
+table.datatable th { text-align: left; font-size: 10px; letter-spacing: 0.8px; color: var(--muted); text-transform: uppercase; padding: 8px 14px; background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+table.datatable td { padding: 10px 14px; font-size: 13px; border-top: 1px solid var(--border); vertical-align: middle; }
+table.datatable tr:hover td { background: #FCFBF8; }
+.row-person { display: flex; align-items: center; gap: 8px; }
+.mini-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--purple-bg); color: var(--purple); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-4); }
+.field label { display: block; font-size: 10.5px; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+.field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 11px; font-size: 13.5px; font-family: 'Inter'; background: var(--bg); min-height: 38px; }
+.field textarea { min-height: 72px; resize: vertical; }
+.upload-box { border: 1.5px dashed var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; color: var(--muted); font-size: 12px; background: var(--bg); }
+
+.toggle { width: 36px; height: 20px; border-radius: 999px; background: var(--border); position: relative; display: inline-block; flex-shrink: 0; cursor: pointer; }
+.toggle.on { background: var(--green); }
+.toggle .knob { width: 14px; height: 14px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; transition: left 0.15s; }
+.toggle.on .knob { left: 19px; }
+.toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); min-height: 44px; }
+.toggle-row:last-child { border-bottom: none; }
+
+.hero { border-radius: 16px; padding: 44px 32px 48px; margin: var(--sp-5) 0; background: linear-gradient(115deg, #2E2768 0%, #4B3F9C 38%, #9A6A3C 78%, #C97A2E 100%); color: #fff; position: relative; }
+.hero .eyebrow { color: #E8D9BE; }
+.hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(28px, 4.5vw, 46px); line-height: 1.08; margin: 0 0 8px; font-weight: 500; }
+.hero h1 em { font-style: italic; color: #F4D9A8; display: block; }
+.hero p { max-width: 460px; font-size: 14.5px; color: #E4DFF0; line-height: 1.55; margin-bottom: 20px; }
+
+.site-footer { border-top: 1px solid var(--border); padding: 28px 0 18px; margin-top: 20px; }
+.footer-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px; }
+.footer-cols { display: flex; gap: 32px; flex-wrap: wrap; }
+.footer-col-title { font-size: 10px; letter-spacing: 1px; color: var(--purple); text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+.footer-col a { display: block; font-size: 12.5px; color: var(--secondary); margin-bottom: 6px; }
+.footer-col a:hover { color: var(--ink); }
+.footer-fine { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
+
+.empty-state { text-align: center; padding: 28px 16px; color: var(--muted); font-size: 13px; }
+.section-title { font-weight: 700; font-size: 14.5px; margin-bottom: 10px; }
+.list-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .two-col, .two-col-even, .form-grid { grid-template-columns: 1fr; }
+  .shell, .topbar-inner, .subbar-inner, .crumbs { padding-left: 18px; padding-right: 18px; }
+  .hero { padding: 32px 22px 36px; }
+  .footer-cols { gap: 24px; }
+}
+
+@media (max-width: 600px) {
+  body { font-size: 13.5px; }
+  .shell, .topbar-inner, .subbar-inner, .crumbs { padding-left: 14px; padding-right: 14px; }
+  .topbar-inner { height: auto; padding-top: 8px; padding-bottom: 8px; }
+  .role-tabs { order: 3; width: 100%; justify-content: center; }
+  .marketing-links { gap: 12px; font-size: 12px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .card-grid { grid-template-columns: 1fr; gap: 10px; }
+  .hero { padding: 26px 18px 28px; border-radius: 12px; }
+  .hero p { font-size: 13.5px; }
+  table.datatable { min-width: 480px; }
+  .list-row { flex-direction: column; align-items: flex-start; }
+  .footer-top { flex-direction: column; }
+  .footer-cols { gap: 18px 28px; }
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="shell">
+  <div class="marketing-nav">
+    <a href="index.html" class="brand"><div class="brand-mark">NG</div>NextGen Move</a>
+    <div class="marketing-links">
+      <a href="how-it-works.html" class="">How it works</a>
+      <a href="pricing.html" class="">For companies</a>
+      <a href="pricing.html" class="">Pricing</a>
+      <a href="talent-pool.html">Sign in</a>
+    </div>
+    <a href="request-talent.html" class="btn btn-primary btn-sm">Start your journey</a>
+  </div>
+</div>
+<div class="shell">
+  <div class="pagehead">
+    <div class="eyebrow">Credits</div>
+    <h1 class="pagetitle">Coaching, paid in credits.</h1>
+    <div class="pagesub">Every student starts with a welcome balance. Earn more, then spend it on the coaching you need.</div>
+  </div>
+  <div class="two-col-even section">
+    <div>
+      <div class="eyebrow" style="color:var(--amber);">WAYS TO EARN</div>
+      <div class="panel">
+        <div class="toggle-row"><div><div style="font-weight:700; font-size:14px;">Welcome credit</div><div style="font-size:12px; color:var(--muted);">On signup</div></div><div style="font-family:monospace; color:var(--purple); font-weight:700;">2,000 cr</div></div>
+        <div class="toggle-row"><div><div style="font-weight:700; font-size:14px;">Referral bonus</div><div style="font-size:12px; color:var(--muted);">Per successful referral</div></div><div style="font-family:monospace; color:var(--purple); font-weight:700;">150 cr</div></div>
+        <div class="toggle-row"><div><div style="font-weight:700; font-size:14px;">Profile complete</div><div style="font-size:12px; color:var(--muted);">One-time</div></div><div style="font-family:monospace; color:var(--purple); font-weight:700;">100 cr</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="eyebrow" style="color:var(--green);">SPEND ON</div>
+      <div class="panel">
+        <div class="toggle-row"><div><div style="font-weight:700; font-size:14px;">Mock interview</div><div style="font-size:12px; color:var(--muted);">Coaching</div></div><div style="font-family:monospace; color:var(--purple); font-weight:700;">200 cr</div></div>
+        <div class="toggle-row"><div><div style="font-weight:700; font-size:14px;">CV review</div><div style="font-size:12px; color:var(--muted);">Profile</div></div><div style="font-family:monospace; color:var(--purple); font-weight:700;">80 cr</div></div>
+        <div class="toggle-row"><div><div style="font-weight:700; font-size:14px;">Premium placement</div><div style="font-size:12px; color:var(--muted);">Premium</div></div><div style="font-family:monospace; color:var(--purple); font-weight:700;">1,600 cr</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="site-footer">
+  <div class="shell">
+    <div class="footer-top">
+      <div>
+        <div class="brand" style="margin-bottom:8px;"><div class="brand-mark">NG</div>NextGen Move</div>
+        <div style="font-size:13px; color:var(--secondary);">Your next step, engineered.</div>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <div class="footer-col-title">Company</div>
+          <a href="about.html">About</a>
+          <a href="careers.html">Careers</a>
+          <a href="journal.html">Journal</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Talent</div>
+          <a href="browse-roles.html">Browse roles</a>
+          <a href="how-it-works.html">How it works</a>
+          <a href="credits.html">Credits</a>
+        </div>
+        <div class="footer-col">
+          <div class="footer-col-title">Employers</div>
+          <a href="pricing.html">Pricing</a>
+          <a href="tracks.html">Track A / Track B</a>
+          <a href="request-talent.html">Request talent</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-fine">© 2026 NextGen Move. All routes, engineered.</div>
+  </div>
+</div>
+</body>
+</html>
