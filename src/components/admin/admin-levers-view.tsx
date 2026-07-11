@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ProgramLeversDocument, WayToEarn } from "@/types/cms";
+import type { PendingRequestItem } from "@/lib/admin/dashboard";
 import { Button, Input } from "@/components/ui";
 
 interface AdminLeversViewProps {
@@ -10,14 +11,26 @@ interface AdminLeversViewProps {
 
 export function AdminLeversView({ labels }: AdminLeversViewProps) {
   const [levers, setLevers] = useState<ProgramLeversDocument | null>(null);
+  const [pending, setPending] = useState<PendingRequestItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
 
   const load = async () => {
-    const response = await fetch("/api/admin/levers");
-    if (response.ok) {
-      const payload = (await response.json()) as { levers: ProgramLeversDocument | null };
+    const [leversRes, pendingRes] = await Promise.all([
+      fetch("/api/admin/levers"),
+      fetch("/api/admin/pending-requests"),
+    ]);
+    if (leversRes.ok) {
+      const payload = (await leversRes.json()) as {
+        levers: ProgramLeversDocument | null;
+      };
       setLevers(payload.levers);
+    }
+    if (pendingRes.ok) {
+      const payload = (await pendingRes.json()) as {
+        items: PendingRequestItem[];
+      };
+      setPending(payload.items ?? []);
     }
   };
 
@@ -26,20 +39,14 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   }, []);
 
   const updateWay = (index: number, patch: Partial<WayToEarn>) => {
-    if (!levers) {
-      return;
-    }
-
+    if (!levers) return;
     const waysToEarn = [...levers.waysToEarn];
     waysToEarn[index] = { ...waysToEarn[index]!, ...patch };
     setLevers({ ...levers, waysToEarn });
   };
 
   const addWay = () => {
-    if (!levers) {
-      return;
-    }
-
+    if (!levers) return;
     setLevers({
       ...levers,
       waysToEarn: [
@@ -50,10 +57,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   };
 
   const removeWay = (index: number) => {
-    if (!levers) {
-      return;
-    }
-
+    if (!levers) return;
     setLevers({
       ...levers,
       waysToEarn: levers.waysToEarn.filter((_, rowIndex) => rowIndex !== index),
@@ -61,42 +65,135 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   };
 
   const save = async () => {
-    if (!levers) {
-      return;
-    }
-
+    if (!levers) return;
     setIsSaving(true);
     setErrorCode(null);
-
     const response = await fetch("/api/admin/levers", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(levers),
     });
-
     setIsSaving(false);
-
     if (!response.ok) {
       setErrorCode("save_failed");
       return;
     }
-
     const payload = (await response.json()) as { levers: ProgramLeversDocument };
     setLevers(payload.levers);
   };
 
+  const resolvePending = async (item: PendingRequestItem, action: string) => {
+    await fetch(`/api/admin/pending-requests/${item.source}/${item.id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    await load();
+  };
+
   if (!levers) {
-    return <p className="text-sm text-text-muted">{labels.loading}</p>;
+    return <p className="text-sm text-text-muted">{labels.loading ?? "Loading…"}</p>;
   }
 
+  const summaryRows = [
+    ...levers.waysToEarn.map((way) => ({
+      label: way.action || way.description || "—",
+      value: `${way.credits} cr`,
+    })),
+    {
+      label: labels.placementFeeEur ?? "Placement fee (student)",
+      value: `€${levers.placementFeeEur ?? 350}`,
+    },
+    {
+      label: labels.trackAMonthly ?? "Track A",
+      value: `€${levers.trackAMonthly}/mo + €${levers.trackAMatchFee} match`,
+    },
+    {
+      label: labels.trackBMonthly ?? "Track B",
+      value: `€${levers.trackBMonthly}/mo per student`,
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-serif text-3xl text-text-primary">{labels.title}</h1>
+    <div className="mx-auto w-full max-w-[1100px] space-y-6">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
+            {labels.eyebrow ?? "Admin · Program Levers"}
+          </p>
+          <h1 className="font-serif text-[clamp(1.5rem,3vw,2.125rem)] font-semibold leading-tight text-text-primary">
+            {labels.title ?? "The economics, in one panel."}
+          </h1>
+          {labels.subtitle ? (
+            <p className="max-w-xl text-sm text-text-secondary">{labels.subtitle}</p>
+          ) : null}
+        </div>
         <Button disabled={isSaving} onClick={save}>
-          {labels.save}
+          {labels.save ?? "Save"}
         </Button>
       </header>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-radius border border-border bg-surface-1 p-4">
+          <h2 className="mb-3 text-[14px] font-bold text-text-primary">
+            {labels.pendingTitle ?? "Pending requests"}
+          </h2>
+          {pending.length === 0 ? (
+            <p className="py-10 text-center text-sm text-text-muted">
+              {labels.pendingEmpty ?? "No requests yet."}
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {pending.map((item) => (
+                <li
+                  key={`${item.source}-${item.id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-radius border border-border px-3 py-2"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">
+                      {item.title}
+                    </p>
+                    <p className="text-[12px] text-text-secondary">{item.subtitle}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void resolvePending(item, "approve")}
+                    >
+                      {labels.approve ?? "Approve"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void resolvePending(item, "reject")}
+                    >
+                      {labels.reject ?? "Reject"}
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="rounded-radius border border-border bg-surface-1 p-4">
+          <h2 className="mb-3 text-[14px] font-bold text-text-primary">
+            {labels.summaryTitle ?? "Program levers"}
+          </h2>
+          <ul className="divide-y divide-border">
+            {summaryRows.map((row) => (
+              <li
+                key={row.label}
+                className="flex items-center justify-between gap-3 py-2.5 text-[13px]"
+              >
+                <span className="text-text-secondary">{row.label}</span>
+                <span className="font-medium text-text-primary">{row.value}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
 
       <section className="rounded-radius border border-border bg-surface-1 p-5">
         {labels.pricingSectionTitle ? (
@@ -105,73 +202,63 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           </p>
         ) : null}
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
-            <Input
-              id="trackAMonthly"
-              type="number"
-              label={labels.trackAMonthly}
-              value={String(levers.trackAMonthly)}
-              onChange={(event) =>
-                setLevers({ ...levers, trackAMonthly: Number(event.target.value) })
-              }
-            />
-          </div>
-          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
-            <Input
-              id="trackAMatchFee"
-              type="number"
-              label={labels.trackAMatchFee}
-              value={String(levers.trackAMatchFee)}
-              onChange={(event) =>
-                setLevers({ ...levers, trackAMatchFee: Number(event.target.value) })
-              }
-            />
-          </div>
-          <div className="space-y-1 rounded-radius border border-fill-accent bg-brand-lavender px-4 py-3">
-            <Input
-              id="trackBMonthly"
-              type="number"
-              label={labels.trackBMonthly}
-              value={String(levers.trackBMonthly)}
-              onChange={(event) =>
-                setLevers({ ...levers, trackBMonthly: Number(event.target.value) })
-              }
-            />
-          </div>
-          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
-            <Input
-              id="placementFeeEur"
-              type="number"
-              label={labels.placementFeeEur}
-              value={String(levers.placementFeeEur ?? 350)}
-              onChange={(event) =>
-                setLevers({
-                  ...levers,
-                  placementFeeEur: Number(event.target.value),
-                })
-              }
-            />
-          </div>
-          <div className="space-y-1 rounded-radius border border-border bg-bg px-4 py-3">
-            <Input
-              id="creditsPerEuro"
-              type="number"
-              label={labels.creditsPerEuro}
-              value={String(levers.creditsPerEuro ?? 4)}
-              onChange={(event) =>
-                setLevers({
-                  ...levers,
-                  creditsPerEuro: Number(event.target.value),
-                })
-              }
-            />
-          </div>
+          <Input
+            id="trackAMonthly"
+            type="number"
+            label={labels.trackAMonthly}
+            value={String(levers.trackAMonthly)}
+            onChange={(event) =>
+              setLevers({ ...levers, trackAMonthly: Number(event.target.value) })
+            }
+          />
+          <Input
+            id="trackAMatchFee"
+            type="number"
+            label={labels.trackAMatchFee}
+            value={String(levers.trackAMatchFee)}
+            onChange={(event) =>
+              setLevers({ ...levers, trackAMatchFee: Number(event.target.value) })
+            }
+          />
+          <Input
+            id="trackBMonthly"
+            type="number"
+            label={labels.trackBMonthly}
+            value={String(levers.trackBMonthly)}
+            onChange={(event) =>
+              setLevers({ ...levers, trackBMonthly: Number(event.target.value) })
+            }
+          />
+          <Input
+            id="placementFeeEur"
+            type="number"
+            label={labels.placementFeeEur}
+            value={String(levers.placementFeeEur ?? 350)}
+            onChange={(event) =>
+              setLevers({
+                ...levers,
+                placementFeeEur: Number(event.target.value),
+              })
+            }
+          />
+          <Input
+            id="creditsPerEuro"
+            type="number"
+            label={labels.creditsPerEuro}
+            value={String(levers.creditsPerEuro ?? 4)}
+            onChange={(event) =>
+              setLevers({
+                ...levers,
+                creditsPerEuro: Number(event.target.value),
+              })
+            }
+          />
         </div>
       </section>
 
       <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-serif text-xl text-text-primary">
+          <h2 className="text-[14.5px] font-bold text-text-primary">
             {labels.topUpPackagesTitle ?? "Credit top-up packages"}
           </h2>
           <Button
@@ -205,7 +292,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               label={labels.packageLabel ?? "Label"}
               value={pack.label}
               onChange={(event) => {
-                const creditTopUpPackages = [...(levers.creditTopUpPackages ?? [])];
+                const creditTopUpPackages = [
+                  ...(levers.creditTopUpPackages ?? []),
+                ];
                 creditTopUpPackages[index] = {
                   ...pack,
                   label: event.target.value,
@@ -219,7 +308,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               label={labels.credits}
               value={String(pack.credits)}
               onChange={(event) => {
-                const creditTopUpPackages = [...(levers.creditTopUpPackages ?? [])];
+                const creditTopUpPackages = [
+                  ...(levers.creditTopUpPackages ?? []),
+                ];
                 creditTopUpPackages[index] = {
                   ...pack,
                   credits: Number(event.target.value),
@@ -233,7 +324,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               label={labels.priceEur ?? "€"}
               value={String(pack.priceEur)}
               onChange={(event) => {
-                const creditTopUpPackages = [...(levers.creditTopUpPackages ?? [])];
+                const creditTopUpPackages = [
+                  ...(levers.creditTopUpPackages ?? []),
+                ];
                 creditTopUpPackages[index] = {
                   ...pack,
                   priceEur: Number(event.target.value),
@@ -248,9 +341,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                 onClick={() =>
                   setLevers({
                     ...levers,
-                    creditTopUpPackages: (levers.creditTopUpPackages ?? []).filter(
-                      (_, rowIndex) => rowIndex !== index,
-                    ),
+                    creditTopUpPackages: (
+                      levers.creditTopUpPackages ?? []
+                    ).filter((_, rowIndex) => rowIndex !== index),
                   })
                 }
               >
@@ -263,12 +356,13 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
 
       <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-serif text-xl text-text-primary">{labels.waysToEarnTitle}</h2>
+          <h2 className="text-[14.5px] font-bold text-text-primary">
+            {labels.waysToEarnTitle}
+          </h2>
           <Button variant="outline" size="sm" onClick={addWay}>
             {labels.addRow}
           </Button>
         </div>
-
         {levers.waysToEarn.map((way, index) => (
           <div
             key={way.id || index}
@@ -278,7 +372,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               id={`way-action-${index}`}
               label={labels.action}
               value={way.action}
-              onChange={(event) => updateWay(index, { action: event.target.value })}
+              onChange={(event) =>
+                updateWay(index, { action: event.target.value })
+              }
             />
             <Input
               id={`way-credits-${index}`}
@@ -293,7 +389,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               id={`way-description-${index}`}
               label={labels.description}
               value={way.description}
-              onChange={(event) => updateWay(index, { description: event.target.value })}
+              onChange={(event) =>
+                updateWay(index, { description: event.target.value })
+              }
             />
             <div className="flex items-end">
               <Button variant="ghost" size="sm" onClick={() => removeWay(index)}>

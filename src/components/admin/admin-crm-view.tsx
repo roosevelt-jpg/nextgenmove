@@ -204,7 +204,29 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
             ),
           },
           { key: "type" as const, header: labels.typeColumn, sortable: true },
-          { key: "stage" as const, header: labels.stageColumn, sortable: true },
+          {
+            key: "stage" as const,
+            header: labels.stageColumn,
+            sortable: true,
+            render: (row: CrmRow) => {
+              const stage = String(row.stage ?? "").toLowerCase();
+              const tone =
+                stage === "won"
+                  ? "bg-bg-success text-text-success"
+                  : stage === "qualified"
+                    ? "bg-bg-purple text-fill-accent"
+                    : stage === "contacted"
+                      ? "bg-bg-accent text-text-accent"
+                      : "bg-surface-2 text-text-secondary";
+              return (
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-semibold capitalize ${tone}`}
+                >
+                  {String(row.stage ?? "—")}
+                </span>
+              );
+            },
+          },
           { key: "owner" as const, header: labels.ownerColumn, sortable: true },
           {
             key: "lastActivity" as const,

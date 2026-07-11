@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 
 const CONTENT_SECTIONS = [
   { key: "library", href: "/admin/content" },
-  { key: "home", href: "/admin/content/home" },
   { key: "videos", href: "/admin/content/videos" },
   { key: "podcast", href: "/admin/content/podcast" },
+  { key: "home", href: "/admin/content/home" },
   { key: "about", href: "/admin/content/about" },
   { key: "careers", href: "/admin/content/careers" },
   { key: "roles", href: "/admin/content/roles" },
@@ -24,7 +24,7 @@ export function AdminContentNav({ labels }: { labels: Record<string, string> }) 
   const pathname = usePathname();
 
   return (
-    <nav className="mb-6 flex flex-wrap gap-4 border-b border-border pb-3 text-sm">
+    <nav className="mb-5 flex flex-wrap gap-1.5" aria-label="Homepage content">
       {CONTENT_SECTIONS.map((section) => {
         const label = labels[section.key];
         if (!label) {
@@ -41,8 +41,10 @@ export function AdminContentNav({ labels }: { labels: Record<string, string> }) 
             key={section.key}
             href={section.href}
             className={cn(
-              "text-text-secondary hover:text-text-primary",
-              isActive && "font-medium text-text-primary",
+              "inline-flex min-h-[30px] items-center rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+              isActive
+                ? "bg-fill-primary text-on-primary"
+                : "bg-surface-2 text-text-secondary hover:text-text-primary",
             )}
           >
             {label}

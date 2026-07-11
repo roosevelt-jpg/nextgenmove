@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, EmptyState, Input, StatCard } from "@/components/ui";
+import { Button, EmptyState, Input } from "@/components/ui";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface TalentPoolRow extends Record<string, unknown> {
@@ -25,12 +25,6 @@ export interface TalentPoolViewProps {
   labels: Record<string, string>;
   canBrowse?: boolean;
 }
-
-const VALUE_TONES = [
-  "text-fill-accent",
-  "text-text-accent",
-  "text-text-success",
-] as const;
 
 const INTERVIEW_STAGE_HINT = "interview";
 
@@ -139,50 +133,62 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
+    <div className="mx-auto w-full max-w-[1100px] space-y-6">
+      <header className="space-y-1">
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
+          {labels.eyebrow ?? "Talent Pool"}
+        </p>
+        <h1 className="font-serif text-[clamp(1.5rem,3vw,2.125rem)] font-semibold leading-tight text-text-primary">
+          {labels.title ?? "Find your next great hire."}
+        </h1>
+        {labels.subtitle ? (
+          <p className="max-w-xl text-sm text-text-secondary">{labels.subtitle}</p>
+        ) : null}
+      </header>
+
+      <div className="grid gap-3 sm:grid-cols-3">
         {labels.statCandidates ? (
-          <StatCard
-            label={labels.statCandidates}
-            value={rows.length}
-            valueClassName={VALUE_TONES[0]}
-          />
+          <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+              {labels.statCandidates}
+            </p>
+            <p className="mt-1 font-serif text-[1.65rem] font-semibold text-text-primary">
+              {rows.length}
+            </p>
+          </div>
         ) : null}
         {labels.statShortlisted ? (
-          <StatCard
-            label={labels.statShortlisted}
-            value={shortlistedCount}
-            valueClassName={VALUE_TONES[1]}
-          />
+          <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+              {labels.statShortlisted}
+            </p>
+            <p className="mt-1 font-serif text-[1.65rem] font-semibold text-fill-accent">
+              {shortlistedCount}
+            </p>
+          </div>
         ) : null}
         {labels.statInterviewing ? (
-          <StatCard
-            label={labels.statInterviewing}
-            value={interviewingCount}
-            valueClassName={VALUE_TONES[2]}
-          />
-        ) : labels.statSectors ? (
-          <StatCard
-            label={labels.statSectors}
-            value={
-              new Set(rows.map((row) => row.sector).filter(Boolean)).size
-            }
-            valueClassName={VALUE_TONES[2]}
-          />
+          <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+              {labels.statInterviewing}
+            </p>
+            <p className="mt-1 font-serif text-[1.65rem] font-semibold text-text-success">
+              {interviewingCount}
+            </p>
+          </div>
         ) : null}
       </div>
 
-      <div className="grid gap-3 rounded-radius border border-border bg-surface-1 p-4 md:grid-cols-4">
+      <div className="rounded-radius border border-border bg-surface-1 p-3">
         {labels.searchPlaceholder ? (
-          <div className="md:col-span-4">
-            <Input
-              label={labels.searchLabel ?? labels.searchPlaceholder}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={labels.searchPlaceholder}
-            />
-          </div>
+          <Input
+            label={labels.searchLabel ?? labels.searchPlaceholder}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={labels.searchPlaceholder}
+          />
         ) : null}
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
         {labels.filterSector ? (
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterSector}
@@ -234,68 +240,54 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
             </select>
           </label>
         ) : null}
+        </div>
       </div>
 
       {rows.length ? (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="space-y-2">
           {rows.map((row) => {
             const sectorLabel =
               taxonomies.sector?.find((option) => option.value === row.sector)
                 ?.label ?? row.sector;
-            const seniorityLabel =
-              taxonomies.seniority?.find(
-                (option) => option.value === row.seniority,
-              )?.label ?? row.seniority;
 
             return (
               <li
                 key={row.matchId}
-                className="flex flex-col rounded-radius border border-border bg-surface-1 p-4"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border bg-surface-1 px-3.5 py-3"
               >
-                <div className="flex items-start gap-3">
-                  <span
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-radius bg-brand-lavender font-serif text-sm font-semibold text-fill-accent"
-                    aria-hidden="true"
-                  >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent">
                     {initialsFromName(row.fullName)}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-serif text-lg text-text-primary">
-                        {row.fullName}
-                      </p>
-                      {typeof row.matchScore === "number" ? (
-                        <span className="shrink-0 rounded-full bg-bg-purple px-2 py-0.5 font-mono text-[10px] font-medium text-text-label">
-                          {row.matchScore}%
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="mt-0.5 text-sm text-text-secondary">
-                      {[seniorityLabel, sectorLabel, row.currentCity]
-                        .filter(Boolean)
-                        .join(" · ")}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-text-primary">{row.fullName}</p>
+                    <p className="text-[12.5px] text-text-secondary">
+                      {[sectorLabel, row.currentCity].filter(Boolean).join(" · ")}
                     </p>
+                    {row.skills?.length ? (
+                      <ul className="mt-1.5 flex flex-wrap gap-1">
+                        {row.skills.slice(0, 4).map((skill) => (
+                          <li
+                            key={skill}
+                            className="rounded-full bg-bg-success px-2 py-0.5 text-[10.5px] font-medium text-text-success"
+                          >
+                            {skill}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                 </div>
-
-                {row.skills?.length ? (
-                  <ul className="mt-3 flex flex-wrap gap-1.5">
-                    {row.skills.slice(0, 3).map((skill) => (
-                      <li
-                        key={skill}
-                        className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag"
-                      >
-                        {skill}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-
-                <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {typeof row.matchScore === "number" ? (
+                    <span className="rounded-full bg-bg-purple px-2.5 py-0.5 text-[11px] font-semibold text-fill-accent">
+                      {row.matchScore}% {labels.matchScoreLabel ?? "match"}
+                    </span>
+                  ) : null}
                   {labels.viewProfile ? (
                     <Link
                       href={`/employer/talent-pool/${row.matchId}`}
-                      className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3 py-1.5 text-xs font-semibold text-text-primary hover:bg-surface-2"
+                      className="inline-flex items-center justify-center rounded-radius-sm border border-border px-3 py-1.5 text-[12px] font-semibold text-text-primary hover:bg-surface-2"
                     >
                       {labels.viewProfile}
                     </Link>

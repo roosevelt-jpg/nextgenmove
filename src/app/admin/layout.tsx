@@ -1,5 +1,5 @@
 import { RoleGate } from "@/components/auth/role-gate";
-import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminPortalShell } from "@/components/admin/admin-portal-shell";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function AdminLayout({
@@ -8,14 +8,21 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }>) {
   const settings = await getSiteSettings();
-  const labels = settings.adminNavLabels ?? settings.formLabels ?? {};
+  const labels = {
+    ...(settings.formLabels ?? {}),
+    ...(settings.adminNavLabels ?? {}),
+    ...(settings.adminPageLabels?.shell ?? {}),
+  };
 
   return (
     <RoleGate allowedRoles={["admin"]}>
-      <div className="flex w-full flex-1 flex-col">
-        <AdminNav labels={labels} />
-        <div className="portal-shell min-w-0 flex-1 pb-10 pt-2">{children}</div>
-      </div>
+      <AdminPortalShell
+        labels={labels}
+        siteName={settings.siteName ?? "NextGen Move"}
+        brandMark={settings.brandMark ?? "NG"}
+      >
+        {children}
+      </AdminPortalShell>
     </RoleGate>
   );
 }

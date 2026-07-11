@@ -42,7 +42,7 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
               className={cn(
                 "inline-flex shrink-0 items-center rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
                 isActive
-                  ? "bg-surface-1 text-text-primary shadow-sm"
+                  ? "bg-fill-accent text-on-accent shadow-sm"
                   : "text-text-secondary hover:bg-surface-1/70 hover:text-text-primary",
               )}
             >

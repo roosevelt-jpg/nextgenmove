@@ -5,5 +5,7 @@ export default function StudentLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <RoleGate allowedRoles={["student"]}>{children}</RoleGate>;
+  return (
+    <RoleGate allowedRoles={["student", "admin"]}>{children}</RoleGate>
+  );
 }

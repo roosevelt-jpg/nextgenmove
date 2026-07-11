@@ -3,7 +3,10 @@ import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function AdminLeversPage() {
   const settings = await getSiteSettings();
-  const labels = settings.adminPageLabels?.levers ?? settings.formLabels ?? {};
+  const labels = {
+    ...(settings.formLabels ?? {}),
+    ...(settings.adminPageLabels?.levers ?? {}),
+  };
 
   return <AdminLeversView labels={labels} />;
 }

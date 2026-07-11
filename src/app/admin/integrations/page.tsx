@@ -3,7 +3,10 @@ import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function AdminIntegrationsPage() {
   const settings = await getSiteSettings();
-  const labels = settings.adminPageLabels?.integrations ?? settings.formLabels ?? {};
+  const labels = {
+    ...(settings.formLabels ?? {}),
+    ...(settings.adminPageLabels?.integrations ?? {}),
+  };
 
   return <AdminIntegrationsView labels={labels} />;
 }

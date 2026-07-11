@@ -5,5 +5,7 @@ export default function EmployerLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <RoleGate allowedRoles={["company"]}>{children}</RoleGate>;
+  return (
+    <RoleGate allowedRoles={["company", "admin"]}>{children}</RoleGate>
+  );
 }

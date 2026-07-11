@@ -19,6 +19,7 @@ export async function GET() {
         id: doc.id,
         name: data.name ?? "",
         description: data.description ?? "",
+        category: data.category ?? data.config?.category ?? "",
         iconUrl: data.iconUrl ?? "",
         status: data.status ?? "not_connected",
         connectedAt: serializeTimestamp(data.connectedAt),

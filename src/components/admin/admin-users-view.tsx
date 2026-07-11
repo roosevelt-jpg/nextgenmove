@@ -59,13 +59,13 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
   };
 
   const columns = [
-    { key: "email" as const, header: labels.email, sortable: true },
-    { key: "displayName" as const, header: labels.name, sortable: true },
-    { key: "role" as const, header: labels.role, sortable: true },
-    { key: "status" as const, header: labels.status, sortable: true },
+    { key: "email" as const, header: labels.email ?? "Email", sortable: true },
+    { key: "displayName" as const, header: labels.name ?? "Name", sortable: true },
+    { key: "role" as const, header: labels.role ?? "Role", sortable: true },
+    { key: "status" as const, header: labels.status ?? "Status", sortable: true },
     {
       key: "actions" as const,
-      header: labels.actions,
+      header: labels.actions ?? "Actions",
       render: (row: UserRow) => (
         <div className="flex flex-wrap gap-2">
           <Button
@@ -73,21 +73,21 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "promote_admin")}
           >
-            {labels.promoteAdmin}
+            {labels.promoteAdmin ?? "Make admin"}
           </Button>
           <Button
             variant="ghost"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "suspend")}
           >
-            {labels.suspend}
+            {labels.suspend ?? "Suspend"}
           </Button>
           <Button
             variant="ghost"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "activate")}
           >
-            {labels.activate}
+            {labels.activate ?? "Activate"}
           </Button>
         </div>
       ),
@@ -96,8 +96,18 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="font-serif text-3xl text-text-primary">{labels.title}</h1>
+      <header className="space-y-2">
+        {labels.eyebrow ? (
+          <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.8px] text-text-label">
+            {labels.eyebrow}
+          </p>
+        ) : null}
+        <h1 className="font-serif text-[1.75rem] text-text-primary md:text-[2rem]">
+          {labels.title ?? "Team & users"}
+        </h1>
+        {labels.subtitle ? (
+          <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>
+        ) : null}
       </header>
 
       <Input
@@ -111,7 +121,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
         columns={columns}
         data={filteredUsers}
         rowKey={(row) => row.uid}
-        emptyState={<EmptyState title={labels.empty} />}
+        emptyState={<EmptyState title={labels.empty ?? "No users yet"} />}
       />
     </div>
   );

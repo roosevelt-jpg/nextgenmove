@@ -84,9 +84,10 @@ export function AdminEntityListView({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-3xl text-text-primary">{title}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[14.5px] font-bold text-text-primary">{title}</h2>
         <Button
+          size="sm"
           onClick={() => {
             setEditingItem(null);
             setModalOpen(true);

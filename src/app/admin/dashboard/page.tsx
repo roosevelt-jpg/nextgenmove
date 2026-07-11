@@ -1,27 +1,17 @@
 import { AdminDashboardView } from "@/components/admin/admin-dashboard-view";
-import {
-  getAdminDashboardStats,
-  getPendingRequests,
-  getRecentActivity,
-} from "@/lib/admin/dashboard";
+import { getAdminDashboardStats } from "@/lib/admin/dashboard";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function AdminDashboardPage() {
-  const [settings, stats, activity, pending] = await Promise.all([
+  const [settings, stats] = await Promise.all([
     getSiteSettings(),
     getAdminDashboardStats(),
-    getRecentActivity(20),
-    getPendingRequests(),
   ]);
 
-  const labels = settings.adminPageLabels?.dashboard ?? settings.formLabels ?? {};
+  const labels = {
+    ...(settings.formLabels ?? {}),
+    ...(settings.adminPageLabels?.dashboard ?? {}),
+  };
 
-  return (
-    <AdminDashboardView
-      labels={labels}
-      initialStats={stats}
-      initialActivity={activity}
-      initialPending={pending}
-    />
-  );
+  return <AdminDashboardView labels={labels} initialStats={stats} />;
 }

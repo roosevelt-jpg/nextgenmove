@@ -18,7 +18,7 @@ export default async function AdminSiteSettingsPage() {
     <div className="space-y-8">
       <header className="space-y-2">
         {labels.workspaceEyebrow ? (
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-accent">
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
             {labels.workspaceEyebrow}
           </p>
         ) : null}

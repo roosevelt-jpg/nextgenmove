@@ -1,4 +1,4 @@
-import { AdminEntityListView } from "@/components/admin/admin-entity-list-view";
+import { AdminHomepageMediaView } from "@/components/admin/admin-homepage-media-view";
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { getTaxonomies } from "@/lib/collections/taxonomies";
@@ -11,12 +11,12 @@ export default async function AdminHomepageVideosPage() {
   const labels = settings.adminPageLabels?.content ?? settings.formLabels ?? {};
 
   return (
-    <AdminEntityListView
+    <AdminHomepageMediaView
       labels={labels}
       formLabels={settings.formLabels ?? {}}
       taxonomies={taxonomies}
-      schema={ENTITY_SCHEMAS.video_cards!}
-      title={labels.videosTitle ?? "Video cards"}
+      videoSchema={ENTITY_SCHEMAS.video_cards!}
+      podcastSchema={ENTITY_SCHEMAS.podcast_episodes!}
     />
   );
 }

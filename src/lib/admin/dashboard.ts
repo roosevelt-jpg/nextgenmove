@@ -9,6 +9,11 @@ export interface AdminDashboardStats {
   liveContentItems: number;
   placedThisQuarter: number;
   avgTimeToPlaceDays: number | null;
+  trackACompanies: number;
+  trackBCompanies: number;
+  monthlyActiveStudents: number[];
+  monthlyPlaced: number[];
+  monthLabels: string[];
 }
 
 function quarterStart(date = new Date()): Date {
@@ -41,6 +46,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       liveContentSnap,
       stagesSnap,
       matchesSnap,
+      companiesSnap,
     ] = await Promise.all([
       adminDb
         .collection("companies")
@@ -59,7 +65,29 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       adminDb.collection("content_items").where("status", "==", "live").count().get(),
       adminDb.collection("pipeline_stages").get(),
       adminDb.collection("matches").get(),
+      adminDb.collection("companies").get(),
     ]);
+
+    let trackACompanies = 0;
+    let trackBCompanies = 0;
+    for (const doc of companiesSnap.docs) {
+      const plan = String(doc.data().plan ?? "");
+      if (plan === "track_a") trackACompanies += 1;
+      if (plan === "track_b") trackBCompanies += 1;
+    }
+
+    const monthLabels: string[] = [];
+    const monthlyActiveStudents: number[] = [];
+    const monthlyPlaced: number[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      monthLabels.push(
+        d.toLocaleString("en-US", { month: "short", timeZone: "UTC" }),
+      );
+      monthlyActiveStudents.push(0);
+      monthlyPlaced.push(0);
+    }
 
     const terminalStageIds = new Set(
       stagesSnap.docs
@@ -76,12 +104,25 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
     for (const doc of matchesSnap.docs) {
       const data = doc.data();
+      const updatedAt = toDate(data.updatedAt) ?? toDate(data.createdAt);
+      const createdAt = toDate(data.createdAt);
+
+      if (updatedAt) {
+        const idx =
+          (updatedAt.getUTCFullYear() - now.getUTCFullYear()) * 12 +
+          (updatedAt.getUTCMonth() - now.getUTCMonth()) +
+          5;
+        if (idx >= 0 && idx < 6) {
+          monthlyActiveStudents[idx] = (monthlyActiveStudents[idx] ?? 0) + 1;
+          if (terminalStageIds.has(String(data.stageId ?? ""))) {
+            monthlyPlaced[idx] = (monthlyPlaced[idx] ?? 0) + 1;
+          }
+        }
+      }
+
       if (!terminalStageIds.has(String(data.stageId ?? ""))) {
         continue;
       }
-
-      const updatedAt = toDate(data.updatedAt) ?? toDate(data.createdAt);
-      const createdAt = toDate(data.createdAt);
 
       if (updatedAt && updatedAt >= start) {
         placedThisQuarter += 1;
@@ -116,6 +157,11 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       liveContentItems: liveContentSnap.data().count,
       placedThisQuarter,
       avgTimeToPlaceDays,
+      trackACompanies,
+      trackBCompanies,
+      monthlyActiveStudents,
+      monthlyPlaced,
+      monthLabels,
     };
   } catch {
     return {
@@ -126,6 +172,11 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       liveContentItems: 0,
       placedThisQuarter: 0,
       avgTimeToPlaceDays: null,
+      trackACompanies: 0,
+      trackBCompanies: 0,
+      monthlyActiveStudents: [0, 0, 0, 0, 0, 0],
+      monthlyPlaced: [0, 0, 0, 0, 0, 0],
+      monthLabels: ["Feb", "Mar", "Apr", "May", "Jun", "Jul"],
     };
   }
 }

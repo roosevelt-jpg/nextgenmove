@@ -51,17 +51,19 @@ export function NewsletterForm({
   }
 
   if (layout === "inline") {
+    const title = labels.newsletterTitle ?? labels.title;
+    const subtitle = labels.newsletterSubtitle ?? labels.subtitle;
     return (
       <form
         className="flex w-full flex-col gap-4 md:flex-row md:items-end md:justify-between"
         onSubmit={handleSubmit}
       >
         <div className="space-y-1">
-          {labels.title ? (
-            <h3 className="font-serif text-2xl text-text-primary">{labels.title}</h3>
+          {title ? (
+            <h3 className="font-serif text-2xl text-text-primary">{title}</h3>
           ) : null}
-          {labels.subtitle ? (
-            <p className="text-sm text-text-secondary">{labels.subtitle}</p>
+          {subtitle ? (
+            <p className="text-sm text-text-secondary">{subtitle}</p>
           ) : null}
         </div>
         <div className="flex w-full max-w-md flex-col gap-2 sm:flex-row sm:items-end">
@@ -88,10 +90,12 @@ export function NewsletterForm({
     );
   }
 
+  const title = labels.newsletterTitle ?? labels.title;
+
   return (
     <form className="flex max-w-md flex-col gap-3" onSubmit={handleSubmit}>
-      {labels.title ? (
-        <h3 className="font-serif text-xl text-text-primary">{labels.title}</h3>
+      {title ? (
+        <h3 className="font-serif text-xl text-text-primary">{title}</h3>
       ) : null}
       <Input
         id="newsletter-email"

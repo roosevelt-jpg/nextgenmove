@@ -99,3 +99,31 @@
     --shell-gutter: 0.875rem; /* 14px */
   }
 }
+
+/* Portal dark mode — Admin_01_Dashboard_DARKMODE mockup */
+html.dark {
+  --bg: #14122b;
+  --surface-1: #1c1a33;
+  --surface-2: #252240;
+  --border: #35314f;
+  --text-primary: #f4f2ff;
+  --text-secondary: #b7b3cc;
+  --text-muted: #8a869e;
+  --fill-primary: #f4f2ff;
+  --on-primary: #14122b;
+  --fill-accent: #9a7fe0;
+  --fill-accent-strong: #b39aef;
+  --on-accent: #14122b;
+  --bg-purple: #2a2550;
+  --text-label: #c4b5f5;
+  --bg-accent: #3d2e1a;
+  --text-accent: #e8a85c;
+  --bg-success: #1e3320;
+  --text-success: #8fd48a;
+  --bg-warning: #3a2220;
+  --text-warning: #e8a090;
+  --bg-tag: #1e3320;
+  --text-tag: #8fd48a;
+  --border-accent: #9a7fe0;
+  color-scheme: dark;
+}
