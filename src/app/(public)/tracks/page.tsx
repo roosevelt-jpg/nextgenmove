@@ -181,7 +181,7 @@ export default async function TracksPage() {
           ) : null}
           <Link
             href={ctaHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-radius-sm bg-white px-5 text-sm font-semibold text-brand-indigo-1 hover:opacity-90"
+            className="inline-flex min-h-8 items-center justify-center rounded-radius-sm bg-white px-3.5 text-xs font-semibold text-brand-indigo-1 hover:opacity-90"
           >
             {ctaLabel}
           </Link>

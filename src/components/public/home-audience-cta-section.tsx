@@ -59,14 +59,14 @@ function AudienceCtaCard({
         isGradient ? (
           <Link
             href={href}
-            className="mt-5 inline-flex min-h-11 w-fit items-center rounded-radius-sm border border-on-gradient/50 bg-white/15 px-3.5 text-sm font-medium text-on-gradient hover:bg-white/25"
+            className="mt-5 inline-flex min-h-8 w-fit items-center rounded-radius-sm border border-on-gradient/50 bg-white/15 px-2.5 text-xs font-medium text-on-gradient hover:bg-white/25"
           >
             {cta.ctaLabel}
           </Link>
         ) : isInk ? (
           <Link
             href={href}
-            className="mt-5 inline-flex min-h-11 w-fit items-center rounded-radius-sm border border-on-primary/40 bg-white/10 px-3.5 text-sm font-medium text-on-primary hover:bg-white/20"
+            className="mt-5 inline-flex min-h-8 w-fit items-center rounded-radius-sm border border-on-primary/40 bg-white/10 px-2.5 text-xs font-medium text-on-primary hover:bg-white/20"
           >
             {cta.ctaLabel}
           </Link>

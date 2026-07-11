@@ -16,10 +16,10 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * (explicit background-image — more reliable than Tailwind bg-* alone).
  */
 const sizeClasses: Record<ButtonSize, string> = {
-  default: "min-h-7 shrink-0 whitespace-nowrap px-2.5 py-1 text-xs",
-  sm: "min-h-6 shrink-0 whitespace-nowrap px-2 py-0.5 text-[11px]",
+  default: "min-h-6 shrink-0 whitespace-nowrap px-2 py-0.5 text-[11px]",
+  sm: "min-h-5 shrink-0 whitespace-nowrap px-1.5 py-0.5 text-[10px]",
   xs: "min-h-5 shrink-0 whitespace-nowrap px-1.5 py-0.5 text-[10px] leading-tight",
-  lg: "min-h-8 shrink-0 whitespace-nowrap px-3 py-1.5 text-xs",
+  lg: "min-h-7 shrink-0 whitespace-nowrap px-2.5 py-1 text-xs",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

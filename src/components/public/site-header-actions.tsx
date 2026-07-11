@@ -23,7 +23,7 @@ export function SiteHeaderActions({
       {ctaLabel ? (
         <Link
           href={ctaHref}
-          className="btn-brand px-3 text-xs sm:px-4 sm:text-sm"
+          className="btn-brand px-2.5 text-[11px] sm:px-3 sm:text-xs"
         >
           {ctaLabel}
         </Link>

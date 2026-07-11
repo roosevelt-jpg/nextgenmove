@@ -17,7 +17,7 @@ export function YoutubeEmbed({ url, title, watchLabel }: YoutubeEmbedProps) {
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center justify-center rounded-radius-sm bg-grad-rouse px-3.5 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
+        className="inline-flex items-center justify-center rounded-radius-sm bg-grad-rouse px-2.5 py-1 text-xs font-medium text-on-gradient hover:opacity-90"
       >
         {watchLabel ?? title ?? url}
       </a>

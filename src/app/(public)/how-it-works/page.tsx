@@ -42,7 +42,7 @@ export default async function HowItWorksPage() {
             </p>
           ) : null}
           <Link href={ctaHref}>
-            <Button size="lg">{ctaLabel}</Button>
+            <Button size="sm">{ctaLabel}</Button>
           </Link>
         </div>
       ) : null}

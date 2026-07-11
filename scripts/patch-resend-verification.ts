@@ -71,30 +71,40 @@ async function main() {
 
   const settingsRef = db.collection("site_settings").doc("default");
   const snap = await settingsRef.get();
-  const existing = (snap.data()?.authLabels ?? {}) as Record<string, string>;
+  const existingAuthLabels = (snap.data()?.authLabels ?? {}) as Record<
+    string,
+    string
+  >;
   await settingsRef.set(
     stripUndefined({
       authLabels: {
-        ...existing,
-        stepVerify: existing.stepVerify || "3 · Verify email & phone",
+        ...existingAuthLabels,
+        stepVerify: existingAuthLabels.stepVerify || "3 · Verify email & phone",
         stepMedia: "4 · Photo / logo",
-        verifyTitle: existing.verifyTitle || "Verify your email and phone",
+        verifyTitle:
+          existingAuthLabels.verifyTitle || "Verify your email and phone",
         verifySubtitle:
-          existing.verifySubtitle ||
+          existingAuthLabels.verifySubtitle ||
           "We sent a code to your email. Then confirm your phone with the Firebase SMS code.",
-        verifyEmailHeading: existing.verifyEmailHeading || "Email verification",
-        verifyPhoneHeading: existing.verifyPhoneHeading || "Phone verification",
-        emailOtpLabel: existing.emailOtpLabel || "Email code",
-        smsOtpLabel: existing.smsOtpLabel || "SMS code",
-        resendEmailOtpLabel: existing.resendEmailOtpLabel || "Resend email code",
-        sendSmsOtpLabel: existing.sendSmsOtpLabel || "Send SMS code",
-        verifyEmailButton: existing.verifyEmailButton || "Verify email",
-        verifyPhoneButton: existing.verifyPhoneButton || "Verify phone",
+        verifyEmailHeading:
+          existingAuthLabels.verifyEmailHeading || "Email verification",
+        verifyPhoneHeading:
+          existingAuthLabels.verifyPhoneHeading || "Phone verification",
+        emailOtpLabel: existingAuthLabels.emailOtpLabel || "Email code",
+        smsOtpLabel: existingAuthLabels.smsOtpLabel || "SMS code",
+        resendEmailOtpLabel:
+          existingAuthLabels.resendEmailOtpLabel || "Resend email code",
+        sendSmsOtpLabel: existingAuthLabels.sendSmsOtpLabel || "Send SMS code",
+        verifyEmailButton:
+          existingAuthLabels.verifyEmailButton || "Verify email",
+        verifyPhoneButton:
+          existingAuthLabels.verifyPhoneButton || "Verify phone",
         continueAfterVerifyLabel:
-          existing.continueAfterVerifyLabel || "Continue to profile media",
-        verifiedLabel: existing.verifiedLabel || "Verified",
+          existingAuthLabels.continueAfterVerifyLabel ||
+          "Continue to profile media",
+        verifiedLabel: existingAuthLabels.verifiedLabel || "Verified",
         verification_required:
-          existing.verification_required ||
+          existingAuthLabels.verification_required ||
           "Verify your email and phone to continue.",
       },
       updatedAt: FieldValue.serverTimestamp(),
