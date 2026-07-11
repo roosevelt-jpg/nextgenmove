@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { clearSession } from "@/lib/auth-client";
 import { resolveBrandIconUrl } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export type PortalWorkspace = "student" | "employer" | "admin";
 
@@ -61,25 +62,8 @@ export function WorkspacePortalShell({
   impersonation = null,
 }: WorkspacePortalShellProps) {
   const pathname = usePathname();
-  const [dark, setDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [exiting, setExiting] = useState(false);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("ngm-theme");
-    const preferDark =
-      stored === "dark" ||
-      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    setDark(preferDark);
-    document.documentElement.classList.toggle("dark", preferDark);
-  }, []);
-
-  const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    window.localStorage.setItem("ngm-theme", next ? "dark" : "light");
-  };
 
   const activeItem = navItems.find((item) => isActivePath(pathname, item));
   const titleLabel =
@@ -261,14 +245,7 @@ export function WorkspacePortalShell({
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <LiveDateTime className="mr-1 hidden text-[12px] text-text-secondary min-[860px]:inline" />
             <LanguageSwitcher className="hidden sm:block" />
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
-              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {dark ? "☀" : "☾"}
-            </button>
+            <ThemeToggle />
             <Link
               href={settingsHref}
               className="hidden min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary sm:inline-flex"

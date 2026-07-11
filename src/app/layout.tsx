@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n/locales";
 import { buildRootMetadata } from "@/lib/public/site-metadata";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,6 +42,11 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${inter.variable} ${playfair.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }}
+        />
+      </head>
       <body className="flex min-h-full flex-col bg-bg font-sans text-text-primary">
         <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
       </body>

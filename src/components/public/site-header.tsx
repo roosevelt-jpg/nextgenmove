@@ -68,6 +68,8 @@ export async function SiteHeader() {
           ctaHref={ctaHref}
           languageAriaLabel={localeLabels.languageAriaLabel}
           searchPlaceholder={localeLabels.searchPlaceholder}
+          themeLightLabel={localeLabels.themeSwitchToLight}
+          themeDarkLabel={localeLabels.themeSwitchToDark}
         />
       </div>
 

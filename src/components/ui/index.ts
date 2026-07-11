@@ -42,3 +42,4 @@ export { SectionEyebrow, type SectionEyebrowProps } from "./section-eyebrow";
 export { StatCard, type StatCardProps } from "./stat-card";
 export { Tabs, type TabItem, type TabsProps } from "./tabs";
 export { Textarea, type TextareaProps } from "./textarea";
+export { ThemeToggle } from "./theme-toggle";

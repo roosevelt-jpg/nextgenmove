@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { clearSession } from "@/lib/auth-client";
 import { resolveBrandIconUrl } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/admin/dashboard", match: "exact" as const },
@@ -112,24 +113,7 @@ export function AdminPortalShell({
   children,
 }: AdminPortalShellProps) {
   const pathname = usePathname();
-  const [dark, setDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("ngm-theme");
-    const preferDark =
-      stored === "dark" ||
-      (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    setDark(preferDark);
-    document.documentElement.classList.toggle("dark", preferDark);
-  }, []);
-
-  const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    window.localStorage.setItem("ngm-theme", next ? "dark" : "light");
-  };
 
   const activeItem = NAV_ITEMS.find((item) => isNavActive(pathname, item));
   const titleLabel =
@@ -289,23 +273,7 @@ export function AdminPortalShell({
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <LiveDateTime className="mr-1 hidden text-[12px] text-text-secondary min-[860px]:inline" />
             <LanguageSwitcher className="hidden sm:block" />
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
-              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {dark ? (
-                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                  <circle cx="8" cy="8" r="3" />
-                  <path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" strokeWidth="1.3" fill="none" />
-                </svg>
-              ) : (
-                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                  <path d="M12.5 9.2A5.25 5.25 0 0 1 6.8 3.5 5.5 5.5 0 1 0 12.5 9.2z" />
-                </svg>
-              )}
-            </button>
+            <ThemeToggle />
             <Link
               href="/admin/account"
               className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
