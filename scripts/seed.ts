@@ -1458,6 +1458,11 @@ const OPERATIONAL_SITE_SETTINGS = {
       saveChanges: "Save changes",
       saveSuccess: "Saved.",
       saveError: "Could not save.",
+      loadError: "Could not load your account. Try again.",
+      retry: "Retry",
+      loading: "Loading…",
+      degradedWarning:
+        "Profile details may be incomplete while the database is slow.",
       uploadProgress: "Uploading…",
       uploadError: "Upload failed. Try a smaller JPG or PNG.",
       photoReady: "Photo ready — click Save changes.",
