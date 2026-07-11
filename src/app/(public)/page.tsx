@@ -108,17 +108,14 @@ export default async function HomePage() {
                 </p>
               ) : null}
               {page.talentCta?.ctaLabel ? (
-                <Link
-                  href={talentHref}
-                  className="mt-5 inline-flex min-h-11 items-center rounded-radius-sm bg-grad-rouse px-3.5 text-sm font-medium text-on-gradient hover:opacity-90"
-                >
+                <Link href={talentHref} className="btn-brand mt-5">
                   {page.talentCta.ctaLabel}
                 </Link>
               ) : null}
             </div>
           ) : null}
           {page?.companyCta?.title || page?.companyCta?.ctaLabel ? (
-            <div className="rounded-radius bg-grad-rouse p-6 text-on-gradient sm:p-7">
+            <div className="rounded-radius bg-[image:var(--grad-rouse)] p-6 text-on-gradient sm:p-7">
               {page.companyCta?.eyebrow ? (
                 <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-brand-lavender">
                   {page.companyCta.eyebrow}

@@ -23,7 +23,7 @@ export default async function PricingPage() {
     (programLevers && pageLabels.trackBMonthlyLabel);
 
   return (
-    <div className="page-section space-y-8">
+    <div className="page-section space-y-10">
       <header className="max-w-2xl space-y-3">
         {pageLabels.pricingEyebrow || pageLabels.pricingTitle ? (
           <SectionEyebrow>
@@ -44,15 +44,15 @@ export default async function PricingPage() {
         ) : null}
       </header>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {showTrackA ? (
-          <Card>
-            <CardBody className="space-y-4">
+          <Card className="h-full">
+            <CardBody className="flex h-full flex-col space-y-5 p-5 sm:p-6">
               {pageLabels.trackATitle ? (
                 <SectionEyebrow>{pageLabels.trackATitle}</SectionEyebrow>
               ) : null}
               {page?.trackAHeadline ? (
-                <h2 className="font-serif text-2xl text-text-primary">
+                <h2 className="font-serif text-2xl text-text-primary sm:text-3xl">
                   {page.trackAHeadline}
                 </h2>
               ) : null}
@@ -73,10 +73,13 @@ export default async function PricingPage() {
                 </p>
               ) : null}
               {page?.trackAFeatures?.length ? (
-                <ul className="space-y-2 text-sm text-text-secondary">
+                <ul className="flex-1 space-y-3 text-sm text-text-secondary">
                   {page.trackAFeatures.map((feature) => (
-                    <li key={feature} className="flex gap-2">
-                      <span className="text-text-muted" aria-hidden>
+                    <li key={feature} className="flex gap-2.5">
+                      <span
+                        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[image:var(--grad-rouse)] text-[10px] font-bold text-on-gradient"
+                        aria-hidden
+                      >
                         ✓
                       </span>
                       <span>{feature}</span>
@@ -85,8 +88,8 @@ export default async function PricingPage() {
                 </ul>
               ) : null}
               {ctaLabel ? (
-                <Link href={PUBLIC_ROUTES.requestTalent} className="inline-block pt-2">
-                  <Button variant="outline">
+                <Link href={PUBLIC_ROUTES.requestTalent} className="pt-2">
+                  <Button className="w-full sm:w-auto">
                     {pageLabels.trackACtaLabel ?? ctaLabel}
                   </Button>
                 </Link>
@@ -96,13 +99,13 @@ export default async function PricingPage() {
         ) : null}
 
         {showTrackB ? (
-          <Card className="border-2 border-border-accent">
-            <CardBody className="space-y-4">
+          <Card className="h-full border-2 border-border-accent shadow-sm">
+            <CardBody className="flex h-full flex-col space-y-5 p-5 sm:p-6">
               {pageLabels.trackBTitle ? (
                 <SectionEyebrow>{pageLabels.trackBTitle}</SectionEyebrow>
               ) : null}
               {page?.trackBHeadline ? (
-                <h2 className="font-serif text-2xl text-text-primary">
+                <h2 className="font-serif text-2xl text-text-primary sm:text-3xl">
                   {page.trackBHeadline}
                 </h2>
               ) : null}
@@ -120,10 +123,13 @@ export default async function PricingPage() {
                 </p>
               ) : null}
               {page?.trackBFeatures?.length ? (
-                <ul className="space-y-2 text-sm text-text-secondary">
+                <ul className="flex-1 space-y-3 text-sm text-text-secondary">
                   {page.trackBFeatures.map((feature) => (
-                    <li key={feature} className="flex gap-2">
-                      <span className="text-text-muted" aria-hidden>
+                    <li key={feature} className="flex gap-2.5">
+                      <span
+                        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[image:var(--grad-rouse)] text-[10px] font-bold text-on-gradient"
+                        aria-hidden
+                      >
                         ✓
                       </span>
                       <span>{feature}</span>
@@ -132,8 +138,10 @@ export default async function PricingPage() {
                 </ul>
               ) : null}
               {ctaLabel ? (
-                <Link href={PUBLIC_ROUTES.requestTalent} className="inline-block pt-2">
-                  <Button>{pageLabels.trackBCtaLabel ?? ctaLabel}</Button>
+                <Link href={PUBLIC_ROUTES.requestTalent} className="pt-2">
+                  <Button className="w-full sm:w-auto">
+                    {pageLabels.trackBCtaLabel ?? ctaLabel}
+                  </Button>
                 </Link>
               ) : null}
             </CardBody>
@@ -152,7 +160,9 @@ export default async function PricingPage() {
                 <h3 className="font-serif text-xl text-text-primary">
                   {item.question}
                 </h3>
-                <p className="mt-2 text-sm text-text-secondary">{item.answer}</p>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-secondary">
+                  {item.answer}
+                </p>
               </div>
             ))}
           </div>

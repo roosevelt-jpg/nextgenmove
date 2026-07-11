@@ -85,10 +85,10 @@
     #9a6a3c 78%,
     #c97a2e 100%
   );
-  /* Rouse — signature CTA (purple strong → amber) */
-  --grad-rouse: linear-gradient(90deg, #3b2e7d 0%, #c97a2e 100%);
-  /* Noon — heavier purple → amber */
-  --grad-noon: linear-gradient(90deg, #5239a0 0%, #c97a2e 100%);
+  /* Rouse — signature CTA (blue → purple, white label) */
+  --grad-rouse: linear-gradient(105deg, #1a2f6b 0%, #3c3489 48%, #6b4fc4 100%);
+  /* Noon — deeper indigo → purple */
+  --grad-noon: linear-gradient(105deg, #152556 0%, #5239a0 55%, #7a68d4 100%);
   /* Ink fade — purple → ink */
   --grad-ink-fade: linear-gradient(90deg, #3b2e7d 0%, #141416 100%);
   /* Card surface — grey → purple (readable panels) */
@@ -156,8 +156,8 @@ html.dark {
   --bg-tag: #1e3320;
   --text-tag: #8fd48a;
   --border-accent: #9a7fe0;
-  --grad-rouse: linear-gradient(90deg, #5239a0 0%, #c97a2e 100%);
-  --grad-noon: linear-gradient(90deg, #6b4fc4 0%, #e8a85c 100%);
+  --grad-rouse: linear-gradient(105deg, #2a3f8f 0%, #5b4db8 50%, #8b7ae0 100%);
+  --grad-noon: linear-gradient(105deg, #1e326e 0%, #6b4fc4 55%, #9a8aef 100%);
   --grad-ink-fade: linear-gradient(90deg, #3b2e7d 0%, #0e0c1a 100%);
   --grad-card: linear-gradient(
     145deg,

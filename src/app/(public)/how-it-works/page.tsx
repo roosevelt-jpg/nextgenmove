@@ -1,4 +1,5 @@
-import { SectionEyebrow } from "@/components/ui";
+import Link from "next/link";
+import { Button, SectionEyebrow } from "@/components/ui";
 import { StepsSection } from "@/components/public/steps-section";
 import { getPageHowItWorks } from "@/lib/collections/pages";
 import { getSiteSettings } from "@/lib/collections/site-settings";
@@ -6,9 +7,11 @@ import { getSiteSettings } from "@/lib/collections/site-settings";
 export default async function HowItWorksPage() {
   const [page, settings] = await Promise.all([getPageHowItWorks(), getSiteSettings()]);
   const pageLabels = settings.pageLabels ?? {};
+  const ctaLabel = pageLabels.howItWorksCtaLabel ?? pageLabels.getStarted;
+  const ctaHref = pageLabels.howItWorksCtaHref || "/sign-up";
 
   return (
-    <div className="page-section space-y-10">
+    <div className="page-section space-y-12">
       <header className="max-w-2xl space-y-3">
         {pageLabels.howItWorksEyebrow || pageLabels.howItWorksTitle ? (
           <SectionEyebrow>
@@ -31,6 +34,19 @@ export default async function HowItWorksPage() {
 
       <StepsSection steps={page?.steps} />
 
+      {ctaLabel ? (
+        <div className="flex flex-wrap items-center gap-4 rounded-radius border border-border bg-grad-card px-5 py-6 sm:px-8">
+          {pageLabels.howItWorksCtaBody ? (
+            <p className="max-w-xl flex-1 text-sm text-text-secondary">
+              {pageLabels.howItWorksCtaBody}
+            </p>
+          ) : null}
+          <Link href={ctaHref}>
+            <Button size="lg">{ctaLabel}</Button>
+          </Link>
+        </div>
+      ) : null}
+
       {page?.faqItems?.length ? (
         <section className="space-y-6 border-t border-border pt-12">
           {pageLabels.faqTitle ? (
@@ -44,13 +60,15 @@ export default async function HowItWorksPage() {
                     {item.question}
                     <span
                       aria-hidden
-                      className="text-text-muted transition group-open:rotate-45"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-radius-sm border border-border text-text-muted transition group-open:rotate-45 group-open:border-transparent group-open:bg-[image:var(--grad-rouse)] group-open:text-on-gradient"
                     >
                       +
                     </span>
                   </span>
                 </summary>
-                <p className="mt-2 text-sm text-text-secondary">{item.answer}</p>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-text-secondary">
+                  {item.answer}
+                </p>
               </details>
             ))}
           </div>

@@ -468,6 +468,31 @@ const PAGE_TRACKS = {
     "<p>Browse the talent pool yourself. You find the match. Lemoni handles the introduction.</p>",
   trackBBody:
     "<p>Full service. Lemoni actively sources your match and coaches the placement through to day ninety.</p>",
+  statBlocks: [
+    {
+      label: "Active talent",
+      value: "0",
+      metric: "active_students",
+      suffix: "+",
+    },
+    {
+      label: "Hiring partners",
+      value: "0",
+      metric: "active_companies",
+      suffix: "+",
+    },
+    {
+      label: "Placed this year",
+      value: "0",
+      metric: "placed_this_year",
+    },
+    {
+      label: "Avg. time to place",
+      value: "—",
+      metric: "avg_time_to_place",
+      suffix: "d",
+    },
+  ],
   comparisonRows: [
     {
       feature: "Talent pool access",
@@ -486,6 +511,8 @@ const PAGE_TRACKS = {
     },
   ],
   caseStudyQuote: null,
+  ctaLabel: "Request talent",
+  ctaHref: "/request-talent",
 };
 
 const DEFAULT_WAYS_TO_EARN = [
@@ -866,6 +893,9 @@ const OPERATIONAL_SITE_SETTINGS = {
     howItWorksEyebrow: "How it works",
     howItWorksHeadline: "Three legs. One arrival.",
     howItWorksIntro: "",
+    howItWorksCtaLabel: "Start your journey",
+    howItWorksCtaHref: "/sign-up",
+    howItWorksCtaBody: "Free to join. Earn your first 2,000 credits on welcome.",
     aboutEyebrow: "About",
     requestTalentEyebrow: "Request talent",
     requestTalentHeadline: "Tell us who you need.",
@@ -884,6 +914,8 @@ const OPERATIONAL_SITE_SETTINGS = {
     tracksEyebrow: "Track A / Track B",
     tracksHeadline: "Which track fits how you hire?",
     tracksIntro: "A side-by-side of what each track actually does for your team.",
+    tracksCtaLabel: "Request talent",
+    tracksCtaBody: "Tell us who you need — we’ll match the right track.",
     comparisonTitle: "Compare tracks",
     comparisonFeatureColumn: "Feature",
     comparisonTrackAColumn: "Track A · Self service",

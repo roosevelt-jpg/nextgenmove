@@ -107,7 +107,7 @@ video {
   padding-right: var(--page-gutter);
 }
 
-/* Brand — signature CTA (Rouse gradient + white label) */
+/* Brand — signature CTA (blue→purple gradient + white label) */
 .btn-brand {
   display: inline-flex;
   align-items: center;
@@ -117,6 +117,7 @@ video {
   padding: 0.625rem 0.875rem;
   border: 0;
   border-radius: var(--radius-sm);
+  background-color: #3c3489;
   background-image: var(--grad-rouse);
   color: var(--on-gradient);
   font-size: 0.875rem;

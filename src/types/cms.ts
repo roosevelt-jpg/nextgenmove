@@ -189,6 +189,10 @@ export interface PageTracksDocument {
   trackBBody?: string;
   comparisonRows?: ComparisonRow[];
   caseStudyQuote?: CaseStudyQuote | null;
+  /** Optional metrics strip — supports live `metric` keys like homepage stats */
+  statBlocks?: StatBlock[];
+  ctaLabel?: string;
+  ctaHref?: string;
 }
 
 export interface NavLabels {

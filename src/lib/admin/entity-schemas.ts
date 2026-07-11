@@ -403,6 +403,17 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "trackABody", type: "richtext", labelKey: "trackABody" },
       { key: "trackBBody", type: "richtext", labelKey: "trackBBody" },
       {
+        key: "statBlocks",
+        type: "repeatable",
+        labelKey: "statBlocks",
+        fields: [
+          { key: "label", type: "text", labelKey: "label" },
+          { key: "value", type: "text", labelKey: "value" },
+          { key: "metric", type: "text", labelKey: "metric" },
+          { key: "suffix", type: "text", labelKey: "suffix" },
+        ],
+      },
+      {
         key: "comparisonRows",
         type: "repeatable",
         labelKey: "comparisonRows",
@@ -422,6 +433,8 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
           { key: "resultStat", type: "text", labelKey: "caseStudyStat" },
         ],
       },
+      { key: "ctaLabel", type: "text", labelKey: "ctaLabel" },
+      { key: "ctaHref", type: "text", labelKey: "ctaHref" },
     ],
   },
   site_settings: {

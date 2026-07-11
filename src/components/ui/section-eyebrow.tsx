@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export interface SectionEyebrowProps extends HTMLAttributes<HTMLParagraphElement> {}
+export type SectionEyebrowProps = HTMLAttributes<HTMLParagraphElement>;
 
 /**
  * Brand Guidelines: JetBrains Mono, uppercase, purple (#3C3489), ~11px.

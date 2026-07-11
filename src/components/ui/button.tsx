@@ -11,18 +11,10 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
 }
 
-/** Brand Guidelines: Signature CTA = Rouse gradient + white text (all action variants). */
-const gradientAction =
-  "bg-grad-rouse text-on-gradient shadow-sm hover:opacity-90 disabled:opacity-50 border-0";
-
-const variantClasses: Record<ButtonVariant, string> = {
-  primary: gradientAction,
-  brand: gradientAction,
-  secondary: gradientAction,
-  outline: gradientAction,
-  ghost: gradientAction,
-};
-
+/**
+ * Signature CTA: blue→purple gradient + white text via `.btn-brand`
+ * (explicit background-image — more reliable than Tailwind bg-* alone).
+ */
 const sizeClasses: Record<ButtonSize, string> = {
   default: "min-h-11 px-3.5 py-2.5 text-sm",
   sm: "min-h-9 px-2.5 py-1.5 text-xs",
@@ -40,16 +32,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
+    void variant;
     return (
       <button
         ref={ref}
         type={type}
-        className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-radius-sm font-semibold transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-accent",
-          variantClasses[variant],
-          sizeClasses[size],
-          className,
-        )}
+        className={cn("btn-brand", sizeClasses[size], className)}
         {...props}
       />
     );
