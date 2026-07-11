@@ -57,8 +57,9 @@ export function AdminEntityListView({
       key: "actions" as const,
       header: labels.actionsColumn,
       render: (row: Record<string, unknown>) => (
-        <div className="flex gap-2">
+        <div className="flex flex-nowrap items-center gap-1">
           <Button
+            size="xs"
             variant="ghost"
             onClick={() => {
               setEditingItem(row);
@@ -68,6 +69,7 @@ export function AdminEntityListView({
             {labels.edit}
           </Button>
           <Button
+            size="xs"
             variant="outline"
             onClick={async () => {
               setActionMessage(null);

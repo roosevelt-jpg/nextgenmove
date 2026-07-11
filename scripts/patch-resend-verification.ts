@@ -29,22 +29,36 @@ async function main() {
   const db = getFirestore();
 
   const resendRef = db.collection("integrations").doc("resend");
+  const existing = (await resendRef.get()).data() ?? {};
+  const alreadyConnected = existing.status === "connected";
   await resendRef.set(
     stripUndefined({
       id: "resend",
-      name: "Resend",
-      category: "Transactional email",
+      name: existing.name || "Resend",
+      category: existing.category || "Transactional email",
       description:
+        existing.description ||
         "All notification emails — paste re_ API key + verified from address to go live.",
-      iconUrl: "",
-      status: "not_connected",
-      connectedAt: null,
-      config: { category: "Transactional email" },
+      iconUrl: existing.iconUrl || "",
+      // Never clobber a live connection when re-running this patch.
+      ...(alreadyConnected
+        ? {}
+        : { status: "not_connected", connectedAt: null }),
+      config: {
+        category: "Transactional email",
+        ...(typeof existing.config === "object" && existing.config
+          ? existing.config
+          : {}),
+      },
       updatedAt: FieldValue.serverTimestamp(),
     }),
     { merge: true },
   );
-  console.log("upserted integrations/resend");
+  console.log(
+    alreadyConnected
+      ? "upserted integrations/resend (kept connected)"
+      : "upserted integrations/resend",
+  );
 
   const otpTpl = EMAIL_TEMPLATES.find((t) => t.id === "email_otp");
   if (otpTpl) {

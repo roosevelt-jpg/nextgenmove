@@ -15,6 +15,8 @@ export interface FileUploadMetadata {
 
 export interface FileUploadProps {
   storagePath: string;
+  /** When set, uploads via this session-authenticated API instead of client Storage. */
+  uploadEndpoint?: string;
   onUploadComplete: (result: FileUploadMetadata) => void;
   onError?: (error: Error) => void;
   accept?: string;
@@ -27,6 +29,7 @@ export interface FileUploadProps {
 
 export function FileUpload({
   storagePath,
+  uploadEndpoint,
   onUploadComplete,
   onError,
   accept,
@@ -40,8 +43,71 @@ export function FileUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const uploadFile = useCallback(
+  const fail = useCallback(
+    (error: Error) => {
+      setIsUploading(false);
+      setProgress(null);
+      setErrorMessage(error.message || "upload_failed");
+      onError?.(error);
+    },
+    [onError],
+  );
+
+  const uploadViaApi = useCallback(
+    (file: File, endpoint: string) => {
+      setIsUploading(true);
+      setProgress(0);
+      setErrorMessage(null);
+
+      const body = new FormData();
+      body.append("file", file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", endpoint);
+      xhr.responseType = "json";
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          setProgress((event.loaded / event.total) * 100);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const payload = (xhr.response ?? {}) as Partial<FileUploadMetadata> & {
+            error?: string;
+          };
+          if (!payload.url || !payload.path) {
+            fail(new Error(payload.error ?? "upload_failed"));
+            return;
+          }
+          setIsUploading(false);
+          setProgress(null);
+          onUploadComplete({
+            url: payload.url,
+            path: payload.path,
+            filename: payload.filename ?? file.name,
+            size: payload.size ?? file.size,
+            mimeType: payload.mimeType ?? file.type,
+          });
+          return;
+        }
+
+        const payload = xhr.response as { error?: string } | null;
+        fail(new Error(payload?.error ?? `upload_failed_${xhr.status}`));
+      };
+
+      xhr.onerror = () => fail(new Error("upload_network_error"));
+      xhr.ontimeout = () => fail(new Error("upload_timeout"));
+      xhr.timeout = 120_000;
+      xhr.send(body);
+    },
+    [fail, onUploadComplete],
+  );
+
+  const uploadViaStorage = useCallback(
     (file: File) => {
       const path = `${storagePath.replace(/\/$/, "")}/${Date.now()}-${file.name}`;
       const storageRef = ref(storage, path);
@@ -51,6 +117,7 @@ export function FileUpload({
 
       setIsUploading(true);
       setProgress(0);
+      setErrorMessage(null);
 
       task.on(
         "state_changed",
@@ -59,25 +126,38 @@ export function FileUpload({
           setProgress(pct);
         },
         (error) => {
-          setIsUploading(false);
-          setProgress(null);
-          onError?.(error);
+          fail(error);
         },
         async () => {
-          const url = await getDownloadURL(task.snapshot.ref);
-          setIsUploading(false);
-          setProgress(null);
-          onUploadComplete({
-            url,
-            path,
-            filename: file.name,
-            size: file.size,
-            mimeType: file.type,
-          });
+          try {
+            const url = await getDownloadURL(task.snapshot.ref);
+            setIsUploading(false);
+            setProgress(null);
+            onUploadComplete({
+              url,
+              path,
+              filename: file.name,
+              size: file.size,
+              mimeType: file.type,
+            });
+          } catch (error) {
+            fail(error instanceof Error ? error : new Error("upload_failed"));
+          }
         },
       );
     },
-    [onError, onUploadComplete, storagePath],
+    [fail, onUploadComplete, storagePath],
+  );
+
+  const uploadFile = useCallback(
+    (file: File) => {
+      if (uploadEndpoint) {
+        uploadViaApi(file, uploadEndpoint);
+        return;
+      }
+      uploadViaStorage(file);
+    },
+    [uploadEndpoint, uploadViaApi, uploadViaStorage],
   );
 
   const handleFiles = useCallback(
@@ -145,7 +225,10 @@ export function FileUpload({
           accept={accept}
           className="hidden"
           disabled={disabled || isUploading}
-          onChange={(event) => handleFiles(event.target.files)}
+          onChange={(event) => {
+            handleFiles(event.target.files);
+            event.target.value = "";
+          }}
         />
       </div>
       {isUploading && progress !== null ? (
@@ -162,10 +245,15 @@ export function FileUpload({
           >
             <div
               className="h-full bg-grad-rouse transition-all duration-150"
-              style={{ width: `${progress}%` }}
+              style={{ width: `${Math.max(progress, 2)}%` }}
             />
           </div>
         </div>
+      ) : null}
+      {errorMessage ? (
+        <p className="text-xs text-text-warning" role="alert">
+          {errorMessage}
+        </p>
       ) : null}
     </div>
   );

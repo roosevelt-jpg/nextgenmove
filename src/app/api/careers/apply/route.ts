@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import { notifyAdminsOfPending } from "@/lib/email/notify-admins";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const applySchema = z.object({
@@ -45,6 +46,11 @@ export async function POST(request: Request) {
         status: "new",
         createdAt: FieldValue.serverTimestamp(),
       }),
+    );
+
+    void notifyAdminsOfPending(
+      `New careers application from ${body.fullName} (${body.email})`,
+      request,
     );
 
     return NextResponse.json({ id: applicationRef.id });

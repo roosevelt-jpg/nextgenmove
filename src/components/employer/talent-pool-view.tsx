@@ -303,7 +303,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
                   {labels.viewProfile ? (
                     <Link
                       href={`/employer/talent-pool/${row.matchId}`}
-                      className="inline-flex min-h-11 items-center justify-center rounded-radius-sm bg-grad-rouse px-3 text-[12px] font-semibold text-on-gradient hover:opacity-90"
+                      className="inline-flex min-h-7 items-center justify-center rounded-radius-sm bg-grad-rouse px-2.5 text-[11px] font-semibold text-on-gradient hover:opacity-90"
                     >
                       {labels.viewProfile}
                     </Link>

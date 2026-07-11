@@ -31,21 +31,31 @@ export async function POST(
     const body = connectSchema.parse(await request.json());
     const ref = adminDb.collection("integrations").doc(id);
     const snapshot = await ref.get();
-
-    if (!snapshot.exists) {
-      return NextResponse.json({ error: "not_found" }, { status: 404 });
-    }
+    const existing = snapshot.data() ?? {};
 
     if (body.secrets && Object.keys(body.secrets).length > 0) {
       await storeIntegrationSecret(id, body.secrets);
     }
 
-    await ref.update(
+    // Upsert shell if missing so Connect never 404s on a fresh project.
+    await ref.set(
       stripUndefined({
+        id,
+        name: existing.name || id,
+        description: existing.description || "",
+        category: existing.category || body.config?.category || "",
+        iconUrl: existing.iconUrl || "",
         status: "connected",
         connectedAt: FieldValue.serverTimestamp(),
-        config: body.config ?? {},
+        config: {
+          ...(typeof existing.config === "object" && existing.config
+            ? existing.config
+            : {}),
+          ...(body.config ?? {}),
+        },
+        updatedAt: FieldValue.serverTimestamp(),
       }),
+      { merge: true },
     );
 
     await logActivity({

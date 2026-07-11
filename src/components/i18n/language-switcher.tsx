@@ -36,7 +36,7 @@ export function LanguageSwitcher({
     <div className={className ? `relative ${className}` : "relative"}>
       <button
         type="button"
-        className="inline-flex min-h-11 max-w-[9rem] items-center gap-1.5 rounded-radius-sm border border-border px-2.5 text-[12px] text-text-secondary"
+        className="inline-flex min-h-7 max-w-[9rem] items-center gap-1.5 rounded-radius-sm border border-border px-2 text-[11px] text-text-secondary"
         aria-label={ariaLabel ?? "Language"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
@@ -72,8 +72,8 @@ export function LanguageSwitcher({
                   type="button"
                   className={
                     lang.code === locale.split("-")[0]
-                      ? "flex min-h-11 w-full items-center justify-between rounded-radius-sm bg-surface-2 px-2 py-2 text-start text-text-primary"
-                      : "flex min-h-11 w-full items-center justify-between rounded-radius-sm px-2 py-2 text-start text-text-secondary hover:bg-surface-2"
+                      ? "flex min-h-7 w-full items-center justify-between rounded-radius-sm bg-surface-2 px-2 py-1.5 text-start text-text-primary"
+                      : "flex min-h-7 w-full items-center justify-between rounded-radius-sm px-2 py-1.5 text-start text-text-secondary hover:bg-surface-2"
                   }
                   onClick={() => {
                     setLocale(lang.code);

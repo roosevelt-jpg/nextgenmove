@@ -36,10 +36,12 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = async () => {
-    const response = await fetch("/api/admin/integrations");
+    const response = await fetch("/api/admin/integrations", {
+      cache: "no-store",
+    });
     if (response.ok) {
       const payload = (await response.json()) as { items: IntegrationItem[] };
-      setItems(payload.items);
+      setItems(payload.items ?? []);
     } else {
       setActionMessage(labels.loadError ?? "Could not load integrations.");
     }
@@ -117,6 +119,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     setIsSaving(false);
 
     if (response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        item?: IntegrationItem;
+      } | null;
       setConnectItem(null);
       setApiKey("");
       setConfigHost("");
@@ -130,6 +135,20 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       setFromSms("");
       setFromWhatsApp("");
       setActionMessage(labels.connectSuccess ?? "Connected.");
+      if (payload?.item) {
+        setItems((prev) => {
+          const next = prev.filter((row) => row.id !== payload.item!.id);
+          return [
+            ...next,
+            {
+              ...payload.item!,
+              connectedAt: new Date().toISOString(),
+              category: payload.item!.category ?? "",
+              status: "connected" as const,
+            },
+          ].sort((a, b) => a.name.localeCompare(b.name));
+        });
+      }
       await load();
       return;
     }

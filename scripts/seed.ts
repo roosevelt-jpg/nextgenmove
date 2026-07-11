@@ -826,6 +826,8 @@ const OPERATIONAL_SITE_SETTINGS = {
     empty: "Nothing here yet",
     loading: "Loading…",
     submit: "Submit request",
+    newsletterSubmit: "Subscribe",
+    subscribe: "Subscribe",
     successMessage: "Request received. We'll be in touch shortly.",
     formSuccess: "Thanks — we received your submission.",
     missing_required: "Please fill in all required fields.",

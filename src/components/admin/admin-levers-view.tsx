@@ -21,44 +21,84 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const load = async () => {
-    const [leversRes, pendingRes, companiesRes, stagesRes] = await Promise.all([
-      fetch("/api/admin/levers"),
-      fetch("/api/admin/pending-requests"),
-      fetch("/api/admin/crm/companies"),
-      fetch("/api/admin/data/pipeline_stages"),
-    ]);
-    if (leversRes.ok) {
-      const payload = (await leversRes.json()) as {
-        levers: ProgramLeversDocument | null;
-      };
-      setLevers(payload.levers);
-    }
-    if (pendingRes.ok) {
-      const payload = (await pendingRes.json()) as {
-        items: PendingRequestItem[];
-      };
-      setPending(payload.items ?? []);
-    }
-    if (companiesRes.ok) {
-      const payload = (await companiesRes.json()) as {
-        items?: Array<{ id: string; name?: string }>;
-        rows?: Array<{ id: string; name?: string }>;
-      };
-      const list = payload.items ?? payload.rows ?? [];
-      setCompanies(
-        list.map((c) => ({ id: c.id, name: c.name || c.id })),
-      );
-    }
-    if (stagesRes.ok) {
-      const payload = (await stagesRes.json()) as {
-        items: Array<{ id: string; name?: string }>;
-      };
-      setStages(
-        (payload.items ?? []).map((s) => ({
-          id: s.id,
-          name: s.name || s.id,
-        })),
-      );
+    setErrorCode(null);
+    try {
+      const [leversRes, pendingRes, companiesRes, stagesRes] = await Promise.all([
+        fetch("/api/admin/levers", { cache: "no-store" }),
+        fetch("/api/admin/pending-requests", { cache: "no-store" }),
+        fetch("/api/admin/crm/companies", { cache: "no-store" }),
+        fetch("/api/admin/data/pipeline_stages", { cache: "no-store" }),
+      ]);
+
+      if (leversRes.ok) {
+        const payload = (await leversRes.json()) as {
+          levers: ProgramLeversDocument | null;
+        };
+        setLevers(
+          payload.levers ?? {
+            trackAMonthly: 50,
+            trackAMatchFee: 200,
+            trackBMonthly: 125,
+            placementFeeEur: 350,
+            creditsPerEuro: 4,
+            creditTopUpPackages: [],
+            waysToEarn: [],
+            updatedAt: null,
+          },
+        );
+      } else {
+        setErrorCode("load_failed");
+        setLevers({
+          trackAMonthly: 50,
+          trackAMatchFee: 200,
+          trackBMonthly: 125,
+          placementFeeEur: 350,
+          creditsPerEuro: 4,
+          creditTopUpPackages: [],
+          waysToEarn: [],
+          updatedAt: null,
+        });
+      }
+
+      if (pendingRes.ok) {
+        const payload = (await pendingRes.json()) as {
+          items: PendingRequestItem[];
+        };
+        setPending(payload.items ?? []);
+      }
+      if (companiesRes.ok) {
+        const payload = (await companiesRes.json()) as {
+          items?: Array<{ id: string; name?: string }>;
+          rows?: Array<{ id: string; name?: string }>;
+        };
+        const list = payload.items ?? payload.rows ?? [];
+        setCompanies(
+          list.map((c) => ({ id: c.id, name: c.name || c.id })),
+        );
+      }
+      if (stagesRes.ok) {
+        const payload = (await stagesRes.json()) as {
+          items: Array<{ id: string; name?: string }>;
+        };
+        setStages(
+          (payload.items ?? []).map((s) => ({
+            id: s.id,
+            name: s.name || s.id,
+          })),
+        );
+      }
+    } catch {
+      setErrorCode("load_failed");
+      setLevers({
+        trackAMonthly: 50,
+        trackAMatchFee: 200,
+        trackBMonthly: 125,
+        placementFeeEur: 350,
+        creditsPerEuro: 4,
+        creditTopUpPackages: [],
+        waysToEarn: [],
+        updatedAt: null,
+      });
     }
   };
 
@@ -170,6 +210,11 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           {labels.subtitle ? (
             <p className="max-w-xl text-sm text-text-secondary">{labels.subtitle}</p>
           ) : null}
+          {errorCode ? (
+            <p className="text-sm text-text-warning" role="alert">
+              {labels[errorCode] ?? labels.loadError ?? "Could not load levers — showing defaults."}
+            </p>
+          ) : null}
         </div>
         <Button disabled={isSaving} onClick={save}>
           {labels.save ?? "Save"}
@@ -208,9 +253,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                         : ""}
                     </p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex flex-nowrap items-center gap-1">
                     <Button
-                      size="sm"
+                      size="xs"
                       variant="outline"
                       onClick={() => void resolvePending(item, "approve")}
                     >
@@ -219,7 +264,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                         : labels.approve ?? "Approve"}
                     </Button>
                     <Button
-                      size="sm"
+                      size="xs"
                       variant="ghost"
                       onClick={() => void resolvePending(item, "reject")}
                     >

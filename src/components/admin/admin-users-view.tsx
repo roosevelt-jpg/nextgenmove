@@ -82,8 +82,9 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
       key: "actions" as const,
       header: labels.actions ?? "Actions",
       render: (row: UserRow) => (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-nowrap items-center gap-1">
           <Button
+            size="xs"
             variant="outline"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "promote_admin")}
@@ -91,6 +92,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
             {labels.promoteAdmin ?? "Make admin"}
           </Button>
           <Button
+            size="xs"
             variant="ghost"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "suspend")}
@@ -98,6 +100,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
             {labels.suspend ?? "Suspend"}
           </Button>
           <Button
+            size="xs"
             variant="ghost"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "activate")}
@@ -106,6 +109,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           </Button>
         </div>
       ),
+      className: "w-[1%] whitespace-nowrap",
     },
   ];
 

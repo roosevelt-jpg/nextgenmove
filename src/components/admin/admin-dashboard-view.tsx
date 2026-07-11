@@ -405,7 +405,7 @@ export function AdminDashboardView({
                     {item.priceEur != null ? ` (€${item.priceEur})` : ""}
                   </p>
                 </div>
-                <div className="flex gap-1.5">
+                <div className="flex flex-nowrap items-center gap-1">
                   {(["draft", "live", "archived"] as const).map((status) => {
                     const active = item.status === status;
                     return (
@@ -414,7 +414,7 @@ export function AdminDashboardView({
                         type="button"
                         onClick={() => void setContentStatus(item.id, status)}
                         className={cn(
-                          "min-h-9 rounded-full bg-grad-rouse px-3 py-1.5 text-[10.5px] font-semibold text-on-gradient transition-opacity",
+                          "min-h-6 shrink-0 whitespace-nowrap rounded-full bg-grad-rouse px-2 py-0.5 text-[10px] font-semibold text-on-gradient transition-opacity",
                           active
                             ? "opacity-100 shadow-sm ring-2 ring-white/40"
                             : "opacity-55 hover:opacity-90",

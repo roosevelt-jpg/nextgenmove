@@ -59,13 +59,14 @@ export async function GET() {
   }
 
   try {
-    const [companiesSnap, studentsSnap, appsSnap, interestSnap, requestsSnap, levers, usersSnap] =
+    const [companiesSnap, studentsSnap, appsSnap, interestSnap, requestsSnap, newsletterSnap, levers, usersSnap] =
       await Promise.all([
         adminDb.collection("companies").get(),
         adminDb.collection("students").get(),
         adminDb.collection("job_applications").get(),
         adminDb.collection("role_interest_submissions").get(),
         adminDb.collection("requests").where("status", "==", "pending").get(),
+        adminDb.collection("newsletter_subscribers").get(),
         getProgramLevers(),
         adminDb.collection("users").get(),
       ]);
@@ -202,12 +203,37 @@ export async function GET() {
         owner: "",
         lastActivity: serializeTimestamp(data.createdAt) ?? null,
         value: "—",
-        email: String(payload.email ?? payload.contactEmail ?? ""),
+        email: String(
+          payload.workEmail ?? payload.email ?? payload.contactEmail ?? "",
+        ),
         phone: String(payload.phone ?? ""),
         nationality: String(payload.nationality ?? ""),
         dateJoined: serializeTimestamp(data.createdAt) ?? null,
         sourceId: doc.id,
         sourceCollection: "requests",
+      });
+    }
+
+    for (const doc of newsletterSnap.docs) {
+      const data = doc.data();
+      const createdAt = data.subscribedAt?.toDate?.()?.getTime?.() ?? 0;
+      if (createdAt >= weekAgo) newLeads7d += 1;
+
+      contacts.push({
+        id: `news_${doc.id}`,
+        name: String(data.email ?? doc.id),
+        type: "lead",
+        stage: "newsletter",
+        owner: "",
+        lastActivity:
+          serializeTimestamp(data.subscribedAt ?? data.createdAt) ?? null,
+        value: "—",
+        email: String(data.email ?? ""),
+        phone: "",
+        nationality: "",
+        dateJoined: serializeTimestamp(data.subscribedAt) ?? null,
+        sourceId: doc.id,
+        sourceCollection: "newsletter_subscribers",
       });
     }
 

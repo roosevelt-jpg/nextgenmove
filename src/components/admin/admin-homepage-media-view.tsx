@@ -162,7 +162,7 @@ export function AdminHomepageMediaView({
                   : labels.status_draft ?? "Draft"}
               </span>
               <Button
-                size="sm"
+                size="xs"
                 variant="outline"
                 onClick={() => void openEdit(videoSchema, item.id)}
               >
@@ -213,7 +213,7 @@ export function AdminHomepageMediaView({
                   : labels.status_draft ?? "Draft"}
               </span>
               <Button
-                size="sm"
+                size="xs"
                 variant="outline"
                 onClick={() => void openEdit(podcastSchema, item.id)}
               >

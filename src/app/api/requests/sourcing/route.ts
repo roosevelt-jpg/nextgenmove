@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import { notifyAdminsOfPending } from "@/lib/email/notify-admins";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const sourcingSchema = z.object({
@@ -46,6 +47,11 @@ export async function POST(request: Request) {
         status: "pending",
         createdAt: FieldValue.serverTimestamp(),
       }),
+    );
+
+    void notifyAdminsOfPending(
+      `New talent request from ${body.companyName} (${body.workEmail}) — ${body.roleTitleNeeded}`,
+      request,
     );
 
     return NextResponse.json({ id: requestRef.id });

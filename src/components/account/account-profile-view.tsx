@@ -122,13 +122,23 @@ export function AccountProfileView({
         <div className="space-y-2">
           <FileUpload
             storagePath={storagePath}
+            uploadEndpoint="/api/account/upload"
             accept="image/*"
             label={labels.uploadPhoto}
             dropzoneContent={labels.photoDropzone}
             progressLabel={labels.uploadProgress}
-            onUploadComplete={(result: FileUploadMetadata) =>
-              setPhotoUrl(result.url)
-            }
+            onUploadComplete={(result: FileUploadMetadata) => {
+              setPhotoUrl(result.url);
+              setStatusMessage(labels.photoReady ?? "Photo ready — click Save changes.");
+            }}
+            onError={(error) => {
+              setStatusMessage(
+                labels[error.message] ??
+                  labels.uploadError ??
+                  error.message ??
+                  "Upload failed.",
+              );
+            }}
           />
           {photoUrl ? (
             <Button

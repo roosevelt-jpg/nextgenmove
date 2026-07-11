@@ -78,7 +78,7 @@ export function NewsletterForm({
             onChange={(event) => setEmail(event.target.value)}
           />
           <Button type="submit" disabled={isSubmitting} className="shrink-0">
-            {labels.submit}
+            {labels.newsletterSubmit ?? labels.subscribe ?? labels.submit}
           </Button>
         </div>
         {errorCode ? (
@@ -112,7 +112,7 @@ export function NewsletterForm({
         </p>
       ) : null}
       <Button type="submit" disabled={isSubmitting}>
-        {labels.submit}
+        {labels.newsletterSubmit ?? labels.subscribe ?? labels.submit}
       </Button>
     </form>
   );

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import { notifyAdminsOfPending } from "@/lib/email/notify-admins";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const subscribeSchema = z.object({
@@ -31,6 +32,11 @@ export async function POST(request: Request) {
         email: normalizedEmail,
         subscribedAt: FieldValue.serverTimestamp(),
       }),
+    );
+
+    void notifyAdminsOfPending(
+      `New journal newsletter subscriber: ${normalizedEmail}`,
+      request,
     );
 
     return NextResponse.json({ id: subscriberRef.id });

@@ -4,7 +4,7 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 export type ButtonVariant = "primary" | "ghost" | "outline" | "secondary" | "brand";
-export type ButtonSize = "default" | "sm" | "lg";
+export type ButtonSize = "default" | "sm" | "xs" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -16,9 +16,10 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * (explicit background-image — more reliable than Tailwind bg-* alone).
  */
 const sizeClasses: Record<ButtonSize, string> = {
-  default: "min-h-11 px-3.5 py-2.5 text-sm",
-  sm: "min-h-9 px-2.5 py-1.5 text-xs",
-  lg: "min-h-12 px-5 py-3 text-sm",
+  default: "min-h-7 shrink-0 whitespace-nowrap px-2.5 py-1 text-xs",
+  sm: "min-h-6 shrink-0 whitespace-nowrap px-2 py-0.5 text-[11px]",
+  xs: "min-h-6 shrink-0 whitespace-nowrap px-1.5 py-0.5 text-[10px] leading-tight",
+  lg: "min-h-8 shrink-0 whitespace-nowrap px-3 py-1.5 text-xs",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

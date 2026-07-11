@@ -151,9 +151,28 @@ export async function getProgramLevers(): Promise<ProgramLeversDocument | null> 
       waysToEarn: data.waysToEarn ?? [],
       updatedAt: serializeTimestamp(data.updatedAt),
     };
-  } catch {
+  } catch (error) {
+    console.error("getProgramLevers_failed", error);
     return null;
   }
+}
+
+/** Editable defaults when the Firestore shell is missing or unreadable. */
+export function defaultProgramLevers(): ProgramLeversDocument {
+  return {
+    trackAMonthly: 50,
+    trackAMatchFee: 200,
+    trackBMonthly: 125,
+    placementFeeEur: 350,
+    creditsPerEuro: 4,
+    creditTopUpPackages: [
+      { id: "pack_400", label: "Starter pack", credits: 400, priceEur: 100 },
+      { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },
+      { id: "pack_1600", label: "Premium pack", credits: 1600, priceEur: 400 },
+    ],
+    waysToEarn: [],
+    updatedAt: null,
+  };
 }
 
 export async function getOpenJobPostings(): Promise<JobPostingDocument[]> {

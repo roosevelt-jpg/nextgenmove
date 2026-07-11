@@ -60,6 +60,14 @@ service firebase.storage {
       return request.resource.contentType.matches('application/pdf|image/.*');
     }
 
+    // ── User profile photos (account settings) ────────────────────────────
+
+    match /users/{userId}/{allPaths=**} {
+      allow write: if isValidUpload() && isPdfOrImageUpload()
+        && (isAdmin() || (isOwner(userId) && isActiveUser()));
+      allow read: if true;
+    }
+
     // ── Student CVs (canonical + current app paths) ───────────────────────
 
     match /cvs/{studentId}/{allPaths=**} {

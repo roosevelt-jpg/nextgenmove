@@ -112,18 +112,27 @@ video {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  min-height: 2.75rem;
-  padding: 0.625rem 0.875rem;
+  gap: 0.25rem;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.625rem;
   border: 0;
   border-radius: var(--radius-sm);
   background-color: #3c3489;
   background-image: var(--grad-rouse);
   color: var(--on-gradient);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  line-height: 1.2;
   text-decoration: none;
   transition: opacity 0.15s ease;
+}
+
+/* Dashboard chrome — keep interactive controls compact */
+.dashboard-shell .btn-brand {
+  min-height: 1.5rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.625rem;
+  white-space: nowrap;
 }
 
 .btn-brand:hover {
@@ -133,6 +142,13 @@ video {
 .btn-brand:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Force compact control heights inside dashboards (beats leftover min-h-11 utilities) */
+.dashboard-shell button:not([role="switch"]):not(.absolute),
+.dashboard-shell a.btn-brand,
+.dashboard-shell a[class*="bg-grad-rouse"] {
+  min-height: 1.625rem;
 }
 
 /* Brand — grey → purple card / panel surface */

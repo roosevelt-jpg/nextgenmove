@@ -159,19 +159,19 @@ export function AdminPortalShell({
         <div className="flex gap-1 rounded-full bg-surface-2 p-1">
           <Link
             href="/student/dashboard"
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient opacity-70 transition-opacity hover:opacity-100"
+            className="flex min-h-7 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient opacity-70 transition-opacity hover:opacity-100"
           >
             {labels.workspaceStudent ?? "Student"}
           </Link>
           <Link
             href="/employer/pipeline"
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient opacity-70 transition-opacity hover:opacity-100"
+            className="flex min-h-7 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient opacity-70 transition-opacity hover:opacity-100"
           >
             {labels.workspaceEmployer ?? "Employer"}
           </Link>
           <Link
             href="/admin/dashboard"
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient shadow-sm ring-2 ring-white/40"
+            className="flex min-h-7 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient shadow-sm ring-2 ring-white/40"
           >
             {labels.workspaceAdmin ?? "Admin"}
           </Link>
@@ -193,7 +193,7 @@ export function AdminPortalShell({
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "relative flex min-h-11 items-center gap-2.5 rounded-radius px-3 py-2.5 text-[13px] font-medium transition-colors",
+                  "relative flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs font-medium transition-colors",
                   active
                     ? "bg-bg-purple text-fill-accent"
                     : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
@@ -219,7 +219,7 @@ export function AdminPortalShell({
         </div>
         <Link
           href="/admin/account"
-          className="flex min-h-11 items-center gap-2 rounded-radius px-3 py-2 text-[12.5px] text-text-secondary hover:bg-surface-2"
+          className="flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs text-text-secondary hover:bg-surface-2"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <circle cx="8" cy="8" r="2.25" />
@@ -229,7 +229,7 @@ export function AdminPortalShell({
         </Link>
         <Link
           href="/"
-          className="flex min-h-11 items-center gap-2 rounded-radius px-3 py-2 text-[12.5px] text-text-secondary hover:bg-surface-2"
+          className="flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs text-text-secondary hover:bg-surface-2"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <circle cx="8" cy="8" r="5.5" />
@@ -240,7 +240,7 @@ export function AdminPortalShell({
         <button
           type="button"
           onClick={signOut}
-          className="flex min-h-11 w-full items-center gap-2 rounded-radius px-3 py-2 text-left text-[12.5px] text-text-secondary hover:bg-surface-2"
+          className="flex min-h-7 w-full items-center gap-2 rounded-radius px-2.5 py-1.5 text-left text-xs text-text-secondary hover:bg-surface-2"
         >
           {labels.signOut ?? "Sign out"}
         </button>
@@ -249,7 +249,7 @@ export function AdminPortalShell({
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-bg text-text-primary">
+    <div className="dashboard-shell flex min-h-screen w-full bg-bg text-text-primary">
       <div className="sticky top-0 hidden h-screen shrink-0 min-[860px]:block">
         {sidebar}
       </div>
@@ -271,7 +271,7 @@ export function AdminPortalShell({
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-radius-sm border border-border text-sm min-[860px]:hidden"
+              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-sm min-[860px]:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >
@@ -287,7 +287,7 @@ export function AdminPortalShell({
             <button
               type="button"
               onClick={toggleTheme}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
+              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {dark ? (
@@ -303,7 +303,7 @@ export function AdminPortalShell({
             </button>
             <Link
               href="/admin/settings"
-              className="hidden min-h-11 min-w-11 items-center justify-center rounded-radius-sm border border-border text-text-secondary sm:inline-flex"
+              className="hidden min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary sm:inline-flex"
               aria-label="Settings"
             >
               <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
@@ -313,7 +313,7 @@ export function AdminPortalShell({
             </Link>
             <Link
               href="/admin/account"
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
+              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
               aria-label="Account"
             >
               {labels.avatarInitial ?? "V"}

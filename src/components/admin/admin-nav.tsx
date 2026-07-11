@@ -40,7 +40,7 @@ export function AdminNav({ labels }: { labels: Record<string, string> }) {
               key={item.key}
               href={item.href}
               className={cn(
-                "inline-flex shrink-0 items-center rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+                "inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors",
                 isActive
                   ? "bg-fill-accent text-on-accent shadow-sm"
                   : "text-text-secondary hover:bg-surface-1/70 hover:text-text-primary",

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
-import { getProgramLevers } from "@/lib/collections/pages";
+import { getProgramLevers, defaultProgramLevers } from "@/lib/collections/pages";
 import { serializeTimestamp } from "@/lib/firestore-utils";
 import {
   getAdminSession,
@@ -12,6 +12,8 @@ import {
 import { revalidateAdminCollection } from "@/lib/admin/revalidate";
 import { stripUndefined } from "@/lib/stripUndefined";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const session = await getAdminSession();
 
@@ -19,8 +21,19 @@ export async function GET() {
     return unauthorizedResponse();
   }
 
-  const levers = await getProgramLevers();
-  return NextResponse.json({ levers });
+  try {
+    const levers = (await getProgramLevers()) ?? defaultProgramLevers();
+    return NextResponse.json(
+      { levers },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    console.error("levers_get_failed", error);
+    return NextResponse.json(
+      { levers: defaultProgramLevers() },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }
 
 const waySchema = z.object({
@@ -61,11 +74,14 @@ export async function PATCH(request: Request) {
       .collection("program_levers")
       .doc("default")
       .set(
-        stripUndefined({
-          id: "default",
-          ...body,
+        {
+          ...stripUndefined({
+            id: "default",
+            ...body,
+          }),
+          // Keep FieldValue outside stripUndefined (older builds ate the sentinel → {}).
           updatedAt: FieldValue.serverTimestamp(),
-        }),
+        },
         { merge: true },
       );
 

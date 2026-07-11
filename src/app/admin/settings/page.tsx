@@ -75,7 +75,7 @@ export default async function AdminSiteSettingsPage() {
               href={settings.billingManageUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded-radius-sm bg-grad-rouse px-3 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
+              className="rounded-radius-sm bg-grad-rouse px-2.5 py-1 text-xs font-medium text-on-gradient hover:opacity-90"
             >
               {labels.manageBilling}
             </a>

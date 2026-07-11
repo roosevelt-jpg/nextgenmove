@@ -41,7 +41,7 @@ export function AdminContentNav({ labels }: { labels: Record<string, string> }) 
             key={section.key}
             href={section.href}
             className={cn(
-              "inline-flex min-h-11 items-center rounded-full bg-grad-rouse px-3.5 py-1.5 text-[12.5px] font-semibold text-on-gradient transition-opacity",
+              "inline-flex min-h-7 items-center rounded-full bg-grad-rouse px-2.5 py-1 text-[11px] font-semibold text-on-gradient transition-opacity",
               isActive
                 ? "opacity-100 shadow-sm ring-2 ring-white/35"
                 : "opacity-70 hover:opacity-100",

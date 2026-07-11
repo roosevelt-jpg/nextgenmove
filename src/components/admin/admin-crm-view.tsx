@@ -315,21 +315,32 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   };
 
   const sendMessage = async () => {
-    if (!selectedId || leadMode || !messageBody.trim()) return;
+    if (!selectedId || !messageBody.trim()) return;
     setMessageSending(true);
     setActionMessage(null);
-    const response = await fetch(
-      `/api/admin/crm/${entityTab}/${selectedId}/message`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel: messageChannel,
-          subject: messageSubject.trim() || undefined,
-          body: messageBody.trim(),
-        }),
-      },
-    );
+
+    const response = leadMode
+      ? await fetch("/api/admin/crm/leads/message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceCollection: detail?.sourceCollection,
+            sourceId: detail?.sourceId,
+            channel: messageChannel,
+            subject: messageSubject.trim() || undefined,
+            body: messageBody.trim(),
+          }),
+        })
+      : await fetch(`/api/admin/crm/${entityTab}/${selectedId}/message`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            channel: messageChannel,
+            subject: messageSubject.trim() || undefined,
+            body: messageBody.trim(),
+          }),
+        });
+
     setMessageSending(false);
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as {
@@ -346,7 +357,9 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
     setMessageBody("");
     setMessageSubject("");
     setActionMessage(labels.messageSent ?? "Message sent.");
-    await openDetail(selectedId, entityTab);
+    if (!leadMode) {
+      await openDetail(selectedId, entityTab);
+    }
   };
 
   const formatJoined = (value: unknown) => {
@@ -748,29 +761,81 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                     </label>
                   </div>
                 ) : null}
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => void resolveLead("approve")}>
-                    {detail.sourceCollection === "role_interest_submissions"
-                      ? labels.promote ?? "Promote"
-                      : labels.approve ?? "Approve"}
-                  </Button>
-                  <Button variant="outline" onClick={() => void resolveLead("reject")}>
-                    {labels.reject ?? "Reject"}
+                {detail.sourceCollection !== "newsletter_subscribers" ? (
+                  <div className="flex flex-nowrap items-center gap-1">
+                    <Button size="xs" onClick={() => void resolveLead("approve")}>
+                      {detail.sourceCollection === "role_interest_submissions"
+                        ? labels.promote ?? "Promote"
+                        : labels.approve ?? "Approve"}
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      onClick={() => void resolveLead("reject")}
+                    >
+                      {labels.reject ?? "Reject"}
+                    </Button>
+                  </div>
+                ) : null}
+
+                <div className="space-y-2 rounded-radius border border-border p-3">
+                  <p className="text-sm font-medium text-text-primary">
+                    {labels.messageTitle ?? "Reply"}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {(["email", "sms", "whatsapp"] as const).map((channel) => (
+                      <button
+                        key={channel}
+                        type="button"
+                        onClick={() => setMessageChannel(channel)}
+                        className={
+                          messageChannel === channel
+                            ? "rounded-full bg-fill-accent px-2.5 py-0.5 text-[11px] font-semibold text-on-accent"
+                            : "rounded-full bg-surface-2 px-2.5 py-0.5 text-[11px] font-semibold text-text-secondary"
+                        }
+                      >
+                        {labels[`channel_${channel}`] ?? channel}
+                      </button>
+                    ))}
+                  </div>
+                  {messageChannel === "email" ? (
+                    <Input
+                      id="crm-lead-message-subject"
+                      label={labels.messageSubject ?? "Subject"}
+                      value={messageSubject}
+                      onChange={(e) => setMessageSubject(e.target.value)}
+                    />
+                  ) : null}
+                  <Textarea
+                    id="crm-lead-message-body"
+                    label={labels.messageBody ?? "Message"}
+                    value={messageBody}
+                    onChange={(e) => setMessageBody(e.target.value)}
+                    rows={3}
+                  />
+                  <Button
+                    size="sm"
+                    disabled={messageSending || !messageBody.trim()}
+                    onClick={() => void sendMessage()}
+                  >
+                    {labels.sendMessage ?? "Send"}
                   </Button>
                 </div>
               </div>
             ) : (
               <>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-nowrap items-center gap-1">
               {entityTab === "companies" ? (
                 <>
                   <Button
+                    size="xs"
                     variant="outline"
                     onClick={() => runAction("change_plan", { plan: "track_a" })}
                   >
                     {labels.planTrackA}
                   </Button>
                   <Button
+                    size="xs"
                     variant="outline"
                     onClick={() => runAction("change_plan", { plan: "track_b" })}
                   >
@@ -778,13 +843,13 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                   </Button>
                 </>
               ) : null}
-              <Button variant="outline" onClick={() => runAction("suspend")}>
+              <Button size="xs" variant="outline" onClick={() => runAction("suspend")}>
                 {labels.suspend}
               </Button>
-              <Button variant="ghost" onClick={() => runAction("activate")}>
+              <Button size="xs" variant="ghost" onClick={() => runAction("activate")}>
                 {labels.activate}
               </Button>
-              <Button variant="ghost" onClick={() => setEditOpen(true)}>
+              <Button size="xs" variant="ghost" onClick={() => setEditOpen(true)}>
                 {labels.edit}
               </Button>
             </div>

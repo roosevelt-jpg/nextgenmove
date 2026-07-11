@@ -1,12 +1,17 @@
 type PlainObject = Record<string, unknown>;
 
 function isPlainObject(value: unknown): value is PlainObject {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    !(value instanceof Date)
-  );
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    value instanceof Date
+  ) {
+    return false;
+  }
+
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
 }
 
 function isFirestoreTimestamp(value: unknown): boolean {
@@ -14,8 +19,7 @@ function isFirestoreTimestamp(value: unknown): boolean {
     typeof value === "object" &&
     value !== null &&
     "toDate" in value &&
-    typeof (value as { toDate: unknown }).toDate === "function" &&
-    "seconds" in value
+    typeof (value as { toDate: unknown }).toDate === "function"
   );
 }
 
@@ -30,18 +34,38 @@ function isFirestoreDocumentReference(value: unknown): boolean {
   );
 }
 
+function isFirestoreFieldValue(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  // firebase-admin FieldValue sentinels (serverTimestamp, delete, increment, …)
+  const ctorName = (value as { constructor?: { name?: string } }).constructor
+    ?.name;
+  if (ctorName === "FieldValue" || ctorName === "FieldTransform") {
+    return true;
+  }
+
+  return (
+    "isEqual" in value &&
+    typeof (value as { isEqual: unknown }).isEqual === "function" &&
+    !("toDate" in value)
+  );
+}
+
 function shouldPreserveValue(value: unknown): boolean {
   return (
     Array.isArray(value) ||
     isFirestoreTimestamp(value) ||
-    isFirestoreDocumentReference(value)
+    isFirestoreDocumentReference(value) ||
+    isFirestoreFieldValue(value)
   );
 }
 
 /**
  * Removes undefined keys from objects before Firestore writes.
- * Recurses into nested plain objects. Arrays, Timestamps, and
- * DocumentReferences are returned unchanged.
+ * Recurses into nested plain objects. Arrays, Timestamps,
+ * DocumentReferences, and FieldValue sentinels are returned unchanged.
  */
 export function stripUndefined<T>(value: T): T {
   if (shouldPreserveValue(value) || !isPlainObject(value)) {
