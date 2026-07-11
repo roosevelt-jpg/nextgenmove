@@ -34,8 +34,8 @@ export default async function EmployerPortalLayout({
       sectionLabel={labels.employerSection ?? "Employer"}
       navItems={NAV_ITEMS}
       labels={labels}
-      siteName={settings.siteName ?? "NextGen Move"}
-      brandMark={settings.brandMark ?? "NG"}
+      siteName={settings.siteName ?? "Venturo"}
+      brandMark={settings.brandMark ?? "V"}
     >
       {children}
     </WorkspacePortalShell>

@@ -146,7 +146,7 @@ export function AdminPortalShell({
           {brandMark || "NG"}
         </span>
         <span className="font-serif text-[15px] font-semibold text-text-primary">
-          {siteName || "NextGen Move"}
+          {siteName || "Venturo"}
         </span>
       </div>
 

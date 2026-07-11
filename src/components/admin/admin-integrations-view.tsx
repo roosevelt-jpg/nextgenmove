@@ -68,7 +68,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
         ? {
             config: {
               fromEmail,
-              fromName: fromName || labels.sendgridDefaultFromName || "NextGen Move",
+              fromName: fromName || labels.sendgridDefaultFromName || "Venturo",
             },
             secrets: {
               ...(apiKey ? { apiKey } : {}),

@@ -1,8 +1,10 @@
+import { redirect } from "next/navigation";
+import { AuthSplitShell } from "@/components/auth/auth-split-shell";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { getAuthLabels } from "@/lib/auth/labels";
 import { getCurrentUser } from "@/lib/auth";
 import { PORTAL_HOME } from "@/lib/auth/constants";
-import { redirect } from "next/navigation";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function ForgotPasswordPage() {
   const user = await getCurrentUser();
@@ -10,6 +12,19 @@ export default async function ForgotPasswordPage() {
     redirect(PORTAL_HOME[user.role]);
   }
 
-  const labels = await getAuthLabels();
-  return <ForgotPasswordForm labels={labels} />;
+  const [labels, settings] = await Promise.all([
+    getAuthLabels(),
+    getSiteSettings(),
+  ]);
+
+  return (
+    <AuthSplitShell
+      labels={labels}
+      siteName={settings.siteName || "Venturo"}
+      brandMark={settings.brandMark || "V"}
+      panel="signIn"
+    >
+      <ForgotPasswordForm labels={labels} />
+    </AuthSplitShell>
+  );
 }

@@ -33,8 +33,8 @@ export default async function StudentPortalLayout({
       sectionLabel={labels.studentSection ?? "Student"}
       navItems={NAV_ITEMS}
       labels={labels}
-      siteName={settings.siteName ?? "NextGen Move"}
-      brandMark={settings.brandMark ?? "NG"}
+      siteName={settings.siteName ?? "Venturo"}
+      brandMark={settings.brandMark ?? "V"}
     >
       {children}
     </WorkspacePortalShell>

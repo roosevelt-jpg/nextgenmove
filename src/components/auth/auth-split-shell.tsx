@@ -5,7 +5,7 @@ import Link from "next/link";
 export type AuthPanel = "signIn" | "signUpTalent" | "signUpCompany";
 
 export interface AuthSplitShellProps {
-  labels: Record<string, string>;
+  labels: Record<string, string | undefined>;
   siteName: string;
   brandMark: string;
   panel?: AuthPanel;

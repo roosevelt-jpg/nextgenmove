@@ -402,7 +402,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               </p>
             ) : null}
             <Button type="submit" className="h-11 w-full">
-              {labels.continueLabel ?? labels.signUpSubmitLabel ?? "Create account"}
+              {labels.createAccountLabel ??
+                labels.signUpSubmitLabel ??
+                "Create account"}
             </Button>
           </form>
 

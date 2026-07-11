@@ -31,8 +31,8 @@ export async function createEmployerSubscriptionCheckout(options: {
     options.plan === "track_a" ? levers.trackAMonthly : levers.trackBMonthly;
   const productName =
     options.plan === "track_a"
-      ? "NextGen Move Track A"
-      : "NextGen Move Track B";
+      ? "Venturo Track A"
+      : "Venturo Track B";
 
   const base = appBaseUrl(options.request);
 
