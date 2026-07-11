@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getCurrentUser, getSessionActor, hasRole } from "@/lib/auth";
-import { PORTAL_HOME } from "@/lib/auth/constants";
+import { PORTAL_HOME, SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import type { UserRole } from "@/types/user";
 
 export interface RoleGateProps {
@@ -12,6 +13,13 @@ export async function RoleGate({ allowedRoles, children }: RoleGateProps) {
   const actor = await getSessionActor();
 
   if (!actor) {
+    const jar = await cookies();
+    // Session/role cookies present but actor unresolved (expired Auth or
+    // Firestore outage) — clear cookies instead of bouncing to /sign-in,
+    // which middleware would send straight back into the portal.
+    if (jar.get(SESSION_COOKIE_NAME)?.value) {
+      redirect("/api/auth/signout?next=/sign-in");
+    }
     redirect("/sign-in");
   }
 
@@ -26,6 +34,10 @@ export async function RoleGate({ allowedRoles, children }: RoleGateProps) {
   const user = await getCurrentUser();
 
   if (!user) {
+    const jar = await cookies();
+    if (jar.get(SESSION_COOKIE_NAME)?.value) {
+      redirect("/api/auth/signout?next=/sign-in");
+    }
     redirect("/sign-in");
   }
 

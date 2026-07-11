@@ -13,16 +13,32 @@ import {
   verifyImpersonationToken,
 } from "@/lib/auth/impersonation-token";
 
+const CLEAR_COOKIE = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 0,
+  path: "/",
+};
+
+function clearAuthCookies(response: NextResponse) {
+  response.cookies.set(SESSION_COOKIE_NAME, "", CLEAR_COOKIE);
+  response.cookies.set(ROLE_COOKIE_NAME, "", CLEAR_COOKIE);
+  response.cookies.set(IMPERSONATE_COOKIE_NAME, "", CLEAR_COOKIE);
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requiredRole = getRequiredRoleForPath(pathname);
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const roleToken = request.cookies.get(ROLE_COOKIE_NAME)?.value;
 
   if (isAuthPath(pathname)) {
-    const roleToken = request.cookies.get(ROLE_COOKIE_NAME)?.value;
-
-    if (roleToken) {
+    // Only bounce signed-in users away when BOTH cookies exist and the role
+    // JWT verifies. A lone/stale __ngm_role cookie caused sign-in ↔ portal loops.
+    if (roleToken && sessionCookie) {
       const payload = await verifyRoleToken(roleToken);
-
       if (payload) {
         return NextResponse.redirect(
           new URL(PORTAL_HOME[payload.role], request.url),
@@ -30,20 +46,33 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    return NextResponse.next();
+    const response = NextResponse.next();
+    if (roleToken && !sessionCookie) {
+      response.cookies.set(ROLE_COOKIE_NAME, "", CLEAR_COOKIE);
+      response.cookies.set(IMPERSONATE_COOKIE_NAME, "", CLEAR_COOKIE);
+    } else if (roleToken) {
+      const payload = await verifyRoleToken(roleToken);
+      if (!payload) {
+        response.cookies.set(ROLE_COOKIE_NAME, "", CLEAR_COOKIE);
+        response.cookies.set(IMPERSONATE_COOKIE_NAME, "", CLEAR_COOKIE);
+      }
+    }
+    return response;
   }
 
   if (!requiredRole) {
     return NextResponse.next();
   }
 
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const roleToken = request.cookies.get(ROLE_COOKIE_NAME)?.value;
-
   if (!sessionCookie || !roleToken) {
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(signInUrl);
+    const response = NextResponse.redirect(signInUrl);
+    // Drop orphan role cookie so /sign-in does not bounce back to the portal.
+    if (roleToken && !sessionCookie) {
+      clearAuthCookies(response);
+    }
+    return response;
   }
 
   const payload = await verifyRoleToken(roleToken);
@@ -51,7 +80,7 @@ export async function middleware(request: NextRequest) {
   if (!payload) {
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(signInUrl);
+    return clearAuthCookies(NextResponse.redirect(signInUrl));
   }
 
   let subjectRole: typeof payload.role | null = null;
@@ -78,7 +107,6 @@ export async function middleware(request: NextRequest) {
   });
 
   if (!allowed) {
-    // Impersonating: send subject to their own home; otherwise actor home.
     const homeRole = subjectRole ?? payload.role;
     return NextResponse.redirect(new URL(PORTAL_HOME[homeRole], request.url));
   }
