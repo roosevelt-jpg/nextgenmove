@@ -835,7 +835,7 @@ async function main() {
   for (const line of log) console.log(" -", line);
   console.log(`
 Login credentials (password for all: ${DEMO_PASSWORD})
-  Admin (from seed):     admin@nextgenmove.local  /  ChangeMe-Seed-123!
+  Admin (from seed):     admin@venturo.ae  /  (SEED_ADMIN_PASSWORD in .env.local)
   Employer:              employer@nextgenmove.demo
   Student:               student@nextgenmove.demo
   Talent (e.g.):         sara.kowalski@nextgenmove.demo
