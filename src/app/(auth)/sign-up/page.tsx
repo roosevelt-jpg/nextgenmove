@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { SignUpForm } from "@/components/auth/sign-up-form";
+import { SignUpPageClient } from "@/components/auth/sign-up-page-client";
 import { getAuthLabels } from "@/lib/auth/labels";
 import { getCurrentUser } from "@/lib/auth";
 import { PORTAL_HOME } from "@/lib/auth/constants";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 
 export default async function SignUpPage() {
   const user = await getCurrentUser();
@@ -11,7 +12,16 @@ export default async function SignUpPage() {
     redirect(PORTAL_HOME[user.role]);
   }
 
-  const labels = await getAuthLabels();
+  const [labels, settings] = await Promise.all([
+    getAuthLabels(),
+    getSiteSettings(),
+  ]);
 
-  return <SignUpForm labels={labels} />;
+  return (
+    <SignUpPageClient
+      labels={labels}
+      siteName={settings.siteName || "Venturo"}
+      brandMark={settings.brandMark || "V"}
+    />
+  );
 }

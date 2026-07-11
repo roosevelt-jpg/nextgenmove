@@ -14,6 +14,7 @@ import type { AuthLabels, SignUpRole } from "@/types/user";
 
 export interface SignUpFormProps {
   labels: AuthLabels;
+  onRoleChange?: (role: SignUpRole) => void;
 }
 
 type Step = "account" | "details" | "media";
@@ -30,16 +31,22 @@ function splitList(value: string): string[] {
     .filter(Boolean);
 }
 
-export function SignUpForm({ labels }: SignUpFormProps) {
+export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("account");
   const [uid, setUid] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<SignUpRole>("student");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<SignUpRole>("company");
   const [consentRequired, setConsentRequired] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
+
+  const selectRole = (next: SignUpRole) => {
+    setRole(next);
+    onRoleChange?.(next);
+  };
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -107,22 +114,6 @@ export function SignUpForm({ labels }: SignUpFormProps) {
       .catch(() => undefined);
   }, []);
 
-  const roleOptions = useMemo(
-    () =>
-      [
-        labels.roleCompanyLabel
-          ? { value: "company" as const, label: labels.roleCompanyLabel }
-          : null,
-        labels.roleStudentLabel
-          ? { value: "student" as const, label: labels.roleStudentLabel }
-          : null,
-      ].filter(
-        (option): option is { value: SignUpRole; label: string } =>
-          option !== null,
-      ),
-    [labels.roleCompanyLabel, labels.roleStudentLabel],
-  );
-
   const sectorOptions = useMemo(
     () => sectors.map((item) => ({ value: item.value, label: item.label })),
     [sectors],
@@ -148,6 +139,19 @@ export function SignUpForm({ labels }: SignUpFormProps) {
     setErrorCode(null);
     if (!consentRequired) {
       setErrorCode("consent_required");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorCode("password_mismatch");
+      return;
+    }
+    if (role === "company") {
+      if (!contactName.trim() || !companyName.trim()) {
+        setErrorCode("invalid_request");
+        return;
+      }
+    } else if (!fullName.trim()) {
+      setErrorCode("invalid_request");
       return;
     }
     setStep("details");
@@ -256,88 +260,172 @@ export function SignUpForm({ labels }: SignUpFormProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-4 py-4">
-      {labels.signUpTitle ? (
-        <h1 className="font-serif text-2xl text-text-primary">
-          {labels.signUpTitle}
-        </h1>
+    <div className="flex flex-col gap-6">
+      {step === "account" ? (
+        <>
+          <header className="space-y-1.5">
+            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
+              {labels.signUpEyebrow ?? "Get started"}
+            </p>
+            <h1 className="font-serif text-[clamp(1.5rem,3vw,2rem)] font-semibold leading-tight text-text-primary">
+              {labels.signUpTitle ?? "Create your account."}
+            </h1>
+            {labels.signUpSubtitle ? (
+              <p className="text-sm text-text-secondary">{labels.signUpSubtitle}</p>
+            ) : null}
+          </header>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => selectRole("student")}
+              className={
+                role === "student"
+                  ? "rounded-radius-sm bg-fill-primary px-3 py-3 text-center text-[12.5px] font-semibold text-on-primary"
+                  : "rounded-radius-sm bg-surface-2 px-3 py-3 text-center text-[12.5px] font-semibold text-text-secondary"
+              }
+            >
+              {labels.roleStudentLabel ?? "I'm looking for a role"}
+            </button>
+            <button
+              type="button"
+              onClick={() => selectRole("company")}
+              className={
+                role === "company"
+                  ? "rounded-radius-sm bg-fill-primary px-3 py-3 text-center text-[12.5px] font-semibold text-on-primary"
+                  : "rounded-radius-sm bg-surface-2 px-3 py-3 text-center text-[12.5px] font-semibold text-text-secondary"
+              }
+            >
+              {labels.roleCompanyLabel ?? "I'm hiring"}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-radius-sm border border-border bg-surface-1 text-[13px] font-semibold text-text-primary hover:bg-surface-2"
+            onClick={() => setErrorCode("google_coming_soon")}
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
+              <path
+                fill="#EA4335"
+                d="M12 10.2v3.6h5.1c-.2 1.2-1.5 3.6-5.1 3.6-3.1 0-5.6-2.5-5.6-5.6S8.9 6.2 12 6.2c1.8 0 3 .7 3.7 1.4l2.5-2.4C16.7 3.7 14.5 2.7 12 2.7 6.9 2.7 2.7 6.9 2.7 12S6.9 21.3 12 21.3c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.8H12z"
+              />
+            </svg>
+            {labels.continueWithGoogle ?? "Continue with Google"}
+          </button>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+              {labels.orDivider ?? "Or"}
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <form className="flex flex-col gap-3.5" onSubmit={goToDetails}>
+            {role === "company" ? (
+              <>
+                <Input
+                  id="company-contact-name"
+                  required
+                  placeholder={labels.contactNamePlaceholder ?? "Your name"}
+                  label={labels.contactNameLabel ?? "Contact name"}
+                  value={contactName}
+                  onChange={(event) => setContactName(event.target.value)}
+                />
+                <Input
+                  id="company-name"
+                  required
+                  placeholder={labels.companyNamePlaceholder ?? "Acme Corp"}
+                  label={labels.companyNameLabel ?? "Company name"}
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.target.value)}
+                />
+              </>
+            ) : (
+              <Input
+                id="student-full-name"
+                required
+                placeholder={labels.fullNamePlaceholder ?? "Your name"}
+                label={labels.fullNameLabel ?? "Full name"}
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+              />
+            )}
+            <Input
+              id="sign-up-email"
+              type="email"
+              autoComplete="email"
+              required
+              placeholder={labels.emailPlaceholder ?? "you@email.com"}
+              aria-label={labels.emailLabel ?? "email"}
+              label={labels.emailLabel}
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <div className="grid gap-3.5 sm:grid-cols-2">
+              <Input
+                id="sign-up-password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                aria-label={labels.passwordLabel ?? "password"}
+                label={labels.passwordLabel}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <Input
+                id="sign-up-confirm-password"
+                type="password"
+                autoComplete="new-password"
+                required
+                minLength={8}
+                label={labels.confirmPasswordLabel ?? "Confirm password"}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+            </div>
+            <label className="flex items-start gap-2.5 text-[13px] text-text-primary">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={consentRequired}
+                onChange={(event) => setConsentRequired(event.target.checked)}
+                required
+              />
+              <span>{labels.consentRequiredLabel}</span>
+            </label>
+            {errorCode ? (
+              <p className="text-sm text-text-warning" role="alert">
+                {labels[errorCode] ?? labels.genericErrorLabel}
+              </p>
+            ) : null}
+            <Button type="submit" className="h-11 w-full">
+              {labels.continueLabel ?? labels.signUpSubmitLabel ?? "Create account"}
+            </Button>
+          </form>
+
+          <p className="text-center text-[13px] text-text-secondary">
+            {labels.signInPrompt ?? "Already have an account?"}{" "}
+            <Link
+              href="/sign-in"
+              className="font-semibold text-fill-accent hover:opacity-80"
+            >
+              {labels.signInLinkShort ?? "Sign in"}
+            </Link>
+          </p>
+        </>
       ) : null}
-      {stepLabel ? (
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-label">
+
+      {step !== "account" && stepLabel ? (
+        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
           {stepLabel}
         </p>
       ) : null}
 
-      {step === "account" ? (
-        <form className="flex flex-col gap-3" onSubmit={goToDetails}>
-          <Select
-            id="sign-up-role"
-            required={roleOptions.length > 0}
-            disabled={roleOptions.length === 0}
-            aria-label={labels.roleLabel ?? "role"}
-            label={labels.roleLabel}
-            value={role}
-            options={roleOptions}
-            onChange={(event) => setRole(event.target.value as SignUpRole)}
-          />
-          <Input
-            id="sign-up-email"
-            type="email"
-            autoComplete="email"
-            required
-            aria-label={labels.emailLabel ?? "email"}
-            label={labels.emailLabel}
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-          <Input
-            id="sign-up-password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            aria-label={labels.passwordLabel ?? "password"}
-            label={labels.passwordLabel}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <label className="flex items-start gap-2 text-sm text-text-primary">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={consentRequired}
-              onChange={(event) => setConsentRequired(event.target.checked)}
-              required
-            />
-            <span>{labels.consentRequiredLabel}</span>
-          </label>
-          <label className="flex items-start gap-2 text-sm text-text-secondary">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={consentMarketing}
-              onChange={(event) => setConsentMarketing(event.target.checked)}
-            />
-            <span>{labels.consentMarketingLabel}</span>
-          </label>
-          {errorCode ? (
-            <p className="text-sm text-text-warning" role="alert">
-              {labels[errorCode] ?? labels.genericErrorLabel}
-            </p>
-          ) : null}
-          <Button type="submit">{labels.continueLabel ?? labels.signUpSubmitLabel}</Button>
-        </form>
-      ) : null}
-
       {step === "details" && role === "student" ? (
         <form className="flex flex-col gap-3" onSubmit={(e) => void createAccount(e)}>
-          <Input
-            id="student-full-name"
-            required
-            label={labels.fullNameLabel}
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
-          />
           <Input
             id="student-phone"
             type="tel"
@@ -436,6 +524,15 @@ export function SignUpForm({ labels }: SignUpFormProps) {
             value={referralCode}
             onChange={(event) => setReferralCode(event.target.value)}
           />
+          <label className="flex items-start gap-2 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={consentMarketing}
+              onChange={(event) => setConsentMarketing(event.target.checked)}
+            />
+            <span>{labels.consentMarketingLabel}</span>
+          </label>
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
               {labels[errorCode] ?? labels.genericErrorLabel}
@@ -449,7 +546,7 @@ export function SignUpForm({ labels }: SignUpFormProps) {
             >
               {labels.backLabel}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="flex-1">
               {labels.createAccountLabel ?? labels.signUpSubmitLabel}
             </Button>
           </div>
@@ -458,20 +555,6 @@ export function SignUpForm({ labels }: SignUpFormProps) {
 
       {step === "details" && role === "company" ? (
         <form className="flex flex-col gap-3" onSubmit={(e) => void createAccount(e)}>
-          <Input
-            id="company-name"
-            required
-            label={labels.companyNameLabel}
-            value={companyName}
-            onChange={(event) => setCompanyName(event.target.value)}
-          />
-          <Input
-            id="company-contact-name"
-            required
-            label={labels.contactNameLabel}
-            value={contactName}
-            onChange={(event) => setContactName(event.target.value)}
-          />
           <Input
             id="company-phone"
             type="tel"
@@ -519,6 +602,15 @@ export function SignUpForm({ labels }: SignUpFormProps) {
             onChange={(event) => setHiringNeeds(event.target.value)}
             rows={3}
           />
+          <label className="flex items-start gap-2 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={consentMarketing}
+              onChange={(event) => setConsentMarketing(event.target.checked)}
+            />
+            <span>{labels.consentMarketingLabel}</span>
+          </label>
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
               {labels[errorCode] ?? labels.genericErrorLabel}
@@ -532,7 +624,7 @@ export function SignUpForm({ labels }: SignUpFormProps) {
             >
               {labels.backLabel}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="flex-1">
               {labels.createAccountLabel ?? labels.signUpSubmitLabel}
             </Button>
           </div>
@@ -614,15 +706,6 @@ export function SignUpForm({ labels }: SignUpFormProps) {
             {labels.finishLabel ?? labels.signUpSubmitLabel}
           </Button>
         </div>
-      ) : null}
-
-      {labels.signInLinkLabel ? (
-        <Link
-          href="/sign-in"
-          className="text-sm text-text-secondary hover:text-text-primary"
-        >
-          {labels.signInLinkLabel}
-        </Link>
       ) : null}
     </div>
   );
