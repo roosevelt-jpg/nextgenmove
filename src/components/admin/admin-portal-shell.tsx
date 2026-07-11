@@ -307,16 +307,6 @@ export function AdminPortalShell({
               )}
             </button>
             <Link
-              href="/admin/settings"
-              className="hidden min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary sm:inline-flex"
-              aria-label="Settings"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
-                <circle cx="8" cy="8" r="2.25" />
-                <path d="M8 1.75v1.5M8 12.75v1.5M1.75 8h1.5M12.75 8h1.5M3.4 3.4l1.06 1.06M11.54 11.54l1.06 1.06M3.4 12.6l1.06-1.06M11.54 4.46l1.06-1.06" />
-              </svg>
-            </Link>
-            <Link
               href="/admin/account"
               className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
               aria-label="Account"
