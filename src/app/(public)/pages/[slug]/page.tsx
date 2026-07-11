@@ -1,9 +1,25 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SectionEyebrow } from "@/components/ui";
 import {
   getPublishedCmsPageBySlug,
   getSiteSettings,
 } from "@/lib/collections/site-settings";
+import { buildCmsPageMetadata } from "@/lib/public/site-metadata";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const [page, settings] = await Promise.all([
+    getPublishedCmsPageBySlug(slug),
+    getSiteSettings(),
+  ]);
+  if (!page) return {};
+  return buildCmsPageMetadata(page, settings);
+}
 
 export default async function CmsPageRoute({
   params,

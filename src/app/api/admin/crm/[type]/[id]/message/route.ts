@@ -7,7 +7,7 @@ import {
   logActivity,
   unauthorizedResponse,
 } from "@/lib/admin/session";
-import { sendViaSendGrid } from "@/lib/email/sendgrid";
+import { sendRawEmail } from "@/lib/email/send";
 import { sendSms, sendWhatsApp } from "@/lib/sms/twilio";
 import {
   clientIpFromRequest,
@@ -79,12 +79,18 @@ export async function POST(
       if (!email.includes("@")) {
         return NextResponse.json({ error: "missing_email" }, { status: 400 });
       }
-      await sendViaSendGrid({
+      const sent = await sendRawEmail({
         to: email,
         subject: body.subject?.trim() || "Message from Venturo",
         html: `<p>${body.body.replace(/\n/g, "<br/>")}</p>`,
         text: body.body,
       });
+      if (!sent.sent) {
+        return NextResponse.json(
+          { error: sent.reason ?? "email_failed" },
+          { status: 502 },
+        );
+      }
       providerId = email;
     } else if (body.channel === "sms") {
       if (!phone) {

@@ -5,6 +5,7 @@ import type {
   SiteSettingsDocument,
   SocialLink,
 } from "@/types/cms";
+import { isCmsPageInFooter, isCmsPageInHeader } from "@/lib/public/nav";
 
 /** Normalize legacy Record socialLinks and array form into SocialLink[]. */
 export function normalizeSocialLinks(raw: unknown): SocialLink[] {
@@ -61,18 +62,26 @@ export async function getPublishedCmsPageBySlug(
   return { id: doc.id, ...(doc.data() as Omit<CmsPageDocument, "id">) };
 }
 
-export async function listNavCmsPages(): Promise<CmsPageDocument[]> {
+async function listPublishedCmsPages(): Promise<CmsPageDocument[]> {
   const snapshot = await adminDb
     .collection("cms_pages")
     .where("status", "==", "published")
     .get();
 
-  return snapshot.docs
-    .map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<CmsPageDocument, "id">),
-    }))
-    .filter((page) => Boolean(page.showInNav));
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<CmsPageDocument, "id">),
+  }));
+}
+
+export async function listNavCmsPages(): Promise<CmsPageDocument[]> {
+  const pages = await listPublishedCmsPages();
+  return pages.filter(isCmsPageInHeader);
+}
+
+export async function listFooterCmsPages(): Promise<CmsPageDocument[]> {
+  const pages = await listPublishedCmsPages();
+  return pages.filter(isCmsPageInFooter);
 }
 
 export async function getPublishedCmsFormBySlug(

@@ -1,4 +1,4 @@
-import type { FooterGroup, NavLabels } from "@/types/cms";
+import type { CmsPageDocument, FooterGroup, NavLabels } from "@/types/cms";
 
 export const PUBLIC_ROUTES = {
   about: "/about",
@@ -59,12 +59,31 @@ export function buildDefaultFooterGroups(navLabels: NavLabels = {}): FooterGroup
 export function resolveFooterGroups(
   footerLinks: FooterGroup[] | undefined,
   navLabels: NavLabels,
+  cmsPages: CmsPageDocument[] = [],
 ): FooterGroup[] {
-  if (footerLinks?.length) {
-    return footerLinks;
+  const base = footerLinks?.length
+    ? footerLinks.map((group) => ({
+        ...group,
+        links: [...(group.links ?? [])],
+      }))
+    : buildDefaultFooterGroups(navLabels);
+
+  for (const page of cmsPages) {
+    const groupKey = page.footerGroup;
+    if (!groupKey || groupKey === "none") continue;
+    const group = base.find((item) => item.key === groupKey);
+    if (!group) continue;
+    const href = `/pages/${page.slug}`;
+    const already = group.links.some((link) => link.href === href);
+    if (already) continue;
+    group.links.push({
+      key: `cms-${page.slug}`,
+      href,
+      label: page.navLabel || page.title,
+    });
   }
 
-  return buildDefaultFooterGroups(navLabels);
+  return base;
 }
 
 export function buildHeaderSections(navLabels: NavLabels = {}) {
@@ -95,4 +114,12 @@ export function buildHeaderPrimaryLinks(navLabels: NavLabels = {}) {
       label: navLabels.signIn,
     },
   ] as const;
+}
+
+export function isCmsPageInHeader(page: CmsPageDocument): boolean {
+  return Boolean(page.showInHeader ?? page.showInNav);
+}
+
+export function isCmsPageInFooter(page: CmsPageDocument): boolean {
+  return Boolean(page.footerGroup && page.footerGroup !== "none");
 }

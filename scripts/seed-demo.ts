@@ -775,17 +775,36 @@ async function main() {
     stripUndefined({
       ...home,
       statBlocks: [
-        { label: "Active students", value: "248+" },
-        { label: "Partner employers", value: "60+" },
-        { label: "Avg. time to place", value: "38d" },
-        { label: "Placed this year", value: "120+" },
+        {
+          label: "Active students",
+          value: "0",
+          metric: "active_students",
+          suffix: "+",
+        },
+        {
+          label: "Partner employers",
+          value: "0",
+          metric: "active_companies",
+          suffix: "+",
+        },
+        {
+          label: "Avg. time to place",
+          value: "—",
+          metric: "avg_time_to_place",
+        },
+        {
+          label: "Placed this year",
+          value: "0",
+          metric: "placed_this_year",
+          suffix: "+",
+        },
       ],
       testimonialQuote:
         home.testimonialQuote ||
-        "NextGen Move turned a cold Dubai application into a coached placement in six weeks.",
+        "Venturo turned a cold Dubai application into a coached placement in six weeks.",
       testimonialAttribution:
         home.testimonialAttribution || "Sara K. · Marketing Lead",
-      testimonialBadge: home.testimonialBadge || "Track B",
+      testimonialBadge: home.testimonialBadge || "Placed {year}",
       updatedAt: now,
     }),
     { merge: true },

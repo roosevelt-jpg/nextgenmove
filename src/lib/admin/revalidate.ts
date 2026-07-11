@@ -28,8 +28,9 @@ const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
     "/tracks",
     "/sign-in",
     "/sign-up",
+    "/pages",
   ],
-  cms_pages: ["/pages"],
+  cms_pages: ["/", "/pages"],
   cms_forms: ["/forms"],
 };
 

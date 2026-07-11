@@ -18,11 +18,11 @@ export function StepsSection({ steps, className }: StepsSectionProps) {
             key={`${step.legNumber}-${step.title}`}
             className="rounded-radius border border-border bg-grad-card p-4"
           >
-            <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-text-label">
-              {step.phaseLabel
-                ? `LEG ${String(step.legNumber).padStart(2, "0")} · ${step.phaseLabel}`
-                : `LEG ${String(step.legNumber).padStart(2, "0")}`}
-            </div>
+            {step.phaseLabel ? (
+              <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-text-label">
+                {step.phaseLabel}
+              </div>
+            ) : null}
             <h3 className="mt-2 font-serif text-lg text-text-primary">
               {step.title}
             </h3>

@@ -1,6 +1,21 @@
 export interface StatBlock {
   label: string;
+  /** Manual display value, or fallback when metric is unavailable */
   value: string;
+  /**
+   * When set, homepage replaces `value` with a live Firestore metric.
+   * Use `manual` (or omit) to keep the CMS value as-is.
+   */
+  metric?:
+    | "active_students"
+    | "active_companies"
+    | "placed_this_quarter"
+    | "placed_this_year"
+    | "avg_time_to_place"
+    | "origin_cities"
+    | "manual";
+  /** Optional suffix appended to live metrics (e.g. "+", "%") */
+  suffix?: string;
 }
 
 export interface StepItem {
@@ -49,6 +64,25 @@ export interface AudienceCtaBand {
   ctaHref?: string;
 }
 
+export interface RoutesMarqueeSettings {
+  /** Seconds for one full loop (lower = faster). Default 28. */
+  speedSec?: number;
+  /** ltr = left → right (default), rtl = right → left */
+  direction?: "ltr" | "rtl";
+  /** CSS timing function */
+  easing?: "linear" | "ease" | "ease-in-out";
+  pauseOnHover?: boolean;
+  /** Separator between items, e.g. " · " */
+  separator?: string;
+  /** When false, bar renders static (no animation). Default true. */
+  enabled?: boolean;
+}
+
+export interface RouteMarqueeItem {
+  code?: string;
+  label?: string;
+}
+
 export interface PageHomeDocument {
   eyebrowText?: string;
   headline?: string;
@@ -61,11 +95,14 @@ export interface PageHomeDocument {
   hubLabel?: string;
   originCities?: OriginCity[];
   currentRoutesLabel?: string;
+  /** Editable marquee entries — admin can add/remove any number */
+  currentRoutesItems?: RouteMarqueeItem[];
+  routesMarquee?: RoutesMarqueeSettings;
   boardingPass?: BoardingPassFields;
   globalReachEyebrow?: string;
   globalReachHeadline?: string;
   globalReachBody?: string;
-  corridorChips?: string[];
+  corridorChips?: Array<string | { chip?: string }>;
   itineraryEyebrow?: string;
   itineraryHeadline?: string;
   storiesEyebrow?: string;
@@ -189,6 +226,8 @@ export interface SocialLink {
   url: string;
 }
 
+export type CmsPageFooterGroup = "company" | "talent" | "employers" | "none";
+
 export interface CmsPageDocument {
   id: string;
   slug: string;
@@ -197,8 +236,14 @@ export interface CmsPageDocument {
   headline?: string;
   body?: string;
   status: "draft" | "published";
+  /** @deprecated Prefer showInHeader */
   showInNav?: boolean;
+  showInHeader?: boolean;
+  /** Footer column to list this page under; "none" hides from footer */
+  footerGroup?: CmsPageFooterGroup;
   navLabel?: string;
+  metaTitle?: string;
+  metaDescription?: string;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -228,7 +273,12 @@ export interface CmsFormDocument {
 export interface SiteSettingsDocument {
   siteName?: string;
   tagline?: string;
+  /** Site-wide description used for default SEO / meta description */
+  siteDescription?: string;
   logoUrl?: string;
+  faviconUrl?: string;
+  defaultMetaTitle?: string;
+  defaultMetaDescription?: string;
   contactEmail?: string;
   /** Brand mark when logo image is empty — e.g. "NG" */
   brandMark?: string;

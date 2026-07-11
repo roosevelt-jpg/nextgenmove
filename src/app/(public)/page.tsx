@@ -11,6 +11,13 @@ import {
   getLiveVideoCards,
   getPageHome,
 } from "@/lib/collections/pages";
+import {
+  applyCurrentYearToken,
+  getPublicHomeMetrics,
+  resolveHomeStatBlocks,
+} from "@/lib/public/home-stats";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [page, videoCards, podcastEpisodes] = await Promise.all([
@@ -19,12 +26,19 @@ export default async function HomePage() {
     getLivePodcastEpisodes(),
   ]);
 
+  const metrics = await getPublicHomeMetrics(page?.originCities?.length ?? 0);
+  const statBlocks = resolveHomeStatBlocks(page?.statBlocks, metrics);
+  const testimonialBadge = applyCurrentYearToken(page?.testimonialBadge);
+
+  const talentHref = page?.talentCta?.ctaHref?.trim() || "/sign-up";
+  const companyHref = page?.companyCta?.ctaHref?.trim() || "/pricing";
+
   return (
     <div>
       <AnimatedGlobeHero content={page} />
 
       <section className="page-container pb-2 pt-6">
-        <StatBlocksSection statBlocks={page?.statBlocks} valueTone />
+        <StatBlocksSection statBlocks={statBlocks} valueTone />
       </section>
 
       <HomeGlobalReachSection page={page} />
@@ -54,13 +68,13 @@ export default async function HomePage() {
         <section className="bg-surface-2">
           <div className="page-container py-8 sm:py-10">
             <blockquote className="relative">
-              {page?.testimonialBadge ? (
+              {testimonialBadge ? (
                 <span className="mb-3 inline-block rounded-full bg-surface-1 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-text-label sm:absolute sm:right-0 sm:top-0 sm:mb-0">
-                  {page.testimonialBadge}
+                  {testimonialBadge}
                 </span>
               ) : null}
               {page?.testimonialQuote ? (
-                <p className="max-w-2xl font-serif text-lg leading-snug text-text-primary sm:text-xl md:text-2xl">
+                <p className="max-w-3xl font-serif text-lg leading-snug text-text-primary sm:text-xl md:text-2xl">
                   “{page.testimonialQuote}”
                 </p>
               ) : null}
@@ -93,9 +107,9 @@ export default async function HomePage() {
                   {page.talentCta.body}
                 </p>
               ) : null}
-              {page.talentCta?.ctaLabel && page.talentCta?.ctaHref ? (
+              {page.talentCta?.ctaLabel ? (
                 <Link
-                  href={page.talentCta.ctaHref}
+                  href={talentHref}
                   className="mt-5 inline-flex min-h-11 items-center rounded-radius-sm bg-grad-rouse px-3.5 text-sm font-medium text-on-gradient hover:opacity-90"
                 >
                   {page.talentCta.ctaLabel}
@@ -118,9 +132,9 @@ export default async function HomePage() {
               {page.companyCta?.body ? (
                 <p className="mt-2 text-sm opacity-80">{page.companyCta.body}</p>
               ) : null}
-              {page.companyCta?.ctaLabel && page.companyCta?.ctaHref ? (
+              {page.companyCta?.ctaLabel ? (
                 <Link
-                  href={page.companyCta.ctaHref}
+                  href={companyHref}
                   className="mt-5 inline-flex min-h-11 items-center rounded-radius-sm border border-on-gradient/50 bg-white/15 px-3.5 text-sm font-medium text-on-gradient hover:bg-white/25"
                 >
                   {page.companyCta.ctaLabel}

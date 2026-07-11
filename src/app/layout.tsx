@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
 import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 import { LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n/locales";
+import { buildRootMetadata } from "@/lib/public/site-metadata";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,7 +22,10 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  return buildRootMetadata(settings);
+}
 
 export default async function RootLayout({
   children,

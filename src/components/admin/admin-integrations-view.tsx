@@ -50,6 +50,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   }, []);
 
   const isStripe = connectItem?.id === "stripe";
+  const isResend = connectItem?.id === "resend";
   const isSendGrid = connectItem?.id === "sendgrid";
   const isTwilio = connectItem?.id === "twilio";
 
@@ -73,11 +74,15 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
             ...(publishableKey ? { publishableKey } : {}),
           },
         }
-      : isSendGrid
+      : isResend || isSendGrid
         ? {
             config: {
               fromEmail,
-              fromName: fromName || labels.sendgridDefaultFromName || "Venturo",
+              fromName:
+                fromName ||
+                (isResend
+                  ? labels.resendDefaultFromName || "Venturo"
+                  : labels.sendgridDefaultFromName || "Venturo"),
             },
             secrets: {
               ...(apiKey ? { apiKey } : {}),
@@ -308,29 +313,44 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 <p className="text-xs text-text-muted">{labels.stripeWebhookHelp}</p>
               ) : null}
             </>
-          ) : isSendGrid ? (
+          ) : isResend || isSendGrid ? (
             <>
               <Input
-                id="sendgrid-api-key"
+                id="email-api-key"
                 type="password"
-                label={labels.sendgridApiKey ?? "API key (SG.…)"}
+                label={
+                  isResend
+                    ? (labels.resendApiKey ?? "API key (re_…)")
+                    : (labels.sendgridApiKey ?? "API key (SG.…)")
+                }
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
               />
               <Input
-                id="sendgrid-from-email"
+                id="email-from-email"
                 type="email"
-                label={labels.sendgridFromEmail ?? "From email"}
+                label={
+                  isResend
+                    ? (labels.resendFromEmail ?? "From email")
+                    : (labels.sendgridFromEmail ?? "From email")
+                }
                 value={fromEmail}
                 onChange={(event) => setFromEmail(event.target.value)}
               />
               <Input
-                id="sendgrid-from-name"
-                label={labels.sendgridFromName ?? "From name"}
+                id="email-from-name"
+                label={
+                  isResend
+                    ? (labels.resendFromName ?? "From name")
+                    : (labels.sendgridFromName ?? "From name")
+                }
                 value={fromName}
                 onChange={(event) => setFromName(event.target.value)}
               />
-              {labels.sendgridHelp ? (
+              {isResend && labels.resendHelp ? (
+                <p className="text-xs text-text-muted">{labels.resendHelp}</p>
+              ) : null}
+              {!isResend && labels.sendgridHelp ? (
                 <p className="text-xs text-text-muted">{labels.sendgridHelp}</p>
               ) : null}
             </>

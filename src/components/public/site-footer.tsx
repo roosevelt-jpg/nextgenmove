@@ -1,16 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
-import { getSiteSettings } from "@/lib/collections/site-settings";
+import {
+  getSiteSettings,
+  listFooterCmsPages,
+} from "@/lib/collections/site-settings";
 import { resolveFooterGroups } from "@/lib/public/nav";
 
 export async function SiteFooter() {
-  const settings = await getSiteSettings();
+  const [settings, cmsPages] = await Promise.all([
+    getSiteSettings(),
+    listFooterCmsPages(),
+  ]);
   const navLabels = settings.navLabels ?? {};
-  const groups = resolveFooterGroups(settings.footerLinks, navLabels);
+  const groups = resolveFooterGroups(settings.footerLinks, navLabels, cmsPages);
   const siteName = settings.siteName ?? navLabels.siteName;
   const brandMark = settings.brandMark ?? "";
   const socialLinks = settings.socialLinks ?? [];
   const contactEmail = settings.contactEmail?.trim() ?? "";
+  const description =
+    settings.siteDescription?.trim() || settings.tagline?.trim() || "";
 
   return (
     <footer className="mt-auto border-t border-border bg-bg">
@@ -37,8 +45,8 @@ export async function SiteFooter() {
               <span className="font-serif text-lg text-text-primary">{siteName}</span>
             ) : null}
           </div>
-          {settings.tagline ? (
-            <p className="text-sm text-text-secondary">{settings.tagline}</p>
+          {description ? (
+            <p className="text-sm text-text-secondary">{description}</p>
           ) : null}
           {contactEmail ? (
             <a

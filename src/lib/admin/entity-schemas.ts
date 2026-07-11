@@ -190,9 +190,37 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "ctaSecondaryHref", type: "text", labelKey: "ctaSecondaryHref" },
       { key: "hubLabel", type: "text", labelKey: "hubLabel" },
       { key: "currentRoutesLabel", type: "text", labelKey: "currentRoutesLabel" },
+      {
+        key: "currentRoutesItems",
+        type: "repeatable",
+        labelKey: "currentRoutesItems",
+        fields: [
+          { key: "code", type: "text", labelKey: "routeCode" },
+          { key: "label", type: "text", labelKey: "routeLabel" },
+        ],
+      },
+      {
+        key: "routesMarquee",
+        type: "object",
+        labelKey: "routesMarquee",
+        fields: [
+          { key: "enabled", type: "boolean", labelKey: "marqueeEnabled" },
+          { key: "speedSec", type: "number", labelKey: "marqueeSpeedSec" },
+          { key: "direction", type: "select", labelKey: "marqueeDirection" },
+          { key: "easing", type: "select", labelKey: "marqueeEasing" },
+          { key: "pauseOnHover", type: "boolean", labelKey: "marqueePauseOnHover" },
+          { key: "separator", type: "text", labelKey: "marqueeSeparator" },
+        ],
+      },
       { key: "globalReachEyebrow", type: "text", labelKey: "globalReachEyebrow" },
       { key: "globalReachHeadline", type: "text", labelKey: "globalReachHeadline" },
       { key: "globalReachBody", type: "textarea", labelKey: "globalReachBody" },
+      {
+        key: "corridorChips",
+        type: "repeatable",
+        labelKey: "corridorChips",
+        fields: [{ key: "chip", type: "text", labelKey: "chip" }],
+      },
       {
         key: "boardingPass",
         type: "object",
@@ -251,6 +279,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         fields: [
           { key: "label", type: "text", labelKey: "label" },
           { key: "value", type: "text", labelKey: "value" },
+          {
+            key: "metric",
+            type: "text",
+            labelKey: "metric",
+          },
+          { key: "suffix", type: "text", labelKey: "suffix" },
         ],
       },
       { key: "testimonialQuote", type: "textarea", labelKey: "testimonialQuote" },
@@ -396,7 +430,11 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
     fields: [
       { key: "siteName", type: "text", labelKey: "siteName" },
       { key: "tagline", type: "text", labelKey: "tagline" },
+      { key: "siteDescription", type: "textarea", labelKey: "siteDescription" },
       { key: "logoUrl", type: "image", labelKey: "logoUrl" },
+      { key: "faviconUrl", type: "image", labelKey: "faviconUrl" },
+      { key: "defaultMetaTitle", type: "text", labelKey: "defaultMetaTitle" },
+      { key: "defaultMetaDescription", type: "textarea", labelKey: "defaultMetaDescription" },
       { key: "brandMark", type: "text", labelKey: "brandMark" },
       { key: "contactEmail", type: "text", labelKey: "contactEmail" },
       { key: "timezone", type: "text", labelKey: "timezone" },
@@ -472,8 +510,11 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "eyebrow", type: "text", labelKey: "eyebrow" },
       { key: "headline", type: "text", labelKey: "headline" },
       { key: "body", type: "richtext", labelKey: "body" },
+      { key: "metaTitle", type: "text", labelKey: "metaTitle" },
+      { key: "metaDescription", type: "textarea", labelKey: "metaDescription" },
       { key: "navLabel", type: "text", labelKey: "navLabel" },
-      { key: "showInNav", type: "boolean", labelKey: "showInNav" },
+      { key: "showInHeader", type: "boolean", labelKey: "showInHeader" },
+      { key: "footerGroup", type: "select", labelKey: "footerGroup" },
       { key: "status", type: "select", labelKey: "status" },
     ],
   },
@@ -550,10 +591,14 @@ export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
   articles: { status: "status_article" },
   public_roles: { status: "status_role" },
   content_items: { status: "status_content", type: "type_content" },
-  cms_pages: { status: "status_cms" },
+  cms_pages: { status: "status_cms", footerGroup: "footerGroup" },
   cms_forms: { status: "status_cms" },
   video_cards: { status: "status_content" },
   podcast_episodes: { status: "status_content" },
+  page_home: {
+    direction: "marqueeDirection",
+    easing: "marqueeEasing",
+  },
 };
 
 export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: string }[]> = {
@@ -611,5 +656,20 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
   status_users: [
     { value: "active", label: "active" },
     { value: "suspended", label: "suspended" },
+  ],
+  marqueeDirection: [
+    { value: "ltr", label: "Left → right" },
+    { value: "rtl", label: "Right → left" },
+  ],
+  marqueeEasing: [
+    { value: "linear", label: "Linear" },
+    { value: "ease", label: "Ease" },
+    { value: "ease-in-out", label: "Ease in-out" },
+  ],
+  footerGroup: [
+    { value: "none", label: "footerGroupNone" },
+    { value: "company", label: "footerGroupCompany" },
+    { value: "talent", label: "footerGroupTalent" },
+    { value: "employers", label: "footerGroupEmployers" },
   ],
 };

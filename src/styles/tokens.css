@@ -103,8 +103,8 @@
   /* Button text on gradient CTAs */
   --on-gradient: #ffffff;
 
-  /* Content column — leave excess side area on wide screens (marketing) */
-  --page-max: 56rem; /* 896px — visibly inset on laptop+ */
+  /* Content column — wide marketing canvas (tracks viewport with gutters) */
+  --page-max: 90rem; /* 1440px */
   --page-gutter: var(--space-10); /* 40px desktop */
 
   /* Portal / admin shell — matches prototype .shell (~1180–1200px) */

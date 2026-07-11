@@ -1,6 +1,21 @@
 import type { PageHomeDocument } from "@/types/cms";
 import { SectionEyebrow } from "@/components/ui";
 
+function normalizeChips(
+  chips: PageHomeDocument["corridorChips"],
+): string[] {
+  if (!chips?.length) return [];
+  return chips
+    .map((chip) => {
+      if (typeof chip === "string") return chip.trim();
+      if (chip && typeof chip === "object" && "chip" in chip) {
+        return String((chip as { chip?: string }).chip ?? "").trim();
+      }
+      return "";
+    })
+    .filter(Boolean);
+}
+
 export function HomeGlobalReachSection({
   page,
 }: {
@@ -14,19 +29,20 @@ export function HomeGlobalReachSection({
     return null;
   }
 
-  const hub = (page.hubLabel ?? "DXB").toUpperCase();
-  const chips =
-    page.corridorChips?.filter(Boolean).length
-      ? page.corridorChips.filter(Boolean)
-      : (page.originCities ?? [])
-          .map((city) => city.code)
-          .filter(Boolean)
-          .map((code) => `${code.toUpperCase()} → ${hub}`);
+  const hub = (page.hubLabel ?? "").toUpperCase();
+  const chips = normalizeChips(page.corridorChips).length
+    ? normalizeChips(page.corridorChips)
+    : (page.originCities ?? [])
+        .map((city) => city.code)
+        .filter(Boolean)
+        .map((code) =>
+          hub ? `${code.toUpperCase()} → ${hub}` : code.toUpperCase(),
+        );
 
   return (
     <section className="page-container py-6">
-      <div className="relative overflow-hidden rounded-radius bg-fill-accent px-6 py-8 text-on-accent sm:px-8 sm:py-10">
-        <div className="relative z-[1] max-w-xl space-y-3">
+      <div className="relative overflow-hidden rounded-radius bg-grad-rouse px-6 py-8 text-on-gradient sm:px-8 sm:py-10">
+        <div className="relative z-[1] max-w-3xl space-y-3">
           {page.globalReachEyebrow ? (
             <SectionEyebrow className="text-brand-lavender">
               {page.globalReachEyebrow}
@@ -47,7 +63,7 @@ export function HomeGlobalReachSection({
               {chips.map((chip) => (
                 <span
                   key={chip}
-                  className="rounded-full border border-on-accent/20 bg-on-accent/10 px-3 py-1.5 font-mono text-[11px] tracking-wide text-brand-amber-1"
+                  className="rounded-full border border-on-gradient/25 bg-white/10 px-3 py-1.5 font-mono text-[11px] tracking-wide text-brand-amber-1"
                 >
                   {chip}
                 </span>

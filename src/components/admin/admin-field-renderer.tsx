@@ -184,7 +184,13 @@ export function AdminFieldRenderer({
   }
 
   if (field.type === "repeatable" && field.fields) {
-    const rows = Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+    const rows = Array.isArray(value)
+      ? value.map((row) =>
+          typeof row === "string"
+            ? { chip: row }
+            : ((row as Record<string, unknown>) ?? {}),
+        )
+      : [];
 
     return (
       <fieldset className="space-y-3 rounded-radius border border-border p-3">
@@ -248,7 +254,12 @@ export function AdminFieldRenderer({
   }
 
   if (field.type === "select") {
-    const options = getSelectOptions(field, taxonomies, entityCollection);
+    const options = getSelectOptions(field, taxonomies, entityCollection).map(
+      (option) => ({
+        value: option.value,
+        label: labels[option.label] ?? option.label,
+      }),
+    );
     return (
       <Select
         id={field.key}

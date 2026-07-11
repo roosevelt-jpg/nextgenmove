@@ -1,19 +1,23 @@
 import Link from "next/link";
 import type { OriginCity, PageHomeDocument } from "@/types/cms";
+import { RoutesMarqueeBar } from "@/components/public/routes-marquee";
 import styles from "./animated-globe-hero.module.css";
 
 const HUB = { x: 250, y: 250 } as const;
 const VIEW = 500;
 
-/** Fallback layout matching NextGenMove_Homepage_Animated_Globe.html */
-const DEFAULT_CITIES: OriginCity[] = [
-  { code: "AMS", label: "Amsterdam", initials: "SK", x: 80, y: 140, avatarX: 80, avatarY: 105 },
-  { code: "BER", label: "Berlin", initials: "JL", x: 70, y: 250, avatarX: 55, avatarY: 250 },
-  { code: "CAI", label: "Cairo", initials: "AM", x: 90, y: 360, avatarX: 78, avatarY: 398 },
-  { code: "WAW", label: "Warsaw", initials: "PV", x: 420, y: 120, avatarX: 430, avatarY: 85 },
-  { code: "PAR", label: "Paris", initials: "LB", x: 440, y: 260, avatarX: 465, avatarY: 260 },
-  { code: "LIS", label: "Lisbon", initials: "CN", x: 410, y: 380, avatarX: 425, avatarY: 405 },
+/** Geometric layout slots only — no demo people/initials. Positions from CMS when set. */
+const LAYOUT_SLOTS: Array<Pick<OriginCity, "x" | "y" | "avatarX" | "avatarY">> = [
+  { x: 80, y: 140, avatarX: 80, avatarY: 105 },
+  { x: 70, y: 250, avatarX: 55, avatarY: 250 },
+  { x: 90, y: 360, avatarX: 78, avatarY: 398 },
+  { x: 420, y: 120, avatarX: 430, avatarY: 85 },
+  { x: 440, y: 260, avatarX: 465, avatarY: 260 },
+  { x: 410, y: 380, avatarX: 425, avatarY: 405 },
 ];
+
+const DEFAULT_PRIMARY_HREF = "/careers-talent";
+const DEFAULT_SECONDARY_HREF = "/request-talent";
 
 export interface AnimatedGlobeHeroProps {
   content: PageHomeDocument | null;
@@ -27,7 +31,7 @@ function initialsFromLabel(label: string, code: string): string {
   if (parts[0] && parts[0].length >= 2) {
     return parts[0].slice(0, 2).toUpperCase();
   }
-  return (code || "NG").slice(0, 2).toUpperCase();
+  return (code || "").slice(0, 2).toUpperCase();
 }
 
 function avatarPosition(city: OriginCity): { ax: number; ay: number } {
@@ -49,27 +53,24 @@ function routePath(city: OriginCity): string {
 }
 
 function resolveCities(content: PageHomeDocument | null): OriginCity[] {
-  const hub = (content?.hubLabel ?? "DXB").toUpperCase();
+  const hub = (content?.hubLabel ?? "").toUpperCase();
   const raw = (content?.originCities ?? []).filter(
-    (c) => c.code && c.code.toUpperCase() !== hub,
+    (c) => c.code && (!hub || c.code.toUpperCase() !== hub),
   );
 
-  if (!raw.length) return DEFAULT_CITIES;
+  if (!raw.length) return [];
 
   return raw.map((city, i) => {
-    const byCode = DEFAULT_CITIES.find((d) => d.code === city.code);
-    const byIndex = DEFAULT_CITIES[i % DEFAULT_CITIES.length]!;
-    const layout = byCode ?? byIndex;
-    const useDefaultLayout = typeof city.avatarX !== "number";
+    const layout = LAYOUT_SLOTS[i % LAYOUT_SLOTS.length]!;
+    const hasCoords = typeof city.x === "number" && typeof city.y === "number";
 
     return {
       ...city,
       initials:
         city.initials?.trim() ||
-        layout.initials ||
         initialsFromLabel(city.label || "", city.code || ""),
-      x: useDefaultLayout ? layout.x : city.x,
-      y: useDefaultLayout ? layout.y : city.y,
+      x: hasCoords ? city.x : layout.x,
+      y: hasCoords ? city.y : layout.y,
       avatarX: city.avatarX ?? layout.avatarX,
       avatarY: city.avatarY ?? layout.avatarY,
     };
@@ -78,11 +79,16 @@ function resolveCities(content: PageHomeDocument | null): OriginCity[] {
 
 export function AnimatedGlobeHero({ content }: AnimatedGlobeHeroProps) {
   const cities = resolveCities(content);
-  const hubLabel = content?.hubLabel ?? "DXB";
+  const hubLabel = content?.hubLabel?.trim() || "";
   const routeCodes = [
     ...cities.map((c) => c.code).filter(Boolean),
-    hubLabel,
+    ...(hubLabel ? [hubLabel] : []),
   ];
+
+  const primaryHref =
+    content?.ctaPrimaryHref?.trim() || DEFAULT_PRIMARY_HREF;
+  const secondaryHref =
+    content?.ctaSecondaryHref?.trim() || DEFAULT_SECONDARY_HREF;
 
   return (
     <section className={styles.heroBand}>
@@ -105,13 +111,13 @@ export function AnimatedGlobeHero({ content }: AnimatedGlobeHeroProps) {
             <p className={styles.subtext}>{content.subtext}</p>
           ) : null}
           <div className={styles.ctas}>
-            {content?.ctaPrimaryLabel && content?.ctaPrimaryHref ? (
-              <Link href={content.ctaPrimaryHref} className={styles.btnPrimary}>
+            {content?.ctaPrimaryLabel ? (
+              <Link href={primaryHref} className={styles.btnPrimary}>
                 {content.ctaPrimaryLabel}
               </Link>
             ) : null}
-            {content?.ctaSecondaryLabel && content?.ctaSecondaryHref ? (
-              <Link href={content.ctaSecondaryHref} className={styles.btnGhost}>
+            {content?.ctaSecondaryLabel ? (
+              <Link href={secondaryHref} className={styles.btnGhost}>
                 {content.ctaSecondaryLabel}
               </Link>
             ) : null}
@@ -119,7 +125,7 @@ export function AnimatedGlobeHero({ content }: AnimatedGlobeHeroProps) {
 
           {content?.boardingPass?.routeLabel ||
           content?.boardingPass?.passengerValue ? (
-            <div className={styles.boardingPass} aria-label="Boarding pass">
+            <div className={styles.boardingPass}>
               {content.boardingPass.routeLabel ? (
                 <p className={styles.boardingRoute}>
                   {content.boardingPass.routeLabel}
@@ -208,18 +214,22 @@ export function AnimatedGlobeHero({ content }: AnimatedGlobeHeroProps) {
               );
             })}
 
-            <circle className={styles.hubRing} cx={HUB.x} cy={HUB.y} r={8} />
-            <circle
-              className={styles.hubRing}
-              cx={HUB.x}
-              cy={HUB.y}
-              r={8}
-              style={{ animationDelay: "-1.1s" }}
-            />
-            <circle className={styles.hubDot} cx={HUB.x} cy={HUB.y} r={6} />
-            <text className={styles.dxbLabel} x={HUB.x} y={HUB.y + 28}>
-              {hubLabel}
-            </text>
+            {hubLabel ? (
+              <>
+                <circle className={styles.hubRing} cx={HUB.x} cy={HUB.y} r={8} />
+                <circle
+                  className={styles.hubRing}
+                  cx={HUB.x}
+                  cy={HUB.y}
+                  r={8}
+                  style={{ animationDelay: "-1.1s" }}
+                />
+                <circle className={styles.hubDot} cx={HUB.x} cy={HUB.y} r={6} />
+                <text className={styles.dxbLabel} x={HUB.x} y={HUB.y + 28}>
+                  {hubLabel}
+                </text>
+              </>
+            ) : null}
 
             {cities.map((city, i) => {
               const { ax, ay } = avatarPosition(city);
@@ -256,21 +266,10 @@ export function AnimatedGlobeHero({ content }: AnimatedGlobeHeroProps) {
         </div>
       </div>
 
-      {content?.currentRoutesLabel || routeCodes.length ? (
-        <div className={styles.routeBar}>
-          <div className={styles.routeBarInner}>
-            {content?.currentRoutesLabel ? (
-              <span className={styles.routeBarLabel}>
-                {content.currentRoutesLabel}
-              </span>
-            ) : null}
-            {routeCodes.length ? (
-              <span className={styles.routeBarCodes}>
-                {routeCodes.join(" · ")}
-              </span>
-            ) : null}
-          </div>
-        </div>
+      {content?.currentRoutesLabel ||
+      content?.currentRoutesItems?.length ||
+      routeCodes.length ? (
+        <RoutesMarqueeBar content={content} fallbackCodes={routeCodes} />
       ) : null}
     </section>
   );

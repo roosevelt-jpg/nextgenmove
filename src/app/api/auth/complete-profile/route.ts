@@ -25,6 +25,15 @@ export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
 
+    const { getVerificationStatus } = await import("@/lib/auth/verification");
+    const verification = await getVerificationStatus(user.uid);
+    if (!verification.emailVerified || !verification.phoneVerified) {
+      return NextResponse.json(
+        { error: "verification_required" },
+        { status: 403 },
+      );
+    }
+
     if (user.role === "student") {
       if (!body.photoUrl) {
         return NextResponse.json({ error: "photo_required" }, { status: 400 });

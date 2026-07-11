@@ -10,6 +10,13 @@ import {
   registerAccount,
   signInWithEmail,
 } from "@/lib/auth-client";
+import {
+  clearRecaptcha,
+  confirmPhoneCode,
+  startPhoneVerification,
+  toE164Phone,
+} from "@/lib/auth/phone-otp-client";
+import type { ConfirmationResult } from "firebase/auth";
 import type { AuthLabels, SignUpRole } from "@/types/user";
 
 export interface SignUpFormProps {
@@ -17,7 +24,7 @@ export interface SignUpFormProps {
   onRoleChange?: (role: SignUpRole) => void;
 }
 
-type Step = "account" | "details" | "media";
+type Step = "account" | "details" | "verify" | "media";
 
 interface TaxonomyOption {
   value: string;
@@ -84,6 +91,14 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
 
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [emailOtp, setEmailOtp] = useState("");
+  const [smsOtp, setSmsOtp] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phoneConfirmation, setPhoneConfirmation] =
+    useState<ConfirmationResult | null>(null);
+  const [smsSent, setSmsSent] = useState(false);
 
   useEffect(() => {
     void fetch("/api/taxonomies")
@@ -153,7 +168,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
       ? labels.stepAccount
       : step === "details"
         ? labels.stepDetails
-        : labels.stepMedia;
+        : step === "verify"
+          ? labels.stepVerify ?? "Verify"
+          : labels.stepMedia;
 
   const goToDetails = (event: React.FormEvent) => {
     event.preventDefault();
@@ -237,13 +254,148 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
       await establishSession(idToken);
 
       setUid(result.uid);
-      setStep("media");
+      setStep("verify");
+      // Kick off email OTP resend in case register-time send failed
+      void fetch("/api/auth/verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send_email_otp" }),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "register_failed";
       setErrorCode(message);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const refreshVerification = async () => {
+    const response = await fetch("/api/auth/verification");
+    if (!response.ok) return;
+    const payload = (await response.json()) as {
+      emailVerified?: boolean;
+      phoneVerified?: boolean;
+    };
+    setEmailVerified(Boolean(payload.emailVerified));
+    setPhoneVerified(Boolean(payload.phoneVerified));
+  };
+
+  const sendEmailOtp = async () => {
+    setErrorCode(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send_email_otp" }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(payload?.error ?? "email_otp_send_failed");
+      }
+    } catch (error) {
+      setErrorCode(
+        error instanceof Error ? error.message : "email_otp_send_failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    setErrorCode(null);
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/auth/verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify_email_otp", code: emailOtp }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(payload?.error ?? "otp_invalid");
+      }
+      setEmailVerified(true);
+      await refreshVerification();
+    } catch (error) {
+      setErrorCode(error instanceof Error ? error.message : "otp_invalid");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const sendSmsOtp = async () => {
+    setErrorCode(null);
+    setIsSubmitting(true);
+    try {
+      const e164 = toE164Phone(phone);
+      const confirmation = await startPhoneVerification(e164);
+      setPhoneConfirmation(confirmation);
+      setSmsSent(true);
+    } catch (error) {
+      clearRecaptcha();
+      const message =
+        error instanceof Error ? error.message : "sms_otp_send_failed";
+      setErrorCode(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const verifySmsCode = async () => {
+    setErrorCode(null);
+    if (!phoneConfirmation) {
+      setErrorCode("sms_not_sent");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const e164 = await confirmPhoneCode(phoneConfirmation, smsOtp);
+      const response = await fetch("/api/auth/verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm_phone", phoneE164: e164 }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(payload?.error ?? "phone_verify_failed");
+      }
+      setPhoneVerified(true);
+      clearRecaptcha();
+      await refreshVerification();
+    } catch (error) {
+      setErrorCode(
+        error instanceof Error ? error.message : "phone_verify_failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const continueAfterVerify = async () => {
+    setErrorCode(null);
+    const response = await fetch("/api/auth/verification");
+    if (!response.ok) {
+      setErrorCode("verification_required");
+      return;
+    }
+    const payload = (await response.json()) as {
+      emailVerified?: boolean;
+      phoneVerified?: boolean;
+    };
+    setEmailVerified(Boolean(payload.emailVerified));
+    setPhoneVerified(Boolean(payload.phoneVerified));
+    if (!payload.emailVerified || !payload.phoneVerified) {
+      setErrorCode("verification_required");
+      return;
+    }
+    setStep("media");
   };
 
   const finishSignup = async () => {
@@ -752,6 +904,136 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             </Button>
           </div>
         </form>
+      ) : null}
+
+      {step === "verify" && uid ? (
+        <div className="flex flex-col gap-5">
+          <header className="space-y-1.5">
+            <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
+              {stepLabel}
+            </p>
+            <h2 className="font-serif text-xl font-semibold text-text-primary">
+              {labels.verifyTitle ?? "Verify your email and phone"}
+            </h2>
+            {labels.verifySubtitle ? (
+              <p className="text-sm text-text-secondary">{labels.verifySubtitle}</p>
+            ) : (
+              <p className="text-sm text-text-secondary">
+                Enter the code we emailed you, then confirm your phone with the
+                SMS code from Firebase.
+              </p>
+            )}
+          </header>
+
+          <div className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-text-primary">
+                {labels.verifyEmailHeading ?? "Email verification"}
+              </p>
+              {emailVerified ? (
+                <span className="font-mono text-[10px] uppercase tracking-wider text-text-success">
+                  {labels.verifiedLabel ?? "Verified"}
+                </span>
+              ) : null}
+            </div>
+            {!emailVerified ? (
+              <>
+                <Input
+                  label={labels.emailOtpLabel ?? "Email code"}
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting}
+                    onClick={() => void sendEmailOtp()}
+                  >
+                    {labels.resendEmailOtpLabel ?? "Resend email code"}
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={isSubmitting || emailOtp.trim().length < 4}
+                    onClick={() => void verifyEmailCode()}
+                  >
+                    {labels.verifyEmailButton ?? "Verify email"}
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </div>
+
+          <div className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-text-primary">
+                {labels.verifyPhoneHeading ?? "Phone verification"}
+              </p>
+              {phoneVerified ? (
+                <span className="font-mono text-[10px] uppercase tracking-wider text-text-success">
+                  {labels.verifiedLabel ?? "Verified"}
+                </span>
+              ) : null}
+            </div>
+            <p className="text-xs text-text-muted">
+              {labels.verifyPhoneHint ??
+                "Use international format (e.g. +9715…)."}{" "}
+              <span className="font-mono text-text-secondary">{phone}</span>
+            </p>
+            {!phoneVerified ? (
+              <>
+                {smsSent ? (
+                  <Input
+                    label={labels.smsOtpLabel ?? "SMS code"}
+                    value={smsOtp}
+                    onChange={(e) => setSmsOtp(e.target.value)}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                  />
+                ) : null}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting}
+                    onClick={() => void sendSmsOtp()}
+                  >
+                    {smsSent
+                      ? (labels.resendSmsOtpLabel ?? "Resend SMS")
+                      : (labels.sendSmsOtpLabel ?? "Send SMS code")}
+                  </Button>
+                  {smsSent ? (
+                    <Button
+                      type="button"
+                      disabled={isSubmitting || smsOtp.trim().length < 4}
+                      onClick={() => void verifySmsCode()}
+                    >
+                      {labels.verifyPhoneButton ?? "Verify phone"}
+                    </Button>
+                  ) : null}
+                </div>
+                <div id="signup-recaptcha" />
+              </>
+            ) : null}
+          </div>
+
+          {errorCode ? (
+            <p className="text-sm text-text-warning" role="alert">
+              {labels[errorCode] ?? errorCode}
+            </p>
+          ) : null}
+
+          <Button
+            type="button"
+            disabled={isSubmitting || !emailVerified || !phoneVerified}
+            onClick={() => void continueAfterVerify()}
+            className="w-full"
+          >
+            {labels.continueAfterVerifyLabel ?? "Continue to profile media"}
+          </Button>
+        </div>
       ) : null}
 
       {step === "media" && uid ? (

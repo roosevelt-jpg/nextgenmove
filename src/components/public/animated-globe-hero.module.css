@@ -303,7 +303,6 @@
 
 .routeBarInner {
   width: 100%;
-  max-width: 56rem;
   max-width: var(--page-max);
   margin-left: auto;
   margin-right: auto;

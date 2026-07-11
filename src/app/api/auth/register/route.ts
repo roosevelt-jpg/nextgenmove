@@ -127,6 +127,8 @@ export async function POST(request: Request) {
           displayName,
           photoUrl: null,
           phone,
+          emailVerified: false,
+          phoneVerified: false,
           createdAt: now,
           lastLoginAt: null,
           status: "active",
@@ -211,23 +213,19 @@ export async function POST(request: Request) {
       const { notifyAccountCreated, notifyWelcomeCredits } = await import(
         "@/lib/email/notify"
       );
-      const { appBaseUrl } = await import("@/lib/billing/stripe");
       void notifyAccountCreated({
         userId: uid,
         role: body.role,
         request,
       });
 
-      // Branded verification link (SendGrid) — fire-and-forget
+      // Email OTP via Resend — fire-and-forget (client can resend on verify step)
       try {
-        const verifyUrl = await adminAuth.generateEmailVerificationLink(email, {
-          url: `${appBaseUrl(request)}/sign-in`,
-          handleCodeInApp: false,
-        });
-        const { notifyEmailVerification } = await import("@/lib/email/notify");
-        void notifyEmailVerification({
-          userId: uid,
-          verifyUrl,
+        const { issueEmailOtp } = await import("@/lib/auth/verification");
+        void issueEmailOtp({
+          uid,
+          email,
+          displayName,
           request,
         });
       } catch {
@@ -264,7 +262,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         uid,
         role: body.role,
-        nextStep: "media",
+        nextStep: "verify",
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

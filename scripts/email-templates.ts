@@ -43,9 +43,23 @@ export const EMAIL_TEMPLATES = [
       "Hi {{displayName}},\n\nWelcome to {{siteName}}.\nDashboard: {{dashboardUrl}}\n",
   }),
   tpl({
+    id: "email_otp",
+    name: "Email OTP",
+    description: "Six-digit code to verify email during signup.",
+    subject: "Your {{siteName}} verification code",
+    preferenceKey: null,
+    category: "security",
+    htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
+<p style="margin:0 0 16px;">Your verification code is:</p>
+<p style="margin:0 0 16px;font-size:28px;letter-spacing:0.2em;font-weight:700;">{{otpCode}}</p>
+<p style="margin:0;font-size:13px;color:#6b6478;">This code expires in 10 minutes. If you did not create an account, you can ignore this message.</p>`,
+    textBody:
+      "Hi {{displayName}},\n\nYour verification code is: {{otpCode}}\n\nIt expires in 10 minutes.\n",
+  }),
+  tpl({
     id: "email_verification",
     name: "Email verification",
-    description: "Verify email ownership.",
+    description: "Verify email ownership (link-based).",
     subject: "Verify your email for {{siteName}}",
     preferenceKey: null,
     category: "security",
