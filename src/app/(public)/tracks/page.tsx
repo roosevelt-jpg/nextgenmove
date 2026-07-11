@@ -49,7 +49,7 @@ export default async function TracksPage() {
         <StatBlocksSection statBlocks={statBlocks} valueTone />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="mx-auto grid w-full max-w-3xl gap-4 lg:grid-cols-2">
         {page?.trackABody ? (
           <Card className="h-full">
             <CardBody className="space-y-4 p-5 sm:p-6">

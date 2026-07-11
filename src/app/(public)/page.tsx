@@ -89,7 +89,8 @@ export default async function HomePage() {
       )}
 
       {(page?.talentCta || page?.companyCta) && (
-        <section className="page-section grid gap-3 md:grid-cols-2">
+        <section className="page-section">
+          <div className="mx-auto grid w-full max-w-3xl gap-3 md:grid-cols-2">
           {page?.talentCta?.title || page?.talentCta?.ctaLabel ? (
             <div className="rounded-radius border border-border bg-grad-card p-6 sm:p-7">
               {page.talentCta?.eyebrow ? (
@@ -139,6 +140,7 @@ export default async function HomePage() {
               ) : null}
             </div>
           ) : null}
+          </div>
         </section>
       )}
     </div>
