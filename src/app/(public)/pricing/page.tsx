@@ -44,7 +44,7 @@ export default async function PricingPage() {
         ) : null}
       </header>
 
-      <div className="mx-auto grid w-full max-w-3xl gap-4 lg:grid-cols-2">
+      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 md:grid-cols-2">
         {showTrackA ? (
           <Card className="h-full">
             <CardBody className="flex h-full flex-col space-y-5 p-5 sm:p-6">

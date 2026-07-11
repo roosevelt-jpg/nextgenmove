@@ -25,15 +25,15 @@ export function StatBlocksSection({
 
   return (
     <section className={className}>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {statBlocks.map((block, index) => (
           <div
             key={`${block.label}-${block.value}`}
-            className="rounded-radius border border-border bg-grad-card px-5 py-5"
+            className="min-w-0 rounded-radius border border-border bg-grad-card px-3 py-4 sm:px-5 sm:py-5"
           >
             <div
               className={cn(
-                "font-serif text-3xl font-semibold",
+                "font-serif text-2xl font-semibold sm:text-3xl",
                 valueTone
                   ? VALUE_TONES[index % VALUE_TONES.length]
                   : "text-text-primary",
@@ -41,7 +41,7 @@ export function StatBlocksSection({
             >
               {block.value}
             </div>
-            <div className="mt-2 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
+            <div className="mt-2 font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-text-muted sm:text-[11px]">
               {block.label}
             </div>
           </div>

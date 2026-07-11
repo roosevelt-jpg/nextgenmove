@@ -12,11 +12,11 @@ export function StepsSection({ steps, className }: StepsSectionProps) {
 
   return (
     <section className={className}>
-      <ol className="grid gap-4 md:grid-cols-3">
+      <ol className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {steps.map((step, index) => (
           <li
             key={`${step.legNumber}-${step.title}`}
-            className="relative overflow-hidden rounded-radius border border-border bg-grad-card p-5 sm:p-6"
+            className="relative min-w-0 overflow-hidden rounded-radius border border-border bg-grad-card p-5 sm:p-6"
           >
             <div
               aria-hidden

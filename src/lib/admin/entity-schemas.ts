@@ -318,6 +318,18 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
           { key: "ctaHref", type: "text", labelKey: "ctaHref" },
         ],
       },
+      {
+        key: "rolesCta",
+        type: "object",
+        labelKey: "rolesCta",
+        fields: [
+          { key: "eyebrow", type: "text", labelKey: "eyebrow" },
+          { key: "title", type: "text", labelKey: "title" },
+          { key: "body", type: "textarea", labelKey: "body" },
+          { key: "ctaLabel", type: "text", labelKey: "ctaLabel" },
+          { key: "ctaHref", type: "text", labelKey: "ctaHref" },
+        ],
+      },
     ],
   },
   page_about: {

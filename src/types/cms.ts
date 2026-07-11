@@ -116,6 +116,8 @@ export interface PageHomeDocument {
   testimonialBadge?: string;
   talentCta?: AudienceCtaBand;
   companyCta?: AudienceCtaBand;
+  /** Third homepage audience CTA (e.g. open roles) */
+  rolesCta?: AudienceCtaBand;
   statBlocks?: StatBlock[];
   steps?: StepItem[];
 }

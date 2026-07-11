@@ -298,16 +298,23 @@ const PAGE_HOME = {
   talentCta: {
     eyebrow: "For talent",
     title: "Your seat is waiting.",
-    body: "Build your profile, get matched, and relocate with a coach on the route.",
+    body: "Free to join. Earn your first credits on welcome.",
     ctaLabel: "Get started",
     ctaHref: "/sign-up",
   },
   companyCta: {
     eyebrow: "For companies",
     title: "A pool, pre-flown.",
-    body: "Browse vetted talent or let us source and coach the match for you.",
+    body: "Every candidate is pre-screened and coached before you see them.",
     ctaLabel: "View plans",
     ctaHref: "/pricing",
+  },
+  rolesCta: {
+    eyebrow: "Open seats",
+    title: "Roles, ready now.",
+    body: "Browse live openings across corridors — visa-ready paths included.",
+    ctaLabel: "Browse roles",
+    ctaHref: "/careers-talent",
   },
   statBlocks: [
     {
