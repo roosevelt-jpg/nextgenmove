@@ -12,10 +12,12 @@ export function SignUpPageClient({
   labels,
   siteName,
   brandMark,
+  logoUrl,
 }: {
   labels: AuthLabels;
   siteName: string;
   brandMark: string;
+  logoUrl?: string | null;
 }) {
   const [panel, setPanel] = useState<AuthPanel>("signUpCompany");
 
@@ -24,6 +26,7 @@ export function SignUpPageClient({
       labels={labels}
       siteName={siteName}
       brandMark={brandMark}
+      logoUrl={logoUrl}
       panel={panel}
     >
       <SignUpForm

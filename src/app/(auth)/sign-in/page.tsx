@@ -24,6 +24,7 @@ export default async function SignInPage() {
       labels={labels}
       siteName={settings.siteName || "Venturo"}
       brandMark={settings.brandMark || "V"}
+      logoUrl={settings.logoUrl || null}
       panel="signIn"
     >
       <Suspense fallback={null}>

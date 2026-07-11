@@ -8,19 +8,72 @@ export interface AuthSplitShellProps {
   labels: Record<string, string | undefined>;
   siteName: string;
   brandMark: string;
+  logoUrl?: string | null;
   panel?: AuthPanel;
   children: React.ReactNode;
+}
+
+function BrandMark({
+  siteName,
+  brandMark,
+  logoUrl,
+  variant,
+}: {
+  siteName: string;
+  brandMark: string;
+  logoUrl?: string | null;
+  variant: "light" | "dark";
+}) {
+  const name = siteName || "Venturo";
+  const mark = brandMark || "V";
+
+  if (logoUrl) {
+    return (
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logoUrl}
+          alt={name}
+          className="h-9 w-auto max-w-[10rem] object-contain"
+        />
+        <span className="sr-only">{name}</span>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <span
+        className={
+          variant === "light"
+            ? "flex h-8 w-8 items-center justify-center rounded-radius-sm bg-white/20 text-[12px] font-bold tracking-tight"
+            : "flex h-8 w-8 items-center justify-center rounded-radius-sm bg-bg-purple text-[12px] font-bold text-fill-accent"
+        }
+      >
+        {mark}
+      </span>
+      <span
+        className={
+          variant === "light"
+            ? "font-serif text-[1.125rem] font-semibold"
+            : "font-serif text-[1.125rem] font-semibold text-text-primary"
+        }
+      >
+        {name}
+      </span>
+    </>
+  );
 }
 
 export function AuthSplitShell({
   labels,
   siteName,
   brandMark,
+  logoUrl,
   panel = "signIn",
   children,
 }: AuthSplitShellProps) {
   const name = siteName || "Venturo";
-  const mark = brandMark || "V";
 
   const quote =
     panel === "signUpCompany"
@@ -73,10 +126,12 @@ export function AuthSplitShell({
     <div className="flex min-h-screen w-full bg-bg">
       <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[image:var(--grad-horizon)] p-10 text-white lg:flex">
         <Link href="/" className="relative z-10 flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-white/20 text-[12px] font-bold tracking-tight">
-            {mark}
-          </span>
-          <span className="font-serif text-[1.125rem] font-semibold">{name}</span>
+          <BrandMark
+            siteName={name}
+            brandMark={brandMark}
+            logoUrl={logoUrl}
+            variant="light"
+          />
         </Link>
 
         <blockquote className="relative z-10 max-w-md">
@@ -101,12 +156,12 @@ export function AuthSplitShell({
       <div className="flex w-full flex-col justify-center px-6 py-10 sm:px-10 lg:w-1/2 lg:px-16">
         <div className="mx-auto w-full max-w-[420px]">
           <Link href="/" className="mb-8 flex items-center gap-2.5 lg:mb-10">
-            <span className="flex h-8 w-8 items-center justify-center rounded-radius-sm bg-bg-purple text-[12px] font-bold text-fill-accent">
-              {mark}
-            </span>
-            <span className="font-serif text-[1.125rem] font-semibold text-text-primary">
-              {name}
-            </span>
+            <BrandMark
+              siteName={name}
+              brandMark={brandMark}
+              logoUrl={logoUrl}
+              variant="dark"
+            />
           </Link>
           {children}
         </div>

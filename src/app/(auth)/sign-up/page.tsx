@@ -22,6 +22,7 @@ export default async function SignUpPage() {
       labels={labels}
       siteName={settings.siteName || "Venturo"}
       brandMark={settings.brandMark || "V"}
+      logoUrl={settings.logoUrl || null}
     />
   );
 }
