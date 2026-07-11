@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "seed": "tsx scripts/seed.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
+    "purge:demo": "tsx scripts/purge-demo-data.ts",
     "verify:rbac": "tsx scripts/verify-rbac.ts"
   },
   "dependencies": {
