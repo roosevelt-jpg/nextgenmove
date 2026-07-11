@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AdminEntityModal } from "@/components/admin/admin-entity-modal";
+import { AdminCrmImportModal } from "@/components/admin/admin-crm-import-modal";
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Button, DataTable, EmptyState, Input, Modal, Tabs, Textarea } from "@/components/ui";
@@ -86,6 +87,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   const [messageSending, setMessageSending] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [viewAsLoading, setViewAsLoading] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const loadOverview = async () => {
     const response = await fetch("/api/admin/crm/overview");
@@ -546,6 +548,11 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         {labels.subtitle ? (
           <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>
         ) : null}
+        <div className="pt-1">
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            {labels.importContacts ?? "Import CSV / Excel"}
+          </Button>
+        </div>
       </header>
 
       <Tabs
@@ -1042,6 +1049,18 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
           }}
         />
       ) : null}
+
+      <AdminCrmImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        labels={labels}
+        onImported={() => {
+          void loadOverview();
+          if (tab === "companies" || tab === "students") {
+            void loadRows(tab);
+          }
+        }}
+      />
     </div>
   );
 }
