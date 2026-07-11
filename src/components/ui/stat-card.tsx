@@ -19,7 +19,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-radius border border-border bg-surface-1 px-3.5 py-3",
+        "rounded-radius border border-border bg-grad-card px-3.5 py-3",
         className,
       )}
     >

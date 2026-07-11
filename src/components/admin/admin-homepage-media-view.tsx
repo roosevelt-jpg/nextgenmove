@@ -119,7 +119,7 @@ export function AdminHomepageMediaView({
         {labels.liveCount ?? "live"})
       </p>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-[14.5px] font-bold text-text-primary">
             {labels.videosTitle ?? "Video cards"}
@@ -133,7 +133,7 @@ export function AdminHomepageMediaView({
             <li
               key={item.id}
               className={cn(
-                "flex flex-wrap items-center gap-3 rounded-radius border border-border bg-surface-1 px-3 py-2.5",
+                "flex flex-wrap items-center gap-3 rounded-radius border border-border bg-grad-card px-3 py-2.5",
                 item.status !== "live" && "opacity-60",
               )}
             >
@@ -173,7 +173,7 @@ export function AdminHomepageMediaView({
         </ul>
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-[14.5px] font-bold text-text-primary">
             {labels.podcastTitle ?? "Podcast episodes"}
@@ -186,7 +186,7 @@ export function AdminHomepageMediaView({
           {podcasts.map((item) => (
             <li
               key={item.id}
-              className="flex flex-wrap items-center gap-3 rounded-radius border border-border bg-surface-1 px-3 py-2.5"
+              className="flex flex-wrap items-center gap-3 rounded-radius border border-border bg-grad-card px-3 py-2.5"
             >
               <div
                 className={cn(
@@ -224,7 +224,7 @@ export function AdminHomepageMediaView({
         </ul>
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-2 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <h2 className="mb-2 text-[14px] font-bold text-text-primary">
           {labels.connectTitle ?? "How this connects to the public site"}
         </h2>

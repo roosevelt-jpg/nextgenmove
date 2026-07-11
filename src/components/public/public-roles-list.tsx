@@ -45,7 +45,7 @@ export function PublicRolesList({ roles, labels }: PublicRolesListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-radius border border-border bg-surface-1 p-3 md:flex-row md:items-center">
+      <div className="flex flex-col gap-3 rounded-radius border border-border bg-grad-card p-3 md:flex-row md:items-center">
         <input
           type="search"
           value={query}
@@ -55,7 +55,7 @@ export function PublicRolesList({ roles, labels }: PublicRolesListProps) {
           className="min-w-0 flex-1 rounded-radius border-0 bg-transparent px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
         />
         <select
-          className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm"
+          className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm"
           value={sector}
           aria-label={labels.filterSector ?? "sector"}
           onChange={(event) => setSector(event.target.value)}
@@ -68,7 +68,7 @@ export function PublicRolesList({ roles, labels }: PublicRolesListProps) {
           ))}
         </select>
         <select
-          className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm"
+          className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm"
           value={location}
           aria-label={labels.filterLocation ?? "location"}
           onChange={(event) => setLocation(event.target.value)}
@@ -86,7 +86,7 @@ export function PublicRolesList({ roles, labels }: PublicRolesListProps) {
         {filteredRoles.map((role) => (
           <li
             key={role.id}
-            className="rounded-radius border border-border bg-surface-1 p-5"
+            className="rounded-radius border border-border bg-grad-card p-5"
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0 flex-1">

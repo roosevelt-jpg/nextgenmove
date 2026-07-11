@@ -11,6 +11,7 @@ export interface UserDocument {
   displayName: string;
   photoUrl: string | null;
   phone?: string | null;
+  preferredLocale?: string | null;
   notificationPreferences?: Record<string, boolean>;
   createdAt: Timestamp;
   lastLoginAt: Timestamp | null;

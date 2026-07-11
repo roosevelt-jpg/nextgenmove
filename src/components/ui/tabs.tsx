@@ -66,7 +66,7 @@ export function Tabs({
               disabled={tab.disabled}
               onClick={() => selectTab(tab.id)}
               className={cn(
-                "rounded-t-radius px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                "min-h-11 rounded-t-radius px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                 isActive
                   ? "border-b-2 border-fill-primary text-text-primary"
                   : "text-text-muted hover:text-text-secondary",

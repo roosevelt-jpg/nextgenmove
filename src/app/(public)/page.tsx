@@ -77,14 +77,14 @@ export default async function HomePage() {
       {(page?.talentCta || page?.companyCta) && (
         <section className="page-section grid gap-3 md:grid-cols-2">
           {page?.talentCta?.title || page?.talentCta?.ctaLabel ? (
-            <div className="rounded-radius bg-brand-lavender p-5">
+            <div className="rounded-radius border border-border bg-grad-card p-6 sm:p-7">
               {page.talentCta?.eyebrow ? (
                 <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-text-label">
                   {page.talentCta.eyebrow}
                 </p>
               ) : null}
               {page.talentCta?.title ? (
-                <h3 className="font-serif text-lg text-text-primary sm:text-xl">
+                <h3 className="font-serif text-xl text-text-primary sm:text-2xl">
                   {page.talentCta.title}
                 </h3>
               ) : null}
@@ -96,7 +96,7 @@ export default async function HomePage() {
               {page.talentCta?.ctaLabel && page.talentCta?.ctaHref ? (
                 <Link
                   href={page.talentCta.ctaHref}
-                  className="mt-4 inline-flex rounded-radius-sm bg-fill-primary px-3.5 py-1.5 text-sm font-medium text-on-primary"
+                  className="mt-5 inline-flex min-h-11 items-center rounded-radius-sm bg-grad-rouse px-3.5 text-sm font-medium text-on-gradient hover:opacity-90"
                 >
                   {page.talentCta.ctaLabel}
                 </Link>
@@ -104,14 +104,14 @@ export default async function HomePage() {
             </div>
           ) : null}
           {page?.companyCta?.title || page?.companyCta?.ctaLabel ? (
-            <div className="rounded-radius bg-fill-primary p-5 text-on-primary">
+            <div className="rounded-radius bg-grad-rouse p-6 text-on-gradient sm:p-7">
               {page.companyCta?.eyebrow ? (
                 <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-brand-lavender">
                   {page.companyCta.eyebrow}
                 </p>
               ) : null}
               {page.companyCta?.title ? (
-                <h3 className="font-serif text-lg sm:text-xl">
+                <h3 className="font-serif text-xl sm:text-2xl">
                   {page.companyCta.title}
                 </h3>
               ) : null}
@@ -121,7 +121,7 @@ export default async function HomePage() {
               {page.companyCta?.ctaLabel && page.companyCta?.ctaHref ? (
                 <Link
                   href={page.companyCta.ctaHref}
-                  className="mt-4 inline-flex rounded-radius-sm border border-on-primary/40 px-3.5 py-1.5 text-sm font-medium text-on-primary"
+                  className="mt-5 inline-flex min-h-11 items-center rounded-radius-sm border border-on-gradient/50 bg-white/15 px-3.5 text-sm font-medium text-on-gradient hover:bg-white/25"
                 >
                   {page.companyCta.ctaLabel}
                 </Link>

@@ -29,7 +29,7 @@ export function StatBlocksSection({
         {statBlocks.map((block, index) => (
           <div
             key={`${block.label}-${block.value}`}
-            className="rounded-radius border border-border bg-surface-1 px-5 py-5"
+            className="rounded-radius border border-border bg-grad-card px-5 py-5"
           >
             <div
               className={cn(

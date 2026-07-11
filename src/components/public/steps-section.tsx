@@ -16,7 +16,7 @@ export function StepsSection({ steps, className }: StepsSectionProps) {
         {steps.map((step) => (
           <li
             key={`${step.legNumber}-${step.title}`}
-            className="rounded-radius border border-border bg-surface-1 p-4"
+            className="rounded-radius border border-border bg-grad-card p-4"
           >
             <div className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-text-label">
               {step.phaseLabel

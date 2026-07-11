@@ -60,7 +60,7 @@ export function HomePodcastSection({
         ) : null}
       </div>
 
-      <div className="overflow-hidden rounded-radius border border-border bg-surface-1">
+      <div className="overflow-hidden rounded-radius border border-border bg-grad-card">
         {episodes.map((episode) => (
           <div
             key={episode.id}
@@ -105,7 +105,7 @@ export function HomePodcastSection({
             <button
               type="button"
               onClick={() => void toggle(episode)}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fill-primary text-xs text-on-primary"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-grad-rouse text-xs text-on-gradient"
               aria-label={playingId === episode.id ? "Pause" : "Play"}
             >
               {playingId === episode.id ? "❚❚" : "▶"}

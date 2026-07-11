@@ -143,7 +143,7 @@ export function AccountProfileView({
         </div>
       </div>
 
-      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-4">
+      <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
         {labels.personalDetailsTitle ? (
           <h2 className="font-medium text-text-primary">{labels.personalDetailsTitle}</h2>
         ) : null}
@@ -173,7 +173,7 @@ export function AccountProfileView({
         />
       </section>
 
-      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-4">
+      <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
         {labels.passwordTitle ? (
           <h2 className="font-medium text-text-primary">{labels.passwordTitle}</h2>
         ) : null}
@@ -194,7 +194,7 @@ export function AccountProfileView({
       </section>
 
       {notificationKeys.length > 0 ? (
-        <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-4">
+        <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
           {labels.notificationsTitle ? (
             <h2 className="font-medium text-text-primary">{labels.notificationsTitle}</h2>
           ) : null}

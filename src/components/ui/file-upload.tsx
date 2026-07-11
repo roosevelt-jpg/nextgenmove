@@ -133,8 +133,8 @@ export function FileUpload({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-radius border-2 border-dashed border-border bg-surface-1 px-6 py-8 text-center transition-colors",
-          isDragging && "border-border-accent bg-surface-2",
+          "flex cursor-pointer flex-col items-center justify-center rounded-radius border-2 border-dashed border-border bg-grad-card px-6 py-8 text-center transition-colors",
+          isDragging && "border-border-accent",
           (disabled || isUploading) && "cursor-not-allowed opacity-50",
         )}
       >
@@ -161,7 +161,7 @@ export function FileUpload({
             aria-valuemax={100}
           >
             <div
-              className="h-full bg-fill-primary transition-all duration-150"
+              className="h-full bg-grad-rouse transition-all duration-150"
               style={{ width: `${progress}%` }}
             />
           </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ProgramLeversDocument, WayToEarn } from "@/types/cms";
 import type { PendingRequestItem } from "@/lib/admin/dashboard";
+import { AdminPromoteModal } from "@/components/admin/admin-promote-modal";
 import { Button, Input } from "@/components/ui";
 
 interface AdminLeversViewProps {
@@ -12,13 +13,19 @@ interface AdminLeversViewProps {
 export function AdminLeversView({ labels }: AdminLeversViewProps) {
   const [levers, setLevers] = useState<ProgramLeversDocument | null>(null);
   const [pending, setPending] = useState<PendingRequestItem[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [stages, setStages] = useState<{ id: string; name: string }[]>([]);
+  const [promoteItem, setPromoteItem] = useState<PendingRequestItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const load = async () => {
-    const [leversRes, pendingRes] = await Promise.all([
+    const [leversRes, pendingRes, companiesRes, stagesRes] = await Promise.all([
       fetch("/api/admin/levers"),
       fetch("/api/admin/pending-requests"),
+      fetch("/api/admin/crm/companies"),
+      fetch("/api/admin/data/pipeline_stages"),
     ]);
     if (leversRes.ok) {
       const payload = (await leversRes.json()) as {
@@ -31,6 +38,27 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         items: PendingRequestItem[];
       };
       setPending(payload.items ?? []);
+    }
+    if (companiesRes.ok) {
+      const payload = (await companiesRes.json()) as {
+        items?: Array<{ id: string; name?: string }>;
+        rows?: Array<{ id: string; name?: string }>;
+      };
+      const list = payload.items ?? payload.rows ?? [];
+      setCompanies(
+        list.map((c) => ({ id: c.id, name: c.name || c.id })),
+      );
+    }
+    if (stagesRes.ok) {
+      const payload = (await stagesRes.json()) as {
+        items: Array<{ id: string; name?: string }>;
+      };
+      setStages(
+        (payload.items ?? []).map((s) => ({
+          id: s.id,
+          name: s.name || s.id,
+        })),
+      );
     }
   };
 
@@ -83,11 +111,26 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   };
 
   const resolvePending = async (item: PendingRequestItem, action: string) => {
-    await fetch(`/api/admin/pending-requests/${item.source}/${item.id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
-    });
+    setActionError(null);
+    if (item.source === "role_interest_submissions" && action === "approve") {
+      setPromoteItem(item);
+      return;
+    }
+    const response = await fetch(
+      `/api/admin/pending-requests/${item.source}/${item.id}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      },
+    );
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setActionError(payload?.error ?? "action_failed");
+      return;
+    }
     await load();
   };
 
@@ -134,10 +177,15 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
       </header>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-radius border border-border bg-surface-1 p-4">
+        <section className="rounded-radius border border-border bg-grad-card p-4">
           <h2 className="mb-3 text-[14px] font-bold text-text-primary">
             {labels.pendingTitle ?? "Pending requests"}
           </h2>
+          {actionError ? (
+            <p className="mb-2 text-sm text-text-warning" role="alert">
+              {labels[actionError] ?? actionError}
+            </p>
+          ) : null}
           {pending.length === 0 ? (
             <p className="py-10 text-center text-sm text-text-muted">
               {labels.pendingEmpty ?? "No requests yet."}
@@ -153,7 +201,12 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                     <p className="text-sm font-medium text-text-primary">
                       {item.title}
                     </p>
-                    <p className="text-[12px] text-text-secondary">{item.subtitle}</p>
+                    <p className="text-[12px] text-text-secondary">
+                      {item.subtitle}
+                      {item.createdAt
+                        ? ` · ${new Date(item.createdAt).toLocaleString()}`
+                        : ""}
+                    </p>
                   </div>
                   <div className="flex gap-1">
                     <Button
@@ -161,7 +214,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                       variant="outline"
                       onClick={() => void resolvePending(item, "approve")}
                     >
-                      {labels.approve ?? "Approve"}
+                      {item.source === "role_interest_submissions"
+                        ? labels.promote ?? "Promote"
+                        : labels.approve ?? "Approve"}
                     </Button>
                     <Button
                       size="sm"
@@ -177,7 +232,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           )}
         </section>
 
-        <section className="rounded-radius border border-border bg-surface-1 p-4">
+        <section className="rounded-radius border border-border bg-grad-card p-4">
           <h2 className="mb-3 text-[14px] font-bold text-text-primary">
             {labels.summaryTitle ?? "Program levers"}
           </h2>
@@ -195,7 +250,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         </section>
       </div>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-5">
+      <section className="rounded-radius border border-border bg-grad-card p-5">
         {labels.pricingSectionTitle ? (
           <p className="mb-4 text-xs font-medium uppercase tracking-[0.18em] text-text-label">
             {labels.pricingSectionTitle}
@@ -256,7 +311,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         </div>
       </section>
 
-      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">
+      <section className="space-y-3 rounded-radius border border-border bg-grad-card p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-[14.5px] font-bold text-text-primary">
             {labels.topUpPackagesTitle ?? "Credit top-up packages"}
@@ -354,7 +409,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         ))}
       </section>
 
-      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-5">
+      <section className="space-y-3 rounded-radius border border-border bg-grad-card p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-[14.5px] font-bold text-text-primary">
             {labels.waysToEarnTitle}
@@ -407,6 +462,23 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           {labels[errorCode] ?? errorCode}
         </p>
       ) : null}
+
+      <AdminPromoteModal
+        open={Boolean(promoteItem)}
+        item={promoteItem}
+        labels={{
+          ...labels,
+          promoteTitle: labels.promoteTitle ?? "Promote to pipeline",
+          company: labels.company ?? "Company",
+          stage: labels.stage ?? "Stage",
+          promote: labels.promote ?? "Promote",
+          cancel: labels.cancel ?? "Cancel",
+        }}
+        companies={companies}
+        stages={stages}
+        onClose={() => setPromoteItem(null)}
+        onPromoted={() => void load()}
+      />
     </div>
   );
 }

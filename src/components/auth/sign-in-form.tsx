@@ -12,17 +12,6 @@ export interface SignInFormProps {
   labels: AuthLabels;
 }
 
-function GoogleIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="#EA4335"
-        d="M12 10.2v3.6h5.1c-.2 1.2-1.5 3.6-5.1 3.6-3.1 0-5.6-2.5-5.6-5.6S8.9 6.2 12 6.2c1.8 0 3 .7 3.7 1.4l2.5-2.4C16.7 3.7 14.5 2.7 12 2.7 6.9 2.7 2.7 6.9 2.7 12S6.9 21.3 12 21.3c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.8H12z"
-      />
-    </svg>
-  );
-}
-
 export function SignInForm({ labels }: SignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -75,23 +64,6 @@ export function SignInForm({ labels }: SignInFormProps) {
           <p className="text-sm text-text-secondary">{labels.signInSubtitle}</p>
         ) : null}
       </header>
-
-      <button
-        type="button"
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-radius-sm border border-border bg-surface-1 text-[13px] font-semibold text-text-primary hover:bg-surface-2"
-        onClick={() => setErrorCode("google_coming_soon")}
-      >
-        <GoogleIcon />
-        {labels.continueWithGoogle ?? "Continue with Google"}
-      </button>
-
-      <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-border" />
-        <span className="font-mono text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-          {labels.orDivider ?? "Or"}
-        </span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
 
       <form className="flex flex-col gap-3.5" onSubmit={handleSubmit}>
         <Input

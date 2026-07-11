@@ -71,7 +71,7 @@ export function HomeStoriesSection({
             key={card.id}
             type="button"
             onClick={() => setActive(card)}
-            className="overflow-hidden rounded-radius border border-border bg-surface-1 text-left transition-opacity hover:opacity-95"
+            className="overflow-hidden rounded-radius border border-border bg-grad-card text-left transition-opacity hover:opacity-95"
           >
             <div
               className="relative aspect-[16/10] bg-fill-accent"

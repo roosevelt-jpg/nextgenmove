@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { LiveDateTime } from "@/components/layout/live-date-time";
 
 export type PortalWorkspace = "student" | "employer" | "admin";
 
@@ -116,10 +118,10 @@ export function WorkspacePortalShell({
               key={key}
               href={href}
               className={cn(
-                "flex-1 rounded-full px-2 py-1.5 text-center text-[11px] font-semibold transition-colors",
+                "flex min-h-11 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient transition-opacity",
                 workspace === key
-                  ? "bg-fill-primary text-on-primary"
-                  : "text-text-secondary hover:text-text-primary",
+                  ? "opacity-100 shadow-sm ring-2 ring-white/40"
+                  : "opacity-70 hover:opacity-100",
               )}
             >
               {label}
@@ -143,7 +145,7 @@ export function WorkspacePortalShell({
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "relative flex items-center gap-2.5 rounded-radius px-3 py-2 text-[13px] font-medium transition-colors",
+                  "relative flex min-h-11 items-center gap-2.5 rounded-radius px-3 py-2.5 text-[13px] font-medium transition-colors",
                   active
                     ? "bg-bg-purple text-fill-accent"
                     : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
@@ -162,23 +164,26 @@ export function WorkspacePortalShell({
         </nav>
       </div>
 
-      <div className="space-y-1 border-t border-border px-3 py-3">
+      <div className="space-y-2 border-t border-border px-3 py-3">
+        <div className="px-1 sm:hidden">
+          <LanguageSwitcher />
+        </div>
         <Link
           href={settingsHref}
-          className="flex items-center gap-2 rounded-radius px-3 py-2 text-[12.5px] text-text-secondary hover:bg-surface-2"
+          className="flex min-h-11 items-center gap-2 rounded-radius px-3 py-2 text-[12.5px] text-text-secondary hover:bg-surface-2"
         >
           {labels.globalSettings ?? "Global Settings"}
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-radius px-3 py-2 text-[12.5px] text-text-secondary hover:bg-surface-2"
+          className="flex min-h-11 items-center gap-2 rounded-radius px-3 py-2 text-[12.5px] text-text-secondary hover:bg-surface-2"
         >
           {labels.publicSite ?? "Public site"}
         </Link>
         <button
           type="button"
           onClick={signOut}
-          className="flex w-full items-center gap-2 rounded-radius px-3 py-2 text-left text-[12.5px] text-text-secondary hover:bg-surface-2"
+          className="flex min-h-11 w-full items-center gap-2 rounded-radius px-3 py-2 text-left text-[12.5px] text-text-secondary hover:bg-surface-2"
         >
           {labels.signOut ?? "Sign out"}
         </button>
@@ -188,10 +193,12 @@ export function WorkspacePortalShell({
 
   return (
     <div className="flex min-h-screen w-full bg-bg text-text-primary">
-      <div className="sticky top-0 hidden h-screen shrink-0 md:block">{sidebar}</div>
+      <div className="sticky top-0 hidden h-screen shrink-0 min-[860px]:block">
+        {sidebar}
+      </div>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex min-[860px]:hidden">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
@@ -203,49 +210,57 @@ export function WorkspacePortalShell({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface-1 px-4 md:px-6">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-2 border-b border-border bg-surface-1 px-4 min-[860px]:px-6">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              className="rounded-radius-sm border border-border px-2 py-1 text-sm md:hidden"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-radius-sm border border-border text-sm min-[860px]:hidden"
               onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
             >
               ☰
             </button>
-            <h1 className="text-[15px] font-medium text-text-primary">
+            <h1 className="truncate text-[15px] font-medium text-text-primary">
               {titleLabel}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="inline-flex h-8 items-center gap-1.5 rounded-radius-sm border border-border px-2.5 text-[12px] text-text-secondary"
-              aria-label="Language"
-            >
-              EN
-            </button>
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <LiveDateTime className="mr-1 hidden text-[12px] text-text-secondary min-[860px]:inline" />
+            <LanguageSwitcher className="hidden sm:block" />
             <button
               type="button"
               onClick={toggleTheme}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {dark ? "☀" : "☾"}
             </button>
             <Link
               href={settingsHref}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
+              className="hidden min-h-11 min-w-11 items-center justify-center rounded-radius-sm border border-border text-text-secondary sm:inline-flex"
               aria-label="Settings"
             >
               ⚙
             </Link>
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent">
-              L
-            </span>
+            <Link
+              href={
+                workspace === "admin"
+                  ? "/admin/account"
+                  : workspace === "employer"
+                    ? "/employer/settings"
+                    : "/student/settings"
+              }
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
+              aria-label="Account"
+            >
+              {labels.avatarInitial ?? "V"}
+            </Link>
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-7">{children}</main>
+        <main className="flex-1 px-4 py-6 min-[860px]:px-8 min-[860px]:py-7">
+          {children}
+        </main>
       </div>
     </div>
   );

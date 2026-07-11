@@ -254,6 +254,7 @@ export interface SiteSettingsDocument {
   adminNavLabels?: Record<string, string>;
   adminPageLabels?: Record<string, Record<string, string>>;
   adminNotificationKeys?: string[];
+  localeLabels?: Record<string, string>;
 }
 
 export interface TaxonomyOption {
@@ -270,6 +271,7 @@ export interface TaxonomiesDocument {
   category?: TaxonomyOption[];
   preferredTrack?: TaxonomyOption[];
   articleTag?: TaxonomyOption[];
+  nationality?: TaxonomyOption[];
 }
 
 export interface JobPostingDocument {

@@ -94,7 +94,7 @@ export default async function TracksPage() {
       ) : null}
 
       {page?.caseStudyQuote ? (
-        <blockquote className="rounded-radius-lg border border-border bg-surface-1 p-8">
+        <blockquote className="rounded-radius-lg border border-border bg-grad-card p-8">
           {pageLabels.caseStudyEyebrow ? (
             <p className="mb-3 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-accent">
               {pageLabels.caseStudyEyebrow}

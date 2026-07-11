@@ -33,6 +33,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [matches, setMatches] = useState<EmployerMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [moveError, setMoveError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -152,11 +153,16 @@ export function PipelineView({ labels }: PipelineViewProps) {
   );
 
   const handleMove = async (itemId: string, toColumnId: string) => {
-    await fetch(`/api/employer/matches/${itemId}`, {
+    setMoveError(null);
+    const response = await fetch(`/api/employer/matches/${itemId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stageId: toColumnId }),
     });
+    if (!response.ok) {
+      setMoveError(labels.moveError ?? "Could not move candidate.");
+      return;
+    }
     await loadData();
   };
 
@@ -173,11 +179,17 @@ export function PipelineView({ labels }: PipelineViewProps) {
         </h1>
       </header>
 
+      {moveError ? (
+        <p className="text-sm text-text-warning" role="status">
+          {moveError}
+        </p>
+      ) : null}
+
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((card) => (
           <div
             key={card.key}
-            className="rounded-radius border border-border bg-surface-1 px-4 py-3.5"
+            className="rounded-radius border border-border bg-grad-card px-4 py-3.5"
           >
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
               {card.label}
@@ -194,7 +206,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
         ))}
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[14px] font-semibold text-text-primary">
             {labels.funnelTitle ?? "Hiring funnel, this quarter"}
@@ -224,7 +236,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
         </ul>
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
           {labels.activeTitle ?? "Active candidates"}
         </h2>

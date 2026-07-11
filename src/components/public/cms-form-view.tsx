@@ -46,7 +46,7 @@ export function CmsFormView({ form, labels }: CmsFormViewProps) {
 
   if (success) {
     return (
-      <p className="rounded-radius border border-border bg-surface-1 px-4 py-3 text-sm text-text-primary">
+      <p className="rounded-radius border border-border bg-grad-card px-4 py-3 text-sm text-text-primary">
         {form.successMessage || labels.formSuccess}
       </p>
     );

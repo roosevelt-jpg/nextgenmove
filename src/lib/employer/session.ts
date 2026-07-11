@@ -12,6 +12,8 @@ export interface CompanyDocument {
   userId: string;
   name: string;
   contactEmail: string;
+  contactPhone?: string | null;
+  nationality?: string | null;
   logoUrl: string | null;
   industry: string;
   website: string | null;
@@ -65,6 +67,8 @@ export async function getEmployerSession(): Promise<EmployerSession | null> {
       userId: data.userId ?? user.uid,
       name: data.name ?? "",
       contactEmail: data.contactEmail ?? "",
+      contactPhone: data.contactPhone ?? null,
+      nationality: data.nationality ?? null,
       logoUrl: data.logoUrl ?? null,
       industry: data.industry ?? "",
       website: data.website ?? null,

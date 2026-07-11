@@ -78,6 +78,10 @@ export async function POST(
             body.action === "approve" || body.action === "reject"
               ? FieldValue.serverTimestamp()
               : undefined,
+          resolvedBy:
+            body.action === "approve" || body.action === "reject"
+              ? session.uid
+              : undefined,
         }),
       );
 
@@ -118,6 +122,102 @@ export async function POST(
             source: `topup:${id}`,
             once: true,
           });
+        }
+      }
+
+      // Placement fee: mark student fee as settled on approve.
+      if (
+        body.action === "approve" &&
+        data.type === "placement_fee" &&
+        data.studentId
+      ) {
+        await adminDb
+          .collection("students")
+          .doc(String(data.studentId))
+          .update(
+            stripUndefined({
+              placementFeeStatus: "paid",
+              updatedAt: FieldValue.serverTimestamp(),
+            }),
+          );
+      }
+
+      if (
+        body.action === "reject" &&
+        data.type === "placement_fee" &&
+        data.studentId
+      ) {
+        await adminDb
+          .collection("students")
+          .doc(String(data.studentId))
+          .update(
+            stripUndefined({
+              placementFeeStatus: "waived",
+              updatedAt: FieldValue.serverTimestamp(),
+            }),
+          );
+      }
+
+      // Track A match fee: mark match as billed/waived.
+      if (
+        (body.action === "approve" || body.action === "reject") &&
+        data.type === "match_fee" &&
+        data.matchId
+      ) {
+        await adminDb
+          .collection("matches")
+          .doc(String(data.matchId))
+          .update(
+            stripUndefined({
+              matchFeeStatus: body.action === "approve" ? "billed" : "waived",
+              matchFeeEur: Number(
+                (data.payload as Record<string, unknown> | undefined)
+                  ?.matchFeeEur ?? 0,
+              ),
+              updatedAt: FieldValue.serverTimestamp(),
+            }),
+          );
+      }
+
+      // Sourcing request: link to existing company by email when possible.
+      if (body.action === "approve" && data.type === "sourcing_request") {
+        const payload = (data.payload ?? {}) as Record<string, unknown>;
+        const workEmail = String(payload.workEmail ?? "")
+          .trim()
+          .toLowerCase();
+        let linkedCompanyId = data.companyId
+          ? String(data.companyId)
+          : "";
+        if (!linkedCompanyId && workEmail) {
+          const companies = await adminDb
+            .collection("companies")
+            .where("contactEmail", "==", workEmail)
+            .limit(1)
+            .get();
+          linkedCompanyId = companies.docs[0]?.id ?? "";
+        }
+        if (linkedCompanyId) {
+          await ref.update(
+            stripUndefined({
+              companyId: linkedCompanyId,
+              linkedAt: FieldValue.serverTimestamp(),
+            }),
+          );
+          await adminDb
+            .collection("companies")
+            .doc(linkedCompanyId)
+            .update(
+              stripUndefined({
+                lastSourcingRequestId: id,
+                hiringNeeds: [
+                  String(payload.roleTitleNeeded ?? ""),
+                  String(payload.additionalRequirements ?? ""),
+                ]
+                  .filter(Boolean)
+                  .join(" — "),
+                updatedAt: FieldValue.serverTimestamp(),
+              }),
+            );
         }
       }
     }

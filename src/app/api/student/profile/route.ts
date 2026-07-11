@@ -107,6 +107,19 @@ export async function PATCH(request: Request) {
       }
     }
 
+    if (
+      body.skills !== undefined ||
+      body.currentCity !== undefined ||
+      body.targetCities !== undefined ||
+      body.sector !== undefined ||
+      body.bio !== undefined
+    ) {
+      const { recomputeStudentMatchScores } = await import(
+        "@/lib/matching/recompute"
+      );
+      void recomputeStudentMatchScores(session.studentId);
+    }
+
     return NextResponse.json({
       student,
       profileCompleteness,

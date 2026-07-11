@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminSecurityControls } from "@/components/admin/admin-security-controls";
 import { AdminSingletonEditor } from "@/components/admin/admin-singleton-editor";
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import { getSiteSettings } from "@/lib/collections/site-settings";
@@ -30,7 +31,7 @@ export default async function AdminSiteSettingsPage() {
         ) : null}
       </header>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         {labels.teamMembersTitle ? (
           <h2 className="mb-2 font-medium text-text-primary">{labels.teamMembersTitle}</h2>
         ) : null}
@@ -45,34 +46,18 @@ export default async function AdminSiteSettingsPage() {
         </Link>
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         {labels.securityTitle ? (
           <h2 className="mb-2 font-medium text-text-primary">{labels.securityTitle}</h2>
         ) : null}
-        <dl className="space-y-2 text-sm">
-          <div className="flex justify-between gap-4 border-b border-border py-2">
-            <dt>
-              <p className="font-medium text-text-primary">{labels.require2fa}</p>
-              <p className="text-xs text-text-muted">{labels.require2faHelp}</p>
-            </dt>
-            <dd className="font-medium text-text-secondary">
-              {settings.require2fa ? labels.toggleOn : labels.toggleOff}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4 py-2">
-            <dt>
-              <p className="font-medium text-text-primary">{labels.sessionExpireDays}</p>
-              <p className="text-xs text-text-muted">{labels.sessionExpireHelp}</p>
-            </dt>
-            <dd className="font-medium text-text-secondary">
-              {settings.sessionExpireDays ?? 5}
-            </dd>
-          </div>
-        </dl>
-        <p className="mt-2 text-xs text-text-muted">{labels.securityEditHint}</p>
+        <AdminSecurityControls
+          labels={labels}
+          initialRequire2fa={Boolean(settings.require2fa)}
+          initialSessionExpireDays={Number(settings.sessionExpireDays ?? 5)}
+        />
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         {labels.billingTitle ? (
           <h2 className="mb-2 font-medium text-text-primary">{labels.billingTitle}</h2>
         ) : null}
@@ -90,7 +75,7 @@ export default async function AdminSiteSettingsPage() {
               href={settings.billingManageUrl}
               target="_blank"
               rel="noreferrer"
-              className="rounded-radius-sm border border-fill-primary px-3 py-1.5 text-sm font-medium text-text-primary"
+              className="rounded-radius-sm bg-grad-rouse px-3 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
             >
               {labels.manageBilling}
             </a>

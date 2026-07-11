@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
+import { LocaleProvider } from "@/components/i18n/locale-provider";
+import { LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n/locales";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,18 +22,22 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {};
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jar = await cookies();
+  const initialLocale = normalizeLocale(jar.get(LOCALE_COOKIE)?.value);
+
   return (
     <html
-      lang="en"
+      lang={initialLocale}
+      suppressHydrationWarning
       className={`${inter.variable} ${playfair.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-bg font-sans text-text-primary">
-        {children}
+        <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
       </body>
     </html>
   );

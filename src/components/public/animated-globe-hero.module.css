@@ -2,38 +2,41 @@
   background: var(--grad-horizon);
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .heroInner {
   width: 100%;
-  max-width: 56rem;
   max-width: var(--page-max);
   margin-left: auto;
   margin-right: auto;
-  padding: clamp(1.75rem, 4vw, 2.75rem) var(--page-gutter);
+  padding: clamp(2.25rem, 5.5vw, 4rem) var(--page-gutter) clamp(2rem, 4vw, 3.25rem);
   display: grid;
-  gap: clamp(1rem, 3vw, 1.5rem);
+  gap: clamp(1.25rem, 3vw, 2rem);
   align-items: center;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 900px) {
   .heroInner {
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 1rem;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 1.25rem;
+    min-height: min(70vh, 36rem);
   }
 }
 
 .heroCopy {
   position: relative;
   z-index: 2;
-  max-width: 28rem;
+  max-width: 32rem;
 }
 
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--brand-hero-muted);
@@ -42,26 +45,26 @@
 
 .headline {
   font-family: var(--font-serif);
-  font-size: clamp(1.85rem, 4.2vw, 2.65rem);
-  line-height: 1.15;
+  font-size: clamp(2rem, 4.8vw, 3.1rem);
+  line-height: 1.12;
   color: var(--on-accent);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .headlineEmphasis {
   display: block;
   font-style: italic;
   color: var(--brand-amber-1);
-  font-size: clamp(2.05rem, 4.6vw, 3rem);
+  font-size: clamp(2.15rem, 5vw, 3.25rem);
   margin-top: 0.1rem;
 }
 
 .subtext {
-  max-width: 24rem;
-  font-size: 0.9rem;
+  max-width: 26rem;
+  font-size: 0.95rem;
   line-height: 1.65;
   color: var(--brand-hero-subtext);
-  margin: 1rem 0 1.35rem;
+  margin: 1.1rem 0 1.5rem;
 }
 
 .ctas {
@@ -71,9 +74,13 @@
 }
 
 .btnPrimary {
-  background: var(--surface-1);
-  color: var(--brand-indigo-2);
-  padding: 0.65rem 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  background-image: var(--grad-rouse);
+  color: var(--on-gradient);
+  padding: 0.75rem 1.15rem;
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-weight: 700;
@@ -85,18 +92,23 @@
 }
 
 .btnGhost {
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--on-accent);
-  border: 1px solid rgba(255, 253, 248, 0.4);
-  padding: 0.65rem 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  background-image: var(--grad-rouse);
+  color: var(--on-gradient);
+  border: 0;
+  padding: 0.75rem 1.15rem;
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
   font-weight: 500;
-  transition: background 0.15s ease;
+  opacity: 0.88;
+  transition: opacity 0.15s ease;
 }
 
 .btnGhost:hover {
-  background: rgba(255, 255, 255, 0.14);
+  opacity: 1;
 }
 
 .boardingPass {
@@ -329,6 +341,12 @@
 
   .avatarText {
     font-size: 9px;
+  }
+}
+
+@media (max-width: 400px) {
+  .avatarLabel {
+    display: none;
   }
 }
 

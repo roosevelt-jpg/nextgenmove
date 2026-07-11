@@ -36,7 +36,7 @@ export function CareersList({ jobs, labels }: CareersListProps) {
           </label>
           <select
             id="careers-department-filter"
-            className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm"
+            className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm"
             value={department}
             onChange={(event) => setDepartment(event.target.value)}
           >
@@ -54,7 +54,7 @@ export function CareersList({ jobs, labels }: CareersListProps) {
         {filteredJobs.map((job) => (
           <li
             key={job.id}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-radius border border-border bg-surface-1 px-5 py-4"
+            className="flex flex-wrap items-center justify-between gap-4 rounded-radius border border-border bg-grad-card px-5 py-4"
           >
             <div>
               <h2 className="font-medium text-text-primary">{job.title}</h2>

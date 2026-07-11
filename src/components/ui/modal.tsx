@@ -70,18 +70,22 @@ export function Modal({
         aria-modal="true"
         aria-label={typeof title === "string" ? title : "Dialog"}
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-radius-lg border border-border bg-surface-1 shadow-lg",
+          "relative z-10 flex max-h-[min(90dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-radius-lg border border-border bg-grad-card shadow-lg",
           className,
         )}
       >
         {title ? (
-          <div className="border-b border-border px-6 py-4">
+          <div className="shrink-0 border-b border-border px-4 py-4 sm:px-6">
             <div className="text-lg font-medium text-text-primary">{title}</div>
           </div>
         ) : null}
-        <div className="px-6 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          {children}
+        </div>
         {footer ? (
-          <div className="border-t border-border px-6 py-4">{footer}</div>
+          <div className="shrink-0 border-t border-border px-4 py-4 sm:px-6">
+            {footer}
+          </div>
         ) : null}
       </div>
     </div>,

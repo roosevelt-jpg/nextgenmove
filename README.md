@@ -2,11 +2,11 @@
 
 Next.js App Router + TypeScript + Tailwind + Firebase (Auth, Firestore, Storage).
 
-Canonical product docs (project root):
+Canonical product docs (project root — do not fork copies):
 
-- `NextGenMove_Master_Blueprint.md` — product / engineering blueprint
-- `NextGenMove_Production_Readiness_Audit.md` — production readiness bar (always refer before shipping)
-- `NextGenMove_Brand_Guidelines.html` — design tokens source of truth
+- `NextGenMove_Master_Blueprint.md` — product features & business logic (implemented on **Next.js + Firebase**, not the Postgres/Express sketch in §6)
+- `NextGenMove_Production_Readiness_Audit.md` — production readiness bar
+- Spacing / type scale lives in `src/styles/tokens.css` (4px spacing scale from the sizing spec)
 
 ## Local setup
 

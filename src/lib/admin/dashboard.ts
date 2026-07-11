@@ -39,7 +39,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     const [
       activeCompaniesSnap,
       activeStudentsSnap,
-      openMatchesSnap,
       pendingRequestsSnap,
       newApplicationsSnap,
       newInterestSnap,
@@ -54,7 +53,6 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
         .count()
         .get(),
       adminDb.collection("students").where("status", "==", "active").count().get(),
-      adminDb.collection("matches").count().get(),
       adminDb.collection("requests").where("status", "==", "pending").count().get(),
       adminDb.collection("job_applications").where("status", "==", "new").count().get(),
       adminDb
@@ -100,10 +98,16 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
     const start = quarterStart();
     let placedThisQuarter = 0;
+    let openPipelineMatches = 0;
     const placeDurations: number[] = [];
 
     for (const doc of matchesSnap.docs) {
       const data = doc.data();
+      const stageId = String(data.stageId ?? "");
+      const isTerminal = terminalStageIds.has(stageId);
+      if (!isTerminal) {
+        openPipelineMatches += 1;
+      }
       const updatedAt = toDate(data.updatedAt) ?? toDate(data.createdAt);
       const createdAt = toDate(data.createdAt);
 
@@ -114,13 +118,13 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
           5;
         if (idx >= 0 && idx < 6) {
           monthlyActiveStudents[idx] = (monthlyActiveStudents[idx] ?? 0) + 1;
-          if (terminalStageIds.has(String(data.stageId ?? ""))) {
+          if (isTerminal) {
             monthlyPlaced[idx] = (monthlyPlaced[idx] ?? 0) + 1;
           }
         }
       }
 
-      if (!terminalStageIds.has(String(data.stageId ?? ""))) {
+      if (!isTerminal) {
         continue;
       }
 
@@ -149,7 +153,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     return {
       activeCompanies: activeCompaniesSnap.data().count,
       activeStudents: activeStudentsSnap.data().count,
-      openPipelineMatches: openMatchesSnap.data().count,
+      openPipelineMatches,
       pendingRequestsCount:
         pendingRequestsSnap.data().count +
         newApplicationsSnap.data().count +

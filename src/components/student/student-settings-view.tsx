@@ -143,7 +143,7 @@ export function StudentSettingsView({
         ) : null}
       </section>
 
-      <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-4">
+      <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
         {labels.referralTitle ? (
           <h2 className="font-serif text-xl text-text-primary">{labels.referralTitle}</h2>
         ) : null}
@@ -207,7 +207,7 @@ export function StudentSettingsView({
       </section>
 
       {topUpPackages.length ? (
-        <section className="space-y-3 rounded-radius border border-border bg-surface-1 p-4">
+        <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
           {labels.topUpTitle ? (
             <h2 className="font-serif text-xl text-text-primary">{labels.topUpTitle}</h2>
           ) : null}
@@ -300,36 +300,38 @@ export function StudentSettingsView({
         <Button type="submit">{labels.changePassword}</Button>
       </form>
 
-      <form className="space-y-4" onSubmit={saveNotifications}>
-        {labels.notificationsTitle ? (
-          <h2 className="font-serif text-xl text-text-primary">{labels.notificationsTitle}</h2>
-        ) : null}
-        {notificationKeys.map((key) => (
-          <label key={key} className="flex items-center gap-2 text-sm text-text-primary">
-            <input
-              type="checkbox"
-              checked={Boolean(notificationPreferences[key])}
-              onChange={(event) =>
-                setNotificationPreferences((current) => ({
-                  ...current,
-                  [key]: event.target.checked,
-                }))
-              }
-            />
-            {labels[`notification_${key}`] ?? key}
-          </label>
-        ))}
-        {statusMessage ? (
-          <p className="text-sm text-text-secondary" role="status">
-            {statusMessage}
-          </p>
-        ) : null}
-        <Button type="submit" disabled={isSaving}>
-          {labels.saveNotifications}
-        </Button>
-      </form>
+      {notificationKeys.length ? (
+        <form className="space-y-4" onSubmit={saveNotifications}>
+          {labels.notificationsTitle ? (
+            <h2 className="font-serif text-xl text-text-primary">{labels.notificationsTitle}</h2>
+          ) : null}
+          {notificationKeys.map((key) => (
+            <label key={key} className="flex items-center gap-2 text-sm text-text-primary">
+              <input
+                type="checkbox"
+                checked={Boolean(notificationPreferences[key])}
+                onChange={(event) =>
+                  setNotificationPreferences((current) => ({
+                    ...current,
+                    [key]: event.target.checked,
+                  }))
+                }
+              />
+              {labels[`notification_${key}`] ?? key}
+            </label>
+          ))}
+          {statusMessage ? (
+            <p className="text-sm text-text-secondary" role="status">
+              {statusMessage}
+            </p>
+          ) : null}
+          <Button type="submit" disabled={isSaving}>
+            {labels.saveNotifications}
+          </Button>
+        </form>
+      ) : null}
 
-      <section className="space-y-4 rounded-radius border border-border bg-surface-2 p-5">
+      <section className="space-y-4 rounded-radius border border-border bg-grad-card p-5">
         {labels.dangerZoneTitle ? (
           <h2 className="font-serif text-xl text-text-primary">{labels.dangerZoneTitle}</h2>
         ) : null}

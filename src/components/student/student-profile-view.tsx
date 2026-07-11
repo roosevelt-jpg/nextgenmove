@@ -197,7 +197,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         />
       </div>
 
-      <aside className="space-y-4 rounded-radius border border-border bg-surface-2 p-5">
+      <aside className="space-y-4 rounded-radius border border-border bg-grad-card p-5">
         {labels.documentsTitle ? (
           <h2 className="font-medium text-text-primary">{labels.documentsTitle}</h2>
         ) : null}

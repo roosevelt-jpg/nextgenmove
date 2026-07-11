@@ -47,6 +47,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
   const [location, setLocation] = useState("");
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const loadRows = useCallback(async () => {
     setIsLoading(true);
@@ -100,24 +101,33 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
 
   const shortlist = useCallback(
     async (matchId: string, shortlisted: boolean) => {
-      await fetch(`/api/employer/matches/${matchId}`, {
+      setActionMessage(null);
+      const response = await fetch(`/api/employer/matches/${matchId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shortlisted }),
       });
+      if (!response.ok) {
+        setActionMessage(labels.shortlistError ?? "Could not update shortlist.");
+        return;
+      }
       await loadRows();
     },
-    [loadRows],
+    [labels.shortlistError, loadRows],
   );
 
   const openBrowsed = useCallback(
     async (studentId: string) => {
+      setActionMessage(null);
       const response = await fetch("/api/employer/talent-pool/browse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId }),
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        setActionMessage(labels.browseError ?? "Could not open candidate.");
+        return;
+      }
       const data = (await response.json()) as { matchId?: string };
       if (data.matchId) {
         window.location.href = `/employer/talent-pool/${data.matchId}`;
@@ -125,7 +135,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
       }
       await loadRows();
     },
-    [loadRows],
+    [labels.browseError, loadRows],
   );
 
   if (isLoading) {
@@ -146,9 +156,15 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
         ) : null}
       </header>
 
+      {actionMessage ? (
+        <p className="text-sm text-text-warning" role="status">
+          {actionMessage}
+        </p>
+      ) : null}
+
       <div className="grid gap-3 sm:grid-cols-3">
         {labels.statCandidates ? (
-          <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+          <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
               {labels.statCandidates}
             </p>
@@ -158,7 +174,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
           </div>
         ) : null}
         {labels.statShortlisted ? (
-          <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+          <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
               {labels.statShortlisted}
             </p>
@@ -168,7 +184,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
           </div>
         ) : null}
         {labels.statInterviewing ? (
-          <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+          <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
               {labels.statInterviewing}
             </p>
@@ -179,7 +195,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
         ) : null}
       </div>
 
-      <div className="rounded-radius border border-border bg-surface-1 p-3">
+      <div className="rounded-radius border border-border bg-grad-card p-3">
         {labels.searchPlaceholder ? (
           <Input
             label={labels.searchLabel ?? labels.searchPlaceholder}
@@ -193,7 +209,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterSector}
             <select
-              className="rounded-radius-sm border border-border bg-bg px-2.5 py-1.5 text-sm"
+              className="min-h-11 rounded-radius-sm border border-border bg-bg px-2.5 py-2.5 text-sm"
               value={sector}
               onChange={(event) => setSector(event.target.value)}
             >
@@ -210,7 +226,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterSeniority}
             <select
-              className="rounded-radius-sm border border-border bg-bg px-2.5 py-1.5 text-sm"
+              className="min-h-11 rounded-radius-sm border border-border bg-bg px-2.5 py-2.5 text-sm"
               value={seniority}
               onChange={(event) => setSeniority(event.target.value)}
             >
@@ -227,7 +243,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
           <label className="flex flex-col gap-1 text-sm text-text-secondary">
             {labels.filterLocation}
             <select
-              className="rounded-radius-sm border border-border bg-bg px-2.5 py-1.5 text-sm"
+              className="min-h-11 rounded-radius-sm border border-border bg-bg px-2.5 py-2.5 text-sm"
               value={location}
               onChange={(event) => setLocation(event.target.value)}
             >
@@ -253,7 +269,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
             return (
               <li
                 key={row.matchId}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border bg-surface-1 px-3.5 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border bg-grad-card px-3.5 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent">
@@ -287,7 +303,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
                   {labels.viewProfile ? (
                     <Link
                       href={`/employer/talent-pool/${row.matchId}`}
-                      className="inline-flex items-center justify-center rounded-radius-sm border border-border px-3 py-1.5 text-[12px] font-semibold text-text-primary hover:bg-surface-2"
+                      className="inline-flex min-h-11 items-center justify-center rounded-radius-sm bg-grad-rouse px-3 text-[12px] font-semibold text-on-gradient hover:opacity-90"
                     >
                       {labels.viewProfile}
                     </Link>
@@ -310,9 +326,21 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
             );
           })}
         </ul>
-      ) : labels.emptyState ? (
-        <EmptyState title={labels.emptyState} />
-      ) : null}
+      ) : (
+        <EmptyState
+          title={labels.emptyState ?? "No candidates yet"}
+          action={
+            canBrowse ? undefined : (
+              <Link
+                href="/employer/profile"
+                className="text-sm font-medium text-text-accent hover:underline"
+              >
+                {labels.emptyCta ?? "Complete your company profile"}
+              </Link>
+            )
+          }
+        />
+      )}
 
       {canBrowse ? (
         <section className="space-y-3 border-t border-border pt-6">
@@ -329,7 +357,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
               {browseRows.map((row) => (
                 <li
                   key={row.studentId}
-                  className="rounded-radius border border-dashed border-border bg-surface-1 p-4"
+                  className="rounded-radius border border-dashed border-border bg-grad-card p-4"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>

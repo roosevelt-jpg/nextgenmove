@@ -174,14 +174,14 @@ const PIPELINE_STAGES = [
 ];
 
 const PAGE_HOME = {
-  eyebrowText: "Relocation, engineered",
+  eyebrowText: "Relocation. Engineered.",
   headline: "Your next step,",
   headlineEmphasis: "engineered.",
   subtext:
-    "NextGen Move pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
+    "Venturo pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
   ctaPrimaryLabel: "Explore open roles",
   ctaPrimaryHref: "/careers-talent",
-  ctaSecondaryLabel: "I'm hiring →",
+  ctaSecondaryLabel: "I'm hiring",
   ctaSecondaryHref: "/request-talent",
   hubLabel: "DXB",
   currentRoutesLabel: "Current routes",
@@ -192,8 +192,8 @@ const PAGE_HOME = {
   corridorChips: [
     "AMS → DXB",
     "BER → DXB",
-    "CAI → DXB",
-    "WAW → DXB",
+    "TAI → DXB",
+    "WAR → DXB",
     "PAR → DXB",
     "LIS → DXB",
   ],

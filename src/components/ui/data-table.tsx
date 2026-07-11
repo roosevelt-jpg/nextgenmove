@@ -81,9 +81,9 @@ export function DataTable<T extends Record<string, unknown>>({
   };
 
   return (
-    <div className={cn("w-full overflow-x-auto rounded-radius border border-border", className)}>
-      <table className="w-full min-w-full border-collapse text-left text-sm">
-        <thead className={cn("bg-surface-2", headerClassName)}>
+    <div className={cn("w-full overflow-x-auto rounded-radius border border-border bg-grad-card", className)}>
+      <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
+        <thead className={cn("bg-transparent", headerClassName)}>
           <tr>
             {columns.map((column) => {
               const isSorted = sortKey === column.key;
@@ -100,7 +100,7 @@ export function DataTable<T extends Record<string, unknown>>({
                       : "none"
                   }
                   className={cn(
-                    "px-4 py-3 font-medium text-text-secondary",
+                    "whitespace-nowrap px-4 py-3 font-medium text-text-secondary",
                     column.sortable && "cursor-pointer select-none hover:text-text-primary",
                     column.className,
                   )}
@@ -141,7 +141,10 @@ export function DataTable<T extends Record<string, unknown>>({
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    className={cn("px-4 py-3 text-text-primary", column.className)}
+                    className={cn(
+                      "whitespace-nowrap px-4 py-3 text-text-primary",
+                      column.className,
+                    )}
                   >
                     {column.render
                       ? column.render(row)

@@ -11,24 +11,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
 }
 
-/** Brand Guidelines: primary = Ink; brand = Purple; outline = Ink border. */
+/** Brand Guidelines: Signature CTA = Rouse gradient + white text (all action variants). */
+const gradientAction =
+  "bg-grad-rouse text-on-gradient shadow-sm hover:opacity-90 disabled:opacity-50 border-0";
+
 const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    "bg-fill-primary text-on-primary hover:opacity-90 disabled:opacity-50",
-  brand:
-    "bg-fill-accent text-on-accent hover:opacity-90 disabled:opacity-50",
-  secondary:
-    "bg-fill-accent-strong text-on-accent hover:opacity-90 disabled:opacity-50",
-  ghost:
-    "bg-transparent text-text-primary hover:bg-surface-2 disabled:opacity-50",
-  outline:
-    "border border-fill-primary bg-transparent text-text-primary hover:bg-surface-2 disabled:opacity-50",
+  primary: gradientAction,
+  brand: gradientAction,
+  secondary: gradientAction,
+  outline: gradientAction,
+  ghost: gradientAction,
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  default: "px-3.5 py-1.5 text-sm",
-  sm: "px-2.5 py-1 text-xs",
-  lg: "px-5 py-2.5 text-sm",
+  default: "min-h-11 px-3.5 py-2.5 text-sm",
+  sm: "min-h-9 px-2.5 py-1.5 text-xs",
+  lg: "min-h-12 px-5 py-3 text-sm",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

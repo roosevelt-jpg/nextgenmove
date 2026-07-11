@@ -9,9 +9,18 @@ export interface SessionResponse {
   redirectTo: string;
 }
 
+export interface EducationEntry {
+  institution: string;
+  degree?: string;
+  year?: string;
+}
+
 export interface RegisterStudentProfile {
   fullName: string;
-  phone?: string;
+  phone: string;
+  nationality: string;
+  workExperience: string;
+  education: EducationEntry[];
   sector: string;
   seniority: string;
   currentCity: string;
@@ -27,7 +36,8 @@ export interface RegisterStudentProfile {
 export interface RegisterCompanyProfile {
   companyName: string;
   contactName: string;
-  phone?: string;
+  phone: string;
+  nationality: string;
   industry: string;
   website?: string;
   preferredLocations: string[];

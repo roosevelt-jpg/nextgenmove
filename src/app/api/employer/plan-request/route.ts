@@ -80,6 +80,25 @@ export async function POST(request: Request) {
 
       try {
         const { requestedPlan } = planRequestSchema.parse(await request.json());
+
+        const existingPending = await adminDb
+          .collection("requests")
+          .where("companyId", "==", session.companyId)
+          .where("type", "==", "plan_request")
+          .where("status", "==", "pending")
+          .limit(1)
+          .get();
+
+        if (!existingPending.empty) {
+          return NextResponse.json(
+            {
+              error: "plan_request_already_pending",
+              id: existingPending.docs[0]!.id,
+            },
+            { status: 409 },
+          );
+        }
+
         const requestRef = adminDb.collection("requests").doc();
         const body = { id: requestRef.id };
 

@@ -51,7 +51,7 @@ export function JournalList({ articles, labels }: JournalListProps) {
           <label className="flex flex-col gap-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
             {labels.filterCategory}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm font-normal normal-case tracking-normal text-text-primary"
+              className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm font-normal normal-case tracking-normal text-text-primary"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
             >
@@ -68,7 +68,7 @@ export function JournalList({ articles, labels }: JournalListProps) {
           <label className="flex flex-col gap-1.5 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
             {labels.filterTag}
             <select
-              className="rounded-radius border border-border bg-surface-1 px-3 py-2 text-sm font-normal normal-case tracking-normal text-text-primary"
+              className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm font-normal normal-case tracking-normal text-text-primary"
               value={tag}
               onChange={(event) => setTag(event.target.value)}
             >
@@ -88,7 +88,7 @@ export function JournalList({ articles, labels }: JournalListProps) {
         {filteredArticles.map((article, index) => (
           <li
             key={article.id}
-            className="overflow-hidden rounded-radius border border-border bg-surface-1"
+            className="overflow-hidden rounded-radius border border-border bg-grad-card"
           >
             <Link href={`/journal/${article.slug}`} className="block">
               {article.coverImageUrl ? (

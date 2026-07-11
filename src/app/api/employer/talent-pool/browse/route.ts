@@ -3,12 +3,14 @@ import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { computeMatchScore } from "@/lib/matching/score";
+import { matchDocId } from "@/lib/matching/recompute";
 import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 import {
   getEmployerSession,
   unauthorizedResponse,
 } from "@/lib/employer/session";
+import { getProgramLevers } from "@/lib/collections/pages";
 
 function canBrowsePool(session: NonNullable<Awaited<ReturnType<typeof getEmployerSession>>>) {
   return (
@@ -143,6 +145,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
 
+    const matchId = matchDocId(session.companyId, studentId);
+    const existingById = await adminDb.collection("matches").doc(matchId).get();
+    if (existingById.exists) {
+      return NextResponse.json({
+        matchId,
+        alreadyExists: true,
+      });
+    }
+
     if (!existingSnap.empty) {
       return NextResponse.json({
         matchId: existingSnap.docs[0]!.id,
@@ -174,10 +185,13 @@ export async function POST(request: Request) {
       },
     });
 
-    const matchRef = adminDb.collection("matches").doc();
+    const levers = await getProgramLevers();
+    const matchFeeEur = Number(levers?.trackAMatchFee ?? 200);
+
+    const matchRef = adminDb.collection("matches").doc(matchId);
     await matchRef.set(
       stripUndefined({
-        id: matchRef.id,
+        id: matchId,
         companyId: session.companyId,
         studentId,
         stageId,
@@ -192,7 +206,30 @@ export async function POST(request: Request) {
     );
     await upsertMatchAccess(session.companyId, studentId);
 
-    return NextResponse.json({ matchId: matchRef.id });
+    // Blueprint Track A: one-time match fee tracked as an admin-billable request.
+    if (matchFeeEur > 0) {
+      const feeRef = adminDb.collection("requests").doc();
+      await feeRef.set(
+        stripUndefined({
+          id: feeRef.id,
+          type: "match_fee",
+          companyId: session.companyId,
+          matchId,
+          studentId,
+          payload: {
+            matchId,
+            matchFeeEur,
+            plan: "track_a",
+            companyName: session.company.name,
+            studentId,
+          },
+          status: "pending",
+          createdAt: FieldValue.serverTimestamp(),
+        }),
+      );
+    }
+
+    return NextResponse.json({ matchId });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

@@ -85,7 +85,7 @@ export function KanbanBoard({
           <div
             key={column.id}
             className={cn(
-              "flex min-w-64 flex-1 flex-col rounded-radius border border-border bg-surface-2",
+              "flex min-w-64 flex-1 flex-col rounded-radius border border-border bg-grad-card",
               isDropTarget && "ring-2 ring-border-accent",
               columnClassName,
             )}
@@ -113,7 +113,7 @@ export function KanbanBoard({
                   onDragStart={() => handleDragStart(item.id)}
                   onDragEnd={handleDragEnd}
                   className={cn(
-                    "cursor-grab rounded-radius border border-border bg-surface-1 p-3 text-sm text-text-primary shadow-sm active:cursor-grabbing",
+                    "cursor-grab rounded-radius border border-border bg-grad-card p-3 text-sm text-text-primary shadow-sm active:cursor-grabbing",
                     draggingItemId === item.id && "opacity-50",
                     cardClassName,
                   )}

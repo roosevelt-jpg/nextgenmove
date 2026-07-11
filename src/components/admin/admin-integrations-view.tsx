@@ -28,13 +28,20 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [webhookSecret, setWebhookSecret] = useState("");
   const [fromEmail, setFromEmail] = useState("");
   const [fromName, setFromName] = useState("");
+  const [accountSid, setAccountSid] = useState("");
+  const [authToken, setAuthToken] = useState("");
+  const [fromSms, setFromSms] = useState("");
+  const [fromWhatsApp, setFromWhatsApp] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = async () => {
     const response = await fetch("/api/admin/integrations");
     if (response.ok) {
       const payload = (await response.json()) as { items: IntegrationItem[] };
       setItems(payload.items);
+    } else {
+      setActionMessage(labels.loadError ?? "Could not load integrations.");
     }
   };
 
@@ -44,6 +51,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
 
   const isStripe = connectItem?.id === "stripe";
   const isSendGrid = connectItem?.id === "sendgrid";
+  const isTwilio = connectItem?.id === "twilio";
 
   const connect = async () => {
     if (!connectItem) {
@@ -51,6 +59,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     }
 
     setIsSaving(true);
+    setActionMessage(null);
 
     const body = isStripe
       ? {
@@ -75,10 +84,24 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               ...(fromEmail ? { fromEmail } : {}),
             },
           }
-        : {
-            config: { host: configHost },
-            secrets: apiKey ? { apiKey } : undefined,
-          };
+        : isTwilio
+          ? {
+              config: {
+                fromSms,
+                fromWhatsApp,
+                category: "SMS",
+              },
+              secrets: {
+                ...(accountSid ? { accountSid } : {}),
+                ...(authToken ? { authToken } : {}),
+                ...(fromSms ? { fromSms } : {}),
+                ...(fromWhatsApp ? { fromWhatsApp } : {}),
+              },
+            }
+          : {
+              config: { host: configHost },
+              secrets: apiKey ? { apiKey } : undefined,
+            };
 
     const response = await fetch(`/api/admin/integrations/${connectItem.id}/connect`, {
       method: "POST",
@@ -97,12 +120,36 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       setWebhookSecret("");
       setFromEmail("");
       setFromName("");
+      setAccountSid("");
+      setAuthToken("");
+      setFromSms("");
+      setFromWhatsApp("");
+      setActionMessage(labels.connectSuccess ?? "Connected.");
       await load();
+      return;
     }
+
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    setActionMessage(
+      labels[payload?.error ?? ""] ??
+        labels.connectError ??
+        payload?.error ??
+        "Could not connect.",
+    );
   };
 
   const disconnect = async (id: string) => {
-    await fetch(`/api/admin/integrations/${id}/connect`, { method: "DELETE" });
+    setActionMessage(null);
+    const response = await fetch(`/api/admin/integrations/${id}/connect`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      setActionMessage(labels.disconnectError ?? "Could not disconnect.");
+      return;
+    }
+    setActionMessage(labels.disconnectSuccess ?? "Disconnected.");
     await load();
   };
 
@@ -147,6 +194,12 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
         ) : null}
       </header>
 
+      {actionMessage ? (
+        <p className="text-sm text-text-secondary" role="status">
+          {actionMessage}
+        </p>
+      ) : null}
+
       {items.length === 0 ? (
         <EmptyState title={labels.empty ?? "No integrations configured"} />
       ) : (
@@ -156,7 +209,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
             return (
               <article
                 key={item.id}
-                className="flex flex-col rounded-radius border border-border bg-surface-1 p-4"
+                className="flex flex-col rounded-radius border border-border bg-grad-card p-4"
               >
                 <div className="mb-3 flex items-start justify-between gap-2">
                   <div className="flex h-10 w-10 items-center justify-center rounded-radius-sm bg-bg-purple font-mono text-xs font-bold text-fill-accent">
@@ -279,6 +332,37 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               />
               {labels.sendgridHelp ? (
                 <p className="text-xs text-text-muted">{labels.sendgridHelp}</p>
+              ) : null}
+            </>
+          ) : isTwilio ? (
+            <>
+              <Input
+                id="twilio-account-sid"
+                label={labels.twilioAccountSid ?? "Account SID"}
+                value={accountSid}
+                onChange={(event) => setAccountSid(event.target.value)}
+              />
+              <Input
+                id="twilio-auth-token"
+                type="password"
+                label={labels.twilioAuthToken ?? "Auth token"}
+                value={authToken}
+                onChange={(event) => setAuthToken(event.target.value)}
+              />
+              <Input
+                id="twilio-from-sms"
+                label={labels.twilioFromSms ?? "SMS from number"}
+                value={fromSms}
+                onChange={(event) => setFromSms(event.target.value)}
+              />
+              <Input
+                id="twilio-from-whatsapp"
+                label={labels.twilioFromWhatsApp ?? "WhatsApp from number"}
+                value={fromWhatsApp}
+                onChange={(event) => setFromWhatsApp(event.target.value)}
+              />
+              {labels.twilioHelp ? (
+                <p className="text-xs text-text-muted">{labels.twilioHelp}</p>
               ) : null}
             </>
           ) : (

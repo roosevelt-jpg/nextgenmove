@@ -50,6 +50,11 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [workExperience, setWorkExperience] = useState("");
+  const [education, setEducation] = useState<
+    Array<{ institution: string; degree: string; year: string }>
+  >([{ institution: "", degree: "", year: "" }]);
   const [sector, setSector] = useState("");
   const [seniority, setSeniority] = useState("");
   const [currentCity, setCurrentCity] = useState("");
@@ -75,6 +80,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
   const [sectors, setSectors] = useState<TaxonomyOption[]>([]);
   const [seniorities, setSeniorities] = useState<TaxonomyOption[]>([]);
   const [industries, setIndustries] = useState<TaxonomyOption[]>([]);
+  const [nationalities, setNationalities] = useState<TaxonomyOption[]>([]);
 
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,6 +116,16 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               }))
             : [],
         );
+        setNationalities(
+          Array.isArray(payload.nationality)
+            ? payload.nationality.map(
+                (item: { value: string; label: string }) => ({
+                  value: item.value,
+                  label: item.label,
+                }),
+              )
+            : [],
+        );
       })
       .catch(() => undefined);
   }, []);
@@ -125,6 +141,11 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
   const industryOptions = useMemo(
     () => industries.map((item) => ({ value: item.value, label: item.label })),
     [industries],
+  );
+  const nationalityOptions = useMemo(
+    () =>
+      nationalities.map((item) => ({ value: item.value, label: item.label })),
+    [nationalities],
   );
 
   const stepLabel =
@@ -174,7 +195,16 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
           role === "student"
             ? {
                 fullName: fullName.trim(),
-                phone: phone.trim() || undefined,
+                phone: phone.trim(),
+                nationality,
+                workExperience: workExperience.trim(),
+                education: education
+                  .filter((row) => row.institution.trim())
+                  .map((row) => ({
+                    institution: row.institution.trim(),
+                    degree: row.degree.trim() || undefined,
+                    year: row.year.trim() || undefined,
+                  })),
                 sector,
                 seniority,
                 currentCity: currentCity.trim(),
@@ -192,7 +222,8 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             ? {
                 companyName: companyName.trim(),
                 contactName: contactName.trim(),
-                phone: phone.trim() || undefined,
+                phone: phone.trim(),
+                nationality,
                 industry,
                 website: website.trim() || undefined,
                 preferredLocations: splitList(preferredLocations),
@@ -281,8 +312,8 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               onClick={() => selectRole("student")}
               className={
                 role === "student"
-                  ? "rounded-radius-sm bg-fill-primary px-3 py-3 text-center text-[12.5px] font-semibold text-on-primary"
-                  : "rounded-radius-sm bg-surface-2 px-3 py-3 text-center text-[12.5px] font-semibold text-text-secondary"
+                  ? "rounded-radius-sm bg-grad-rouse px-3 py-3 text-center text-[12.5px] font-semibold text-on-gradient shadow-sm"
+                  : "rounded-radius-sm bg-grad-rouse px-3 py-3 text-center text-[12.5px] font-semibold text-on-gradient opacity-70"
               }
             >
               {labels.roleStudentLabel ?? "I'm looking for a role"}
@@ -292,34 +323,12 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               onClick={() => selectRole("company")}
               className={
                 role === "company"
-                  ? "rounded-radius-sm bg-fill-primary px-3 py-3 text-center text-[12.5px] font-semibold text-on-primary"
-                  : "rounded-radius-sm bg-surface-2 px-3 py-3 text-center text-[12.5px] font-semibold text-text-secondary"
+                  ? "rounded-radius-sm bg-grad-rouse px-3 py-3 text-center text-[12.5px] font-semibold text-on-gradient shadow-sm"
+                  : "rounded-radius-sm bg-grad-rouse px-3 py-3 text-center text-[12.5px] font-semibold text-on-gradient opacity-70"
               }
             >
               {labels.roleCompanyLabel ?? "I'm hiring"}
             </button>
-          </div>
-
-          <button
-            type="button"
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-radius-sm border border-border bg-surface-1 text-[13px] font-semibold text-text-primary hover:bg-surface-2"
-            onClick={() => setErrorCode("google_coming_soon")}
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
-              <path
-                fill="#EA4335"
-                d="M12 10.2v3.6h5.1c-.2 1.2-1.5 3.6-5.1 3.6-3.1 0-5.6-2.5-5.6-5.6S8.9 6.2 12 6.2c1.8 0 3 .7 3.7 1.4l2.5-2.4C16.7 3.7 14.5 2.7 12 2.7 6.9 2.7 2.7 6.9 2.7 12S6.9 21.3 12 21.3c5.5 0 9.1-3.9 9.1-9.3 0-.6-.1-1.1-.2-1.8H12z"
-              />
-            </svg>
-            {labels.continueWithGoogle ?? "Continue with Google"}
-          </button>
-
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-              {labels.orDivider ?? "Or"}
-            </span>
-            <span className="h-px flex-1 bg-border" />
           </div>
 
           <form className="flex flex-col gap-3.5" onSubmit={goToDetails}>
@@ -431,10 +440,102 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
           <Input
             id="student-phone"
             type="tel"
+            required
             label={labels.phoneLabel}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
           />
+          {nationalityOptions.length > 0 ? (
+            <Select
+              id="student-nationality"
+              required
+              label={labels.nationalityLabel ?? "Nationality"}
+              value={nationality}
+              placeholder={labels.nationalityLabel ?? "Nationality"}
+              options={nationalityOptions}
+              onChange={(event) => setNationality(event.target.value)}
+            />
+          ) : (
+            <Input
+              id="student-nationality"
+              required
+              label={labels.nationalityLabel ?? "Nationality"}
+              value={nationality}
+              onChange={(event) => setNationality(event.target.value)}
+            />
+          )}
+          <Textarea
+            id="student-work-experience"
+            required
+            label={labels.workExperienceLabel ?? "Work experience"}
+            value={workExperience}
+            onChange={(event) => setWorkExperience(event.target.value)}
+            rows={3}
+          />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-text-secondary">
+              {labels.educationLabel ?? "Universities / education"}
+            </p>
+            {education.map((row, index) => (
+              <div
+                key={`edu-${index}`}
+                className="grid gap-2 rounded-radius-sm border border-border p-2 sm:grid-cols-3"
+              >
+                <Input
+                  id={`edu-institution-${index}`}
+                  required
+                  label={labels.institutionLabel ?? "Institution"}
+                  value={row.institution}
+                  onChange={(event) =>
+                    setEducation((rows) =>
+                      rows.map((r, i) =>
+                        i === index
+                          ? { ...r, institution: event.target.value }
+                          : r,
+                      ),
+                    )
+                  }
+                />
+                <Input
+                  id={`edu-degree-${index}`}
+                  label={labels.degreeLabel ?? "Degree"}
+                  value={row.degree}
+                  onChange={(event) =>
+                    setEducation((rows) =>
+                      rows.map((r, i) =>
+                        i === index ? { ...r, degree: event.target.value } : r,
+                      ),
+                    )
+                  }
+                />
+                <Input
+                  id={`edu-year-${index}`}
+                  label={labels.yearLabel ?? "Year"}
+                  value={row.year}
+                  onChange={(event) =>
+                    setEducation((rows) =>
+                      rows.map((r, i) =>
+                        i === index ? { ...r, year: event.target.value } : r,
+                      ),
+                    )
+                  }
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setEducation((rows) => [
+                  ...rows,
+                  { institution: "", degree: "", year: "" },
+                ])
+              }
+            >
+              {labels.addEducationLabel ?? "Add education"}
+            </Button>
+          </div>
           {sectorOptions.length > 0 ? (
             <Select
               id="student-sector"
@@ -560,10 +661,30 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
           <Input
             id="company-phone"
             type="tel"
+            required
             label={labels.phoneLabel}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
           />
+          {nationalityOptions.length > 0 ? (
+            <Select
+              id="company-nationality"
+              required
+              label={labels.nationalityLabel ?? "Nationality"}
+              value={nationality}
+              placeholder={labels.nationalityLabel ?? "Nationality"}
+              options={nationalityOptions}
+              onChange={(event) => setNationality(event.target.value)}
+            />
+          ) : (
+            <Input
+              id="company-nationality"
+              required
+              label={labels.nationalityLabel ?? "Nationality"}
+              value={nationality}
+              onChange={(event) => setNationality(event.target.value)}
+            />
+          )}
           {industryOptions.length > 0 ? (
             <Select
               id="company-industry"

@@ -21,6 +21,7 @@ export async function GET() {
       email: data.email ?? user.email ?? "",
       photoUrl: data.photoUrl ?? user.photoUrl ?? null,
       phone: data.phone ?? null,
+      preferredLocale: data.preferredLocale ?? null,
       role: data.role ?? user.role,
       profileComplete: Boolean(data.profileComplete),
       notificationPreferences: data.notificationPreferences ?? {},
@@ -31,6 +32,7 @@ export async function GET() {
 const patchSchema = z.object({
   displayName: z.string().trim().min(1).max(120).optional(),
   phone: z.string().trim().max(40).nullable().optional(),
+  preferredLocale: z.string().trim().min(2).max(16).nullable().optional(),
   photoUrl: z.string().url().nullable().optional(),
   notificationPreferences: z.record(z.string(), z.boolean()).optional(),
   currentPassword: z.string().min(8).optional(),
@@ -51,6 +53,9 @@ export async function PATCH(request: Request) {
 
     if (body.displayName !== undefined) updates.displayName = body.displayName;
     if (body.phone !== undefined) updates.phone = body.phone;
+    if (body.preferredLocale !== undefined) {
+      updates.preferredLocale = body.preferredLocale;
+    }
     if (body.photoUrl !== undefined) updates.photoUrl = body.photoUrl;
     if (body.notificationPreferences !== undefined) {
       updates.notificationPreferences = body.notificationPreferences;

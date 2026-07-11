@@ -66,6 +66,13 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "name", type: "text", labelKey: "name", required: true },
       { key: "contactName", type: "text", labelKey: "contactName" },
       { key: "contactEmail", type: "text", labelKey: "contactEmail", required: true },
+      { key: "contactPhone", type: "text", labelKey: "contactPhone" },
+      {
+        key: "nationality",
+        type: "select",
+        labelKey: "nationality",
+        taxonomyKey: "nationality",
+      },
       { key: "industry", type: "text", labelKey: "industry" },
       { key: "website", type: "text", labelKey: "website" },
       { key: "logoUrl", type: "image", labelKey: "logoUrl" },
@@ -88,6 +95,14 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
     fields: [
       { key: "fullName", type: "text", labelKey: "fullName", required: true },
       { key: "email", type: "text", labelKey: "email", required: true },
+      { key: "phone", type: "text", labelKey: "phone" },
+      {
+        key: "nationality",
+        type: "select",
+        labelKey: "nationality",
+        taxonomyKey: "nationality",
+      },
+      { key: "workExperience", type: "textarea", labelKey: "workExperience" },
       { key: "sector", type: "select", labelKey: "sector", taxonomyKey: "sector" },
       { key: "seniority", type: "select", labelKey: "seniority", taxonomyKey: "seniority" },
       { key: "currentCity", type: "text", labelKey: "currentCity" },

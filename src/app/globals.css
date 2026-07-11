@@ -14,6 +14,7 @@
   --color-text-muted: var(--text-muted);
   --color-fill-primary: var(--fill-primary);
   --color-on-primary: var(--on-primary);
+  --color-on-gradient: var(--on-gradient);
   --color-bg-accent: var(--bg-accent);
   --color-text-accent: var(--text-accent);
   --color-bg-success: var(--bg-success);
@@ -31,6 +32,13 @@
   --radius-radius-lg: var(--radius-lg);
   --max-width-page: var(--page-max);
   --max-width-shell: var(--shell-max);
+  --background-image-grad-horizon: var(--grad-horizon);
+  --background-image-grad-rouse: var(--grad-rouse);
+  --background-image-grad-noon: var(--grad-noon);
+  --background-image-grad-ink-fade: var(--grad-ink-fade);
+  --background-image-grad-card: var(--grad-card);
+  --background-image-grad-dusk: var(--grad-dusk);
+  --background-image-grad-route: var(--grad-route);
 }
 
 body {
@@ -69,8 +77,8 @@ video {
   margin-right: auto;
   padding-left: var(--page-gutter);
   padding-right: var(--page-gutter);
-  padding-top: 2.5rem;
-  padding-bottom: 2.5rem;
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
   box-sizing: border-box;
 }
 
@@ -90,8 +98,8 @@ video {
 
 @media (min-width: 768px) {
   .page-section {
-    padding-top: 3rem;
-    padding-bottom: 3rem;
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
   }
 }
 
@@ -99,4 +107,38 @@ video {
 .page-pad {
   padding-left: var(--page-gutter);
   padding-right: var(--page-gutter);
+}
+
+/* Brand — signature CTA (Rouse gradient + white label) */
+.btn-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background-image: var(--grad-rouse);
+  color: var(--on-gradient);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.btn-brand:hover {
+  opacity: 0.9;
+}
+
+.btn-brand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Brand — grey → purple card / panel surface */
+.card-panel {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-image: var(--grad-card);
 }

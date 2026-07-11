@@ -47,6 +47,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
   const [creditActivity, setCreditActivity] = useState<CreditWeek[]>([]);
   const [earnSpendDeltaPct, setEarnSpendDeltaPct] = useState(0);
   const [redeeming, setRedeeming] = useState(false);
+  const [redeemMessage, setRedeemMessage] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async () => {
     const response = await fetch("/api/student/dashboard");
@@ -92,13 +93,30 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
   const redeem = async () => {
     if (!featured || featured.purchased) return;
     setRedeeming(true);
+    setRedeemMessage(null);
     const response = await fetch("/api/student/store/purchase", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": crypto.randomUUID(),
+      },
       body: JSON.stringify({ contentItemId: featured.id }),
     });
     setRedeeming(false);
-    if (response.ok) await loadDashboard();
+    if (response.ok) {
+      setRedeemMessage(labels.redeemSuccess ?? "Unlocked.");
+      await loadDashboard();
+      return;
+    }
+    const payload = (await response.json().catch(() => null)) as {
+      error?: string;
+    } | null;
+    setRedeemMessage(
+      labels[payload?.error ?? ""] ??
+        labels.redeemError ??
+        payload?.error ??
+        "Could not redeem.",
+    );
   };
 
   const maxBar = Math.max(
@@ -121,7 +139,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
       </header>
 
       <section className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+        <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
             {labels.creditsLabel ?? "Credit balance"}
           </p>
@@ -129,7 +147,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
             {credits.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+        <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
             {labels.profileCompletenessLabel ?? "Profile complete"}
           </p>
@@ -137,7 +155,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
             {profileCompleteness}%
           </p>
         </div>
-        <div className="rounded-radius border border-border bg-surface-1 px-4 py-3.5">
+        <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
             {labels.stageLabel ?? "Stage"}
           </p>
@@ -147,7 +165,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
         </div>
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[14px] font-semibold text-text-primary">
             {labels.creditActivityTitle ?? "Credit activity, last 8 weeks"}
@@ -203,7 +221,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
         </p>
       </section>
 
-      <section className="rounded-radius border border-border bg-surface-1 p-4">
+      <section className="rounded-radius border border-border bg-grad-card p-4">
         <h2 className="mb-5 text-[14px] font-semibold text-text-primary">
           {labels.pipelineTitle ?? "Your placement journey"}
         </h2>
@@ -250,7 +268,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
       </section>
 
       {featured ? (
-        <section className="rounded-radius border border-border bg-surface-1 p-4">
+        <section className="rounded-radius border border-border bg-grad-card p-4">
           <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
             {labels.recommendedTitle ?? "Recommended next step"}
           </h2>
@@ -276,6 +294,11 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
                 : labels.redeem ?? "Redeem"}
             </Button>
           </div>
+          {redeemMessage ? (
+            <p className="mt-2 text-sm text-text-secondary" role="status">
+              {redeemMessage}
+            </p>
+          ) : null}
         </section>
       ) : null}
     </div>

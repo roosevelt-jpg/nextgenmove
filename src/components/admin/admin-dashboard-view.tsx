@@ -50,7 +50,7 @@ function PlacementsChart({
     .join(" ");
 
   return (
-    <div className="rounded-radius border border-border bg-surface-1 p-4">
+    <div className="rounded-radius border border-border bg-grad-card p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-[14px] font-semibold text-text-primary">
           {labels.chartPlacementsTitle ??
@@ -171,7 +171,7 @@ function TrackDonut({
   const aLen = (aPct / 100) * c;
 
   return (
-    <div className="rounded-radius border border-border bg-surface-1 p-4">
+    <div className="rounded-radius border border-border bg-grad-card p-4">
       <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
         {labels.chartTracksTitle ?? "Track A vs Track B"}
       </h2>
@@ -273,6 +273,23 @@ export function AdminDashboardView({
     return () => window.clearInterval(id);
   }, [refresh]);
 
+  const setContentStatus = async (
+    id: string,
+    status: ContentRow["status"],
+  ) => {
+    setContent((rows) =>
+      rows.map((row) => (row.id === id ? { ...row, status } : row)),
+    );
+    const response = await fetch(`/api/admin/data/content_items/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) {
+      await refresh();
+    }
+  };
+
   const heroStats = useMemo(
     () => [
       {
@@ -321,7 +338,7 @@ export function AdminDashboardView({
           labels[card.key] ? (
             <div
               key={card.key}
-              className="rounded-radius border border-border bg-surface-1 px-4 py-3.5"
+              className="rounded-radius border border-border bg-grad-card px-4 py-3.5"
             >
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 {labels[card.key]}
@@ -366,7 +383,7 @@ export function AdminDashboardView({
         </div>
 
         {content.length === 0 ? (
-          <div className="rounded-radius border border-border bg-surface-1 px-4 py-10 text-center text-sm text-text-muted">
+          <div className="rounded-radius border border-border bg-grad-card px-4 py-10 text-center text-sm text-text-muted">
             {labels.contentEmpty ?? "No content items yet."}
           </div>
         ) : (
@@ -374,7 +391,7 @@ export function AdminDashboardView({
             {content.map((item) => (
               <li
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border bg-surface-1 px-3.5 py-2.5"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border bg-grad-card px-3.5 py-2.5"
               >
                 <div className="min-w-0">
                   <p className="text-[14px] font-bold text-text-primary">
@@ -392,19 +409,19 @@ export function AdminDashboardView({
                   {(["draft", "live", "archived"] as const).map((status) => {
                     const active = item.status === status;
                     return (
-                      <span
+                      <button
                         key={status}
+                        type="button"
+                        onClick={() => void setContentStatus(item.id, status)}
                         className={cn(
-                          "rounded-full px-2.5 py-0.5 text-[10.5px] font-semibold",
-                          active && status === "live"
-                            ? "bg-bg-success text-text-success"
-                            : active && status === "draft"
-                              ? "bg-bg-accent text-text-accent"
-                              : "bg-surface-2 text-text-secondary",
+                          "min-h-9 rounded-full bg-grad-rouse px-3 py-1.5 text-[10.5px] font-semibold text-on-gradient transition-opacity",
+                          active
+                            ? "opacity-100 shadow-sm ring-2 ring-white/40"
+                            : "opacity-55 hover:opacity-90",
                         )}
                       >
                         {labels[`status_${status}`] ?? status}
-                      </span>
+                      </button>
                     );
                   })}
                 </div>

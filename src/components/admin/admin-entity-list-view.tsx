@@ -24,6 +24,7 @@ export function AdminEntityListView({
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = async () => {
     const response = await fetch(`/api/admin/data/${schema.collection}`);
@@ -69,9 +70,15 @@ export function AdminEntityListView({
           <Button
             variant="outline"
             onClick={async () => {
-              await fetch(`/api/admin/data/${schema.collection}/${String(row.id)}`, {
-                method: "DELETE",
-              });
+              setActionMessage(null);
+              const response = await fetch(
+                `/api/admin/data/${schema.collection}/${String(row.id)}`,
+                { method: "DELETE" },
+              );
+              if (!response.ok) {
+                setActionMessage(labels.deleteError ?? "Could not delete.");
+                return;
+              }
               await load();
             }}
           >
@@ -96,6 +103,12 @@ export function AdminEntityListView({
           {labels.create}
         </Button>
       </div>
+
+      {actionMessage ? (
+        <p className="text-sm text-text-warning" role="status">
+          {actionMessage}
+        </p>
+      ) : null}
 
       <DataTable
         columns={columns}

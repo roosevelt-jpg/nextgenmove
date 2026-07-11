@@ -22,6 +22,10 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
   const [requirementTitle, setRequirementTitle] = useState("");
   const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
   const [planMessage, setPlanMessage] = useState<string | null>(null);
+  const [billingMessage, setBillingMessage] = useState<string | null>(null);
+  const [requirementMessage, setRequirementMessage] = useState<string | null>(
+    null,
+  );
 
   const loadProfile = useCallback(async () => {
     const response = await fetch("/api/employer/company");
@@ -81,22 +85,29 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
   };
 
   const openBillingPortal = async () => {
+    setBillingMessage(null);
     const response = await fetch("/api/employer/billing/checkout", {
       method: "PUT",
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setBillingMessage(labels.billingPortalError ?? "Could not open billing.");
+      return;
+    }
     const payload = (await response.json()) as { url?: string };
     if (payload.url) {
       window.location.href = payload.url;
+      return;
     }
+    setBillingMessage(labels.billingPortalError ?? "Could not open billing.");
   };
 
   const addRequirement = async (upload: FileUploadMetadata) => {
     if (!requirementTitle.trim()) {
+      setRequirementMessage(labels.requirementTitleRequired ?? "Add a title first.");
       return;
     }
 
-    await fetch("/api/employer/company", {
+    const response = await fetch("/api/employer/company", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -105,7 +116,13 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
       }),
     });
 
+    if (!response.ok) {
+      setRequirementMessage(labels.requirementError ?? "Could not save requirement.");
+      return;
+    }
+
     setRequirementTitle("");
+    setRequirementMessage(labels.requirementSuccess ?? "Requirement saved.");
     await loadProfile();
   };
 
@@ -128,22 +145,22 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
 
   return (
     <div className="space-y-5">
-      <Card className="overflow-hidden border-fill-accent bg-fill-accent">
+      <Card className="overflow-hidden border-transparent bg-grad-rouse">
         <CardBody className="space-y-3">
           {company.name ? (
-            <h1 className="font-serif text-2xl text-on-accent">{company.name}</h1>
+            <h1 className="font-serif text-2xl text-on-gradient">{company.name}</h1>
           ) : null}
           {company.contactEmail ? (
             <p className="text-sm text-brand-lavender">{company.contactEmail}</p>
           ) : null}
           <div className="flex flex-wrap gap-2">
             {subscriptionLabel ? (
-              <span className="inline-flex items-center rounded-full bg-brand-lavender px-2.5 py-0.5 text-xs font-medium text-fill-accent">
+              <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-on-gradient">
                 {subscriptionLabel}
               </span>
             ) : null}
             {currentPrice != null && labels.currentPriceLabel ? (
-              <span className="inline-flex items-center rounded-full bg-surface-1 px-2.5 py-0.5 text-xs font-medium text-fill-accent">
+              <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-on-gradient">
                 {labels.currentPriceLabel.replace("{amount}", String(currentPrice))}
               </span>
             ) : null}
@@ -159,6 +176,11 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
               </Button>
             ) : null}
           </div>
+          {billingMessage ? (
+            <p className="text-sm text-brand-lavender" role="status">
+              {billingMessage}
+            </p>
+          ) : null}
         </CardBody>
       </Card>
 
@@ -289,7 +311,7 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
                 {company.requirements.map((requirement) => (
                   <li
                     key={requirement.id}
-                    className="rounded-radius border border-border bg-surface-2 p-3 text-sm"
+                    className="rounded-radius border border-border bg-grad-card p-3 text-sm"
                   >
                     <a
                       href={requirement.fileUrl}
@@ -320,6 +342,11 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
               disabled={!requirementTitle.trim()}
               onUploadComplete={addRequirement}
             />
+            {requirementMessage ? (
+              <p className="text-sm text-text-secondary" role="status">
+                {requirementMessage}
+              </p>
+            ) : null}
           </CardBody>
         </Card>
       </div>

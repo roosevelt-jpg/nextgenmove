@@ -14,6 +14,10 @@ export interface CrmContactRow {
   owner: string;
   lastActivity: string | null;
   value: string;
+  email?: string;
+  phone?: string;
+  nationality?: string;
+  dateJoined?: string | null;
   sourceId?: string;
   sourceCollection?: string;
 }
@@ -55,7 +59,7 @@ export async function GET() {
   }
 
   try {
-    const [companiesSnap, studentsSnap, appsSnap, interestSnap, requestsSnap, levers] =
+    const [companiesSnap, studentsSnap, appsSnap, interestSnap, requestsSnap, levers, usersSnap] =
       await Promise.all([
         adminDb.collection("companies").get(),
         adminDb.collection("students").get(),
@@ -63,7 +67,14 @@ export async function GET() {
         adminDb.collection("role_interest_submissions").get(),
         adminDb.collection("requests").where("status", "==", "pending").get(),
         getProgramLevers(),
+        adminDb.collection("users").get(),
       ]);
+
+    const userPhoneById = new Map<string, string>();
+    for (const doc of usersSnap.docs) {
+      const phone = String(doc.data().phone ?? "").trim();
+      if (phone) userPhoneById.set(doc.id, phone);
+    }
 
     const leverValues = {
       trackAMonthly: levers?.trackAMonthly ?? 0,
@@ -98,6 +109,12 @@ export async function GET() {
         lastActivity:
           serializeTimestamp(data.updatedAt ?? data.createdAt) ?? null,
         value: formatValue(data.plan, leverValues, {}),
+        email: String(data.contactEmail ?? ""),
+        phone: String(
+          data.contactPhone ?? userPhoneById.get(String(data.userId ?? doc.id)) ?? "",
+        ),
+        nationality: String(data.nationality ?? ""),
+        dateJoined: serializeTimestamp(data.createdAt) ?? null,
         sourceId: doc.id,
         sourceCollection: "companies",
       };
@@ -119,6 +136,12 @@ export async function GET() {
         lastActivity:
           serializeTimestamp(data.updatedAt ?? data.createdAt) ?? null,
         value: "—",
+        email: String(data.email ?? ""),
+        phone: String(
+          data.phone ?? userPhoneById.get(String(data.userId ?? doc.id)) ?? "",
+        ),
+        nationality: String(data.nationality ?? ""),
+        dateJoined: serializeTimestamp(data.createdAt) ?? null,
         sourceId: doc.id,
         sourceCollection: "students",
       });
@@ -137,6 +160,10 @@ export async function GET() {
         owner: "",
         lastActivity: serializeTimestamp(data.createdAt) ?? null,
         value: "—",
+        email: String(data.email ?? ""),
+        phone: String(data.phone ?? ""),
+        nationality: String(data.nationality ?? ""),
+        dateJoined: serializeTimestamp(data.createdAt) ?? null,
         sourceId: doc.id,
         sourceCollection: "job_applications",
       });
@@ -155,6 +182,10 @@ export async function GET() {
         owner: "",
         lastActivity: serializeTimestamp(data.createdAt) ?? null,
         value: "—",
+        email: String(data.email ?? ""),
+        phone: String(data.phone ?? ""),
+        nationality: String(data.nationality ?? ""),
+        dateJoined: serializeTimestamp(data.createdAt) ?? null,
         sourceId: doc.id,
         sourceCollection: "role_interest_submissions",
       });
@@ -171,6 +202,10 @@ export async function GET() {
         owner: "",
         lastActivity: serializeTimestamp(data.createdAt) ?? null,
         value: "—",
+        email: String(payload.email ?? payload.contactEmail ?? ""),
+        phone: String(payload.phone ?? ""),
+        nationality: String(payload.nationality ?? ""),
+        dateJoined: serializeTimestamp(data.createdAt) ?? null,
         sourceId: doc.id,
         sourceCollection: "requests",
       });

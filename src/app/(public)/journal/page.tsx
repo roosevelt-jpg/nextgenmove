@@ -36,7 +36,7 @@ export default async function JournalPage() {
 
       <JournalList articles={articles} labels={formLabels} />
 
-      <div className="rounded-radius border border-border bg-surface-2 px-4 py-5 md:flex md:items-center md:justify-between md:gap-6">
+      <div className="rounded-radius border border-border bg-grad-card px-4 py-5 md:flex md:items-center md:justify-between md:gap-6">
         <NewsletterForm labels={formLabels} layout="inline" />
       </div>
     </div>

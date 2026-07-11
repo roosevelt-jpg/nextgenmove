@@ -72,6 +72,18 @@ export async function GET(
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
+  const item = serializeDoc(snapshot.id, snapshot.data()!);
+  const userId = String(item.userId ?? id);
+  const userSnap = await adminDb.collection("users").doc(userId).get();
+  const userPhone = String(userSnap.data()?.phone ?? "").trim();
+  if (type === "students" && !item.phone && userPhone) {
+    item.phone = userPhone;
+  }
+  if (type === "companies" && !item.contactPhone && userPhone) {
+    item.contactPhone = userPhone;
+  }
+  item.dateJoined = item.createdAt ?? null;
+
   const activitySnapshot = await adminDb
     .collection("activity_log")
     .where("targetType", "==", type)
@@ -94,7 +106,7 @@ export async function GET(
     }) ?? [];
 
   return NextResponse.json({
-    item: serializeDoc(snapshot.id, snapshot.data()!),
+    item,
     activity,
   });
 }

@@ -18,9 +18,18 @@ const optionalUrl = z
   .optional()
   .transform((value) => (value === "" || value == null ? null : value));
 
+const educationEntrySchema = z.object({
+  institution: z.string().trim().min(1).max(160),
+  degree: z.string().trim().max(120).optional(),
+  year: z.string().trim().max(20).optional(),
+});
+
 const studentProfileSchema = z.object({
   fullName: z.string().trim().min(1).max(120),
-  phone: z.string().trim().max(40).optional(),
+  phone: z.string().trim().min(5).max(40),
+  nationality: z.string().trim().min(1).max(80),
+  workExperience: z.string().trim().min(1).max(4000),
+  education: z.array(educationEntrySchema).min(1).max(12),
   sector: z.string().trim().min(1).max(80),
   seniority: z.string().trim().min(1).max(80),
   currentCity: z.string().trim().min(1).max(80),
@@ -36,7 +45,8 @@ const studentProfileSchema = z.object({
 const companyProfileSchema = z.object({
   companyName: z.string().trim().min(1).max(160),
   contactName: z.string().trim().min(1).max(120),
-  phone: z.string().trim().max(40).optional(),
+  phone: z.string().trim().min(5).max(40),
+  nationality: z.string().trim().min(1).max(80),
   industry: z.string().trim().min(1).max(80),
   website: optionalUrl,
   preferredLocations: z.array(z.string().trim().min(1)).min(1).max(12),
@@ -134,6 +144,8 @@ export async function POST(request: Request) {
             name: company.companyName,
             contactName: company.contactName,
             contactEmail: email,
+            contactPhone: company.phone.trim(),
+            nationality: company.nationality,
             logoUrl: null,
             industry: company.industry,
             website: company.website ?? null,
@@ -157,6 +169,10 @@ export async function POST(request: Request) {
             userId: uid,
             fullName: student.fullName,
             email,
+            phone: student.phone.trim(),
+            nationality: student.nationality,
+            workExperience: student.workExperience.trim(),
+            education: student.education,
             photoUrl: null,
             sector: student.sector,
             seniority: student.seniority,

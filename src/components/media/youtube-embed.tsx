@@ -17,7 +17,7 @@ export function YoutubeEmbed({ url, title, watchLabel }: YoutubeEmbedProps) {
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+        className="inline-flex items-center justify-center rounded-radius-sm bg-grad-rouse px-3.5 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
       >
         {watchLabel ?? title ?? url}
       </a>
@@ -25,7 +25,7 @@ export function YoutubeEmbed({ url, title, watchLabel }: YoutubeEmbedProps) {
   }
 
   return (
-    <div className="aspect-video w-full overflow-hidden rounded-radius border border-border bg-surface-2">
+    <div className="aspect-video w-full overflow-hidden rounded-radius border border-border bg-grad-card">
       <iframe
         src={youtubeEmbedUrl(videoId)}
         title={title ?? watchLabel ?? "YouTube"}

@@ -38,6 +38,7 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
   const matchId = params.id;
   const [data, setData] = useState<CandidateDetail | null>(null);
   const [error, setError] = useState(false);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -60,11 +61,16 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
 
   const toggleShortlist = async () => {
     if (!data) return;
-    await fetch(`/api/employer/matches/${matchId}`, {
+    setActionMessage(null);
+    const response = await fetch(`/api/employer/matches/${matchId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ shortlisted: !data.match.shortlisted }),
     });
+    if (!response.ok) {
+      setActionMessage(labels.shortlistError ?? "Could not update shortlist.");
+      return;
+    }
     await load();
   };
 
@@ -115,8 +121,14 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
         </div>
       </header>
 
+      {actionMessage ? (
+        <p className="text-sm text-text-warning" role="status">
+          {actionMessage}
+        </p>
+      ) : null}
+
       {student.bio ? (
-        <section className="rounded-radius border border-border bg-surface-1 p-4">
+        <section className="rounded-radius border border-border bg-grad-card p-4">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
             {labels.bioLabel ?? "Bio"}
           </h2>
@@ -144,7 +156,7 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
         </section>
       ) : null}
 
-      <dl className="grid gap-3 rounded-radius border border-border bg-surface-1 p-4 sm:grid-cols-2">
+      <dl className="grid gap-3 rounded-radius border border-border bg-grad-card p-4 sm:grid-cols-2">
         {student.availability ? (
           <div>
             <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">

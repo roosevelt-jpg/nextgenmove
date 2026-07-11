@@ -25,8 +25,23 @@ export async function GET() {
   }
 
   try {
-    const snapshot = await adminDb.collection("students").get();
-    const items = snapshot.docs.map((doc) => serializeDoc(doc.id, doc.data()));
+    const [snapshot, usersSnap] = await Promise.all([
+      adminDb.collection("students").get(),
+      adminDb.collection("users").get(),
+    ]);
+    const phoneByUser = new Map<string, string>();
+    for (const doc of usersSnap.docs) {
+      const phone = String(doc.data().phone ?? "").trim();
+      if (phone) phoneByUser.set(doc.id, phone);
+    }
+
+    const items = snapshot.docs.map((doc) => {
+      const item = serializeDoc(doc.id, doc.data());
+      const userId = String(item.userId ?? doc.id);
+      if (!item.phone) item.phone = phoneByUser.get(userId) ?? "";
+      item.dateJoined = item.createdAt ?? null;
+      return item;
+    });
     return NextResponse.json({ items });
   } catch {
     return NextResponse.json({ items: [] });

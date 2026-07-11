@@ -18,6 +18,10 @@ export function CompanySettingsView({
   const [name, setName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [industry, setIndustry] = useState("");
+  const [preferredLocations, setPreferredLocations] = useState("");
+  const [requirementTags, setRequirementTags] = useState("");
+  const [hiringNeeds, setHiringNeeds] = useState("");
   const [notificationPreferences, setNotificationPreferences] = useState<
     Record<string, boolean>
   >({});
@@ -35,6 +39,10 @@ export function CompanySettingsView({
     setName(data.company.name);
     setContactEmail(data.company.contactEmail);
     setLogoUrl(data.company.logoUrl);
+    setIndustry(data.company.industry ?? "");
+    setPreferredLocations((data.company.preferredLocations ?? []).join(", "));
+    setRequirementTags((data.company.requirementTags ?? []).join(", "));
+    setHiringNeeds(data.company.hiringNeeds ?? "");
     setNotificationPreferences(data.company.notificationPreferences ?? {});
   }, []);
 
@@ -54,6 +62,16 @@ export function CompanySettingsView({
         name,
         contactEmail,
         logoUrl,
+        industry: industry.trim() || undefined,
+        preferredLocations: preferredLocations
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        requirementTags: requirementTags
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        hiringNeeds: hiringNeeds.trim() || undefined,
         notificationPreferences,
       }),
     });
@@ -90,6 +108,36 @@ export function CompanySettingsView({
         label={labels.contactEmail}
         value={contactEmail}
         onChange={(event) => setContactEmail(event.target.value)}
+      />
+      <Input
+        id="settings-industry"
+        aria-label={labels.industry ?? "industry"}
+        label={labels.industry}
+        value={industry}
+        onChange={(event) => setIndustry(event.target.value)}
+      />
+      <Input
+        id="settings-preferred-locations"
+        aria-label={labels.preferredLocations ?? "preferred-locations"}
+        label={labels.preferredLocations ?? "Preferred locations"}
+        value={preferredLocations}
+        onChange={(event) => setPreferredLocations(event.target.value)}
+        placeholder={labels.preferredLocationsHint ?? "City1, City2"}
+      />
+      <Input
+        id="settings-requirement-tags"
+        aria-label={labels.requirementTags ?? "requirement-tags"}
+        label={labels.requirementTags ?? "Hiring requirement tags"}
+        value={requirementTags}
+        onChange={(event) => setRequirementTags(event.target.value)}
+        placeholder={labels.requirementTagsHint ?? "skill, skill, skill"}
+      />
+      <Input
+        id="settings-hiring-needs"
+        aria-label={labels.hiringNeeds ?? "hiring-needs"}
+        label={labels.hiringNeeds ?? "Hiring needs"}
+        value={hiringNeeds}
+        onChange={(event) => setHiringNeeds(event.target.value)}
       />
       <FileUpload
         storagePath={`companies/${company.id}/logo`}

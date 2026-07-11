@@ -33,6 +33,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
   const [noteText, setNoteText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const loadMatches = useCallback(async () => {
     setIsLoading(true);
@@ -48,11 +49,16 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
 
   const persistOrder = async (next: ShortlistMatch[]) => {
     setMatches(next);
-    await fetch("/api/employer/matches/reorder", {
+    setActionMessage(null);
+    const response = await fetch("/api/employer/matches/reorder", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderedMatchIds: next.map((match) => match.id) }),
     });
+    if (!response.ok) {
+      setActionMessage(labels.reorderError ?? "Could not save order.");
+      await loadMatches();
+    }
   };
 
   const move = async (from: number, to: number) => {
@@ -76,11 +82,17 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
     event.preventDefault();
     if (!activeMatchId || !noteText.trim()) return;
 
-    await fetch(`/api/employer/matches/${activeMatchId}/notes`, {
+    setActionMessage(null);
+    const response = await fetch(`/api/employer/matches/${activeMatchId}/notes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: noteText.trim() }),
     });
+
+    if (!response.ok) {
+      setActionMessage(labels.noteError ?? "Could not save note.");
+      return;
+    }
 
     setNoteText("");
     await loadMatches();
@@ -89,11 +101,28 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
   if (isLoading) return null;
 
   if (!matches.length) {
-    return labels.emptyState ? <EmptyState title={labels.emptyState} /> : null;
+    return (
+      <EmptyState
+        title={labels.emptyState ?? "No shortlisted candidates yet"}
+        action={
+          <Link
+            href="/employer/talent-pool"
+            className="text-sm font-medium text-text-accent hover:underline"
+          >
+            {labels.browseTalentPool ?? "Browse talent pool"}
+          </Link>
+        }
+      />
+    );
   }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+      {actionMessage ? (
+        <p className="text-sm text-text-warning lg:col-span-2" role="status">
+          {actionMessage}
+        </p>
+      ) : null}
       <div className="space-y-2">
         {labels.reorderHint ? (
           <p className="text-xs text-text-muted">{labels.reorderHint}</p>
@@ -106,7 +135,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
               onDragStart={() => setDragIndex(index)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={() => void onDrop(index)}
-              className="rounded-radius border border-border bg-surface-1"
+              className="rounded-radius border border-border bg-grad-card"
             >
               <div className="flex items-stretch gap-1">
                 <div className="flex flex-col border-r border-border">
@@ -157,7 +186,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
       </div>
 
       {activeMatchId ? (
-        <section className="rounded-radius border border-border bg-surface-1 p-4">
+        <section className="rounded-radius border border-border bg-grad-card p-4">
           {labels.notesTitle ? (
             <h2 className="mb-4 font-medium text-text-primary">{labels.notesTitle}</h2>
           ) : null}

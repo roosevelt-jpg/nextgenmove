@@ -170,6 +170,26 @@ export async function POST(request: Request) {
           });
         }
 
+        if (
+          !result.alreadyPurchased &&
+          typeof result.credits === "number"
+        ) {
+          const { notifyLowCreditBalance } = await import("@/lib/email/notify");
+          const leversSnap = await adminDb
+            .collection("program_levers")
+            .doc("default")
+            .get();
+          const threshold = Number(leversSnap.data()?.lowCreditThreshold ?? 50);
+          if (result.credits <= threshold) {
+            void notifyLowCreditBalance({
+              studentId: session.studentId,
+              credits: result.credits,
+              threshold,
+              request,
+            });
+          }
+        }
+
         return NextResponse.json(result);
       } catch (error) {
         if (error instanceof z.ZodError) {

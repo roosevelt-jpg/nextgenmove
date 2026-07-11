@@ -2,6 +2,7 @@ import { WorkspacePortalShell } from "@/components/layout/workspace-portal-shell
 import { getSiteSettings } from "@/lib/collections/site-settings";
 
 const NAV_ITEMS = [
+  { key: "dashboard", href: "/employer/dashboard" },
   { key: "talentPool", href: "/employer/talent-pool" },
   { key: "pipeline", href: "/employer/pipeline" },
   { key: "shortlist", href: "/employer/shortlist" },
@@ -19,6 +20,7 @@ export default async function EmployerPortalLayout({
     ...(settings.employerNavLabels ?? {}),
     ...(settings.adminPageLabels?.shell ?? {}),
     talentPool: settings.employerNavLabels?.talentPool ?? "Talent Pool",
+    dashboard: settings.employerNavLabels?.dashboard ?? "Dashboard",
     profile: settings.employerNavLabels?.profile ?? "Our Profile",
     workspaceStudent: "Student",
     workspaceEmployer: "Employer",

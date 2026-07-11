@@ -110,14 +110,18 @@ export async function GET() {
         data.createdAt?.toDate?.() ??
         (data.createdAt ? new Date(data.createdAt) : null);
       if (!created || Number.isNaN(created.getTime())) continue;
-      const amount = Number(data.amount ?? data.delta ?? 0);
+      const amount = Math.abs(Number(data.amount ?? data.delta ?? 0));
+      const direction = String(data.direction ?? "").toLowerCase();
       const idx = weeks.findIndex((w, i) => {
         const next = weeks[i + 1]?.start;
         return created >= w.start && (!next || created < next);
       });
-      if (idx < 0) continue;
-      if (amount >= 0) weeks[idx]!.earned += amount;
-      else weeks[idx]!.spent += Math.abs(amount);
+      if (idx < 0 || !amount) continue;
+      if (direction === "spend" || Number(data.amount ?? data.delta ?? 0) < 0) {
+        weeks[idx]!.spent += amount;
+      } else {
+        weeks[idx]!.earned += amount;
+      }
     }
 
     const thisMonth = weeks.slice(-4);

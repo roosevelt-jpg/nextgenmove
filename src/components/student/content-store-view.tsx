@@ -91,7 +91,7 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-radius border border-border bg-surface-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 rounded-radius border border-border bg-grad-card px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         {labels.creditsBalance ? (
           <p className="font-serif text-xl text-text-primary">
             {labels.creditsBalance.replace("{credits}", String(credits))}
@@ -192,7 +192,7 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
                               href={item.linkUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+                              className="inline-flex items-center justify-center rounded-radius-sm bg-grad-rouse px-3.5 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
                             >
                               {labels.openLink ?? labels.openContent}
                             </a>
@@ -200,7 +200,7 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
                           {item.downloadHref && labels.openContent ? (
                             <a
                               href={item.downloadHref}
-                              className="inline-flex items-center justify-center rounded-radius-sm border border-fill-primary px-3.5 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-2"
+                              className="inline-flex items-center justify-center rounded-radius-sm bg-grad-rouse px-3.5 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
                             >
                               {labels.openContent}
                             </a>

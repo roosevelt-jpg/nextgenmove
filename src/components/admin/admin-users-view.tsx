@@ -19,6 +19,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const load = async () => {
     const response = await fetch("/api/admin/users");
@@ -49,12 +50,26 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
 
   const runAction = async (userId: string, action: "promote_admin" | "suspend" | "activate") => {
     setActionLoadingId(userId);
-    await fetch("/api/admin/users", {
+    setActionMessage(null);
+    const response = await fetch("/api/admin/users", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, action }),
     });
     setActionLoadingId(null);
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setActionMessage(
+        labels[payload?.error ?? ""] ??
+          labels.actionError ??
+          payload?.error ??
+          "Action failed.",
+      );
+      return;
+    }
+    setActionMessage(labels.actionSuccess ?? "Saved.");
     await load();
   };
 
@@ -109,6 +124,12 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>
         ) : null}
       </header>
+
+      {actionMessage ? (
+        <p className="text-sm text-text-secondary" role="status">
+          {actionMessage}
+        </p>
+      ) : null}
 
       <Input
         id="users-search"

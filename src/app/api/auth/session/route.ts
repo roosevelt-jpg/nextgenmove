@@ -66,7 +66,16 @@ export async function POST(request: Request) {
         .collection("site_settings")
         .doc("default")
         .get();
-      const expireDays = Number(settingsSnap.data()?.sessionExpireDays ?? 5);
+      const settingsData = settingsSnap.data() ?? {};
+
+      if (settingsData.require2fa && !decoded.email_verified) {
+        return NextResponse.json(
+          { error: "email_verification_required" },
+          { status: 403 },
+        );
+      }
+
+      const expireDays = Number(settingsData.sessionExpireDays ?? 5);
       const expiresInMs = Math.min(
         Math.max(expireDays, 1),
         14,

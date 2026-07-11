@@ -7,6 +7,14 @@ export interface StudentDocument {
   userId: string;
   fullName: string;
   email: string;
+  phone?: string | null;
+  nationality?: string | null;
+  workExperience?: string | null;
+  education?: Array<{
+    institution: string;
+    degree?: string;
+    year?: string;
+  }>;
   photoUrl: string | null;
   sector: string;
   seniority: string;
@@ -23,6 +31,7 @@ export interface StudentDocument {
   referralCode?: string | null;
   referredBy?: string | null;
   notificationPreferences?: Record<string, boolean>;
+  createdAt?: unknown;
 }
 
 export interface StudentSession {
@@ -37,6 +46,11 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     userId: (data.userId as string | undefined) ?? id,
     fullName: (data.fullName as string | undefined) ?? "",
     email: (data.email as string | undefined) ?? "",
+    phone: (data.phone as string | null | undefined) ?? null,
+    nationality: (data.nationality as string | null | undefined) ?? null,
+    workExperience: (data.workExperience as string | null | undefined) ?? null,
+    education:
+      (data.education as StudentDocument["education"] | undefined) ?? [],
     photoUrl: (data.photoUrl as string | null | undefined) ?? null,
     sector: (data.sector as string | undefined) ?? "",
     seniority: (data.seniority as string | undefined) ?? "",
@@ -54,6 +68,7 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     referredBy: (data.referredBy as string | null | undefined) ?? null,
     notificationPreferences:
       (data.notificationPreferences as Record<string, boolean> | undefined) ?? {},
+    createdAt: data.createdAt,
   };
 }
 
