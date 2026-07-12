@@ -34,6 +34,22 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [fromWhatsApp, setFromWhatsApp] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  const connectErrorMessage = (code?: string) => {
+    if (code === "service_unavailable") {
+      return (
+        labels.service_unavailable ??
+        "Could not save — Firestore is over quota. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel (Production), then redeploy — or wait for quota to reset and try Connect again."
+      );
+    }
+    return (
+      labels[code ?? ""] ??
+      labels.connectError ??
+      code ??
+      "Could not connect."
+    );
+  };
 
   const load = async () => {
     const response = await fetch("/api/admin/integrations", {
@@ -81,6 +97,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
 
     setIsSaving(true);
     setActionMessage(null);
+    setModalError(null);
 
     const body = isStripe
       ? {
@@ -183,12 +200,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     const payload = (await response.json().catch(() => null)) as {
       error?: string;
     } | null;
-    setActionMessage(
-      labels[payload?.error ?? ""] ??
-        labels.connectError ??
-        payload?.error ??
-        "Could not connect.",
-    );
+    const message = connectErrorMessage(payload?.error);
+    setModalError(message);
+    setActionMessage(message);
   };
 
   const disconnect = async (id: string) => {
@@ -226,6 +240,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       await disconnect(item.id);
       return;
     }
+    setModalError(null);
     setConnectItem(item);
   };
 
@@ -319,20 +334,36 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
 
       <Modal
         open={Boolean(connectItem)}
-        onClose={() => setConnectItem(null)}
-        title={labels.connectTitle}
+        onClose={() => {
+          setConnectItem(null);
+          setModalError(null);
+        }}
+        title={labels.connectTitle || "Connect integration"}
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setConnectItem(null)}>
-              {labels.cancel}
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setConnectItem(null);
+                setModalError(null);
+              }}
+            >
+              {labels.cancel || "Cancel"}
             </Button>
-            <Button disabled={isSaving} onClick={connect}>
-              {labels.connect}
+            <Button disabled={isSaving} onClick={() => void connect()}>
+              {isSaving
+                ? labels.connecting || "Connecting…"
+                : labels.connect || "Connect"}
             </Button>
           </div>
         }
       >
         <div className="space-y-4">
+          {modalError ? (
+            <p className="text-sm text-text-warning" role="alert">
+              {modalError}
+            </p>
+          ) : null}
           {isStripe ? (
             <>
               <Input

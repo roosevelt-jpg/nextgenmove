@@ -15,6 +15,15 @@ const connectSchema = z.object({
   secrets: z.record(z.string(), z.string()).optional(),
 });
 
+function isQuotaError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("RESOURCE_EXHAUSTED") ||
+    message.includes("Quota exceeded") ||
+    message.includes("timeout")
+  );
+}
+
 export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
@@ -30,8 +39,21 @@ export async function POST(
   try {
     const body = connectSchema.parse(await request.json());
     const ref = adminDb.collection("integrations").doc(id);
-    const snapshot = await ref.get();
-    const existing = snapshot.data() ?? {};
+    let existing: Record<string, unknown> = {};
+
+    try {
+      const snapshot = await ref.get();
+      existing = snapshot.data() ?? {};
+    } catch (readError) {
+      if (isQuotaError(readError)) {
+        console.error("integration_connect_failed", readError);
+        return NextResponse.json(
+          { error: "service_unavailable" },
+          { status: 503 },
+        );
+      }
+      throw readError;
+    }
 
     if (body.secrets && Object.keys(body.secrets).length > 0) {
       await storeIntegrationSecret(id, body.secrets);
@@ -58,20 +80,39 @@ export async function POST(
       { merge: true },
     );
 
-    await logActivity({
+    void logActivity({
       actorId: session.uid,
       actorRole: session.role,
       action: "integration_connected",
       targetType: "integrations",
       targetId: id,
-    });
+    }).catch(() => undefined);
 
-    const updated = await ref.get();
-    const data = updated.data()!;
+    let data: Record<string, unknown> = {
+      name: existing.name || id,
+      description: existing.description || "",
+      iconUrl: existing.iconUrl || "",
+      status: "connected",
+      config: {
+        ...(typeof existing.config === "object" && existing.config
+          ? (existing.config as Record<string, unknown>)
+          : {}),
+        ...(body.config ?? {}),
+      },
+    };
+
+    try {
+      const updated = await ref.get();
+      if (updated.exists) {
+        data = updated.data() ?? data;
+      }
+    } catch {
+      // Return optimistic payload if the read-back fails.
+    }
 
     return NextResponse.json({
       item: {
-        id: updated.id,
+        id,
         name: data.name ?? "",
         description: data.description ?? "",
         iconUrl: data.iconUrl ?? "",
@@ -85,6 +126,12 @@ export async function POST(
     }
 
     console.error("integration_connect_failed", error);
+    if (isQuotaError(error)) {
+      return NextResponse.json(
+        { error: "service_unavailable" },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ error: "connect_failed" }, { status: 500 });
   }
 }
@@ -130,6 +177,12 @@ export async function DELETE(
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("integration_disconnect_failed", error);
+    if (isQuotaError(error)) {
+      return NextResponse.json(
+        { error: "service_unavailable" },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ error: "disconnect_failed" }, { status: 500 });
   }
 }

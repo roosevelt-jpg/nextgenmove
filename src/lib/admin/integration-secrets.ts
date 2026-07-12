@@ -5,6 +5,32 @@ import { stripUndefined } from "@/lib/stripUndefined";
 
 const ALGORITHM = "aes-256-gcm";
 
+/** Env fallbacks when Firestore secrets are unavailable (quota / outage). */
+const ENV_SECRET_FALLBACKS: Record<string, Record<string, () => string>> = {
+  resend: {
+    apiKey: () => process.env.RESEND_API_KEY?.trim() ?? "",
+    fromEmail: () => process.env.RESEND_FROM_EMAIL?.trim() ?? "",
+    fromName: () => process.env.RESEND_FROM_NAME?.trim() ?? "",
+  },
+  stripe: {
+    secretKey: () => process.env.STRIPE_SECRET_KEY?.trim() ?? "",
+    publishableKey: () => process.env.STRIPE_PUBLISHABLE_KEY?.trim() ?? "",
+    webhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? "",
+  },
+  twilio: {
+    accountSid: () => process.env.TWILIO_ACCOUNT_SID?.trim() ?? "",
+    authToken: () => process.env.TWILIO_AUTH_TOKEN?.trim() ?? "",
+    fromSms: () => process.env.TWILIO_FROM_SMS?.trim() ?? "",
+    fromWhatsApp: () => process.env.TWILIO_FROM_WHATSAPP?.trim() ?? "",
+  },
+  youtube: {
+    apiKey: () =>
+      process.env.YOUTUBE_API_KEY?.trim() ||
+      process.env.GOOGLE_API_KEY?.trim() ||
+      "",
+  },
+};
+
 function getEncryptionKey(): Buffer | null {
   const secret = process.env.INTEGRATION_ENCRYPTION_KEY;
 
@@ -60,6 +86,17 @@ export function decryptIntegrationSecret(payload: string): string {
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8");
 }
 
+function envFallbackSecrets(integrationId: string): Record<string, string> {
+  const factories = ENV_SECRET_FALLBACKS[integrationId];
+  if (!factories) return {};
+  const out: Record<string, string> = {};
+  for (const [key, read] of Object.entries(factories)) {
+    const value = read();
+    if (value) out[key] = value;
+  }
+  return out;
+}
+
 export async function storeIntegrationSecret(
   integrationId: string,
   secrets: Record<string, string>,
@@ -84,30 +121,58 @@ export async function storeIntegrationSecret(
 export async function getIntegrationSecrets(
   integrationId: string,
 ): Promise<Record<string, string>> {
-  const snap = await adminDb
-    .collection("integration_secrets")
-    .doc(integrationId)
-    .get();
+  const fromEnv = envFallbackSecrets(integrationId);
+  let fromStore: Record<string, string> = {};
 
-  if (!snap.exists) {
-    return {};
-  }
+  try {
+    const snap = await adminDb
+      .collection("integration_secrets")
+      .doc(integrationId)
+      .get();
 
-  const encrypted = (snap.data()?.secrets ?? {}) as Record<string, string>;
-  const decrypted: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(encrypted)) {
-    try {
-      decrypted[key] = decryptIntegrationSecret(value);
-    } catch {
-      // Skip undecryptable entries
+    if (snap.exists) {
+      const encrypted = (snap.data()?.secrets ?? {}) as Record<string, string>;
+      for (const [key, value] of Object.entries(encrypted)) {
+        try {
+          fromStore[key] = decryptIntegrationSecret(value);
+        } catch {
+          // Skip undecryptable entries
+        }
+      }
     }
+  } catch {
+    // Firestore quota/outage — env fallbacks still apply.
   }
 
-  return decrypted;
+  return { ...fromEnv, ...fromStore };
 }
 
 export async function isIntegrationConnected(integrationId: string): Promise<boolean> {
-  const snap = await adminDb.collection("integrations").doc(integrationId).get();
-  return snap.exists && snap.data()?.status === "connected";
+  try {
+    const snap = await adminDb.collection("integrations").doc(integrationId).get();
+    if (snap.exists && snap.data()?.status === "connected") {
+      return true;
+    }
+  } catch {
+    // Fall through to env check.
+  }
+
+  const secrets = await getIntegrationSecrets(integrationId);
+  if (integrationId === "resend") {
+    return Boolean(secrets.apiKey?.startsWith("re_") && secrets.fromEmail?.includes("@"));
+  }
+  if (integrationId === "stripe") {
+    return Boolean(secrets.secretKey?.startsWith("sk_"));
+  }
+  if (integrationId === "twilio") {
+    return Boolean(secrets.accountSid && secrets.authToken);
+  }
+  if (integrationId === "youtube") {
+    return Boolean(secrets.apiKey);
+  }
+  return Object.keys(secrets).length > 0;
+}
+
+export function integrationHasEnvFallback(integrationId: string): boolean {
+  return Object.keys(envFallbackSecrets(integrationId)).length > 0;
 }

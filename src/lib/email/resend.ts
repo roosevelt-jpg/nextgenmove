@@ -27,15 +27,29 @@ export async function getResendFrom(): Promise<{
   email: string;
   name: string;
 }> {
-  const snap = await adminDb.collection("integrations").doc(RESEND_INTEGRATION_ID).get();
-  const config = (snap.data()?.config ?? {}) as Record<string, string>;
   const secrets = await getIntegrationSecrets(RESEND_INTEGRATION_ID);
+  let config: Record<string, string> = {};
+
+  try {
+    const snap = await adminDb
+      .collection("integrations")
+      .doc(RESEND_INTEGRATION_ID)
+      .get();
+    config = (snap.data()?.config ?? {}) as Record<string, string>;
+  } catch {
+    // Config may be unavailable during Firestore outages.
+  }
 
   const email =
     config.fromEmail?.trim() ||
     secrets.fromEmail?.trim() ||
+    process.env.RESEND_FROM_EMAIL?.trim() ||
     "";
-  const name = config.fromName?.trim() || "Venturo";
+  const name =
+    config.fromName?.trim() ||
+    secrets.fromName?.trim() ||
+    process.env.RESEND_FROM_NAME?.trim() ||
+    "Venturo";
 
   if (!email || !email.includes("@")) {
     throw new ResendNotConfiguredError("resend_missing_from_email");

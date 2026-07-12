@@ -9,24 +9,11 @@ import {
   type IntegrationShell,
 } from "@/lib/admin/integration-catalog";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { withTimeout } from "@/lib/async/with-timeout";
 
 export const dynamic = "force-dynamic";
 
 const READ_TIMEOUT_MS = 4000;
-
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => reject(new Error("timeout")), ms);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
 
 function mapDoc(
   id: string,
@@ -56,9 +43,48 @@ function mapDoc(
   };
 }
 
+function envMarksConnected(id: string): boolean {
+  if (id === "resend") {
+    const key = process.env.RESEND_API_KEY?.trim() ?? "";
+    const from = process.env.RESEND_FROM_EMAIL?.trim() ?? "";
+    return key.startsWith("re_") && from.includes("@");
+  }
+  if (id === "stripe") {
+    return Boolean(process.env.STRIPE_SECRET_KEY?.trim()?.startsWith("sk_"));
+  }
+  if (id === "twilio") {
+    return Boolean(
+      process.env.TWILIO_ACCOUNT_SID?.trim() &&
+        process.env.TWILIO_AUTH_TOKEN?.trim(),
+    );
+  }
+  if (id === "youtube") {
+    return Boolean(
+      process.env.YOUTUBE_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim(),
+    );
+  }
+  return false;
+}
+
+function applyEnvConnectedStatus(items: IntegrationShell[]): IntegrationShell[] {
+  return items.map((item) => {
+    if (item.status === "connected") return item;
+    if (!envMarksConnected(item.id)) return item;
+    return {
+      ...item,
+      status: "connected",
+      connectedAt: item.connectedAt ?? new Date().toISOString(),
+      config: {
+        ...item.config,
+        source: "env",
+      },
+    };
+  });
+}
+
 async function ensureYoutubeShell() {
   const ref = adminDb.collection("integrations").doc("youtube");
-  const snap = await withTimeout(ref.get(), READ_TIMEOUT_MS);
+  const snap = await withTimeout(ref.get(), READ_TIMEOUT_MS, "youtube_shell_get");
   if (snap.exists) return;
   await withTimeout(
     ref.set(
@@ -68,6 +94,7 @@ async function ensureYoutubeShell() {
       }),
     ),
     READ_TIMEOUT_MS,
+    "youtube_shell_set",
   );
 }
 
@@ -76,18 +103,21 @@ async function loadLiveIntegrations(): Promise<IntegrationShell[]> {
     const snapshot = await withTimeout(
       adminDb.collection("integrations").get(),
       READ_TIMEOUT_MS,
+      "integrations_list",
     );
-    return snapshot.docs.map((doc) => mapDoc(doc.id, doc.data() as Record<string, unknown>));
+    return snapshot.docs.map((doc) =>
+      mapDoc(doc.id, doc.data() as Record<string, unknown>),
+    );
   } catch (collectionError) {
     console.error("integrations_collection_failed", collectionError);
   }
 
-  // Per-doc fallback when the collection query hangs/fails under quota.
   const settled = await Promise.allSettled(
     INTEGRATION_CATALOG.map(async (shell) => {
       const snap = await withTimeout(
         adminDb.collection("integrations").doc(shell.id).get(),
         READ_TIMEOUT_MS,
+        `integration_${shell.id}`,
       );
       if (!snap.exists) return null;
       return mapDoc(snap.id, snap.data() as Record<string, unknown>);
@@ -112,7 +142,7 @@ export async function GET() {
 
   try {
     const live = await loadLiveIntegrations();
-    const items = mergeIntegrationCatalog(live);
+    const items = applyEnvConnectedStatus(mergeIntegrationCatalog(live));
     const degraded = live.length === 0;
 
     return NextResponse.json(
@@ -124,10 +154,9 @@ export async function GET() {
     );
   } catch (error) {
     console.error("integrations_list_failed", error);
-    // Never blank the page — show catalog shells so admins can reconnect.
     return NextResponse.json(
       {
-        items: mergeIntegrationCatalog([]),
+        items: applyEnvConnectedStatus(mergeIntegrationCatalog([])),
         warning: "integrations_degraded",
         error: "list_failed",
       },
