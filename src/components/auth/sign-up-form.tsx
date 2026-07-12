@@ -518,9 +518,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               type="email"
               autoComplete="email"
               required
-              placeholder={labels.emailPlaceholder ?? "you@email.com"}
-              aria-label={labels.emailLabel ?? "email"}
-              label={labels.emailLabel}
+              placeholder={labels.emailPlaceholder || "you@email.com"}
+              aria-label={labels.emailLabel || "Email"}
+              label={labels.emailLabel || "Email"}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
@@ -531,8 +531,8 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                aria-label={labels.passwordLabel ?? "password"}
-                label={labels.passwordLabel}
+                aria-label={labels.passwordLabel || "Password"}
+                label={labels.passwordLabel || "Password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
@@ -542,7 +542,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                label={labels.confirmPasswordLabel ?? "Confirm password"}
+                label={labels.confirmPasswordLabel || "Confirm password"}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
               />
@@ -555,7 +555,10 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 onChange={(event) => setConsentRequired(event.target.checked)}
                 required
               />
-              <span>{labels.consentRequiredLabel}</span>
+              <span>
+                {labels.consentRequiredLabel ||
+                  "I agree to the Terms of Service and Privacy Policy"}
+              </span>
             </label>
             {errorCode ? (
               <p className="text-sm text-text-warning" role="alert">
@@ -563,8 +566,8 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               </p>
             ) : null}
             <Button type="submit" className="h-11 w-full">
-              {labels.createAccountLabel ??
-                labels.signUpSubmitLabel ??
+              {labels.createAccountLabel ||
+                labels.signUpSubmitLabel ||
                 "Create account"}
             </Button>
           </form>
@@ -593,7 +596,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             id="student-phone"
             type="tel"
             required
-            label={labels.phoneLabel}
+            label={labels.phoneLabel || "Phone"}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
           />
@@ -601,9 +604,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Select
               id="student-nationality"
               required
-              label={labels.nationalityLabel ?? "Nationality"}
+              label={labels.nationalityLabel || "Nationality"}
               value={nationality}
-              placeholder={labels.nationalityLabel ?? "Nationality"}
+              placeholder={labels.nationalityLabel || "Nationality"}
               options={nationalityOptions}
               onChange={(event) => setNationality(event.target.value)}
             />
@@ -611,7 +614,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Input
               id="student-nationality"
               required
-              label={labels.nationalityLabel ?? "Nationality"}
+              label={labels.nationalityLabel || "Nationality"}
               value={nationality}
               onChange={(event) => setNationality(event.target.value)}
             />
@@ -619,14 +622,14 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
           <Textarea
             id="student-work-experience"
             required
-            label={labels.workExperienceLabel ?? "Work experience"}
+            label={labels.workExperienceLabel || "Work experience"}
             value={workExperience}
             onChange={(event) => setWorkExperience(event.target.value)}
             rows={3}
           />
           <div className="space-y-2">
             <p className="text-sm font-medium text-text-secondary">
-              {labels.educationLabel ?? "Universities / education"}
+              {labels.educationLabel || "Universities / education"}
             </p>
             {education.map((row, index) => (
               <div
@@ -636,7 +639,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 <Input
                   id={`edu-institution-${index}`}
                   required
-                  label={labels.institutionLabel ?? "Institution"}
+                  label={labels.institutionLabel || "Institution"}
                   value={row.institution}
                   onChange={(event) =>
                     setEducation((rows) =>
@@ -650,7 +653,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 />
                 <Input
                   id={`edu-degree-${index}`}
-                  label={labels.degreeLabel ?? "Degree"}
+                  label={labels.degreeLabel || "Degree"}
                   value={row.degree}
                   onChange={(event) =>
                     setEducation((rows) =>
@@ -662,7 +665,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 />
                 <Input
                   id={`edu-year-${index}`}
-                  label={labels.yearLabel ?? "Year"}
+                  label={labels.yearLabel || "Year"}
                   value={row.year}
                   onChange={(event) =>
                     setEducation((rows) =>
@@ -685,16 +688,16 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 ])
               }
             >
-              {labels.addEducationLabel ?? "Add education"}
+              {labels.addEducationLabel || "Add education"}
             </Button>
           </div>
           {sectorOptions.length > 0 ? (
             <Select
               id="student-sector"
               required
-              label={labels.sectorLabel}
+              label={labels.sectorLabel || "Sector"}
               value={sector}
-              placeholder={labels.sectorLabel}
+              placeholder={labels.sectorLabel || "Sector"}
               options={sectorOptions}
               onChange={(event) => setSector(event.target.value)}
             />
@@ -702,7 +705,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Input
               id="student-sector"
               required
-              label={labels.sectorLabel}
+              label={labels.sectorLabel || "Sector"}
               value={sector}
               onChange={(event) => setSector(event.target.value)}
             />
@@ -711,9 +714,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Select
               id="student-seniority"
               required
-              label={labels.seniorityLabel}
+              label={labels.seniorityLabel || "Seniority"}
               value={seniority}
-              placeholder={labels.seniorityLabel}
+              placeholder={labels.seniorityLabel || "Seniority"}
               options={seniorityOptions}
               onChange={(event) => setSeniority(event.target.value)}
             />
@@ -721,7 +724,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Input
               id="student-seniority"
               required
-              label={labels.seniorityLabel}
+              label={labels.seniorityLabel || "Seniority"}
               value={seniority}
               onChange={(event) => setSeniority(event.target.value)}
             />
@@ -729,53 +732,53 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
           <Input
             id="student-current-city"
             required
-            label={labels.currentCityLabel}
+            label={labels.currentCityLabel || "Current city"}
             value={currentCity}
             onChange={(event) => setCurrentCity(event.target.value)}
           />
           <Input
             id="student-target-cities"
             required
-            label={labels.targetCitiesLabel}
+            label={labels.targetCitiesLabel || "Target cities (comma-separated)"}
             value={targetCities}
             onChange={(event) => setTargetCities(event.target.value)}
           />
           <Textarea
             id="student-bio"
-            label={labels.bioLabel}
+            label={labels.bioLabel || "Short bio"}
             value={bio}
             onChange={(event) => setBio(event.target.value)}
             rows={3}
           />
           <Input
             id="student-skills"
-            label={labels.skillsLabel}
+            label={labels.skillsLabel || "Skills (comma-separated)"}
             value={skills}
             onChange={(event) => setSkills(event.target.value)}
           />
           <Input
             id="student-availability"
-            label={labels.availabilityLabel}
+            label={labels.availabilityLabel || "Availability"}
             value={availability}
             onChange={(event) => setAvailability(event.target.value)}
           />
           <Input
             id="student-linkedin"
             type="url"
-            label={labels.linkedinLabel}
+            label={labels.linkedinLabel || "LinkedIn URL"}
             value={linkedinUrl}
             onChange={(event) => setLinkedinUrl(event.target.value)}
           />
           <Input
             id="student-portfolio"
             type="url"
-            label={labels.portfolioLabel}
+            label={labels.portfolioLabel || "Portfolio URL"}
             value={portfolioUrl}
             onChange={(event) => setPortfolioUrl(event.target.value)}
           />
           <Input
             id="student-referral"
-            label={labels.referralCodeLabel}
+            label={labels.referralCodeLabel || "Referral code (optional)"}
             value={referralCode}
             onChange={(event) => setReferralCode(event.target.value)}
           />
@@ -786,11 +789,14 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               checked={consentMarketing}
               onChange={(event) => setConsentMarketing(event.target.checked)}
             />
-            <span>{labels.consentMarketingLabel}</span>
+            <span>
+              {labels.consentMarketingLabel ||
+                "Send me occasional product updates (optional)."}
+            </span>
           </label>
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
-              {labels[errorCode] ?? labels.genericErrorLabel}
+              {labels[errorCode] || labels.genericErrorLabel}
             </p>
           ) : null}
           <div className="flex gap-2">
@@ -799,10 +805,12 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               variant="outline"
               onClick={() => setStep("account")}
             >
-              {labels.backLabel}
+              {labels.backLabel || "Back"}
             </Button>
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {labels.createAccountLabel ?? labels.signUpSubmitLabel}
+              {labels.createAccountLabel ||
+                labels.signUpSubmitLabel ||
+                "Create account"}
             </Button>
           </div>
         </form>
@@ -814,7 +822,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             id="company-phone"
             type="tel"
             required
-            label={labels.phoneLabel}
+            label={labels.phoneLabel || "Phone"}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
           />
@@ -822,9 +830,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Select
               id="company-nationality"
               required
-              label={labels.nationalityLabel ?? "Nationality"}
+              label={labels.nationalityLabel || "Nationality"}
               value={nationality}
-              placeholder={labels.nationalityLabel ?? "Nationality"}
+              placeholder={labels.nationalityLabel || "Nationality"}
               options={nationalityOptions}
               onChange={(event) => setNationality(event.target.value)}
             />
@@ -832,7 +840,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Input
               id="company-nationality"
               required
-              label={labels.nationalityLabel ?? "Nationality"}
+              label={labels.nationalityLabel || "Nationality"}
               value={nationality}
               onChange={(event) => setNationality(event.target.value)}
             />
@@ -841,9 +849,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Select
               id="company-industry"
               required
-              label={labels.industryLabel}
+              label={labels.industryLabel || "Industry"}
               value={industry}
-              placeholder={labels.industryLabel}
+              placeholder={labels.industryLabel || "Industry"}
               options={industryOptions}
               onChange={(event) => setIndustry(event.target.value)}
             />
@@ -851,7 +859,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             <Input
               id="company-industry"
               required
-              label={labels.industryLabel}
+              label={labels.industryLabel || "Industry"}
               value={industry}
               onChange={(event) => setIndustry(event.target.value)}
             />
@@ -859,20 +867,20 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
           <Input
             id="company-website"
             type="url"
-            label={labels.websiteLabel}
+            label={labels.websiteLabel || "Company website"}
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
           />
           <Input
             id="company-locations"
             required
-            label={labels.preferredLocationsLabel}
+            label={labels.preferredLocationsLabel || "Hiring locations (comma-separated)"}
             value={preferredLocations}
             onChange={(event) => setPreferredLocations(event.target.value)}
           />
           <Textarea
             id="company-hiring-needs"
-            label={labels.hiringNeedsLabel}
+            label={labels.hiringNeedsLabel || "What roles are you hiring for?"}
             value={hiringNeeds}
             onChange={(event) => setHiringNeeds(event.target.value)}
             rows={3}
@@ -884,11 +892,14 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               checked={consentMarketing}
               onChange={(event) => setConsentMarketing(event.target.checked)}
             />
-            <span>{labels.consentMarketingLabel}</span>
+            <span>
+              {labels.consentMarketingLabel ||
+                "Send me occasional product updates (optional)."}
+            </span>
           </label>
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
-              {labels[errorCode] ?? labels.genericErrorLabel}
+              {labels[errorCode] || labels.genericErrorLabel}
             </p>
           ) : null}
           <div className="flex gap-2">
@@ -897,10 +908,12 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               variant="outline"
               onClick={() => setStep("account")}
             >
-              {labels.backLabel}
+              {labels.backLabel || "Back"}
             </Button>
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {labels.createAccountLabel ?? labels.signUpSubmitLabel}
+              {labels.createAccountLabel ||
+                labels.signUpSubmitLabel ||
+                "Create account"}
             </Button>
           </div>
         </form>
@@ -1047,7 +1060,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               <FileUpload
                 storagePath={`students/${uid}/photo`}
                 accept="image/*"
-                label={labels.photoUploadLabel}
+                label={labels.photoUploadLabel || "Profile photo (required)"}
                 dropzoneContent={labels.photoDropzone}
                 progressLabel={labels.uploadProgress}
                 onUploadComplete={(result) => setPhotoUrl(result.url)}
@@ -1064,7 +1077,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               <FileUpload
                 storagePath={`students/${uid}/cv`}
                 accept=".pdf,application/pdf"
-                label={labels.cvUploadLabel}
+                label={labels.cvUploadLabel || "CV (optional)"}
                 dropzoneContent={labels.cvDropzone}
                 progressLabel={labels.uploadProgress}
                 onUploadComplete={(result) => setCvUrl(result.url)}
@@ -1076,7 +1089,7 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
               <FileUpload
                 storagePath={`companies/${uid}/logo`}
                 accept="image/*"
-                label={labels.logoUploadLabel}
+                label={labels.logoUploadLabel || "Company logo (required)"}
                 dropzoneContent={labels.logoDropzone}
                 progressLabel={labels.uploadProgress}
                 onUploadComplete={(result) => setLogoUrl(result.url)}
@@ -1108,7 +1121,9 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
             }
             onClick={() => void finishSignup()}
           >
-            {labels.finishLabel ?? labels.signUpSubmitLabel}
+            {labels.finishLabel ||
+              labels.signUpSubmitLabel ||
+              "Finish & go to dashboard"}
           </Button>
         </div>
       ) : null}
