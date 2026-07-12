@@ -101,8 +101,21 @@ export function SignInForm({ labels }: SignInFormProps) {
         {errorCode ? (
           <p className="text-sm text-text-warning" role="alert">
             {labels[errorCode as keyof AuthLabels] ??
-              errorCode ??
-              labels.genericErrorLabel}
+              (errorCode === "service_unavailable"
+                ? "Sign in is temporarily unavailable. Please try again in a moment."
+                : errorCode === "session_timeout"
+                  ? "Sign in timed out. Please try again."
+                  : errorCode === "session_failed"
+                    ? "Could not start your session. Please try again."
+                    : errorCode === "rate_limited"
+                      ? "Too many attempts. Please wait a minute and try again."
+                      : errorCode === "user_not_found"
+                        ? "No account found for that email."
+                        : errorCode === "account_suspended"
+                          ? "This account is suspended."
+                          : null) ??
+              labels.genericErrorLabel ??
+              errorCode}
           </p>
         ) : null}
 

@@ -9,8 +9,9 @@ import {
   IMPERSONATE_COOKIE_NAME,
 } from "@/lib/auth/constants";
 import { signRoleToken } from "@/lib/auth/role-token";
+import { withTimeout } from "@/lib/async/with-timeout";
 import { stripUndefined } from "@/lib/stripUndefined";
-import type { UserDocument } from "@/types/user";
+import type { UserDocument, UserRole } from "@/types/user";
 import { withRequestLog } from "@/lib/observability/api-handler";
 import { captureException, logger } from "@/lib/observability/logger";
 import {
@@ -36,22 +37,99 @@ function buildCookieOptions(maxAgeMs: number) {
   };
 }
 
-async function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  label: string,
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
+function isUserRole(value: unknown): value is UserRole {
+  return value === "admin" || value === "company" || value === "student";
+}
+
+async function resolveLoginUser(decoded: {
+  uid: string;
+  email?: string;
+  role?: unknown;
+}): Promise<{
+  uid: string;
+  role: UserRole;
+  status: "active" | "suspended";
+  lastLoginIp?: string;
+  fromClaims: boolean;
+}> {
   try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label}_timeout`)), ms);
-      }),
-    ]);
-  } finally {
-    if (timer) clearTimeout(timer);
+    const userSnapshot = await withTimeout(
+      adminDb.collection("users").doc(decoded.uid).get(),
+      3500,
+      "user_lookup",
+    );
+
+    if (userSnapshot.exists) {
+      const user = userSnapshot.data() as UserDocument;
+      if (!isUserRole(user.role)) {
+        throw new Error("invalid_role");
+      }
+      // Keep Auth claims in sync so future Firestore outages still allow login.
+      void adminAuth
+        .setCustomUserClaims(decoded.uid, { role: user.role })
+        .catch((error) => {
+          logger.error("session_claims_sync_failed", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+
+      return {
+        uid: user.uid || decoded.uid,
+        role: user.role,
+        status: user.status === "suspended" ? "suspended" : "active",
+        lastLoginIp: String(userSnapshot.data()?.lastLoginIp ?? ""),
+        fromClaims: false,
+      };
+    }
+  } catch (error) {
+    logger.error("session_user_lookup_degraded", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
+
+  // Token may already carry role after a prior successful claims sync.
+  if (isUserRole(decoded.role)) {
+    return {
+      uid: decoded.uid,
+      role: decoded.role,
+      status: "active",
+      fromClaims: true,
+    };
+  }
+
+  // Auth Admin API is independent of Firestore quota.
+  const authUser = await withTimeout(
+    adminAuth.getUser(decoded.uid),
+    5000,
+    "auth_user_lookup",
+  );
+  const claimRole = authUser.customClaims?.role;
+  if (isUserRole(claimRole)) {
+    return {
+      uid: decoded.uid,
+      role: claimRole,
+      status: "active",
+      fromClaims: true,
+    };
+  }
+
+  // Ops escape hatch: seed super-admin email can sign in during Firestore outages
+  // before custom claims have been synced once.
+  const seedAdmin = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const email = (decoded.email ?? authUser.email ?? "").trim().toLowerCase();
+  if (seedAdmin && email && email === seedAdmin) {
+    void adminAuth
+      .setCustomUserClaims(decoded.uid, { role: "admin" })
+      .catch(() => undefined);
+    return {
+      uid: decoded.uid,
+      role: "admin",
+      status: "active",
+      fromClaims: true,
+    };
+  }
+
+  throw new Error("user_lookup_unavailable");
 }
 
 export async function POST(request: Request) {
@@ -73,17 +151,8 @@ export async function POST(request: Request) {
         10000,
         "verify_id_token",
       );
-      const userSnapshot = await withTimeout(
-        adminDb.collection("users").doc(decoded.uid).get(),
-        8000,
-        "user_lookup",
-      );
 
-      if (!userSnapshot.exists) {
-        return NextResponse.json({ error: "user_not_found" }, { status: 404 });
-      }
-
-      const user = userSnapshot.data() as UserDocument;
+      const user = await resolveLoginUser(decoded);
 
       if (user.status === "suspended") {
         return NextResponse.json({ error: "account_suspended" }, { status: 403 });
@@ -92,10 +161,11 @@ export async function POST(request: Request) {
       let expireDays = 5;
       let require2fa = false;
       try {
-        const settingsSnap = await adminDb
-          .collection("site_settings")
-          .doc("default")
-          .get();
+        const settingsSnap = await withTimeout(
+          adminDb.collection("site_settings").doc("default").get(),
+          2500,
+          "session_settings",
+        );
         const settingsData = settingsSnap.data() ?? {};
         expireDays = Number(settingsData.sessionExpireDays ?? 5);
         require2fa = Boolean(settingsData.require2fa);
@@ -117,63 +187,67 @@ export async function POST(request: Request) {
 
       const expiresInMs = Math.min(Math.max(expireDays, 1), 14) * 24 * 60 * 60 * 1000;
 
-      const sessionCookie = await adminAuth.createSessionCookie(idToken, {
-        expiresIn: expiresInMs,
-      });
+      const sessionCookie = await withTimeout(
+        adminAuth.createSessionCookie(idToken, { expiresIn: expiresInMs }),
+        10000,
+        "create_session_cookie",
+      );
       const roleToken = await signRoleToken({
         uid: user.uid,
         role: user.role,
       });
 
       const userAgent = request.headers.get("user-agent") ?? "unknown";
-      const previousIp = String(userSnapshot.data()?.lastLoginIp ?? "");
+      const previousIp = user.lastLoginIp ?? "";
       const when = new Date().toISOString();
 
-      // Best-effort audit write — never block cookie issuance on Firestore quota.
-      void adminDb
-        .collection("users")
-        .doc(user.uid)
-        .update(
-          stripUndefined({
-            lastLoginAt: FieldValue.serverTimestamp(),
-            lastLoginIp: ip,
-            lastLoginUserAgent: userAgent.slice(0, 300),
-          }),
-        )
-        .catch((auditError) => {
-          logger.error("session_login_audit_failed", {
-            error:
-              auditError instanceof Error
-                ? auditError.message
-                : String(auditError),
+      if (!user.fromClaims) {
+        void adminDb
+          .collection("users")
+          .doc(user.uid)
+          .update(
+            stripUndefined({
+              lastLoginAt: FieldValue.serverTimestamp(),
+              lastLoginIp: ip,
+              lastLoginUserAgent: userAgent.slice(0, 300),
+            }),
+          )
+          .catch((auditError) => {
+            logger.error("session_login_audit_failed", {
+              error:
+                auditError instanceof Error
+                  ? auditError.message
+                  : String(auditError),
+            });
           });
-        });
 
-      void import("@/lib/email/notify")
-        .then(({ notifyLoginAlert, notifySuspiciousLogin }) => {
-          void notifyLoginAlert({
-            userId: user.uid,
-            ip,
-            userAgent,
-            when,
-            request,
-          });
-          if (previousIp && previousIp !== ip && previousIp !== "unknown") {
-            void notifySuspiciousLogin({
+        void import("@/lib/email/notify")
+          .then(({ notifyLoginAlert, notifySuspiciousLogin }) => {
+            void notifyLoginAlert({
               userId: user.uid,
               ip,
-              previousIp,
               userAgent,
               when,
               request,
             });
-          }
-        })
-        .catch(() => undefined);
+            if (previousIp && previousIp !== ip && previousIp !== "unknown") {
+              void notifySuspiciousLogin({
+                userId: user.uid,
+                ip,
+                previousIp,
+                userAgent,
+                when,
+                request,
+              });
+            }
+          })
+          .catch(() => undefined);
+      }
 
       const response = NextResponse.json({
         role: user.role,
         redirectTo: PORTAL_HOME[user.role],
+        degraded: user.fromClaims || undefined,
       });
 
       response.cookies.set(
@@ -186,7 +260,6 @@ export async function POST(request: Request) {
         roleToken,
         buildCookieOptions(expiresInMs),
       );
-      // Never carry a prior admin view-as into a fresh login.
       response.cookies.set(IMPERSONATE_COOKIE_NAME, "", buildCookieOptions(0));
 
       return response;
@@ -196,7 +269,11 @@ export async function POST(request: Request) {
       }
 
       const message = error instanceof Error ? error.message : String(error);
-      if (message.includes("timeout") || message.includes("RESOURCE_EXHAUSTED")) {
+      if (
+        message.includes("timeout") ||
+        message.includes("RESOURCE_EXHAUSTED") ||
+        message === "user_lookup_unavailable"
+      ) {
         await captureException(error, { route: "/api/auth/session" });
         logger.error("session_unavailable", { error: message });
         return NextResponse.json({ error: "service_unavailable" }, { status: 503 });
