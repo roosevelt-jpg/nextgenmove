@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { DEFAULT_ADMIN_NAV_LABELS } from "@/lib/portal/nav-label-defaults";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/admin/dashboard", match: "exact" as const },
@@ -173,8 +174,10 @@ export function AdminPortalShell({
         </p>
         <nav className="space-y-0.5" aria-label="admin">
           {NAV_ITEMS.map((item) => {
-            const label = labels[item.key];
-            if (!label) return null;
+            const label =
+              labels[item.key]?.trim() ||
+              DEFAULT_ADMIN_NAV_LABELS[item.key] ||
+              item.key;
             const active = isNavActive(pathname, item);
             return (
               <Link

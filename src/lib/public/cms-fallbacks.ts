@@ -38,6 +38,32 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
     headerCtaHref: "/sign-up",
     contact: "Contact",
   },
+  adminNavLabels: {
+    dashboard: "Dashboard",
+    levers: "Program Levers",
+    crm: "CRM",
+    library: "Content Library",
+    content: "Homepage Content",
+    settings: "Settings",
+    account: "My account",
+    integrations: "Integrations",
+    users: "Users",
+  },
+  studentNavLabels: {
+    dashboard: "Dashboard",
+    wallet: "Wallet",
+    store: "Content store",
+    profile: "Profile",
+    settings: "Settings",
+  },
+  employerNavLabels: {
+    dashboard: "Dashboard",
+    talentPool: "Talent pool",
+    pipeline: "Pipeline",
+    shortlist: "Shortlist",
+    profile: "Profile",
+    settings: "Settings",
+  },
 };
 
 export const FALLBACK_PAGE_HOME: PageHomeDocument = {

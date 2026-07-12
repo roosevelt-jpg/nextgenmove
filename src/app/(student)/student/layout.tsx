@@ -1,6 +1,10 @@
 import { WorkspacePortalShell } from "@/components/layout/workspace-portal-shell";
 import { getCurrentUser, getSessionActor } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/collections/site-settings";
+import {
+  DEFAULT_STUDENT_NAV_LABELS,
+  mergeNavLabels,
+} from "@/lib/portal/nav-label-defaults";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/student/dashboard" },
@@ -26,20 +30,19 @@ export default async function StudentPortalLayout({
         }
       : null;
   const previewMode = actor?.role === "admin" && !impersonating;
+  const showAdminWorkspace = actor?.role === "admin" || Boolean(impersonating);
 
   const labels: Record<string, string> = {
     ...(settings.formLabels ?? {}),
-    ...(settings.studentNavLabels ?? {}),
+    ...mergeNavLabels(DEFAULT_STUDENT_NAV_LABELS, settings.studentNavLabels),
     ...(settings.adminPageLabels?.shell ?? {}),
-    profile: settings.studentNavLabels?.profile ?? "My Profile",
-    wallet: settings.studentNavLabels?.wallet ?? "Wallet",
     workspaceStudent: "Student",
     workspaceEmployer: "Employer",
     workspaceAdmin: "Admin",
     globalSettings: "Settings",
-    settings: "Settings",
     publicSite: "Public site",
     signOut: "Sign out",
+    studentSection: "Student",
     workspacePreviewBanner:
       settings.adminPageLabels?.shell?.workspacePreviewBanner ??
       "Admin preview — read-only shell. Open CRM for live student and employer records.",
@@ -61,6 +64,7 @@ export default async function StudentPortalLayout({
       brandMark={settings.brandMark ?? "V"}
       previewMode={previewMode}
       impersonation={impersonating}
+      showAdminWorkspace={showAdminWorkspace}
     >
       {children}
     </WorkspacePortalShell>

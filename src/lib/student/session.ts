@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, getSessionActor } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { withTimeout } from "@/lib/async/with-timeout";
 import type { PortalSessionMode } from "@/lib/auth/portal-session";
 
 export interface StudentDocument {
@@ -124,24 +125,32 @@ export async function getStudentSession(): Promise<StudentSession | null> {
   }
 
   if (user.role === "student") {
-    const studentSnapshot = await adminDb.collection("students").doc(user.uid).get();
+    try {
+      const studentSnapshot = await withTimeout(
+        adminDb.collection("students").doc(user.uid).get(),
+        3500,
+        "student_session_lookup",
+      );
 
-    if (!studentSnapshot.exists) {
+      if (!studentSnapshot.exists) {
+        return null;
+      }
+
+      const mode: PortalSessionMode =
+        user.sessionMode === "impersonation" ? "impersonation" : "live";
+
+      return {
+        user,
+        studentId: studentSnapshot.id,
+        student: mapStudentDoc(
+          studentSnapshot.id,
+          studentSnapshot.data()! as Record<string, unknown>,
+        ),
+        mode,
+      };
+    } catch {
       return null;
     }
-
-    const mode: PortalSessionMode =
-      user.sessionMode === "impersonation" ? "impersonation" : "live";
-
-    return {
-      user,
-      studentId: studentSnapshot.id,
-      student: mapStudentDoc(
-        studentSnapshot.id,
-        studentSnapshot.data()! as Record<string, unknown>,
-      ),
-      mode,
-    };
   }
 
   // Admin preview (not impersonating a student).

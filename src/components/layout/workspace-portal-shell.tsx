@@ -9,6 +9,10 @@ import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import {
+  DEFAULT_EMPLOYER_NAV_LABELS,
+  DEFAULT_STUDENT_NAV_LABELS,
+} from "@/lib/portal/nav-label-defaults";
 
 export type PortalWorkspace = "student" | "employer" | "admin";
 
@@ -34,6 +38,8 @@ export interface WorkspacePortalShellProps {
     email?: string | null;
     role: string;
   } | null;
+  /** Only admins (or impersonating admins) see the Admin workspace pill. */
+  showAdminWorkspace?: boolean;
 }
 
 function isActivePath(pathname: string, item: PortalNavItem) {
@@ -60,15 +66,23 @@ export function WorkspacePortalShell({
   children,
   previewMode = false,
   impersonation = null,
+  showAdminWorkspace = false,
 }: WorkspacePortalShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [exiting, setExiting] = useState(false);
 
+  const navDefaults =
+    workspace === "employer"
+      ? DEFAULT_EMPLOYER_NAV_LABELS
+      : DEFAULT_STUDENT_NAV_LABELS;
+
   const activeItem = navItems.find((item) => isActivePath(pathname, item));
   const titleLabel =
-    (activeItem && labels[activeItem.key]) ||
-    labels.dashboard ||
+    (activeItem &&
+      (labels[activeItem.key]?.trim() || navDefaults[activeItem.key])) ||
+    labels.dashboard?.trim() ||
+    navDefaults.dashboard ||
     sectionLabel;
 
   const signOut = async () => {
@@ -106,7 +120,9 @@ export function WorkspacePortalShell({
         "/employer/dashboard",
         labels.workspaceEmployer ?? "Employer",
       ],
-      ["admin", "/admin/dashboard", labels.workspaceAdmin ?? "Admin"],
+      ...(showAdminWorkspace || previewMode || Boolean(impersonation)
+        ? ([["admin", "/admin/dashboard", labels.workspaceAdmin ?? "Admin"]] as const)
+        : []),
     ] as const
   );
 
@@ -154,8 +170,8 @@ export function WorkspacePortalShell({
         </p>
         <nav className="space-y-0.5" aria-label={workspace}>
           {navItems.map((item) => {
-            const label = labels[item.key];
-            if (!label) return null;
+            const label =
+              labels[item.key]?.trim() || navDefaults[item.key] || item.key;
             const active = isActivePath(pathname, item);
             return (
               <Link

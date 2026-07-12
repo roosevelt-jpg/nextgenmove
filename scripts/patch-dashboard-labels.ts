@@ -27,7 +27,7 @@ async function main() {
     ...((adminPageLabels.dashboard as Record<string, string>) || {}),
     eyebrow: "Admin",
     title: "Operations dashboard.",
-    subtitle: "Real-time overview of NextGen Move placements and activity.",
+    subtitle: "Real-time overview of Venturo placements and activity.",
     activeStudents: "Active students",
     pendingRequestsCount: "Open requests",
     placedThisQuarter: "Placed this Q",

@@ -89,7 +89,7 @@ async function writeUser(
 
 const TALENT = [
   {
-    email: "sara.kowalski@nextgenmove.demo",
+    email: "sara.kowalski@Venturo.demo",
     fullName: "Sara Kowalski",
     sector: "Marketing",
     seniority: "Mid-level",
@@ -101,7 +101,7 @@ const TALENT = [
     availability: "2 weeks",
   },
   {
-    email: "jonas.lange@nextgenmove.demo",
+    email: "jonas.lange@Venturo.demo",
     fullName: "Jonas Lange",
     sector: "Finance",
     seniority: "Senior",
@@ -113,7 +113,7 @@ const TALENT = [
     availability: "Immediate",
   },
   {
-    email: "amira.mourad@nextgenmove.demo",
+    email: "amira.mourad@Venturo.demo",
     fullName: "Amira Mourad",
     sector: "Operations",
     seniority: "Mid-level",
@@ -125,7 +125,7 @@ const TALENT = [
     availability: "1 month",
   },
   {
-    email: "piotr.vanlaan@nextgenmove.demo",
+    email: "piotr.vanlaan@Venturo.demo",
     fullName: "Piotr Vanlaan",
     sector: "Tech",
     seniority: "Senior",
@@ -137,7 +137,7 @@ const TALENT = [
     availability: "2 weeks",
   },
   {
-    email: "lea.bernard@nextgenmove.demo",
+    email: "lea.bernard@Venturo.demo",
     fullName: "Léa Bernard",
     sector: "HR",
     seniority: "Mid-level",
@@ -149,7 +149,7 @@ const TALENT = [
     availability: "1 month",
   },
   {
-    email: "carlos.neves@nextgenmove.demo",
+    email: "carlos.neves@Venturo.demo",
     fullName: "Carlos Neves",
     sector: "Sales",
     seniority: "Senior",
@@ -164,7 +164,7 @@ const TALENT = [
 
 const COMPANIES = [
   {
-    email: "employer@nextgenmove.demo",
+    email: "employer@Venturo.demo",
     name: "Nordbridge Logistics",
     contactName: "Helen Park",
     industry: "Logistics",
@@ -173,7 +173,7 @@ const COMPANIES = [
     primary: true,
   },
   {
-    email: "atlas@nextgenmove.demo",
+    email: "atlas@Venturo.demo",
     name: "Atlas Retail Group",
     contactName: "Omar Said",
     industry: "Retail",
@@ -181,7 +181,7 @@ const COMPANIES = [
     crmDealStage: "new",
   },
   {
-    email: "meridian@nextgenmove.demo",
+    email: "meridian@Venturo.demo",
     name: "Meridian Bank",
     contactName: "Claire Ng",
     industry: "Finance",
@@ -189,7 +189,7 @@ const COMPANIES = [
     crmDealStage: "contacted",
   },
   {
-    email: "solace@nextgenmove.demo",
+    email: "solace@Venturo.demo",
     name: "Solace Health",
     contactName: "Dr. Yasmin Ali",
     industry: "Healthcare",
@@ -197,7 +197,7 @@ const COMPANIES = [
     crmDealStage: "contacted",
   },
   {
-    email: "vantage@nextgenmove.demo",
+    email: "vantage@Venturo.demo",
     name: "Vantage Energy",
     contactName: "Tom Reeves",
     industry: "Energy",
@@ -205,7 +205,7 @@ const COMPANIES = [
     crmDealStage: "qualified",
   },
   {
-    email: "lemoni.retail@nextgenmove.demo",
+    email: "lemoni.retail@Venturo.demo",
     name: "Lemoni Retail Co.",
     contactName: "Lemoni Grootkerk",
     industry: "Retail",
@@ -262,12 +262,12 @@ async function main() {
 
   // --- Primary demo student (journey: Interviewing, 2100 credits) ---
   const studentUid = await ensureAuthUser(auth, {
-    email: "student@nextgenmove.demo",
+    email: "student@Venturo.demo",
     password: DEMO_PASSWORD,
     displayName: "Demo Student",
   });
   await writeUser(db, studentUid, {
-    email: "student@nextgenmove.demo",
+    email: "student@Venturo.demo",
     role: "student",
     displayName: "Demo Student",
   });
@@ -279,7 +279,7 @@ async function main() {
         id: studentUid,
         userId: studentUid,
         fullName: "Demo Student",
-        email: "student@nextgenmove.demo",
+        email: "student@Venturo.demo",
         photoUrl: null,
         sector: "Marketing",
         seniority: "Mid-level",
@@ -298,7 +298,7 @@ async function main() {
       }),
       { merge: true },
     );
-  log.push(`student ${studentUid} student@nextgenmove.demo`);
+  log.push(`student ${studentUid} student@Venturo.demo`);
 
   // --- Talent pool students ---
   const talentUids: { uid: string; score: number; email: string }[] = [];
@@ -346,7 +346,7 @@ async function main() {
 
   // Extra active students so admin counts feel populated (Auth + docs)
   for (let i = 1; i <= 18; i++) {
-    const email = `candidate${String(i).padStart(2, "0")}@nextgenmove.demo`;
+    const email = `candidate${String(i).padStart(2, "0")}@Venturo.demo`;
     const uid = await ensureAuthUser(auth, {
       email,
       password: DEMO_PASSWORD,
@@ -428,7 +428,7 @@ async function main() {
         { merge: true },
       );
   }
-  if (!primaryCompanyUid) primaryCompanyUid = (await auth.getUserByEmail("employer@nextgenmove.demo")).uid;
+  if (!primaryCompanyUid) primaryCompanyUid = (await auth.getUserByEmail("employer@Venturo.demo")).uid;
   log.push(`companies ${COMPANIES.length}; primary ${primaryCompanyUid}`);
 
   // --- Matches (talent pool + pipeline stages) ---
@@ -552,7 +552,7 @@ async function main() {
     },
     {
       id: "demo_video_2",
-      title: "Meet your coach: Lemoni",
+      title: "Meet your coach",
       subtitle: "Founder & Coach",
       duration: "2:04",
       position: 2,
@@ -650,7 +650,7 @@ async function main() {
         coverImageUrl: "",
         excerpt: "What employers actually screen for in Dubai and Abu Dhabi.",
         body: "<p>Demo journal article seeded for the public Journal page.</p>",
-        author: "NextGen Move",
+        author: "Venturo",
         category: "Insights",
         publishedDate: new Date().toISOString().slice(0, 10),
         tags: ["Dubai", "Hiring"],
@@ -707,7 +707,7 @@ async function main() {
         payload: {
           companyName: "Nordbridge Logistics",
           contactName: "Helen Park",
-          contactEmail: "employer@nextgenmove.demo",
+          contactEmail: "employer@Venturo.demo",
           roleTitleNeeded: "Operations Lead — Dubai",
           type: "sourcing",
         },
@@ -836,9 +836,9 @@ async function main() {
   console.log(`
 Login credentials (password for all: ${DEMO_PASSWORD})
   Admin (from seed):     admin@venturo.ae  /  (SEED_ADMIN_PASSWORD in .env.local)
-  Employer:              employer@nextgenmove.demo
-  Student:               student@nextgenmove.demo
-  Talent (e.g.):         sara.kowalski@nextgenmove.demo
+  Employer:              employer@Venturo.demo
+  Student:               student@Venturo.demo
+  Talent (e.g.):         sara.kowalski@Venturo.demo
 `);
 }
 

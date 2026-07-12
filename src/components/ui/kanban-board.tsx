@@ -76,7 +76,12 @@ export function KanbanBoard({
   };
 
   return (
-    <div className={cn("flex gap-4 overflow-x-auto pb-2", className)}>
+    <div
+      className={cn(
+        "flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 md:gap-4",
+        className,
+      )}
+    >
       {columns.map((column) => {
         const columnItems = itemsByColumn.get(column.id) ?? [];
         const isDropTarget = dropTargetColumnId === column.id;
@@ -85,7 +90,7 @@ export function KanbanBoard({
           <div
             key={column.id}
             className={cn(
-              "flex min-w-64 flex-1 flex-col rounded-radius border border-border bg-grad-card",
+              "flex w-[min(85vw,18rem)] shrink-0 snap-start flex-col rounded-radius border border-border bg-grad-card md:min-w-56 md:w-auto md:flex-1",
               isDropTarget && "ring-2 ring-border-accent",
               columnClassName,
             )}

@@ -42,6 +42,13 @@ export const FALLBACK_AUTH_LABELS: AuthLabels = {
   invalid_request: "Please check the form and try again.",
   consent_required: "Please accept the required terms to continue.",
   password_mismatch: "Passwords do not match.",
+  email_verification_required:
+    "Verify your email before signing in with 2FA enabled.",
+  verification_required: "Verify your email and phone to continue.",
+  email_otp_send_failed: "Could not send the email code. Try again.",
+  sms_otp_send_failed: "Could not send the SMS code. Check the number and try again.",
+  otp_invalid: "That code is incorrect. Try again.",
+  otp_expired: "That code expired. Request a new one.",
   photo_required: "Upload a profile photo to finish.",
   logo_required: "Upload your company logo to finish.",
   upload_failed: "Upload failed. Try again.",

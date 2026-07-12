@@ -190,10 +190,24 @@ export async function POST(request: Request) {
       }
 
       if (require2fa && !decoded.email_verified) {
-        return NextResponse.json(
-          { error: "email_verification_required" },
-          { status: 403 },
-        );
+        // Allow incomplete signups through so verify/media steps can set cookies.
+        let profileComplete = false;
+        try {
+          const profileSnap = await withTimeout(
+            adminDb.collection("users").doc(user.uid).get(),
+            1500,
+            "profile_complete_check",
+          );
+          profileComplete = Boolean(profileSnap.data()?.profileComplete);
+        } catch {
+          profileComplete = false;
+        }
+        if (profileComplete) {
+          return NextResponse.json(
+            { error: "email_verification_required" },
+            { status: 403 },
+          );
+        }
       }
 
       const expiresInMs = Math.min(Math.max(expireDays, 1), 14) * 24 * 60 * 60 * 1000;

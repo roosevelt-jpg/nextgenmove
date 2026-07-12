@@ -1,4 +1,4 @@
-# Security Model — NextGen Move
+# Security Model — Venturo
 
 Access control is enforced in three layers:
 

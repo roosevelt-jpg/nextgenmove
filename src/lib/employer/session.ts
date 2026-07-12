@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, getSessionActor } from "@/lib/auth";
 import { adminDb } from "@/lib/firebase-admin";
+import { withTimeout } from "@/lib/async/with-timeout";
 import type { PortalSessionMode } from "@/lib/auth/portal-session";
 import {
   assertCompanyOwnsResource,
@@ -80,44 +81,52 @@ export async function getEmployerSession(): Promise<EmployerSession | null> {
   }
 
   if (user.role === "company") {
-    const companySnapshot = await adminDb.collection("companies").doc(user.uid).get();
+    try {
+      const companySnapshot = await withTimeout(
+        adminDb.collection("companies").doc(user.uid).get(),
+        3500,
+        "employer_session_lookup",
+      );
 
-    if (!companySnapshot.exists) {
+      if (!companySnapshot.exists) {
+        return null;
+      }
+
+      const data = companySnapshot.data()!;
+      const mode: PortalSessionMode =
+        user.sessionMode === "impersonation" ? "impersonation" : "live";
+
+      return {
+        user,
+        companyId: companySnapshot.id,
+        company: {
+          id: companySnapshot.id,
+          userId: data.userId ?? user.uid,
+          name: data.name ?? "",
+          contactEmail: data.contactEmail ?? "",
+          contactPhone: data.contactPhone ?? null,
+          nationality: data.nationality ?? null,
+          logoUrl: data.logoUrl ?? null,
+          industry: data.industry ?? "",
+          website: data.website ?? null,
+          plan: data.plan ?? null,
+          subscriptionStatus: data.subscriptionStatus ?? "pending",
+          stripeCustomerId: data.stripeCustomerId ?? null,
+          stripeSubscriptionId: data.stripeSubscriptionId ?? null,
+          billingProvider: data.billingProvider ?? null,
+          contactName: data.contactName ?? null,
+          hiringNeeds: data.hiringNeeds ?? null,
+          requirements: data.requirements ?? [],
+          preferredLocations: data.preferredLocations ?? [],
+          requirementTags: data.requirementTags ?? [],
+          notificationPreferences: data.notificationPreferences ?? {},
+          createdAt: data.createdAt,
+        },
+        mode,
+      };
+    } catch {
       return null;
     }
-
-    const data = companySnapshot.data()!;
-    const mode: PortalSessionMode =
-      user.sessionMode === "impersonation" ? "impersonation" : "live";
-
-    return {
-      user,
-      companyId: companySnapshot.id,
-      company: {
-        id: companySnapshot.id,
-        userId: data.userId ?? user.uid,
-        name: data.name ?? "",
-        contactEmail: data.contactEmail ?? "",
-        contactPhone: data.contactPhone ?? null,
-        nationality: data.nationality ?? null,
-        logoUrl: data.logoUrl ?? null,
-        industry: data.industry ?? "",
-        website: data.website ?? null,
-        plan: data.plan ?? null,
-        subscriptionStatus: data.subscriptionStatus ?? "pending",
-        stripeCustomerId: data.stripeCustomerId ?? null,
-        stripeSubscriptionId: data.stripeSubscriptionId ?? null,
-        billingProvider: data.billingProvider ?? null,
-        contactName: data.contactName ?? null,
-        hiringNeeds: data.hiringNeeds ?? null,
-        requirements: data.requirements ?? [],
-        preferredLocations: data.preferredLocations ?? [],
-        requirementTags: data.requirementTags ?? [],
-        notificationPreferences: data.notificationPreferences ?? {},
-        createdAt: data.createdAt,
-      },
-      mode,
-    };
   }
 
   if (user.role === "admin") {

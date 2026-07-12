@@ -1,5 +1,5 @@
 /**
- * NextGen Move — operational config seed (Admin SDK only).
+ * Venturo — operational config seed (Admin SDK only).
  *
  * Usage:
  *   npm run seed
@@ -377,9 +377,9 @@ const PAGE_HOME = {
 const PAGE_ABOUT = {
   heroHeadline: "We engineer the move.",
   heroSubtext:
-    "NextGen Move exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.",
+    "Venturo exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.",
   missionBody:
-    "<p>NextGen Move exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.</p>",
+    "<p>Venturo exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.</p>",
   statBlocks: [
     { label: "Active students", value: "248" },
     { label: "Placed this quarter", value: "41" },
@@ -456,11 +456,11 @@ const PAGE_PRICING = {
   trackAFeatures: [
     "Full talent pool access",
     "Pipeline tracking",
-    "Introduction via Lemoni",
+    "Introduction via Venturo",
   ],
-  trackBHeadline: "Lemoni does everything",
+  trackBHeadline: "Venturo does everything",
   trackBFeatures: [
-    "Lemoni searches for you",
+    "Venturo searches for you",
     "Weekly updates",
     "Full placement support",
   ],
@@ -480,9 +480,9 @@ const PAGE_PRICING = {
 
 const PAGE_TRACKS = {
   trackABody:
-    "<p>Browse the talent pool yourself. You find the match. Lemoni handles the introduction.</p>",
+    "<p>Browse the talent pool yourself. You find the match. Venturo handles the introduction.</p>",
   trackBBody:
-    "<p>Full service. Lemoni actively sources your match and coaches the placement through to day ninety.</p>",
+    "<p>Full service. Venturo actively sources your match and coaches the placement through to day ninety.</p>",
   statBlocks: [
     {
       label: "Active talent",
@@ -517,7 +517,7 @@ const PAGE_TRACKS = {
     {
       feature: "Sourcing",
       trackAValue: "Self-serve",
-      trackBValue: "Lemoni-led",
+      trackBValue: "Venturo-led",
     },
     {
       feature: "Coaching support",
@@ -907,7 +907,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     timeline: "Timeline",
     timelinePlaceholder: "Select timeline",
     additionalRequirements: "Additional requirements",
-    additionalRequirementsPlaceholder: "Anything else Lemoni should know…",
+    additionalRequirementsPlaceholder: "Anything else Venturo should know…",
     jobDescriptionUpload: "Job description (optional)",
     jobDescriptionDropzone: "Upload PDF or DOCX",
     uploadProgress: "Uploading…",
@@ -1036,7 +1036,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       shortlistAction: "Shortlist",
       unshortlistAction: "Remove star",
       shortlistedLabel: "Shortlisted",
-      emptyState: "No candidates in your pool yet. Ask Lemoni to curate matches.",
+      emptyState: "No candidates in your pool yet. Ask Venturo to curate matches.",
       backToPool: "← Talent pool",
       matchScoreLabel: "match",
       bioLabel: "Bio",
@@ -1224,7 +1224,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       alreadyReferred: "You already used a referral code.",
       topUpTitle: "Buy credits",
       topUpIntro:
-        "Buy a credit pack. When Stripe is connected you pay by card at Checkout; otherwise Lemoni confirms payment manually.",
+        "Buy a credit pack. When Stripe is connected you pay by card at Checkout; otherwise Venturo confirms payment manually.",
       topUpAction: "Buy / request",
       topUpRequested: "Request sent — pending admin approval.",
       topUpFailed: "Could not start top-up. Try again.",
@@ -1308,7 +1308,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       eyebrow: "Admin",
       title: "Operations dashboard.",
       subtitle:
-        "Real-time overview of NextGen Move placements and activity.",
+        "Real-time overview of Venturo placements and activity.",
       activeCompanies: "Active companies",
       activeStudents: "Active students",
       placedThisQuarter: "Placed this Q",
@@ -1581,7 +1581,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     settings: {
       settingsTitle: "Workspace settings.",
       workspaceEyebrow: "Admin · Settings",
-      workspaceSubtitle: "General configuration for the NextGen Move workspace.",
+      workspaceSubtitle: "General configuration for the Venturo workspace.",
       teamMembersTitle: "Team members",
       teamMembersBody: "Invite and manage admin users.",
       manageTeam: "Manage team →",
@@ -2132,7 +2132,7 @@ async function seedPipelineStages(db: Firestore) {
 }
 
 async function main() {
-  console.log("NextGen Move seed — operational config only\n");
+  console.log("Venturo seed — operational config only\n");
 
   initFirebaseAdmin();
 

@@ -82,7 +82,7 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div className={cn("w-full overflow-x-auto rounded-radius border border-border bg-grad-card", className)}>
-      <table className="w-full min-w-[64rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-0 border-collapse text-left text-sm md:min-w-[48rem]">
         <thead className={cn("bg-transparent", headerClassName)}>
           <tr>
             {columns.map((column) => {
@@ -100,7 +100,7 @@ export function DataTable<T extends Record<string, unknown>>({
                       : "none"
                   }
                   className={cn(
-                    "whitespace-nowrap px-4 py-3 font-medium text-text-secondary",
+                    "px-3 py-3 font-medium text-text-secondary sm:px-4 sm:whitespace-nowrap",
                     column.sortable && "cursor-pointer select-none hover:text-text-primary",
                     column.className,
                   )}
@@ -142,7 +142,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   <td
                     key={column.key}
                     className={cn(
-                      "whitespace-nowrap px-4 py-3 text-text-primary",
+                      "px-3 py-3 text-text-primary sm:px-4 sm:whitespace-nowrap",
                       column.className,
                     )}
                   >
