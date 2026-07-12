@@ -1906,6 +1906,9 @@ async function seedAdminUser(auth: ReturnType<typeof getAuth>, db: Firestore) {
     console.log("  updated users/{uid} → role=admin, status=active");
   }
 
+  await auth.setCustomUserClaims(uid, { role: "admin" });
+  console.log("  set Auth custom claims → role=admin");
+
   return { uid, created };
 }
 

@@ -212,6 +212,18 @@ export async function POST(request: Request) {
 
       await batch.commit();
 
+      // Auth claims let session establish without a Firestore user read.
+      try {
+        await adminAuth.setCustomUserClaims(uid, { role: body.role });
+      } catch (claimsError) {
+        logger.error("register_claims_failed", {
+          error:
+            claimsError instanceof Error
+              ? claimsError.message
+              : String(claimsError),
+        });
+      }
+
       const { notifyAccountCreated, notifyWelcomeCredits } = await import(
         "@/lib/email/notify"
       );

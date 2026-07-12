@@ -250,7 +250,8 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
       });
 
       const credential = await signInWithEmail(email, password);
-      const idToken = await credential.user.getIdToken();
+      // Force-refresh so custom claims from register are on the ID token.
+      const idToken = await credential.user.getIdToken(true);
       await establishSession(idToken);
 
       setUid(result.uid);

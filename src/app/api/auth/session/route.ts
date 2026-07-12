@@ -41,6 +41,16 @@ function isUserRole(value: unknown): value is UserRole {
   return value === "admin" || value === "company" || value === "student";
 }
 
+function seedAdminEmail(): string {
+  return process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+}
+
+function isSeedAdminEmail(email: string | null | undefined): boolean {
+  const seed = seedAdminEmail();
+  const normalized = (email ?? "").trim().toLowerCase();
+  return Boolean(seed && normalized && normalized === seed);
+}
+
 async function resolveLoginUser(decoded: {
   uid: string;
   email?: string;
@@ -52,10 +62,45 @@ async function resolveLoginUser(decoded: {
   lastLoginIp?: string;
   fromClaims: boolean;
 }> {
+  // Resolve Auth-side role first (no Firestore). Used when Firestore is down
+  // and to seed admin even if the ID token omitted email.
+  let roleFromAuth: UserRole | null = isUserRole(decoded.role)
+    ? decoded.role
+    : isSeedAdminEmail(decoded.email)
+      ? "admin"
+      : null;
+
+  if (!roleFromAuth) {
+    try {
+      const authUser = await withTimeout(
+        adminAuth.getUser(decoded.uid),
+        5000,
+        "auth_user_lookup",
+      );
+      const claimRole = authUser.customClaims?.role;
+      if (isUserRole(claimRole)) {
+        roleFromAuth = claimRole;
+      } else if (isSeedAdminEmail(authUser.email)) {
+        roleFromAuth = "admin";
+      }
+    } catch (error) {
+      logger.error("session_auth_user_lookup_failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  if (roleFromAuth === "admin") {
+    void adminAuth
+      .setCustomUserClaims(decoded.uid, { role: "admin" })
+      .catch(() => undefined);
+  }
+
+  // Firestore is source of truth for role + suspension when quota allows.
   try {
     const userSnapshot = await withTimeout(
       adminDb.collection("users").doc(decoded.uid).get(),
-      3500,
+      2500,
       "user_lookup",
     );
 
@@ -64,7 +109,6 @@ async function resolveLoginUser(decoded: {
       if (!isUserRole(user.role)) {
         throw new Error("invalid_role");
       }
-      // Keep Auth claims in sync so future Firestore outages still allow login.
       void adminAuth
         .setCustomUserClaims(decoded.uid, { role: user.role })
         .catch((error) => {
@@ -87,51 +131,13 @@ async function resolveLoginUser(decoded: {
     });
   }
 
-  // Token may already carry role after a prior successful claims sync.
-  if (isUserRole(decoded.role)) {
+  if (roleFromAuth) {
     return {
       uid: decoded.uid,
-      role: decoded.role,
+      role: roleFromAuth,
       status: "active",
       fromClaims: true,
     };
-  }
-
-  // Ops escape hatch — email is on the verified ID token; no extra network call.
-  const seedAdmin = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
-  const tokenEmail = (decoded.email ?? "").trim().toLowerCase();
-  if (seedAdmin && tokenEmail && tokenEmail === seedAdmin) {
-    void adminAuth
-      .setCustomUserClaims(decoded.uid, { role: "admin" })
-      .catch(() => undefined);
-    return {
-      uid: decoded.uid,
-      role: "admin",
-      status: "active",
-      fromClaims: true,
-    };
-  }
-
-  // Auth Admin API is independent of Firestore quota.
-  try {
-    const authUser = await withTimeout(
-      adminAuth.getUser(decoded.uid),
-      5000,
-      "auth_user_lookup",
-    );
-    const claimRole = authUser.customClaims?.role;
-    if (isUserRole(claimRole)) {
-      return {
-        uid: decoded.uid,
-        role: claimRole,
-        status: "active",
-        fromClaims: true,
-      };
-    }
-  } catch (error) {
-    logger.error("session_auth_user_lookup_failed", {
-      error: error instanceof Error ? error.message : String(error),
-    });
   }
 
   throw new Error("user_lookup_unavailable");

@@ -27,7 +27,7 @@ export function SignInForm({ labels }: SignInFormProps) {
 
     try {
       const credential = await signInWithEmail(email.trim(), password);
-      const idToken = await credential.user.getIdToken();
+      const idToken = await credential.user.getIdToken(true);
       const session = await establishSession(idToken);
       const nextPath = searchParams.get("next");
       router.push(resolvePostAuthRedirect(session.role, nextPath));
@@ -72,9 +72,9 @@ export function SignInForm({ labels }: SignInFormProps) {
           inputMode="email"
           autoComplete="username"
           required
-          placeholder={labels.emailPlaceholder ?? "you@email.com"}
-          aria-label={labels.emailLabel ?? "email"}
-          label={labels.emailLabel}
+          placeholder={labels.emailPlaceholder || "you@email.com"}
+          aria-label={labels.emailLabel || "Email"}
+          label={labels.emailLabel || "Email"}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
@@ -83,8 +83,8 @@ export function SignInForm({ labels }: SignInFormProps) {
           type="password"
           autoComplete="current-password"
           required
-          aria-label={labels.passwordLabel ?? "password"}
-          label={labels.passwordLabel}
+          aria-label={labels.passwordLabel || "Password"}
+          label={labels.passwordLabel || "Password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />

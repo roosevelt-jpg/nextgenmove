@@ -25,18 +25,29 @@ export async function enforceRateLimit(options: {
   windowSec: number;
 }): Promise<RateLimitResult> {
   try {
-    return await Promise.race([
-      enforceRateLimitFirestore(options),
-      new Promise<RateLimitResult>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            allowed: true,
-            remaining: options.limit,
-            retryAfterSec: 0,
-          });
-        }, RATE_LIMIT_TIMEOUT_MS);
+    // Guard the Firestore transaction so a late RESOURCE_EXHAUSTED reject
+    // after we already fail-open cannot crash the isolate.
+    const firestoreAttempt = enforceRateLimitFirestore(options).then(
+      (value) => ({ ok: true as const, value }),
+      () => ({ ok: false as const }),
+    );
+
+    const raced = await Promise.race([
+      firestoreAttempt,
+      new Promise<{ ok: false }>((resolve) => {
+        setTimeout(() => resolve({ ok: false }), RATE_LIMIT_TIMEOUT_MS);
       }),
     ]);
+
+    if (raced.ok) {
+      return raced.value;
+    }
+
+    return {
+      allowed: true,
+      remaining: options.limit,
+      retryAfterSec: 0,
+    };
   } catch {
     return {
       allowed: true,
