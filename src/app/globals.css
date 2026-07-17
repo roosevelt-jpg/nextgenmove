@@ -43,7 +43,7 @@
 }
 
 body {
-  background: var(--bg);
+  background: #ffffff;
   color: var(--text-primary);
   font-family: var(--font-sans);
   overflow-x: hidden;
@@ -213,20 +213,27 @@ a.link-brand:hover,
   min-height: 1.5rem;
 }
 
-/* Brand — soft white → lavender → cream card / panel surface */
+/* Brand — white card / panel surface */
 .card-panel {
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  background-image: var(--grad-card);
-}
-
-/* Portal main canvas — solid white (dark mode keeps shell bg) */
-.dashboard-shell {
   background-color: #ffffff;
   background-image: none;
 }
 
-html.dark .dashboard-shell {
+/* Portal + site canvas — force solid white (kill any leftover wash) */
+.dashboard-shell,
+.dashboard-shell main,
+body,
+html {
+  background-color: #ffffff;
+  background-image: none;
+}
+
+html.dark,
+html.dark body,
+html.dark .dashboard-shell,
+html.dark .dashboard-shell main {
   background-color: var(--bg);
   background-image: none;
 }

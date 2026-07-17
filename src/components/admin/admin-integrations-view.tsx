@@ -308,7 +308,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       {items.length === 0 ? (
         <EmptyState title={labels.empty ?? "No integrations configured"} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item) => {
             const connected = item.status === "connected";
             return (

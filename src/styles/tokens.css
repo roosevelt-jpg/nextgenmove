@@ -3,11 +3,11 @@
  * Never hardcode colors/fonts/radii in components; use these variables only.
  */
 :root {
-  /* Neutrals */
+  /* Neutrals — pure white canvas (no cream / amber wash) */
   --bg: #ffffff;
   --surface-1: #ffffff;
-  --surface-2: #f3f2ef;
-  --border: #e7e4d9;
+  --surface-2: #f4f4f5;
+  --border: #e4e4e7;
 
   /* Text */
   --text-primary: #1a1a18; /* Ink */
@@ -93,17 +93,12 @@
   --grad-noon: linear-gradient(105deg, #152556 0%, #5239a0 55%, #7a68d4 100%);
   /* Ink fade — purple → ink */
   --grad-ink-fade: linear-gradient(90deg, #3b2e7d 0%, #141416 100%);
-  /* Card surface — soft white → lavender → warm cream */
-  --grad-card: linear-gradient(
-    145deg,
-    #ffffff 0%,
-    #f0eef8 45%,
-    #faf6ee 100%
-  );
-  --grad-dusk: linear-gradient(135deg, #eeedfe 0%, #faeeda 100%);
+  /* Card surface — solid white via 1-stop gradient (bg-grad-card uses background-image) */
+  --grad-card: linear-gradient(#ffffff, #ffffff);
+  --grad-dusk: linear-gradient(#ffffff, #ffffff);
   --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
-  /* Soft portal wash — unused on dashboards (solid white); kept for accents */
-  --grad-portal-wash: #ffffff;
+  /* Portal canvas — always white in light mode */
+  --grad-portal-wash: linear-gradient(#ffffff, #ffffff);
   /* Button text on gradient CTAs */
   --on-gradient: #ffffff;
 
@@ -163,18 +158,8 @@ html.dark {
   --grad-rouse: linear-gradient(105deg, #2a3f8f 0%, #5b4db8 50%, #8b7ae0 100%);
   --grad-noon: linear-gradient(105deg, #1e326e 0%, #6b4fc4 55%, #9a8aef 100%);
   --grad-ink-fade: linear-gradient(90deg, #3b2e7d 0%, #0e0c1a 100%);
-  --grad-card: linear-gradient(
-    145deg,
-    #252240 0%,
-    #2a2550 50%,
-    #322a5c 100%
-  );
-  --grad-portal-wash: linear-gradient(
-    165deg,
-    #1a1635 0%,
-    #221e42 45%,
-    #2a2448 100%
-  );
+  --grad-card: linear-gradient(#252240, #252240);
+  --grad-portal-wash: linear-gradient(#14122b, #14122b);
   --on-gradient: #ffffff;
   /* Keep horizon hero readable when the rest of the site is in dark mode */
   --hero-on: #fffdf8;
