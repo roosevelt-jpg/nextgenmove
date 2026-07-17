@@ -184,7 +184,7 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
     refValue: "NEXTGENMOVE",
   },
   itineraryEyebrow: "The itinerary",
-  itineraryHeadline: "Three legs. One arrival.",
+  itineraryHeadline: "Four steps. One arrival.",
   storiesEyebrow: "Stories",
   storiesHeadline: "Hear it from them.",
   storiesManagedLabel: "Managed in admin · Homepage content",

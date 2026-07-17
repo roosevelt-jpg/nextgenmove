@@ -301,7 +301,7 @@ const PAGE_HOME = {
     refValue: "NEXTGENMOVE",
   },
   itineraryEyebrow: "The itinerary",
-  itineraryHeadline: "Three legs. One arrival.",
+  itineraryHeadline: "Four steps. One arrival.",
   storiesEyebrow: "Stories",
   storiesHeadline: "Hear it from them.",
   storiesManagedLabel: "Managed in admin · Homepage content",
@@ -429,24 +429,31 @@ const PAGE_HOW_IT_WORKS = {
   steps: [
     {
       legNumber: 1,
-      phaseLabel: "Check-in",
-      title: "Build your profile",
+      phaseLabel: "STEP 01",
+      title: "Connect and build your profile",
       description:
-        "Tell us your skills, sector, and where you want to land. Your coach verifies and sharpens it.",
+        "Click the connect button to create your account and build your profile.",
     },
     {
       legNumber: 2,
-      phaseLabel: "Boarding",
-      title: "Get matched & coached",
+      phaseLabel: "STEP 02",
+      title: "Get background checked",
       description:
-        "We introduce you to vetted employers, and coach you through every interview and offer.",
+        "Complete verification so employers can trust your credentials.",
     },
     {
       legNumber: 3,
-      phaseLabel: "Arrival",
-      title: "Placed & supported",
+      phaseLabel: "STEP 03",
+      title: "Publish your profile for employers",
       description:
-        "From signed offer to your first ninety days, your coach stays on the route with you.",
+        "Go live in the talent pool so vetted employers can find you.",
+    },
+    {
+      legNumber: 4,
+      phaseLabel: "STEP 04",
+      title: "Follow up and start work",
+      description:
+        "Follow up with messages and start work immediately once placed.",
     },
   ],
   faqItems: [
@@ -969,7 +976,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     creditsEarnLabel: "{credits} cr",
     howItWorksTitle: "How it works",
     howItWorksEyebrow: "How it works",
-    howItWorksHeadline: "Three legs. One arrival.",
+    howItWorksHeadline: "Four steps. One arrival.",
     howItWorksIntro: "",
     howItWorksCtaLabel: "Start your journey",
     howItWorksCtaHref: "/sign-up",
