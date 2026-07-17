@@ -79,6 +79,17 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     connectedAt: null,
     config: { category: "Media" },
   },
+  {
+    id: "google_places",
+    name: "Google Places",
+    category: "Maps & location",
+    description:
+      "Places Autocomplete for signup and profiles — country, city, and town worldwide.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "Maps & location" },
+  },
 ];
 
 export function mergeIntegrationCatalog(

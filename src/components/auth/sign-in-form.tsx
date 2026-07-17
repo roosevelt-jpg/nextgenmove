@@ -165,7 +165,7 @@ export function SignInForm({
         <div className="flex justify-end">
           <Link
             href="/forgot-password"
-            className="text-[13px] font-semibold text-fill-accent hover:opacity-80"
+            className="link-brand text-[13px]"
           >
             {labels.forgotPasswordLinkLabel ?? "Forgot password?"}
           </Link>
@@ -222,7 +222,7 @@ export function SignInForm({
         {labels.signUpPrompt ?? "Don't have an account?"}{" "}
         <Link
           href="/sign-up"
-          className="font-semibold text-fill-accent hover:opacity-80"
+          className="link-brand"
         >
           {labels.signUpLinkShort ?? "Sign up"}
         </Link>

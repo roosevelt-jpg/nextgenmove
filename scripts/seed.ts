@@ -1683,6 +1683,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       careersTitle: "Job postings",
       careers: "Careers",
       deleteError: "Could not delete.",
+      deleteConfirm: "Delete this item? This cannot be undone.",
       eyebrow: "Admin · Homepage Content",
       title: "Video cards & podcast episodes.",
       subtitle:
@@ -1946,6 +1947,11 @@ const OPERATIONAL_SITE_SETTINGS = {
       youtubeApiKey: "YouTube Data API key",
       youtubeHelp:
         "Create a key in Google Cloud Console → APIs & Services → Credentials, enable YouTube Data API v3, then paste the key here. Playlist URL is set under Admin → Homepage Content.",
+      googlePlacesHint:
+        "Connect a Google Places API key so signup can autocomplete country, city, and town worldwide.",
+      googlePlacesApiKey: "Google Places API key",
+      googlePlacesHelp:
+        "Google Cloud Console → enable Places API → Credentials → API key. Restrict to Places Autocomplete and Place Details.",
       loadError: "Could not load integrations.",
       degradedWarning:
         "Live status may be outdated — Firestore is slow or over quota. Cards still show so you can reconnect.",
@@ -2265,6 +2271,17 @@ async function seedIntegrations(db: Firestore) {
       status: "not_connected",
       connectedAt: null,
       config: { category: "Media" },
+    },
+    {
+      id: "google_places",
+      name: "Google Places",
+      category: "Maps & location",
+      description:
+        "Places Autocomplete for signup and profiles — country, city, and town worldwide.",
+      iconUrl: "",
+      status: "not_connected",
+      connectedAt: null,
+      config: { category: "Maps & location" },
     },
   ];
 

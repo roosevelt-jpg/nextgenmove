@@ -237,6 +237,11 @@ export function AdminEntityListView({
             size="xs"
             variant="outline"
             onClick={async () => {
+              const confirmed = window.confirm(
+                labels.deleteConfirm ??
+                  "Delete this item? This cannot be undone.",
+              );
+              if (!confirmed) return;
               setActionMessage(null);
               const response = await fetch(
                 `/api/admin/data/${schema.collection}/${String(row.id)}`,

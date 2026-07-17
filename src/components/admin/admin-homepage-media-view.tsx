@@ -272,6 +272,25 @@ export function AdminHomepageMediaView({
   const liveVideos = videos.filter((v) => v.status === "live").length;
   const livePodcasts = podcasts.filter((p) => p.status === "live").length;
 
+  const deleteItem = async (
+    schema: AdminEntitySchema,
+    id: string,
+  ): Promise<boolean> => {
+    const confirmed = window.confirm(
+      labels.deleteConfirm ?? "Delete this item? This cannot be undone.",
+    );
+    if (!confirmed) return false;
+    const response = await fetch(`/api/admin/data/${schema.collection}/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      setSyncMessage(labels.deleteError ?? "Could not delete.");
+      return false;
+    }
+    await load();
+    return true;
+  };
+
   return (
     <div className="space-y-5">
       <p className="text-[13px] text-text-secondary">
@@ -437,6 +456,13 @@ export function AdminHomepageMediaView({
               >
                 {labels.edit ?? "Edit"}
               </Button>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => void deleteItem(videoSchema, item.id)}
+              >
+                {labels.delete ?? "Delete"}
+              </Button>
             </li>
           ))}
         </ul>
@@ -487,6 +513,13 @@ export function AdminHomepageMediaView({
                 onClick={() => void openEdit(podcastSchema, item.id)}
               >
                 {labels.edit ?? "Edit"}
+              </Button>
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => void deleteItem(podcastSchema, item.id)}
+              >
+                {labels.delete ?? "Delete"}
               </Button>
             </li>
           ))}

@@ -29,6 +29,9 @@ export interface RegisterStudentProfile {
   seniority: string;
   currentCity: string;
   targetCities: string[];
+  country?: string;
+  town?: string;
+  placeId?: string;
   bio?: string;
   skills?: string[];
   availability?: string;
@@ -45,6 +48,10 @@ export interface RegisterCompanyProfile {
   industry: string;
   website?: string;
   preferredLocations: string[];
+  country?: string;
+  city?: string;
+  town?: string;
+  placeId?: string;
   hiringNeeds?: string;
 }
 

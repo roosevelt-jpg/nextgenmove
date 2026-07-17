@@ -31,6 +31,12 @@ export {
 } from "./file-upload";
 export { Input, type InputProps } from "./input";
 export {
+  LocationPicker,
+  EMPTY_LOCATION,
+  type LocationPickerProps,
+  type LocationValue,
+} from "./location-picker";
+export {
   KanbanBoard,
   type KanbanBoardProps,
   type KanbanColumn,

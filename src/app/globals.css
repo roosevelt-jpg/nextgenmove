@@ -108,7 +108,7 @@ video {
   padding-right: var(--page-gutter);
 }
 
-/* Brand — signature CTA (blue→purple gradient + white label) */
+/* Brand — signature CTA (full-color blue→purple gradient + white label) */
 .btn-brand {
   display: inline-flex;
   align-items: center;
@@ -127,7 +127,54 @@ video {
   line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.btn-brand:hover {
+  opacity: 1;
+  filter: brightness(1.06);
+}
+
+/* Outline / ghost still use the brand gradient wash */
+.btn-brand-outline {
+  background-image: var(--grad-dusk);
+  color: var(--fill-accent);
+  border: 1px solid var(--border-accent);
+}
+
+.btn-brand-ghost {
+  background-image: linear-gradient(
+    105deg,
+    color-mix(in srgb, #3c3489 12%, transparent),
+    color-mix(in srgb, #6b4fc4 18%, transparent)
+  );
+  color: var(--fill-accent);
+}
+
+/* Text links — full-color gradient (purple → amber) */
+a.link-brand,
+.link-brand {
+  background-image: var(--grad-route);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 600;
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+
+a.link-brand:hover,
+.link-brand:hover {
+  filter: brightness(1.08);
+}
+
+/* Fallback when background-clip unsupported */
+@supports not (background-clip: text) {
+  a.link-brand,
+  .link-brand {
+    color: var(--fill-accent);
+    background-image: none;
+  }
 }
 
 /* Dashboard chrome — compact action controls */
@@ -138,12 +185,14 @@ video {
 }
 
 .btn-brand:hover {
-  opacity: 0.9;
+  opacity: 1;
+  filter: brightness(1.06);
 }
 
 .btn-brand:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  filter: none;
 }
 
 /* Compact interactive controls inside dashboards */

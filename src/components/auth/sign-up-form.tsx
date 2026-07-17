@@ -6,6 +6,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Button, Input, Select, Textarea } from "@/components/ui";
 import { FileUpload } from "@/components/ui/file-upload";
 import {
+  EMPTY_LOCATION,
+  LocationPicker,
+  type LocationValue,
+} from "@/components/ui/location-picker";
+import {
   establishSession,
   registerAccount,
   signInWithEmail,
@@ -71,7 +76,8 @@ export function SignUpForm({
   >([{ institution: "", degree: "", year: "" }]);
   const [sector, setSector] = useState("");
   const [seniority, setSeniority] = useState("");
-  const [currentCity, setCurrentCity] = useState("");
+  const [studentLocation, setStudentLocation] =
+    useState<LocationValue>(EMPTY_LOCATION);
   const [targetCities, setTargetCities] = useState("");
   const [bio, setBio] = useState("");
   const [skills, setSkills] = useState("");
@@ -84,8 +90,11 @@ export function SignUpForm({
   const [contactName, setContactName] = useState("");
   const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState("");
+  const [companyLocation, setCompanyLocation] =
+    useState<LocationValue>(EMPTY_LOCATION);
   const [preferredLocations, setPreferredLocations] = useState("");
   const [hiringNeeds, setHiringNeeds] = useState("");
+  const [placesEnabled, setPlacesEnabled] = useState(true);
 
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -106,6 +115,14 @@ export function SignUpForm({
   const [phoneConfirmation, setPhoneConfirmation] =
     useState<ConfirmationResult | null>(null);
   const [smsSent, setSmsSent] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/places?action=autocomplete&query=xx")
+      .then((response) => {
+        setPlacesEnabled(response.status !== 503);
+      })
+      .catch(() => setPlacesEnabled(false));
+  }, []);
 
   useEffect(() => {
     void fetch("/api/taxonomies")
@@ -231,8 +248,15 @@ export function SignUpForm({
                   })),
                 sector,
                 seniority,
-                currentCity: currentCity.trim(),
+                currentCity: (
+                  studentLocation.city ||
+                  studentLocation.town ||
+                  studentLocation.country
+                ).trim(),
                 targetCities: splitList(targetCities),
+                country: studentLocation.country || undefined,
+                town: studentLocation.town || undefined,
+                placeId: studentLocation.placeId || undefined,
                 bio: bio.trim() || undefined,
                 skills: splitList(skills),
                 availability: availability.trim() || undefined,
@@ -250,7 +274,22 @@ export function SignUpForm({
                 nationality,
                 industry,
                 website: website.trim() || undefined,
-                preferredLocations: splitList(preferredLocations),
+                preferredLocations: (() => {
+                  const fromList = splitList(preferredLocations);
+                  const hq = [
+                    companyLocation.town,
+                    companyLocation.city,
+                    companyLocation.country,
+                  ]
+                    .filter(Boolean)
+                    .join(", ");
+                  if (hq && !fromList.includes(hq)) fromList.unshift(hq);
+                  return fromList.length ? fromList : hq ? [hq] : [];
+                })(),
+                country: companyLocation.country || undefined,
+                city: companyLocation.city || undefined,
+                town: companyLocation.town || undefined,
+                placeId: companyLocation.placeId || undefined,
                 hiringNeeds: hiringNeeds.trim() || undefined,
               }
             : undefined,
@@ -623,7 +662,7 @@ export function SignUpForm({
             {labels.signInPrompt ?? "Already have an account?"}{" "}
             <Link
               href="/sign-in"
-              className="font-semibold text-fill-accent hover:opacity-80"
+              className="link-brand"
             >
               {labels.signInLinkShort ?? "Sign in"}
             </Link>
@@ -776,12 +815,12 @@ export function SignUpForm({
               onChange={(event) => setSeniority(event.target.value)}
             />
           )}
-          <Input
-            id="student-current-city"
+          <LocationPicker
+            labels={labels as unknown as Record<string, string>}
+            value={studentLocation}
+            onChange={setStudentLocation}
             required
-            label={labels.currentCityLabel || "Current city"}
-            value={currentCity}
-            onChange={(event) => setCurrentCity(event.target.value)}
+            placesEnabled={placesEnabled}
           />
           <Input
             id="student-target-cities"
@@ -789,6 +828,10 @@ export function SignUpForm({
             label={labels.targetCitiesLabel || "Target cities (comma-separated)"}
             value={targetCities}
             onChange={(event) => setTargetCities(event.target.value)}
+            placeholder={
+              labels.targetCitiesHint ||
+              "e.g. Amsterdam, Dubai, Berlin — search-friendly city names"
+            }
           />
           <Textarea
             id="student-bio"
@@ -918,12 +961,30 @@ export function SignUpForm({
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
           />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-text-primary">
+              {labels.companyLocationLabel || "Company location"}
+            </p>
+            <LocationPicker
+              labels={labels as unknown as Record<string, string>}
+              value={companyLocation}
+              onChange={setCompanyLocation}
+              required
+              placesEnabled={placesEnabled}
+            />
+          </div>
           <Input
             id="company-locations"
-            required
-            label={labels.preferredLocationsLabel || "Hiring locations (comma-separated)"}
+            label={
+              labels.preferredLocationsLabel ||
+              "Additional hiring locations (comma-separated)"
+            }
             value={preferredLocations}
             onChange={(event) => setPreferredLocations(event.target.value)}
+            placeholder={
+              labels.preferredLocationsHint ||
+              "Optional extra cities — HQ above is included automatically"
+            }
           />
           <Textarea
             id="company-hiring-needs"

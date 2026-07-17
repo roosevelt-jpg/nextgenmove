@@ -29,6 +29,13 @@ const ENV_SECRET_FALLBACKS: Record<string, Record<string, () => string>> = {
       process.env.GOOGLE_API_KEY?.trim() ||
       "",
   },
+  google_places: {
+    apiKey: () =>
+      process.env.GOOGLE_PLACES_API_KEY?.trim() ||
+      process.env.GOOGLE_MAPS_API_KEY?.trim() ||
+      process.env.GOOGLE_API_KEY?.trim() ||
+      "",
+  },
   gmail_smtp: {
     host: () => process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
     port: () => process.env.SMTP_PORT?.trim() || "465",
@@ -177,6 +184,9 @@ export async function isIntegrationConnected(integrationId: string): Promise<boo
     return Boolean(secrets.accountSid && secrets.authToken);
   }
   if (integrationId === "youtube") {
+    return Boolean(secrets.apiKey);
+  }
+  if (integrationId === "google_places") {
     return Boolean(secrets.apiKey);
   }
   if (integrationId === "gmail_smtp") {

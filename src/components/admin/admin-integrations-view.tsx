@@ -93,6 +93,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const isGmailSmtp = connectItem?.id === "gmail_smtp";
   const isTwilio = connectItem?.id === "twilio";
   const isYoutube = connectItem?.id === "youtube";
+  const isGooglePlaces = connectItem?.id === "google_places";
 
   const connect = async () => {
     if (!connectItem) {
@@ -175,6 +176,15 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                   ...(apiKey ? { apiKey } : {}),
                 },
               }
+            : isGooglePlaces
+              ? {
+                  config: {
+                    category: "Maps & location",
+                  },
+                  secrets: {
+                    ...(apiKey ? { apiKey } : {}),
+                  },
+                }
             : {
                 config: { host: configHost },
                 secrets: apiKey ? { apiKey } : undefined,
@@ -555,6 +565,34 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               {labels.youtubeHelp ? (
                 <p className="text-xs text-text-muted">{labels.youtubeHelp}</p>
               ) : null}
+            </>
+          ) : isGooglePlaces ? (
+            <>
+              {labels.googlePlacesHint ? (
+                <p className="text-sm text-text-secondary">
+                  {labels.googlePlacesHint}
+                </p>
+              ) : (
+                <p className="text-sm text-text-secondary">
+                  Connect a Google Places API key so signup can autocomplete
+                  country, city, and town worldwide.
+                </p>
+              )}
+              <Input
+                id="google-places-api-key"
+                type="password"
+                label={labels.googlePlacesApiKey ?? "Google Places API key"}
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+              />
+              {labels.googlePlacesHelp ? (
+                <p className="text-xs text-text-muted">{labels.googlePlacesHelp}</p>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  Google Cloud Console → enable Places API → Credentials → API
+                  key. Restrict the key to Places Autocomplete and Place Details.
+                </p>
+              )}
             </>
           ) : (
             <>
