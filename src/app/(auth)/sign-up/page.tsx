@@ -23,6 +23,7 @@ export default async function SignUpPage() {
       siteName={settings.siteName || "Venturo"}
       brandMark={settings.brandMark || "V"}
       logoUrl={undefined}
+      googleSignInEnabled={Boolean(settings.googleSignInEnabled)}
     />
   );
 }

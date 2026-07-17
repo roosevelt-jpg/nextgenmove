@@ -10,6 +10,11 @@ import {
   sendViaResend,
 } from "@/lib/email/resend";
 import {
+  isSmtpLive,
+  sendViaSmtp,
+  SmtpNotConfiguredError,
+} from "@/lib/email/smtp";
+import {
   buildBrandVars,
   interpolate,
   loadEmailTemplate,
@@ -28,15 +33,45 @@ export interface SendTransactionalOptions {
   request?: Request;
 }
 
+async function deliverEmail(options: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  replyTo?: string;
+}): Promise<"gmail_smtp" | "resend"> {
+  const smtpReady = await isSmtpLive();
+  if (smtpReady) {
+    try {
+      await sendViaSmtp(options);
+      return "gmail_smtp";
+    } catch (error) {
+      logger.error("email_smtp_failed_falling_back", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  if (!(await isResendLive())) {
+    throw new ResendNotConfiguredError();
+  }
+  await sendViaResend(options);
+  return "resend";
+}
+
+export async function isAnyEmailProviderLive(): Promise<boolean> {
+  return (await isSmtpLive()) || (await isResendLive());
+}
+
 /**
- * Load CMS template, check preferences, send via Resend when connected.
+ * Load CMS template, check preferences, send via Gmail SMTP (primary) or Resend.
  * Never throws to callers for delivery failures — logs and returns status.
  */
 export async function sendTransactional(
   options: SendTransactionalOptions,
 ): Promise<{ sent: boolean; reason?: string }> {
   try {
-    if (!(await isResendLive())) {
+    if (!(await isAnyEmailProviderLive())) {
       logger.info("email_skipped_not_configured", { templateId: options.templateId });
       return { sent: false, reason: "not_configured" };
     }
@@ -74,7 +109,7 @@ export async function sendTransactional(
     const settings = await adminDb.collection("site_settings").doc("default").get();
     const replyTo = String(settings.data()?.contactEmail ?? "").trim() || undefined;
 
-    await sendViaResend({
+    const provider = await deliverEmail({
       to: options.to,
       subject,
       html,
@@ -92,6 +127,7 @@ export async function sendTransactional(
             templateId: options.templateId,
             to: options.to,
             userId: options.userId ?? null,
+            provider,
             sentAt: FieldValue.serverTimestamp(),
           }),
         );
@@ -101,12 +137,15 @@ export async function sendTransactional(
       templateId: options.templateId,
       to: options.to,
       userId: options.userId ?? null,
-      provider: "resend",
+      provider,
     });
 
     return { sent: true };
   } catch (error) {
-    if (error instanceof ResendNotConfiguredError) {
+    if (
+      error instanceof ResendNotConfiguredError ||
+      error instanceof SmtpNotConfiguredError
+    ) {
       return { sent: false, reason: "not_configured" };
     }
     logger.error("email_send_failed", {
@@ -122,7 +161,7 @@ export function queueTransactional(options: SendTransactionalOptions): void {
   void sendTransactional(options);
 }
 
-/** Raw Resend send for CRM / one-off messages (no CMS template). */
+/** Raw send for CRM / one-off messages (no CMS template). */
 export async function sendRawEmail(options: {
   to: string;
   subject: string;
@@ -131,13 +170,16 @@ export async function sendRawEmail(options: {
   replyTo?: string;
 }): Promise<{ sent: boolean; reason?: string }> {
   try {
-    if (!(await isResendLive())) {
+    if (!(await isAnyEmailProviderLive())) {
       return { sent: false, reason: "not_configured" };
     }
-    await sendViaResend(options);
+    await deliverEmail(options);
     return { sent: true };
   } catch (error) {
-    if (error instanceof ResendNotConfiguredError) {
+    if (
+      error instanceof ResendNotConfiguredError ||
+      error instanceof SmtpNotConfiguredError
+    ) {
       return { sent: false, reason: "not_configured" };
     }
     logger.error("email_raw_send_failed", {

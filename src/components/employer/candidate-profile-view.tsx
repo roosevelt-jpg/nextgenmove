@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Button, EmptyState } from "@/components/ui";
+import { Button, EmptyState, Input, Modal } from "@/components/ui";
 
 interface CandidateDetail {
   match: {
@@ -26,6 +26,16 @@ interface CandidateDetail {
     linkedinUrl: string | null;
     portfolioUrl: string | null;
     cvUrl: string | null;
+    photoUrl?: string | null;
+    workExperience?: string | null;
+    workExperienceEntries?: Array<{
+      company: string;
+      title: string;
+      from: string;
+      to?: string | null;
+      description?: string;
+    }>;
+    githubUrl?: string | null;
   };
 }
 
@@ -40,6 +50,9 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
   const [error, setError] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [interviewOpen, setInterviewOpen] = useState(false);
+  const [interviewAt, setInterviewAt] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -59,19 +72,26 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
     void load();
   }, [load]);
 
-  const toggleShortlist = async () => {
-    if (!data) return;
+  const patchMatch = async (body: Record<string, unknown>) => {
+    setBusy(true);
     setActionMessage(null);
     const response = await fetch(`/api/employer/matches/${matchId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shortlisted: !data.match.shortlisted }),
+      body: JSON.stringify(body),
     });
+    setBusy(false);
     if (!response.ok) {
-      setActionMessage(labels.shortlistError ?? "Could not update shortlist.");
-      return;
+      setActionMessage(labels.actionError || "Could not update applicant.");
+      return false;
     }
     await load();
+    return true;
+  };
+
+  const toggleShortlist = async () => {
+    if (!data) return;
+    await patchMatch({ shortlisted: !data.match.shortlisted });
   };
 
   if (isLoading) return null;
@@ -96,15 +116,25 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
       </div>
 
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-3xl text-text-primary">
-            {student.fullName}
-          </h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {[student.seniority, student.sector, student.currentCity]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
+        <div className="flex gap-3">
+          {student.photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={student.photoUrl}
+              alt=""
+              className="h-16 w-16 rounded-radius object-cover"
+            />
+          ) : null}
+          <div>
+            <h1 className="font-serif text-3xl text-text-primary">
+              {student.fullName}
+            </h1>
+            <p className="mt-1 text-sm text-text-secondary">
+              {[student.seniority, student.sector, student.currentCity]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {typeof match.matchScore === "number" ? (
@@ -113,10 +143,33 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
               {labels.matchScoreLabel ? ` ${labels.matchScoreLabel}` : ""}
             </span>
           ) : null}
-          <Button size="sm" onClick={() => void toggleShortlist()}>
+          <Button size="sm" disabled={busy} onClick={() => void toggleShortlist()}>
             {match.shortlisted
               ? (labels.unshortlistAction ?? labels.shortlistedLabel)
               : labels.shortlistAction}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => setInterviewOpen(true)}
+          >
+            {labels.scheduleInterview || "Schedule Interview"}
+          </Button>
+          <Button
+            size="sm"
+            disabled={busy}
+            onClick={() => void patchMatch({ action: "hire" })}
+          >
+            {labels.hireAction || "Hire"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void patchMatch({ action: "reject" })}
+          >
+            {labels.rejectAction || "Reject"}
           </Button>
         </div>
       </header>
@@ -134,6 +187,42 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-text-secondary">
             {student.bio}
+          </p>
+        </section>
+      ) : null}
+
+      {student.workExperienceEntries && student.workExperienceEntries.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+            {labels.workExperienceLabel || "Work experience"}
+          </h2>
+          {student.workExperienceEntries.map((entry, index) => (
+            <div
+              key={`${entry.company}-${entry.title}-${index}`}
+              className="rounded-radius border border-border bg-grad-card p-4"
+            >
+              <p className="font-medium text-text-primary">
+                {entry.title}
+                {entry.company ? ` · ${entry.company}` : ""}
+              </p>
+              <p className="mt-0.5 text-xs text-text-muted">
+                {[entry.from, entry.to].filter(Boolean).join(" – ")}
+              </p>
+              {entry.description ? (
+                <p className="mt-2 whitespace-pre-wrap text-sm text-text-secondary">
+                  {entry.description}
+                </p>
+              ) : null}
+            </div>
+          ))}
+        </section>
+      ) : student.workExperience ? (
+        <section className="rounded-radius border border-border bg-grad-card p-4">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+            {labels.workExperienceLabel || "Work experience"}
+          </h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-text-secondary">
+            {student.workExperience}
           </p>
         </section>
       ) : null}
@@ -196,6 +285,16 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
             {labels.linkedinLabel ?? "LinkedIn"}
           </a>
         ) : null}
+        {student.githubUrl ? (
+          <a
+            href={student.githubUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium text-text-label hover:text-fill-accent"
+          >
+            {labels.githubLabel || "GitHub"}
+          </a>
+        ) : null}
         {student.portfolioUrl ? (
           <a
             href={student.portfolioUrl}
@@ -213,10 +312,44 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
             rel="noreferrer"
             className="text-sm font-medium text-text-label hover:text-fill-accent"
           >
-            {labels.cvLabel ?? "CV"}
+            {labels.cvLabel ?? "Resume"}
           </a>
         ) : null}
       </div>
+
+      <Modal
+        open={interviewOpen}
+        onClose={() => setInterviewOpen(false)}
+        title={labels.scheduleInterviewTitle || "Schedule Interview"}
+        footer={
+          <div className="flex gap-2">
+            <Button
+              disabled={busy || !interviewAt}
+              onClick={() => {
+                void (async () => {
+                  const ok = await patchMatch({
+                    action: "schedule_interview",
+                    interviewAt: new Date(interviewAt).toISOString(),
+                  });
+                  if (ok) setInterviewOpen(false);
+                })();
+              }}
+            >
+              {labels.confirmInterview || "Confirm"}
+            </Button>
+            <Button variant="outline" onClick={() => setInterviewOpen(false)}>
+              {labels.cancel || "Cancel"}
+            </Button>
+          </div>
+        }
+      >
+        <Input
+          type="datetime-local"
+          label={labels.interviewAtLabel || "Date and time"}
+          value={interviewAt}
+          onChange={(e) => setInterviewAt(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 }

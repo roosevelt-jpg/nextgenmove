@@ -5,6 +5,14 @@ import { Button, Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
+interface WorkEntry {
+  company: string;
+  title: string;
+  from: string;
+  to: string;
+  description: string;
+}
+
 interface StudentProfile {
   id: string;
   fullName: string;
@@ -17,8 +25,10 @@ interface StudentProfile {
   cvUrl: string | null;
   linkedinUrl: string | null;
   portfolioUrl: string | null;
+  githubUrl: string | null;
   availability: string;
   photoUrl: string | null;
+  workExperienceEntries: WorkEntry[];
 }
 
 export interface StudentProfileViewProps {
@@ -36,6 +46,14 @@ function joinList(values: string[]): string {
   return values.join(", ");
 }
 
+const EMPTY_ENTRY: WorkEntry = {
+  company: "",
+  title: "",
+  from: "",
+  to: "",
+  description: "",
+};
+
 export function StudentProfileView({ labels }: StudentProfileViewProps) {
   const { taxonomies, isLoading } = useTaxonomies();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -50,11 +68,24 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     }
 
     const data = (await response.json()) as {
-      student: StudentProfile;
+      student: StudentProfile & {
+        workExperienceEntries?: WorkEntry[];
+        githubUrl?: string | null;
+      };
       profileCompleteness: number;
     };
 
-    setProfile(data.student);
+    setProfile({
+      ...data.student,
+      githubUrl: data.student.githubUrl ?? null,
+      workExperienceEntries: (data.student.workExperienceEntries ?? []).map((e) => ({
+        company: e.company ?? "",
+        title: e.title ?? "",
+        from: e.from ?? "",
+        to: e.to ?? "",
+        description: e.description ?? "",
+      })),
+    });
     setCompleteness(data.profileCompleteness);
   }, []);
 
@@ -74,7 +105,18 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     const response = await fetch("/api/student/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profile),
+      body: JSON.stringify({
+        ...profile,
+        workExperienceEntries: profile.workExperienceEntries
+          .filter((e) => e.company.trim() && e.title.trim() && e.from.trim())
+          .map((e) => ({
+            company: e.company.trim(),
+            title: e.title.trim(),
+            from: e.from.trim(),
+            to: e.to.trim() || null,
+            description: e.description.trim(),
+          })),
+      }),
     });
 
     setIsSaving(false);
@@ -95,6 +137,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     return null;
   }
 
+  const entries = profile.workExperienceEntries ?? [];
+
   return (
     <form className="grid gap-8 lg:grid-cols-[1.4fr_1fr]" onSubmit={saveProfile}>
       <div className="space-y-4">
@@ -102,9 +146,23 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
           <h1 className="font-serif text-2xl text-text-primary">{labels.profileTitle}</h1>
         ) : null}
         {labels.profileCompleteness ? (
-          <p className="text-sm text-text-muted">
-            {labels.profileCompleteness.replace("{percent}", String(completeness))}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-text-muted">
+              {labels.profileCompleteness.replace("{percent}", String(completeness))}
+            </p>
+            <div
+              className="h-2 w-full overflow-hidden rounded-full bg-surface-2"
+              role="progressbar"
+              aria-valuenow={completeness}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="h-full bg-grad-rouse transition-[width] duration-300"
+                style={{ width: `${Math.min(100, Math.max(0, completeness))}%` }}
+              />
+            </div>
+          </div>
         ) : null}
 
         <Input
@@ -186,6 +244,16 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
           }
         />
         <Input
+          id="student-github"
+          type="url"
+          aria-label={labels.githubUrl ?? "github-url"}
+          label={labels.githubUrl || "GitHub URL"}
+          value={profile.githubUrl ?? ""}
+          onChange={(event) =>
+            setProfile({ ...profile, githubUrl: event.target.value || null })
+          }
+        />
+        <Input
           id="student-portfolio"
           type="url"
           aria-label={labels.portfolioUrl ?? "portfolio-url"}
@@ -195,6 +263,92 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
             setProfile({ ...profile, portfolioUrl: event.target.value || null })
           }
         />
+
+        <section className="space-y-3">
+          <h2 className="font-medium text-text-primary">
+            {labels.workExperienceEntriesLabel || "Work experience"}
+          </h2>
+          {entries.map((entry, index) => (
+            <div
+              key={index}
+              className="space-y-2 rounded-radius border border-border p-3"
+            >
+              <Input
+                label={labels.companyLabel || "Company"}
+                value={entry.company}
+                onChange={(e) => {
+                  const next = [...entries];
+                  next[index] = { ...entry, company: e.target.value };
+                  setProfile({ ...profile, workExperienceEntries: next });
+                }}
+              />
+              <Input
+                label={labels.jobTitleLabel || "Title"}
+                value={entry.title}
+                onChange={(e) => {
+                  const next = [...entries];
+                  next[index] = { ...entry, title: e.target.value };
+                  setProfile({ ...profile, workExperienceEntries: next });
+                }}
+              />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input
+                  label={labels.fromLabel || "From"}
+                  value={entry.from}
+                  onChange={(e) => {
+                    const next = [...entries];
+                    next[index] = { ...entry, from: e.target.value };
+                    setProfile({ ...profile, workExperienceEntries: next });
+                  }}
+                />
+                <Input
+                  label={labels.toLabel || "To"}
+                  value={entry.to}
+                  onChange={(e) => {
+                    const next = [...entries];
+                    next[index] = { ...entry, to: e.target.value };
+                    setProfile({ ...profile, workExperienceEntries: next });
+                  }}
+                />
+              </div>
+              <Textarea
+                label={labels.workExperienceDescriptionLabel || "Description"}
+                value={entry.description}
+                onChange={(e) => {
+                  const next = [...entries];
+                  next[index] = { ...entry, description: e.target.value };
+                  setProfile({ ...profile, workExperienceEntries: next });
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setProfile({
+                    ...profile,
+                    workExperienceEntries: entries.filter((_, i) => i !== index),
+                  })
+                }
+              >
+                {labels.removeLabel || "Remove"}
+              </Button>
+            </div>
+          ))}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              setProfile({
+                ...profile,
+                workExperienceEntries: [...entries, { ...EMPTY_ENTRY }],
+              })
+            }
+          >
+            {labels.addWorkExperienceLabel || "Add experience"}
+          </Button>
+        </section>
       </div>
 
       <aside className="space-y-4 rounded-radius border border-border bg-grad-card p-5">
@@ -203,7 +357,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         ) : null}
         <FileUpload
           storagePath={`students/${profile.id}/cv`}
-          accept=".pdf,application/pdf"
+          uploadEndpoint="/api/student/upload"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           label={labels.cvUpload}
           dropzoneContent={labels.cvDropzone}
           progressLabel={labels.uploadProgress}
@@ -223,6 +378,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         ) : null}
         <FileUpload
           storagePath={`students/${profile.id}/photo`}
+          uploadEndpoint="/api/student/upload"
           accept="image/*"
           label={labels.photoUpload}
           dropzoneContent={labels.photoDropzone}

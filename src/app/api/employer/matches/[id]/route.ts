@@ -14,6 +14,11 @@ import {
 const patchSchema = z.object({
   shortlisted: z.boolean().optional(),
   stageId: z.string().min(1).optional(),
+  action: z.enum(["hire", "reject", "schedule_interview"]).optional(),
+  interviewAt: z.string().datetime().optional(),
+  applicationStatus: z
+    .enum(["pending", "interviewing", "hired", "rejected"])
+    .optional(),
 });
 
 export async function GET(
@@ -78,6 +83,10 @@ export async function GET(
       linkedinUrl: student.linkedinUrl ?? null,
       portfolioUrl: student.portfolioUrl ?? null,
       cvUrl: student.cvUrl ?? null,
+      photoUrl: student.photoUrl ?? null,
+      workExperience: student.workExperience ?? null,
+      workExperienceEntries: student.workExperienceEntries ?? [],
+      githubUrl: student.githubUrl ?? null,
     },
   });
 }
@@ -107,11 +116,41 @@ export async function PATCH(
 
     let stageIsTerminal = false;
     let stageName = "";
+    let nextStageId = body.stageId;
+    let applicationStatus = body.applicationStatus;
 
-    if (body.stageId) {
+    if (body.action === "hire") {
+      applicationStatus = "hired";
+      const stages = await adminDb.collection("pipeline_stages").get();
+      const placed = stages.docs.find((d) => {
+        const name = String(d.data()?.name ?? "").toLowerCase();
+        return d.data()?.isTerminal || name.includes("placed") || name.includes("hired");
+      });
+      if (placed) nextStageId = placed.id;
+      stageIsTerminal = true;
+      stageName = String(placed?.data()?.name ?? "Hired");
+    } else if (body.action === "reject") {
+      applicationStatus = "rejected";
+      stageName = "Rejected";
+    } else if (body.action === "schedule_interview") {
+      applicationStatus = "interviewing";
+      if (!body.interviewAt) {
+        return NextResponse.json({ error: "interview_at_required" }, { status: 400 });
+      }
+      const stages = await adminDb.collection("pipeline_stages").get();
+      const interview = stages.docs.find((d) =>
+        String(d.data()?.name ?? "")
+          .toLowerCase()
+          .includes("interview"),
+      );
+      if (interview) nextStageId = interview.id;
+      stageName = String(interview?.data()?.name ?? "Interviewing");
+    }
+
+    if (nextStageId && !stageName) {
       const stageSnapshot = await adminDb
         .collection("pipeline_stages")
-        .doc(body.stageId)
+        .doc(nextStageId)
         .get();
 
       if (!stageSnapshot.exists) {
@@ -119,7 +158,7 @@ export async function PATCH(
       }
 
       stageIsTerminal = Boolean(stageSnapshot.data()?.isTerminal);
-      stageName = String(stageSnapshot.data()?.name ?? body.stageId);
+      stageName = String(stageSnapshot.data()?.name ?? nextStageId);
     }
 
     await adminDb
@@ -128,7 +167,11 @@ export async function PATCH(
       .update(
         stripUndefined({
           ...(body.shortlisted !== undefined ? { shortlisted: body.shortlisted } : {}),
-          ...(body.stageId ? { stageId: body.stageId } : {}),
+          ...(nextStageId ? { stageId: nextStageId } : {}),
+          ...(applicationStatus ? { applicationStatus } : {}),
+          ...(body.action === "schedule_interview" && body.interviewAt
+            ? { interviewAt: new Date(body.interviewAt) }
+            : {}),
           ...(body.shortlisted === true && match.shortlistRank == null
             ? { shortlistRank: Date.now() }
             : {}),
@@ -136,16 +179,39 @@ export async function PATCH(
         }),
       );
 
-    if (body.stageId && stageName) {
+    if ((nextStageId || body.action) && stageName) {
       const { notifyMatchUpdate } = await import("@/lib/email/notify");
       void notifyMatchUpdate({
         studentId: String(match.studentId),
-        stageName,
+        stageName:
+          body.action === "schedule_interview" && body.interviewAt
+            ? `${stageName} · ${new Date(body.interviewAt).toLocaleString()}`
+            : stageName,
+      });
+
+      const { createNotification } = await import("@/lib/notifications/create");
+      const notifType =
+        body.action === "hire"
+          ? "hire"
+          : body.action === "reject"
+            ? "reject"
+            : body.action === "schedule_interview"
+              ? "interview"
+              : "match_update";
+      void createNotification({
+        userId: String(match.studentId),
+        type: notifType,
+        title: stageName,
+        body:
+          body.action === "schedule_interview" && body.interviewAt
+            ? `Interview scheduled for ${new Date(body.interviewAt).toLocaleString()}.`
+            : `Your application status is now: ${stageName}.`,
+        link: "/student/applications",
       });
     }
 
     // Placement fee tracking when a match reaches a terminal stage.
-    if (body.stageId && stageIsTerminal) {
+    if (nextStageId && stageIsTerminal) {
       const leversSnap = await adminDb
         .collection("program_levers")
         .doc("default")

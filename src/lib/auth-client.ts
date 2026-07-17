@@ -1,6 +1,10 @@
 "use client";
 
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase-client";
 import type { UserRole } from "@/types/user";
 
@@ -46,6 +50,12 @@ export interface RegisterCompanyProfile {
 
 export async function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(auth, email, password);
+}
+
+export async function signInWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  return signInWithPopup(auth, provider);
 }
 
 /** Reserved for a future Google sign-in provider hook. */

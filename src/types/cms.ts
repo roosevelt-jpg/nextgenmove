@@ -298,6 +298,8 @@ export interface SiteSettingsDocument {
   timezone?: string;
   defaultCurrency?: string;
   require2fa?: boolean;
+  /** When true, show Google sign-in on auth forms */
+  googleSignInEnabled?: boolean;
   sessionExpireDays?: number;
   operatorPlanLabel?: string;
   operatorPlanDetail?: string;
@@ -358,11 +360,16 @@ export interface TaxonomiesDocument {
 export interface JobPostingDocument {
   id: string;
   title: string;
+  companyName?: string;
   department: string;
   location: string;
+  salary?: string;
   employmentType: string;
+  gender?: string;
+  categories?: string[];
+  skills?: string[];
   description: string;
-  status: "open" | "closed";
+  status: "open" | "closed" | "pending" | "rejected";
   createdAt: string | null;
 }
 

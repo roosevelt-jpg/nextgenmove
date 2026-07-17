@@ -227,6 +227,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /notifications/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == uid());
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == uid());
+      allow create, delete: if isAdmin();
+    }
+
     match /page_home/{docId} {
       allow read: if true;
       allow write: if isAdmin();

@@ -125,6 +125,19 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "photoUrl", type: "image", labelKey: "photoUrl" },
       { key: "linkedinUrl", type: "text", labelKey: "linkedinUrl" },
       { key: "portfolioUrl", type: "text", labelKey: "portfolioUrl" },
+      { key: "githubUrl", type: "text", labelKey: "githubUrl" },
+      {
+        key: "workExperienceEntries",
+        type: "repeatable",
+        labelKey: "workExperienceEntries",
+        fields: [
+          { key: "company", type: "text", labelKey: "company" },
+          { key: "title", type: "text", labelKey: "title" },
+          { key: "from", type: "text", labelKey: "from" },
+          { key: "to", type: "text", labelKey: "to" },
+          { key: "description", type: "textarea", labelKey: "description" },
+        ],
+      },
       {
         key: "status",
         type: "select",
@@ -136,9 +149,14 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
     collection: "job_postings",
     fields: [
       { key: "title", type: "text", labelKey: "title", required: true },
+      { key: "companyName", type: "text", labelKey: "companyName" },
       { key: "department", type: "select", labelKey: "department", taxonomyKey: "department" },
       { key: "location", type: "text", labelKey: "location" },
+      { key: "salary", type: "text", labelKey: "salary" },
       { key: "employmentType", type: "select", labelKey: "employmentType", taxonomyKey: "employmentType" },
+      { key: "gender", type: "text", labelKey: "gender" },
+      { key: "categories", type: "multiselect", labelKey: "categories" },
+      { key: "skills", type: "multiselect", labelKey: "skills" },
       { key: "description", type: "richtext", labelKey: "description" },
       { key: "status", type: "select", labelKey: "status" },
     ],
@@ -504,6 +522,11 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "timezone", type: "text", labelKey: "timezone" },
       { key: "defaultCurrency", type: "text", labelKey: "defaultCurrency" },
       { key: "require2fa", type: "boolean", labelKey: "require2fa" },
+      {
+        key: "googleSignInEnabled",
+        type: "boolean",
+        labelKey: "googleSignInEnabled",
+      },
       { key: "sessionExpireDays", type: "number", labelKey: "sessionExpireDays" },
       { key: "operatorPlanLabel", type: "text", labelKey: "operatorPlanLabel" },
       { key: "operatorPlanDetail", type: "text", labelKey: "operatorPlanDetail" },
@@ -700,8 +723,10 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
     { value: "inactive", label: "inactive" },
   ],
   status_job: [
+    { value: "pending", label: "pending" },
     { value: "open", label: "open" },
     { value: "closed", label: "closed" },
+    { value: "rejected", label: "rejected" },
   ],
   status_article: [
     { value: "draft", label: "draft" },

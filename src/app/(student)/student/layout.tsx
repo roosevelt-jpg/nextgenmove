@@ -8,6 +8,8 @@ import {
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/student/dashboard" },
+  { key: "jobs", href: "/student/jobs" },
+  { key: "applications", href: "/student/applications" },
   { key: "wallet", href: "/student/wallet" },
   { key: "store", href: "/student/store" },
   { key: "profile", href: "/student/profile" },

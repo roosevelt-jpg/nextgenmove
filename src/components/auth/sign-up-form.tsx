@@ -9,7 +9,9 @@ import {
   establishSession,
   registerAccount,
   signInWithEmail,
+  signInWithGoogle,
 } from "@/lib/auth-client";
+import { resolvePostAuthRedirect } from "@/lib/auth/constants";
 import {
   clearRecaptcha,
   confirmPhoneCode,
@@ -22,6 +24,7 @@ import type { AuthLabels, SignUpRole } from "@/types/user";
 export interface SignUpFormProps {
   labels: AuthLabels;
   onRoleChange?: (role: SignUpRole) => void;
+  googleSignInEnabled?: boolean;
 }
 
 type Step = "account" | "details" | "verify" | "media";
@@ -38,7 +41,11 @@ function splitList(value: string): string[] {
     .filter(Boolean);
 }
 
-export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
+export function SignUpForm({
+  labels,
+  onRoleChange,
+  googleSignInEnabled = false,
+}: SignUpFormProps) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("account");
   const [uid, setUid] = useState<string | null>(null);
@@ -572,6 +579,45 @@ export function SignUpForm({ labels, onRoleChange }: SignUpFormProps) {
                 "Create account"}
             </Button>
           </form>
+
+          {googleSignInEnabled ? (
+            <>
+              <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-text-muted">
+                <span className="h-px flex-1 bg-border" />
+                {labels.orDivider || "Or"}
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                className="h-11 w-full"
+                onClick={() => {
+                  void (async () => {
+                    setErrorCode(null);
+                    setIsSubmitting(true);
+                    try {
+                      const credential = await signInWithGoogle();
+                      const idToken = await credential.user.getIdToken(true);
+                      const session = await establishSession(idToken);
+                      router.replace(
+                        resolvePostAuthRedirect(session.role, null),
+                      );
+                      router.refresh();
+                    } catch (error) {
+                      const message =
+                        error instanceof Error ? error.message : "sign_in_failed";
+                      setErrorCode(message);
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  })();
+                }}
+              >
+                {labels.continueWithGoogle || "Continue with Google"}
+              </Button>
+            </>
+          ) : null}
 
           <p className="text-center text-[13px] text-text-secondary">
             {labels.signInPrompt ?? "Already have an account?"}{" "}

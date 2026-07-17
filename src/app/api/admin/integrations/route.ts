@@ -63,6 +63,11 @@ function envMarksConnected(id: string): boolean {
       process.env.YOUTUBE_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim(),
     );
   }
+  if (id === "gmail_smtp") {
+    const user = process.env.SMTP_USER?.trim() ?? "";
+    const pass = process.env.SMTP_PASS?.trim() ?? "";
+    return user.includes("@") && Boolean(pass);
+  }
   return false;
 }
 

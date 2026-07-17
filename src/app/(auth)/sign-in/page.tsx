@@ -28,7 +28,10 @@ export default async function SignInPage() {
       panel="signIn"
     >
       <Suspense fallback={null}>
-        <SignInForm labels={labels} />
+        <SignInForm
+          labels={labels}
+          googleSignInEnabled={Boolean(settings.googleSignInEnabled)}
+        />
       </Suspense>
     </AuthSplitShell>
   );

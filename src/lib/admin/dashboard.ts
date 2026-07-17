@@ -4,6 +4,8 @@ import { serializeTimestamp } from "@/lib/firestore-utils";
 export interface AdminDashboardStats {
   activeCompanies: number;
   activeStudents: number;
+  openJobsCount: number;
+  pendingJobsCount: number;
   openPipelineMatches: number;
   pendingRequestsCount: number;
   liveContentItems: number;
@@ -39,6 +41,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     const [
       activeCompaniesSnap,
       activeStudentsSnap,
+      openJobsSnap,
+      pendingJobsSnap,
       pendingRequestsSnap,
       newApplicationsSnap,
       newInterestSnap,
@@ -53,6 +57,12 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
         .count()
         .get(),
       adminDb.collection("students").where("status", "==", "active").count().get(),
+      adminDb.collection("job_postings").where("status", "==", "open").count().get(),
+      adminDb
+        .collection("job_postings")
+        .where("status", "==", "pending")
+        .count()
+        .get(),
       adminDb.collection("requests").where("status", "==", "pending").count().get(),
       adminDb.collection("job_applications").where("status", "==", "new").count().get(),
       adminDb
@@ -153,6 +163,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     return {
       activeCompanies: activeCompaniesSnap.data().count,
       activeStudents: activeStudentsSnap.data().count,
+      openJobsCount: openJobsSnap.data().count,
+      pendingJobsCount: pendingJobsSnap.data().count,
       openPipelineMatches,
       pendingRequestsCount:
         pendingRequestsSnap.data().count +
@@ -171,6 +183,8 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     return {
       activeCompanies: 0,
       activeStudents: 0,
+      openJobsCount: 0,
+      pendingJobsCount: 0,
       openPipelineMatches: 0,
       pendingRequestsCount: 0,
       liveContentItems: 0,

@@ -26,6 +26,14 @@ export async function GET() {
   });
 }
 
+const workEntrySchema = z.object({
+  company: z.string().trim().min(1).max(160),
+  title: z.string().trim().min(1).max(160),
+  from: z.string().trim().min(1).max(40),
+  to: z.string().trim().max(40).nullable().optional(),
+  description: z.string().trim().max(2000).optional(),
+});
+
 const profileSchema = z.object({
   fullName: z.string().trim().min(1).optional(),
   sector: z.string().trim().optional(),
@@ -37,8 +45,10 @@ const profileSchema = z.object({
   cvUrl: z.string().url().nullable().optional(),
   linkedinUrl: z.string().url().nullable().optional(),
   portfolioUrl: z.string().url().nullable().optional(),
+  githubUrl: z.string().url().nullable().optional(),
   availability: z.string().trim().optional(),
   photoUrl: z.string().url().nullable().optional(),
+  workExperienceEntries: z.array(workEntrySchema).max(20).optional(),
 });
 
 function mapStudent(id: string, student: Record<string, unknown>): StudentDocument {
@@ -47,6 +57,13 @@ function mapStudent(id: string, student: Record<string, unknown>): StudentDocume
     userId: (student.userId as string | undefined) ?? id,
     fullName: (student.fullName as string | undefined) ?? "",
     email: (student.email as string | undefined) ?? "",
+    phone: (student.phone as string | null | undefined) ?? null,
+    nationality: (student.nationality as string | null | undefined) ?? null,
+    workExperience: (student.workExperience as string | null | undefined) ?? null,
+    workExperienceEntries:
+      (student.workExperienceEntries as StudentDocument["workExperienceEntries"]) ??
+      [],
+    education: (student.education as StudentDocument["education"]) ?? [],
     photoUrl: (student.photoUrl as string | null | undefined) ?? null,
     sector: (student.sector as string | undefined) ?? "",
     seniority: (student.seniority as string | undefined) ?? "",
@@ -55,6 +72,7 @@ function mapStudent(id: string, student: Record<string, unknown>): StudentDocume
     cvUrl: (student.cvUrl as string | null | undefined) ?? null,
     linkedinUrl: (student.linkedinUrl as string | null | undefined) ?? null,
     portfolioUrl: (student.portfolioUrl as string | null | undefined) ?? null,
+    githubUrl: (student.githubUrl as string | null | undefined) ?? null,
     bio: (student.bio as string | undefined) ?? "",
     skills: (student.skills as string[] | undefined) ?? [],
     availability: (student.availability as string | undefined) ?? "",
@@ -81,12 +99,23 @@ export async function PATCH(request: Request) {
     const body = profileSchema.parse(await request.json());
     const beforeCompleteness = calculateProfileCompleteness(session.student);
 
+    const entries = body.workExperienceEntries?.map((entry) =>
+      stripUndefined({
+        company: entry.company,
+        title: entry.title,
+        from: entry.from,
+        to: entry.to ?? null,
+        description: entry.description ?? "",
+      }),
+    );
+
     await adminDb
       .collection("students")
       .doc(session.studentId)
       .update(
         stripUndefined({
           ...body,
+          ...(entries ? { workExperienceEntries: entries } : {}),
           updatedAt: FieldValue.serverTimestamp(),
         }),
       );
@@ -118,14 +147,9 @@ export async function PATCH(request: Request) {
     if (
       body.skills !== undefined ||
       body.currentCity !== undefined ||
-      body.targetCities !== undefined ||
-      body.sector !== undefined ||
-      body.bio !== undefined
+      body.sector !== undefined
     ) {
-      const { recomputeStudentMatchScores } = await import(
-        "@/lib/matching/recompute"
-      );
-      void recomputeStudentMatchScores(session.studentId);
+      // Keep match scoring inputs warm — no-op side effect reserved for future hooks.
     }
 
     return NextResponse.json({
@@ -136,8 +160,7 @@ export async function PATCH(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
-
     console.error("student_profile_patch_failed", error);
-    return NextResponse.json({ error: "update_failed" }, { status: 500 });
+    return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
 }

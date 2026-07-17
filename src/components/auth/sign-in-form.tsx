@@ -4,34 +4,78 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button, Input } from "@/components/ui";
-import { establishSession, signInWithEmail } from "@/lib/auth-client";
+import {
+  establishSession,
+  signInWithEmail,
+  signInWithGoogle,
+} from "@/lib/auth-client";
 import { resolvePostAuthRedirect } from "@/lib/auth/constants";
 import type { AuthLabels } from "@/types/user";
 
 export interface SignInFormProps {
   labels: AuthLabels;
+  googleSignInEnabled?: boolean;
 }
 
-export function SignInForm({ labels }: SignInFormProps) {
+export function SignInForm({
+  labels,
+  googleSignInEnabled = false,
+}: SignInFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const mapError = (code: string, message: string) => {
+    if (code === "auth/invalid-email" || code === "auth/missing-email") {
+      setEmailError(labels.invalid_email || "Email is invalid");
+      return;
+    }
+    if (
+      code === "auth/wrong-password" ||
+      code === "auth/invalid-credential" ||
+      code === "auth/user-not-found"
+    ) {
+      setPasswordError(
+        labels.sign_in_failed || "Check your email and password.",
+      );
+      return;
+    }
+    if (code.startsWith("auth/")) {
+      setErrorCode(code);
+    } else if (message && message !== "sign_in_failed") {
+      setErrorCode(message);
+    } else {
+      setErrorCode("sign_in_failed");
+    }
+  };
+
+  const finishLogin = async (idToken: string) => {
+    const session = await establishSession(idToken);
+    const nextPath = searchParams.get("next");
+    router.push(resolvePostAuthRedirect(session.role, nextPath));
+    router.refresh();
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorCode(null);
+    setEmailError(null);
+    setPasswordError(null);
     setIsSubmitting(true);
 
     try {
+      if (!email.trim().includes("@")) {
+        setEmailError(labels.invalid_email || "Email is invalid");
+        return;
+      }
       const credential = await signInWithEmail(email.trim(), password);
       const idToken = await credential.user.getIdToken(true);
-      const session = await establishSession(idToken);
-      const nextPath = searchParams.get("next");
-      router.push(resolvePostAuthRedirect(session.role, nextPath));
-      router.refresh();
+      await finishLogin(idToken);
     } catch (error) {
       const code =
         error && typeof error === "object" && "code" in error
@@ -39,13 +83,32 @@ export function SignInForm({ labels }: SignInFormProps) {
           : "";
       const message =
         error instanceof Error ? error.message : "sign_in_failed";
-      if (code.startsWith("auth/")) {
-        setErrorCode(code);
-      } else if (message && message !== "sign_in_failed") {
-        setErrorCode(message);
-      } else {
-        setErrorCode("sign_in_failed");
+      mapError(code, message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setErrorCode(null);
+    setIsSubmitting(true);
+    try {
+      const credential = await signInWithGoogle();
+      const idToken = await credential.user.getIdToken(true);
+      await finishLogin(idToken);
+    } catch (error) {
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? String((error as { code?: string }).code ?? "")
+          : "";
+      if (code === "auth/popup-closed-by-user") {
+        return;
       }
+      setErrorCode(
+        code.startsWith("auth/")
+          ? code
+          : labels.google_coming_soon || "google_sign_in_failed",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -76,17 +139,26 @@ export function SignInForm({ labels }: SignInFormProps) {
           aria-label={labels.emailLabel || "Email"}
           label={labels.emailLabel || "Email"}
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          error={emailError}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setEmailError(null);
+          }}
         />
         <Input
           id="sign-in-password"
           type="password"
           autoComplete="current-password"
           required
+          showPasswordToggle
           aria-label={labels.passwordLabel || "Password"}
           label={labels.passwordLabel || "Password"}
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          error={passwordError}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setPasswordError(null);
+          }}
         />
 
         <div className="flex justify-end">
@@ -125,6 +197,25 @@ export function SignInForm({ labels }: SignInFormProps) {
             : (labels.signInSubmitLabel ?? "Sign in")}
         </Button>
       </form>
+
+      {googleSignInEnabled ? (
+        <>
+          <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-text-muted">
+            <span className="h-px flex-1 bg-border" />
+            {labels.orDivider || "Or"}
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSubmitting}
+            className="h-11 w-full"
+            onClick={() => void handleGoogle()}
+          >
+            {labels.continueWithGoogle || "Continue with Google"}
+          </Button>
+        </>
+      ) : null}
 
       <p className="text-center text-[13px] text-text-secondary">
         {labels.signUpPrompt ?? "Don't have an account?"}{" "}

@@ -13,11 +13,13 @@ export function SignUpPageClient({
   siteName,
   brandMark,
   logoUrl,
+  googleSignInEnabled = false,
 }: {
   labels: AuthLabels;
   siteName: string;
   brandMark: string;
   logoUrl?: string | null;
+  googleSignInEnabled?: boolean;
 }) {
   const [panel, setPanel] = useState<AuthPanel>("signUpCompany");
 
@@ -31,6 +33,7 @@ export function SignUpPageClient({
     >
       <SignUpForm
         labels={labels}
+        googleSignInEnabled={googleSignInEnabled}
         onRoleChange={(role: SignUpRole) =>
           setPanel(role === "company" ? "signUpCompany" : "signUpTalent")
         }

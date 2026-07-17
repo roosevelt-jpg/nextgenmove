@@ -29,6 +29,15 @@ const ENV_SECRET_FALLBACKS: Record<string, Record<string, () => string>> = {
       process.env.GOOGLE_API_KEY?.trim() ||
       "",
   },
+  gmail_smtp: {
+    host: () => process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
+    port: () => process.env.SMTP_PORT?.trim() || "465",
+    user: () => process.env.SMTP_USER?.trim() ?? "",
+    pass: () => process.env.SMTP_PASS?.trim() ?? "",
+    fromEmail: () => process.env.SMTP_FROM_EMAIL?.trim() ?? "",
+    fromName: () => process.env.SMTP_FROM_NAME?.trim() ?? "",
+    secure: () => process.env.SMTP_SECURE?.trim() || "true",
+  },
 };
 
 function getEncryptionKey(): Buffer | null {
@@ -169,6 +178,13 @@ export async function isIntegrationConnected(integrationId: string): Promise<boo
   }
   if (integrationId === "youtube") {
     return Boolean(secrets.apiKey);
+  }
+  if (integrationId === "gmail_smtp") {
+    return Boolean(
+      secrets.user?.includes("@") &&
+        secrets.pass &&
+        (secrets.fromEmail?.includes("@") || secrets.user?.includes("@")),
+    );
   }
   return Object.keys(secrets).length > 0;
 }

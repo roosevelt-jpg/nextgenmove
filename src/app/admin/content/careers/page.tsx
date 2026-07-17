@@ -5,7 +5,11 @@ import { getTaxonomies } from "@/lib/collections/taxonomies";
 
 export default async function AdminContentCareersPage() {
   const [settings, taxonomies] = await Promise.all([getSiteSettings(), getTaxonomies()]);
-  const labels = settings.adminPageLabels?.content ?? settings.formLabels ?? {};
+  const labels = {
+    ...(settings.formLabels ?? {}),
+    ...(settings.adminPageLabels?.content ?? {}),
+    ...(settings.adminPageLabels?.dashboard ?? {}),
+  };
 
   return (
     <AdminEntityListView

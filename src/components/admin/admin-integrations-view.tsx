@@ -32,6 +32,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [authToken, setAuthToken] = useState("");
   const [fromSms, setFromSms] = useState("");
   const [fromWhatsApp, setFromWhatsApp] = useState("");
+  const [smtpUser, setSmtpUser] = useState("");
+  const [smtpPass, setSmtpPass] = useState("");
+  const [smtpPort, setSmtpPort] = useState("465");
   const [isSaving, setIsSaving] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -87,6 +90,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const isStripe = connectItem?.id === "stripe";
   const isResend = connectItem?.id === "resend";
   const isSendGrid = connectItem?.id === "sendgrid";
+  const isGmailSmtp = connectItem?.id === "gmail_smtp";
   const isTwilio = connectItem?.id === "twilio";
   const isYoutube = connectItem?.id === "youtube";
 
@@ -111,6 +115,28 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
             ...(publishableKey ? { publishableKey } : {}),
           },
         }
+      : isGmailSmtp
+        ? {
+            config: {
+              host: configHost || "smtp.gmail.com",
+              port: smtpPort || "465",
+              fromEmail: fromEmail || smtpUser,
+              fromName: fromName || labels.smtpDefaultFromName || "Venturo",
+              secure: "true",
+              category: "Transactional email",
+            },
+            secrets: {
+              host: configHost || "smtp.gmail.com",
+              port: smtpPort || "465",
+              ...(smtpUser ? { user: smtpUser } : {}),
+              ...(smtpPass ? { pass: smtpPass } : {}),
+              ...(fromEmail || smtpUser
+                ? { fromEmail: fromEmail || smtpUser }
+                : {}),
+              ...(fromName ? { fromName } : {}),
+              secure: "true",
+            },
+          }
       : isResend || isSendGrid
         ? {
             config: {
@@ -178,6 +204,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       setAuthToken("");
       setFromSms("");
       setFromWhatsApp("");
+      setSmtpUser("");
+      setSmtpPass("");
+      setSmtpPort("465");
       setActionMessage(labels.connectSuccess ?? "Connected.");
       if (payload?.item) {
         setItems((prev) => {
@@ -389,6 +418,55 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               {labels.stripeWebhookHelp ? (
                 <p className="text-xs text-text-muted">{labels.stripeWebhookHelp}</p>
               ) : null}
+            </>
+          ) : isGmailSmtp ? (
+            <>
+              <Input
+                id="smtp-host"
+                label={labels.smtpHost ?? "SMTP host"}
+                value={configHost || "smtp.gmail.com"}
+                onChange={(event) => setConfigHost(event.target.value)}
+                placeholder="smtp.gmail.com"
+              />
+              <Input
+                id="smtp-port"
+                label={labels.smtpPort ?? "Port"}
+                value={smtpPort}
+                onChange={(event) => setSmtpPort(event.target.value)}
+                placeholder="465"
+              />
+              <Input
+                id="smtp-user"
+                type="email"
+                label={labels.smtpUser ?? "Gmail address"}
+                value={smtpUser}
+                onChange={(event) => setSmtpUser(event.target.value)}
+                placeholder="you@gmail.com"
+              />
+              <Input
+                id="smtp-pass"
+                type="password"
+                label={labels.smtpPass ?? "App password"}
+                value={smtpPass}
+                onChange={(event) => setSmtpPass(event.target.value)}
+              />
+              <Input
+                id="smtp-from-email"
+                type="email"
+                label={labels.smtpFromEmail ?? "From email"}
+                value={fromEmail}
+                onChange={(event) => setFromEmail(event.target.value)}
+              />
+              <Input
+                id="smtp-from-name"
+                label={labels.smtpFromName ?? "From name"}
+                value={fromName}
+                onChange={(event) => setFromName(event.target.value)}
+              />
+              <p className="text-xs text-text-muted">
+                {labels.smtpHelp ??
+                  "Create a Google App Password (Google Account → Security → 2-Step Verification → App passwords). Used for OTPs, notifications, and CRM email."}
+              </p>
             </>
           ) : isResend || isSendGrid ? (
             <>

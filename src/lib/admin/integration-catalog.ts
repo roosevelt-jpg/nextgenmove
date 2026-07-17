@@ -30,18 +30,29 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     name: "Resend",
     category: "Transactional email",
     description:
-      "All notification emails — paste re_ API key + verified from address to go live.",
+      "Fallback email provider when Gmail SMTP is offline. Paste re_ API key + verified from address.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,
     config: { category: "Transactional email" },
   },
   {
+    id: "gmail_smtp",
+    name: "Gmail SMTP",
+    category: "Transactional email",
+    description:
+      "Primary email for OTPs, notifications, and CRM — use a Google App Password with smtp.gmail.com.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "Transactional email", host: "smtp.gmail.com", port: "465" },
+  },
+  {
     id: "sendgrid",
     name: "SendGrid (legacy)",
     category: "Transactional email",
     description:
-      "Legacy email provider — Venturo now sends via Resend. Kept for reference only.",
+      "Legacy email provider — Venturo prefers Gmail SMTP, then Resend. Kept for reference only.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,

@@ -4,6 +4,14 @@ import { adminDb } from "@/lib/firebase-admin";
 import { withTimeout } from "@/lib/async/with-timeout";
 import type { PortalSessionMode } from "@/lib/auth/portal-session";
 
+export interface WorkExperienceEntry {
+  company: string;
+  title: string;
+  from: string;
+  to?: string | null;
+  description?: string;
+}
+
 export interface StudentDocument {
   id: string;
   userId: string;
@@ -12,6 +20,7 @@ export interface StudentDocument {
   phone?: string | null;
   nationality?: string | null;
   workExperience?: string | null;
+  workExperienceEntries?: WorkExperienceEntry[];
   education?: Array<{
     institution: string;
     degree?: string;
@@ -25,6 +34,7 @@ export interface StudentDocument {
   cvUrl: string | null;
   linkedinUrl: string | null;
   portfolioUrl: string | null;
+  githubUrl?: string | null;
   bio: string;
   skills: string[];
   availability: string;
@@ -54,6 +64,9 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     phone: (data.phone as string | null | undefined) ?? null,
     nationality: (data.nationality as string | null | undefined) ?? null,
     workExperience: (data.workExperience as string | null | undefined) ?? null,
+    workExperienceEntries:
+      (data.workExperienceEntries as StudentDocument["workExperienceEntries"] | undefined) ??
+      [],
     education:
       (data.education as StudentDocument["education"] | undefined) ?? [],
     photoUrl: (data.photoUrl as string | null | undefined) ?? null,
@@ -64,6 +77,7 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     cvUrl: (data.cvUrl as string | null | undefined) ?? null,
     linkedinUrl: (data.linkedinUrl as string | null | undefined) ?? null,
     portfolioUrl: (data.portfolioUrl as string | null | undefined) ?? null,
+    githubUrl: (data.githubUrl as string | null | undefined) ?? null,
     bio: (data.bio as string | undefined) ?? "",
     skills: (data.skills as string[] | undefined) ?? [],
     availability: (data.availability as string | undefined) ?? "",
@@ -95,6 +109,7 @@ function emptyPreviewStudent(user: {
     phone: null,
     nationality: null,
     workExperience: null,
+    workExperienceEntries: [],
     education: [],
     photoUrl: user.photoUrl,
     sector: "",
@@ -104,6 +119,7 @@ function emptyPreviewStudent(user: {
     cvUrl: null,
     linkedinUrl: null,
     portfolioUrl: null,
+    githubUrl: null,
     bio: "",
     skills: [],
     availability: "",
@@ -188,9 +204,13 @@ export function calculateProfileCompleteness(student: StudentDocument): number {
     Boolean(student.bio),
     student.skills.length > 0,
     Boolean(student.cvUrl),
-    Boolean(student.linkedinUrl || student.portfolioUrl),
+    Boolean(student.linkedinUrl || student.portfolioUrl || student.githubUrl),
     Boolean(student.availability),
     Boolean(student.photoUrl),
+    Boolean(
+      (student.workExperienceEntries && student.workExperienceEntries.length > 0) ||
+        student.workExperience,
+    ),
   ];
 
   const filled = checks.filter(Boolean).length;

@@ -149,6 +149,15 @@ export function AdminEntityListView({
       header: labels.titleColumn,
       render: (row: Record<string, unknown>) => String(row.title ?? row.name ?? row.id ?? ""),
     },
+    ...(schema.collection === "job_postings"
+      ? [
+          {
+            key: "companyName" as const,
+            header: labels.companyName || labels.colCompany || "Company",
+            render: (row: Record<string, unknown>) => String(row.companyName ?? ""),
+          },
+        ]
+      : []),
     {
       key: "status" as const,
       header: labels.statusColumn,
@@ -160,6 +169,60 @@ export function AdminEntityListView({
       header: labels.actionsColumn,
       render: (row: Record<string, unknown>) => (
         <div className="flex flex-nowrap items-center gap-1">
+          {schema.collection === "job_postings" &&
+          String(row.status ?? "") === "pending" ? (
+            <>
+              <Button
+                size="xs"
+                onClick={async () => {
+                  setActionMessage(null);
+                  const response = await fetch(
+                    `/api/admin/data/${schema.collection}/${String(row.id)}`,
+                    {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        status: "open",
+                        moderationStatus: "approved",
+                      }),
+                    },
+                  );
+                  if (!response.ok) {
+                    setActionMessage(labels.deleteError ?? "Could not approve.");
+                    return;
+                  }
+                  await load();
+                }}
+              >
+                {labels.approveJobAction || labels.approve || "Approve"}
+              </Button>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={async () => {
+                  setActionMessage(null);
+                  const response = await fetch(
+                    `/api/admin/data/${schema.collection}/${String(row.id)}`,
+                    {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        status: "rejected",
+                        moderationStatus: "rejected",
+                      }),
+                    },
+                  );
+                  if (!response.ok) {
+                    setActionMessage(labels.deleteError ?? "Could not reject.");
+                    return;
+                  }
+                  await load();
+                }}
+              >
+                {labels.rejectJobAction || labels.reject || "Reject"}
+              </Button>
+            </>
+          ) : null}
           <Button
             size="xs"
             variant="ghost"

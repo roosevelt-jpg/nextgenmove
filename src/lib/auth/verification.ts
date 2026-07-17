@@ -54,19 +54,21 @@ export async function issueEmailOtp(options: {
     dedupeKey: null,
   });
 
-  // If CMS template missing, send a minimal branded fallback via same Resend path
+  // If CMS template missing, send a minimal branded fallback via the same router
   if (!result.sent && result.reason === "missing_template") {
-    const { sendViaResend, isResendLive } = await import("@/lib/email/resend");
-    if (!(await isResendLive())) {
+    const { sendRawEmail, isAnyEmailProviderLive } = await import(
+      "@/lib/email/send"
+    );
+    if (!(await isAnyEmailProviderLive())) {
       return result;
     }
-    await sendViaResend({
+    const raw = await sendRawEmail({
       to: options.email,
       subject: "Your verification code",
       html: `<p>Your Venturo verification code is <strong>${code}</strong>.</p><p>It expires in 10 minutes.</p>`,
       text: `Your Venturo verification code is ${code}. It expires in 10 minutes.`,
     });
-    return { sent: true };
+    return raw.sent ? { sent: true } : result;
   }
 
   return result;

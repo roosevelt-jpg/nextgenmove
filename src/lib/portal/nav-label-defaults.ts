@@ -22,6 +22,8 @@ export const DEFAULT_ADMIN_NAV_LABELS: Record<string, string> = {
 
 export const DEFAULT_STUDENT_NAV_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
+  jobs: "Jobs",
+  applications: "Applied jobs",
   wallet: "Wallet",
   store: "Content store",
   profile: "My Profile",
@@ -31,6 +33,7 @@ export const DEFAULT_STUDENT_NAV_LABELS: Record<string, string> = {
 export const DEFAULT_EMPLOYER_NAV_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   talentPool: "Talent pool",
+  jobs: "Opportunities",
   pipeline: "Pipeline",
   shortlist: "Shortlist",
   profile: "Our Profile",

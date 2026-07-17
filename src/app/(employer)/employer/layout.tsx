@@ -9,6 +9,7 @@ import {
 const NAV_ITEMS = [
   { key: "dashboard", href: "/employer/dashboard" },
   { key: "talentPool", href: "/employer/talent-pool" },
+  { key: "jobs", href: "/employer/jobs" },
   { key: "pipeline", href: "/employer/pipeline" },
   { key: "shortlist", href: "/employer/shortlist" },
   { key: "profile", href: "/employer/profile" },

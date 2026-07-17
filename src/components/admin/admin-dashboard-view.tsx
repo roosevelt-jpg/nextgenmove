@@ -298,6 +298,21 @@ export function AdminDashboardView({
         tone: "text-fill-accent",
       },
       {
+        key: "activeCompanies",
+        value: stats.activeCompanies,
+        tone: "text-text-accent",
+      },
+      {
+        key: "openJobsCount",
+        value: stats.openJobsCount,
+        tone: "text-text-success",
+      },
+      {
+        key: "pendingJobsCount",
+        value: stats.pendingJobsCount,
+        tone: "text-text-warning",
+      },
+      {
         key: "pendingRequestsCount",
         value: stats.pendingRequestsCount,
         tone: "text-text-accent",

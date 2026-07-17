@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { DEFAULT_ADMIN_NAV_LABELS } from "@/lib/portal/nav-label-defaults";
 
 const NAV_ITEMS = [
@@ -276,6 +277,7 @@ export function AdminPortalShell({
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <LiveDateTime className="mr-1 hidden text-[12px] text-text-secondary min-[860px]:inline" />
             <LanguageSwitcher className="hidden sm:block" />
+            <NotificationBell labels={labels} />
             <ThemeToggle />
             <Link
               href="/admin/account"
