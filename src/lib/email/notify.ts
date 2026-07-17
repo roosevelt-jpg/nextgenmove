@@ -417,6 +417,7 @@ export async function notifyFormSubmissionAck(options: {
 
 export async function notifyAdminPending(options: {
   adminEmail: string;
+  adminUserId?: string;
   summary: string;
   request?: Request;
 }) {
@@ -424,6 +425,7 @@ export async function notifyAdminPending(options: {
   queueTransactional({
     templateId: "admin_pending_alert",
     to: options.adminEmail,
+    userId: options.adminUserId ?? null,
     role: "admin",
     vars: {
       summary: options.summary,

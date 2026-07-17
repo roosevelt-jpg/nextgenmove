@@ -223,7 +223,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           ) : null}
         </div>
         <Button disabled={isSaving} onClick={save}>
-          {labels.save ?? "Save"}
+          {labels.save || "Save"}
         </Button>
       </header>
 
@@ -266,15 +266,15 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                       onClick={() => void resolvePending(item, "approve")}
                     >
                       {item.source === "role_interest_submissions"
-                        ? labels.promote ?? "Promote"
-                        : labels.approve ?? "Approve"}
+                        ? labels.promote || "Promote"
+                        : labels.approve || "Approve"}
                     </Button>
                     <Button
                       size="xs"
                       variant="ghost"
                       onClick={() => void resolvePending(item, "reject")}
                     >
-                      {labels.reject ?? "Reject"}
+                      {labels.reject || "Reject"}
                     </Button>
                   </div>
                 </li>
@@ -311,7 +311,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           <Input
             id="trackAMonthly"
             type="number"
-            label={labels.trackAMonthly}
+            label={labels.trackAMonthly || "Track A monthly (€)"}
             value={String(levers.trackAMonthly)}
             onChange={(event) =>
               setLevers({ ...levers, trackAMonthly: Number(event.target.value) })
@@ -320,7 +320,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           <Input
             id="trackAMatchFee"
             type="number"
-            label={labels.trackAMatchFee}
+            label={labels.trackAMatchFee || "Track A match fee (€)"}
             value={String(levers.trackAMatchFee)}
             onChange={(event) =>
               setLevers({ ...levers, trackAMatchFee: Number(event.target.value) })
@@ -329,7 +329,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           <Input
             id="trackBMonthly"
             type="number"
-            label={labels.trackBMonthly}
+            label={labels.trackBMonthly || "Track B monthly (€)"}
             value={String(levers.trackBMonthly)}
             onChange={(event) =>
               setLevers({ ...levers, trackBMonthly: Number(event.target.value) })
@@ -338,7 +338,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           <Input
             id="placementFeeEur"
             type="number"
-            label={labels.placementFeeEur}
+            label={labels.placementFeeEur || "Placement fee (€)"}
             value={String(levers.placementFeeEur ?? 350)}
             onChange={(event) =>
               setLevers({
@@ -350,7 +350,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           <Input
             id="creditsPerEuro"
             type="number"
-            label={labels.creditsPerEuro}
+            label={labels.creditsPerEuro || "Credits per euro"}
             value={String(levers.creditsPerEuro ?? 4)}
             onChange={(event) =>
               setLevers({
@@ -385,7 +385,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               })
             }
           >
-            {labels.addRow ?? "Add package"}
+            {labels.addRow || "Add package"}
           </Button>
         </div>
         {(levers.creditTopUpPackages ?? []).map((pack, index) => (
@@ -411,7 +411,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
             <Input
               id={`pack-credits-${index}`}
               type="number"
-              label={labels.credits}
+              label={labels.credits || "Credits"}
               value={String(pack.credits)}
               onChange={(event) => {
                 const creditTopUpPackages = [
@@ -444,7 +444,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="min-w-fit px-2.5"
+                className="min-w-fit px-2.5 !text-white"
                 onClick={() =>
                   setLevers({
                     ...levers,
@@ -454,7 +454,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
                   })
                 }
               >
-                {labels.removeRow ?? "Remove"}
+                {labels.removeRow || "Remove"}
               </Button>
             </div>
           </div>
@@ -464,10 +464,10 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
       <section className="space-y-3 rounded-radius border border-border bg-grad-card p-5">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-[14.5px] font-bold text-text-primary">
-            {labels.waysToEarnTitle ?? "Ways to earn"}
+            {labels.waysToEarnTitle || "Ways to earn"}
           </h2>
           <Button variant="outline" size="sm" onClick={addWay}>
-            {labels.addRow ?? "Add row"}
+            {labels.addRow || "Add row"}
           </Button>
         </div>
         {levers.waysToEarn.map((way, index) => (
@@ -504,10 +504,10 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="min-w-fit px-2.5"
+                className="min-w-fit px-2.5 !text-white"
                 onClick={() => removeWay(index)}
               >
-                {labels.removeRow ?? "Remove"}
+                {labels.removeRow || "Remove"}
               </Button>
             </div>
           </div>

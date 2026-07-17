@@ -7,7 +7,9 @@ export type NotificationType =
   | "reject"
   | "interview"
   | "application"
-  | "match_update";
+  | "match_update"
+  | "activity"
+  | "pending";
 
 export async function createNotification(options: {
   userId: string;

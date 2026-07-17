@@ -51,7 +51,14 @@ export function StudentSettingsView({
         student: { notificationPreferences?: Record<string, boolean> };
       };
       setEmail(data.email ?? "");
-      setNotificationPreferences(data.student.notificationPreferences ?? {});
+      const stored = data.student.notificationPreferences ?? {};
+      const nextPrefs: Record<string, boolean> = {};
+      for (const key of notificationKeys) {
+        nextPrefs[key] = Object.prototype.hasOwnProperty.call(stored, key)
+          ? Boolean(stored[key])
+          : true;
+      }
+      setNotificationPreferences(nextPrefs);
     }
 
     if (referralRes.ok) {
@@ -71,25 +78,37 @@ export function StudentSettingsView({
       };
       setTopUpPackages(data.packages ?? []);
     }
-  }, []);
+  }, [notificationKeys]);
 
   useEffect(() => {
     void loadAccount();
   }, [loadAccount]);
 
-  const saveNotifications = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const persistNotifications = async (next: Record<string, boolean>) => {
     setIsSaving(true);
     setStatusMessage(null);
-
     const response = await fetch("/api/student/account", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notificationPreferences }),
+      body: JSON.stringify({ notificationPreferences: next }),
     });
-
     setIsSaving(false);
-    setStatusMessage(response.ok ? labels.saveSuccess ?? "" : labels.saveError ?? "");
+    setStatusMessage(
+      response.ok
+        ? labels.prefsSaved || labels.saveSuccess || "Preferences saved."
+        : labels.saveError || "Could not save.",
+    );
+  };
+
+  const toggleNotification = (key: string, checked: boolean) => {
+    const next = { ...notificationPreferences, [key]: checked };
+    setNotificationPreferences(next);
+    void persistNotifications(next);
+  };
+
+  const saveNotifications = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await persistNotifications(notificationPreferences);
   };
 
   const changePassword = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -276,8 +295,8 @@ export function StudentSettingsView({
           type="password"
           required
           autoComplete="current-password"
-          aria-label={labels.currentPassword ?? "current-password"}
-          label={labels.currentPassword}
+          aria-label={labels.currentPassword || "Current password"}
+          label={labels.currentPassword || "Current password"}
           value={currentPassword}
           onChange={(event) => setCurrentPassword(event.target.value)}
         />
@@ -287,8 +306,8 @@ export function StudentSettingsView({
           required
           minLength={8}
           autoComplete="new-password"
-          aria-label={labels.newPassword ?? "new-password"}
-          label={labels.newPassword}
+          aria-label={labels.newPassword || "New password"}
+          label={labels.newPassword || "New password"}
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
         />
@@ -297,7 +316,9 @@ export function StudentSettingsView({
             {labels[errorCode] ?? errorCode}
           </p>
         ) : null}
-        <Button type="submit">{labels.changePassword}</Button>
+        <Button type="submit" className="!text-white">
+          {labels.changePassword || "Change password"}
+        </Button>
       </form>
 
       {notificationKeys.length ? (
@@ -309,15 +330,13 @@ export function StudentSettingsView({
             <label key={key} className="flex items-center gap-2 text-sm text-text-primary">
               <input
                 type="checkbox"
+                className="h-4 w-4 accent-[var(--fill-accent)]"
                 checked={Boolean(notificationPreferences[key])}
                 onChange={(event) =>
-                  setNotificationPreferences((current) => ({
-                    ...current,
-                    [key]: event.target.checked,
-                  }))
+                  toggleNotification(key, event.target.checked)
                 }
               />
-              {labels[`notification_${key}`] ?? key}
+              {labels[`notification_${key}`] || key}
             </label>
           ))}
           {statusMessage ? (
@@ -325,8 +344,8 @@ export function StudentSettingsView({
               {statusMessage}
             </p>
           ) : null}
-          <Button type="submit" disabled={isSaving}>
-            {labels.saveNotifications}
+          <Button type="submit" disabled={isSaving} className="!text-white">
+            {labels.saveNotifications || "Save notifications"}
           </Button>
         </form>
       ) : null}

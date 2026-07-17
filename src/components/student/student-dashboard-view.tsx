@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import { StudentWalletPanel } from "@/components/student/student-wallet-panel";
 import { PortalVideosSection } from "@/components/portal/portal-videos-section";
 import { cn } from "@/lib/utils";
+import { resolveStageColor } from "@/lib/pipeline-colors";
 
 interface PipelineStage {
   id: string;
@@ -149,23 +150,38 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
 
   const journeyStages = useMemo(() => {
     if (pipelineStages.length) {
-      return [...pipelineStages].sort((a, b) => a.order - b.order);
+      return [...pipelineStages]
+        .sort((a, b) => a.order - b.order)
+        .map((stage, index) => ({
+          ...stage,
+          color: resolveStageColor(stage.color, index),
+        }));
     }
     return [
-      { id: "applied", name: labels.journey_applied ?? "Applied", order: 0, color: "#4b3f9c" },
+      {
+        id: "applied",
+        name: labels.journey_applied || "Applied",
+        order: 0,
+        color: resolveStageColor(null, 0),
+      },
       {
         id: "shortlisted",
-        name: labels.journey_shortlisted ?? "Shortlisted",
+        name: labels.journey_shortlisted || "Shortlisted",
         order: 1,
-        color: "#c97a2e",
+        color: resolveStageColor(null, 1),
       },
       {
         id: "interviewing",
-        name: labels.journey_interviewing ?? "Interviewing",
+        name: labels.journey_interviewing || "Interviewing",
         order: 2,
-        color: "#2d6a4f",
+        color: resolveStageColor(null, 2),
       },
-      { id: "placed", name: labels.journey_placed ?? "Placed", order: 3, color: "#27500a" },
+      {
+        id: "placed",
+        name: labels.journey_placed || "Placed",
+        order: 3,
+        color: resolveStageColor(null, 4),
+      },
     ];
   }, [pipelineStages, labels]);
 

@@ -329,8 +329,8 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
             ) : null}
             <Input
               id="requirement-title"
-              aria-label={labels.requirementTitle ?? "requirement-title"}
-              label={labels.requirementTitle}
+              aria-label={labels.requirementTitle || "Requirement title"}
+              label={labels.requirementTitle || "Requirement title"}
               value={requirementTitle}
               onChange={(event) => setRequirementTitle(event.target.value)}
             />
@@ -338,9 +338,11 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
               storagePath={`companies/${company.id}/requirements`}
               uploadEndpoint="/api/employer/upload"
               uploadKind="requirements"
-              label={labels.requirementUpload}
-              dropzoneContent={labels.requirementDropzone}
-              progressLabel={labels.uploadProgress}
+              label={labels.requirementUpload || "Upload requirement"}
+              dropzoneContent={
+                labels.requirementDropzone || "PDF or image — click or drop"
+              }
+              progressLabel={labels.uploadProgress || "Uploading…"}
               disabled={!requirementTitle.trim()}
               onUploadComplete={addRequirement}
             />

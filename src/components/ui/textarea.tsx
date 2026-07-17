@@ -14,7 +14,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     return (
       <div className="flex w-full flex-col gap-1">
-        {label ? (
+        {label != null && String(label).trim() !== "" ? (
           <label
             htmlFor={textareaId}
             className="font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-text-muted"

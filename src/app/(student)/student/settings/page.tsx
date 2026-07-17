@@ -8,8 +8,8 @@ export default async function StudentSettingsPage() {
     settings.studentPageLabels?.settings ?? settings.formLabels ?? {};
   const accountLabels = {
     ...(settings.formLabels ?? {}),
-    ...(settings.studentPageLabels?.account ?? {}),
     ...(settings.studentPageLabels?.settings ?? {}),
+    ...(settings.studentPageLabels?.account ?? {}),
   };
   const notificationKeys = settings.studentNotificationKeys ?? [];
 

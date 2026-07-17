@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, Card, CardBody, StatCard } from "@/components/ui";
 import { PortalVideosSection } from "@/components/portal/portal-videos-section";
+import {
+  resolveStageColor,
+  stageTrackBackground,
+} from "@/lib/pipeline-colors";
 
 interface DashboardPayload {
   company: {
@@ -139,23 +143,31 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
             {labels.funnelTitle ?? "Pipeline by stage"}
           </h2>
           <ul className="space-y-2.5">
-            {data.stageBreakdown.map((stage) => {
+            {data.stageBreakdown.map((stage, index) => {
               const max = Math.max(
                 1,
                 ...data.stageBreakdown!.map((s) => s.count),
               );
+              const color = resolveStageColor(stage.color, index);
+              const fillPct =
+                stage.count > 0
+                  ? Math.max(12, (stage.count / max) * 100)
+                  : 8;
               return (
                 <li key={stage.id} className="flex items-center gap-3">
                   <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
                     {stage.name}
                   </span>
-                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-2.5 flex-1 overflow-hidden rounded-full"
+                    style={{ backgroundColor: stageTrackBackground(color) }}
+                  >
                     <div
                       className="h-full rounded-full"
                       style={{
-                        width: `${(stage.count / max) * 100}%`,
-                        backgroundColor: stage.color,
-                        minWidth: stage.count > 0 ? 6 : 0,
+                        width: `${fillPct}%`,
+                        backgroundColor: color,
+                        opacity: stage.count > 0 ? 1 : 0.55,
                       }}
                     />
                   </div>

@@ -76,6 +76,25 @@ export async function PATCH(request: Request) {
       await ref.update(stripUndefined({ status: "active" }));
     }
 
+    const { createNotification } = await import("@/lib/notifications/create");
+    const activityTitles: Record<string, string> = {
+      promote_admin: "Role updated",
+      suspend: "Account suspended",
+      activate: "Account reactivated",
+    };
+    const activityBodies: Record<string, string> = {
+      promote_admin: "Your account role was changed to admin.",
+      suspend: "Your account was suspended by an administrator.",
+      activate: "Your account is active again.",
+    };
+    void createNotification({
+      userId: body.userId,
+      type: "activity",
+      title: activityTitles[body.action] ?? "Account update",
+      body: activityBodies[body.action] ?? "Your account was updated.",
+      link: "/sign-in",
+    });
+
     await logActivity({
       actorId: session.uid,
       actorRole: session.role,

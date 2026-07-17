@@ -5,6 +5,7 @@ import {
   getEmployerSession,
   unauthorizedResponse,
 } from "@/lib/employer/session";
+import { resolveStageColor } from "@/lib/pipeline-colors";
 
 const TALENT_POOL_SOURCES = [
   "admin_curated",
@@ -63,11 +64,15 @@ export async function GET() {
           id: doc.id,
           name: String(data.name ?? doc.id),
           order: Number(data.order ?? 0),
-          color: String(data.color ?? "#4b3f9c"),
+          color: String(data.color ?? ""),
           count: byStage[doc.id] ?? 0,
         };
       })
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map((stage, index) => ({
+        ...stage,
+        color: resolveStageColor(stage.color, index),
+      }));
 
     return NextResponse.json({
       company: {

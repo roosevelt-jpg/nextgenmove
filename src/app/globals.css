@@ -155,8 +155,11 @@ video {
 button.btn-brand,
 button.btn-brand-outline,
 button.btn-brand-ghost,
-.btn-brand {
-  color: #ffffff;
+a.btn-brand,
+.btn-brand,
+.btn-brand-outline,
+.btn-brand-ghost {
+  color: #ffffff !important;
 }
 
 /* Text links — full-color gradient (purple → amber) */
@@ -217,9 +220,13 @@ a.link-brand:hover,
   background-image: var(--grad-card);
 }
 
-/* Portal main canvas — blended wash instead of flat --bg */
+/* Portal main canvas — solid white (dark mode keeps shell bg) */
 .dashboard-shell {
+  background-color: #ffffff;
+  background-image: none;
+}
+
+html.dark .dashboard-shell {
   background-color: var(--bg);
-  background-image: var(--grad-portal-wash);
-  background-attachment: fixed;
+  background-image: none;
 }

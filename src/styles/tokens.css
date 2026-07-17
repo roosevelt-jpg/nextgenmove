@@ -4,9 +4,9 @@
  */
 :root {
   /* Neutrals */
-  --bg: #fafaf7;
+  --bg: #ffffff;
   --surface-1: #ffffff;
-  --surface-2: #f1efe8;
+  --surface-2: #f3f2ef;
   --border: #e7e4d9;
 
   /* Text */
@@ -102,14 +102,8 @@
   );
   --grad-dusk: linear-gradient(135deg, #eeedfe 0%, #faeeda 100%);
   --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
-  /* Soft portal wash — lavender → cream → amber tint (not flat white) */
-  --grad-portal-wash: linear-gradient(
-    165deg,
-    #eeedfe 0%,
-    #f7f5f0 38%,
-    #faeeda 72%,
-    #f3efe8 100%
-  );
+  /* Soft portal wash — unused on dashboards (solid white); kept for accents */
+  --grad-portal-wash: #ffffff;
   /* Button text on gradient CTAs */
   --on-gradient: #ffffff;
 

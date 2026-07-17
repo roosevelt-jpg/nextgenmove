@@ -176,8 +176,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         <Input
           id="student-full-name"
           required
-          aria-label={labels.fullName ?? "full-name"}
-          label={labels.fullName}
+          aria-label={labels.fullName || "Full name"}
+          label={labels.fullName || "Full name"}
           value={profile.fullName}
           onChange={(event) => setProfile({ ...profile, fullName: event.target.value })}
         />
@@ -185,8 +185,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
           id="student-sector"
           required
           disabled={isLoading}
-          aria-label={labels.sector ?? "sector"}
-          label={labels.sector}
+          aria-label={labels.sector || "Sector"}
+          label={labels.sector || "Sector"}
           value={profile.sector}
           options={taxonomies.sector ?? []}
           onChange={(event) => setProfile({ ...profile, sector: event.target.value })}
@@ -195,8 +195,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
           id="student-seniority"
           required
           disabled={isLoading}
-          aria-label={labels.seniority ?? "seniority"}
-          label={labels.seniority}
+          aria-label={labels.seniority || "Seniority"}
+          label={labels.seniority || "Seniority"}
           value={profile.seniority}
           options={taxonomies.seniority ?? []}
           onChange={(event) => setProfile({ ...profile, seniority: event.target.value })}
@@ -204,15 +204,15 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         <Input
           id="student-current-city"
           required
-          aria-label={labels.currentCity ?? "current-city"}
-          label={labels.currentCity}
+          aria-label={labels.currentCity || "Current city"}
+          label={labels.currentCity || "Current city"}
           value={profile.currentCity}
           onChange={(event) => setProfile({ ...profile, currentCity: event.target.value })}
         />
         <Input
           id="student-target-cities"
-          aria-label={labels.targetCities ?? "target-cities"}
-          label={labels.targetCities}
+          aria-label={labels.targetCities || "Target cities"}
+          label={labels.targetCities || "Target cities"}
           value={joinList(profile.targetCities)}
           onChange={(event) =>
             setProfile({ ...profile, targetCities: splitList(event.target.value) })
@@ -220,15 +220,15 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         />
         <Textarea
           id="student-bio"
-          aria-label={labels.bio ?? "bio"}
-          label={labels.bio}
+          aria-label={labels.bio || "Bio"}
+          label={labels.bio || "Bio"}
           value={profile.bio}
           onChange={(event) => setProfile({ ...profile, bio: event.target.value })}
         />
         <Input
           id="student-skills"
-          aria-label={labels.skills ?? "skills"}
-          label={labels.skills}
+          aria-label={labels.skills || "Skills"}
+          label={labels.skills || "Skills"}
           value={joinList(profile.skills)}
           onChange={(event) =>
             setProfile({ ...profile, skills: splitList(event.target.value) })
@@ -236,16 +236,16 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         />
         <Input
           id="student-availability"
-          aria-label={labels.availability ?? "availability"}
-          label={labels.availability}
+          aria-label={labels.availability || "Availability"}
+          label={labels.availability || "Availability"}
           value={profile.availability}
           onChange={(event) => setProfile({ ...profile, availability: event.target.value })}
         />
         <Input
           id="student-linkedin"
           type="url"
-          aria-label={labels.linkedinUrl ?? "linkedin-url"}
-          label={labels.linkedinUrl}
+          aria-label={labels.linkedinUrl || "LinkedIn URL"}
+          label={labels.linkedinUrl || "LinkedIn URL"}
           value={profile.linkedinUrl ?? ""}
           onChange={(event) =>
             setProfile({ ...profile, linkedinUrl: event.target.value || null })
@@ -254,7 +254,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         <Input
           id="student-github"
           type="url"
-          aria-label={labels.githubUrl ?? "github-url"}
+          aria-label={labels.githubUrl || "GitHub URL"}
           label={labels.githubUrl || "GitHub URL"}
           value={profile.githubUrl ?? ""}
           onChange={(event) =>
@@ -264,8 +264,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         <Input
           id="student-portfolio"
           type="url"
-          aria-label={labels.portfolioUrl ?? "portfolio-url"}
-          label={labels.portfolioUrl}
+          aria-label={labels.portfolioUrl || "Portfolio URL"}
+          label={labels.portfolioUrl || "Portfolio URL"}
           value={profile.portfolioUrl ?? ""}
           onChange={(event) =>
             setProfile({ ...profile, portfolioUrl: event.target.value || null })
@@ -367,30 +367,30 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
           storagePath={`students/${profile.id}/cv`}
           uploadEndpoint="/api/student/upload"
           accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          label={labels.cvUpload}
-          dropzoneContent={labels.cvDropzone}
-          progressLabel={labels.uploadProgress}
+          label={labels.cvUpload || "CV / resume"}
+          dropzoneContent={labels.cvDropzone || "PDF or Word (.doc, .docx)"}
+          progressLabel={labels.uploadProgress || "Uploading…"}
           onUploadComplete={(result: FileUploadMetadata) =>
             setProfile({ ...profile, cvUrl: result.url })
           }
         />
-        {profile.cvUrl && labels.cvUploaded ? (
+        {profile.cvUrl ? (
           <a
             href={profile.cvUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-sm text-text-primary hover:text-text-accent"
+            className="link-brand text-sm"
           >
-            {labels.cvUploaded}
+            {labels.cvUploaded || "View uploaded CV"}
           </a>
         ) : null}
         <FileUpload
           storagePath={`students/${profile.id}/photo`}
           uploadEndpoint="/api/student/upload"
           accept="image/*"
-          label={labels.photoUpload}
-          dropzoneContent={labels.photoDropzone}
-          progressLabel={labels.uploadProgress}
+          label={labels.photoUpload || "Profile photo"}
+          dropzoneContent={labels.photoDropzone || "JPG or PNG"}
+          progressLabel={labels.uploadProgress || "Uploading…"}
           onUploadComplete={(result: FileUploadMetadata) =>
             setProfile({ ...profile, photoUrl: result.url })
           }
@@ -400,8 +400,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
             {statusMessage}
           </p>
         ) : null}
-        <Button type="submit" disabled={isSaving}>
-          {labels.save}
+        <Button type="submit" disabled={isSaving} className="!text-white">
+          {labels.save || "Save"}
         </Button>
       </aside>
     </form>

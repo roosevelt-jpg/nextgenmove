@@ -4,6 +4,7 @@ import {
   getEmployerSession,
   unauthorizedResponse,
 } from "@/lib/employer/session";
+import { resolveStageColor } from "@/lib/pipeline-colors";
 
 export async function GET() {
   const session = await getEmployerSession();
@@ -26,7 +27,11 @@ export async function GET() {
           isTerminal: Boolean(data.isTerminal),
         };
       })
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .map((stage, index) => ({
+        ...stage,
+        color: resolveStageColor(stage.color, index),
+      }));
 
     return NextResponse.json({ stages });
   } catch (error) {

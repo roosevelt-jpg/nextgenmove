@@ -37,7 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className="flex w-full flex-col gap-1">
-        {label ? (
+        {label != null && String(label).trim() !== "" ? (
           <label
             htmlFor={inputId}
             className="font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-text-muted"

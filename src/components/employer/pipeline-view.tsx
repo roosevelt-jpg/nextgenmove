@@ -13,6 +13,10 @@ import {
   applyClientFilters,
   uniqueOptionValues,
 } from "@/lib/filters/apply-client-filters";
+import {
+  resolveStageColor,
+  stageTrackBackground,
+} from "@/lib/pipeline-colors";
 
 interface PipelineStage {
   id: string;
@@ -84,11 +88,11 @@ export function PipelineView({ labels }: PipelineViewProps) {
   const stats = useMemo(() => {
     const ordered = [...stages].sort((a, b) => a.order - b.order);
     if (ordered.length) {
-      return ordered.map((stage) => ({
+      return ordered.map((stage, index) => ({
         key: stage.id,
         label: stage.name,
         value: matches.filter((m) => m.stageId === stage.id).length,
-        color: stage.color,
+        color: resolveStageColor(stage.color, index),
       }));
     }
     return [
@@ -96,25 +100,25 @@ export function PipelineView({ labels }: PipelineViewProps) {
         key: "viewed",
         label: labels.statViewed ?? "Viewed",
         value: matches.length,
-        color: "#4b3f9c",
+        color: resolveStageColor(null, 0),
       },
       {
         key: "shortlisted",
         label: labels.statShortlisted ?? "Shortlisted",
         value: matches.filter((m) => m.shortlisted).length,
-        color: "#c97a2e",
+        color: resolveStageColor(null, 1),
       },
       {
         key: "interviews",
         label: labels.statInterviews ?? "Interviews planned",
         value: countFor(/interview/i),
-        color: "#2d6a4f",
+        color: resolveStageColor(null, 2),
       },
       {
         key: "placed",
         label: labels.statPlaced ?? "Placed",
         value: countFor(/placed|offer/i),
-        color: "#27500a",
+        color: resolveStageColor(null, 4),
       },
     ];
   }, [countFor, labels, matches, stages]);
@@ -122,11 +126,11 @@ export function PipelineView({ labels }: PipelineViewProps) {
   const funnel = useMemo(() => {
     const ordered = [...stages].sort((a, b) => a.order - b.order);
     if (ordered.length) {
-      return ordered.map((stage) => ({
+      return ordered.map((stage, index) => ({
         key: stage.id,
         label: stage.name,
         value: matches.filter((m) => m.stageId === stage.id).length,
-        color: stage.color,
+        color: resolveStageColor(stage.color, index),
       }));
     }
     return [
@@ -134,25 +138,25 @@ export function PipelineView({ labels }: PipelineViewProps) {
         key: "viewed",
         label: labels.funnelViewed ?? "Viewed",
         value: matches.length,
-        color: "#4b3f9c",
+        color: resolveStageColor(null, 0),
       },
       {
         key: "shortlisted",
         label: labels.funnelShortlisted ?? "Shortlisted",
         value: matches.filter((m) => m.shortlisted).length,
-        color: "#c97a2e",
+        color: resolveStageColor(null, 1),
       },
       {
         key: "interviewing",
         label: labels.funnelInterviewing ?? "Interviewing",
         value: countFor(/interview/i),
-        color: "#2d6a4f",
+        color: resolveStageColor(null, 2),
       },
       {
         key: "placed",
         label: labels.funnelPlaced ?? "Placed",
         value: countFor(/placed|offer/i),
-        color: "#c97a2e",
+        color: resolveStageColor(null, 4),
       },
     ];
   }, [countFor, labels, matches, stages]);
@@ -243,10 +247,10 @@ export function PipelineView({ labels }: PipelineViewProps) {
 
   const columns = useMemo(
     () =>
-      stages.map((stage) => ({
+      stages.map((stage, index) => ({
         id: stage.id,
         title: stage.name,
-        color: stage.color,
+        color: resolveStageColor(stage.color, index),
       })),
     [stages],
   );
@@ -343,26 +347,36 @@ export function PipelineView({ labels }: PipelineViewProps) {
           </span>
         </div>
         <ul className="space-y-3">
-          {funnel.map((row) => (
-            <li key={row.key} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
-                {row.label}
-              </span>
-              <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface-2">
+          {funnel.map((row) => {
+            const fillPct =
+              row.value > 0
+                ? Math.max(12, (row.value / maxFunnel) * 100)
+                : 8;
+            return (
+              <li key={row.key} className="flex items-center gap-3">
+                <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
+                  {row.label}
+                </span>
                 <div
-                  className="h-full rounded-full transition-[width]"
-                  style={{
-                    width: `${(row.value / maxFunnel) * 100}%`,
-                    backgroundColor: row.color,
-                    minWidth: row.value > 0 ? 8 : 0,
-                  }}
-                />
-              </div>
-              <span className="w-8 text-right font-mono text-[12px] text-text-primary">
-                {row.value}
-              </span>
-            </li>
-          ))}
+                  className="h-3 flex-1 overflow-hidden rounded-full"
+                  style={{ backgroundColor: stageTrackBackground(row.color) }}
+                  title={row.label}
+                >
+                  <div
+                    className="h-full rounded-full transition-[width]"
+                    style={{
+                      width: `${fillPct}%`,
+                      backgroundColor: row.color,
+                      opacity: row.value > 0 ? 1 : 0.55,
+                    }}
+                  />
+                </div>
+                <span className="w-8 text-right font-mono text-[12px] text-text-primary">
+                  {row.value}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </section>
 

@@ -1,7 +1,9 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { notifyAdminPending } from "@/lib/email/notify";
+import { createNotification } from "@/lib/notifications/create";
+import { shouldSendEmail } from "@/lib/email/preferences";
 
-/** Email all active admins about a new public form / pending item. */
+/** Email + in-app notify all active admins about a new public form / pending item. */
 export async function notifyAdminsOfPending(
   summary: string,
   request?: Request,
@@ -14,12 +16,32 @@ export async function notifyAdminsOfPending(
       .get();
 
     for (const doc of snap.docs) {
-      const email = String(doc.data().email ?? "").trim();
-      if (!email.includes("@")) continue;
-      void notifyAdminPending({
-        adminEmail: email,
-        summary,
-        request,
+      const data = doc.data();
+      const email = String(data.email ?? "").trim();
+      const adminId = doc.id;
+
+      const allowPending = await shouldSendEmail({
+        userId: adminId,
+        role: "admin",
+        preferenceKey: "pending_requests",
+      });
+      if (!allowPending) continue;
+
+      if (email.includes("@")) {
+        void notifyAdminPending({
+          adminEmail: email,
+          adminUserId: adminId,
+          summary,
+          request,
+        });
+      }
+
+      void createNotification({
+        userId: adminId,
+        type: "pending",
+        title: "New pending request",
+        body: summary,
+        link: "/admin/dashboard",
       });
     }
   } catch (error) {

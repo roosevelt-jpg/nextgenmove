@@ -41,8 +41,33 @@ export interface AdvancedFiltersProps {
   onClear?: () => void;
   clearKey?: string;
   className?: string;
-  /** Hide a field when its labelKey is missing from labels. Default true. */
+  /** Hide a field when its labelKey is missing from labels. Default false — empty CMS strings still get fallbacks. */
   hideUnlabeled?: boolean;
+}
+
+const FILTER_LABEL_FALLBACKS: Record<string, string> = {
+  search: "Search",
+  searchPlaceholder: "Search…",
+  filterStage: "Stage",
+  filterSector: "Sector",
+  filterShortlisted: "Shortlist",
+  filterRole: "Role",
+  filterStatus: "Status",
+  filterType: "Type",
+  filterPlan: "Plan",
+  filterCategory: "Category",
+  filterAccess: "Access",
+  filterAll: "All",
+  creditsMin: "Min",
+  creditsMax: "Max",
+  clearFilters: "Clear filters",
+};
+
+function fieldLabel(
+  labels: Record<string, string>,
+  key: string,
+): string {
+  return labels[key]?.trim() || FILTER_LABEL_FALLBACKS[key] || key;
 }
 
 function countActive(
@@ -110,15 +135,17 @@ export function AdvancedFilters({
   onClear,
   clearKey = "clearFilters",
   className,
-  hideUnlabeled = true,
+  hideUnlabeled = false,
 }: AdvancedFiltersProps) {
   const visibleFields = useMemo(() => {
     if (!hideUnlabeled) return fields;
-    return fields.filter((field) => Boolean(labels[field.labelKey]));
+    return fields.filter(
+      (field) => Boolean(labels[field.labelKey]?.trim()) || Boolean(FILTER_LABEL_FALLBACKS[field.labelKey]),
+    );
   }, [fields, hideUnlabeled, labels]);
 
   const activeCount = countActive(visibleFields, values);
-  const clearLabel = labels[clearKey];
+  const clearLabel = fieldLabel(labels, clearKey);
 
   if (visibleFields.length === 0) return null;
 
@@ -159,11 +186,11 @@ export function AdvancedFilters({
           <DebouncedSearch
             key={field.id}
             id={`filter-${field.id}`}
-            label={labels[field.labelKey]}
+            label={fieldLabel(labels, field.labelKey)}
             placeholder={
               field.placeholderKey
-                ? labels[field.placeholderKey]
-                : labels[field.labelKey]
+                ? fieldLabel(labels, field.placeholderKey)
+                : fieldLabel(labels, field.labelKey)
             }
             value={values[field.id] ?? ""}
             debounceMs={field.debounceMs ?? 300}
@@ -177,16 +204,16 @@ export function AdvancedFilters({
           {otherFields.map((field) => {
             if (field.type === "select") {
               const allLabel = field.allKey
-                ? labels[field.allKey]
-                : labels.filterAll;
+                ? fieldLabel(labels, field.allKey)
+                : fieldLabel(labels, "filterAll");
               return (
                 <Select
                   key={field.id}
                   id={`filter-${field.id}`}
-                  label={labels[field.labelKey]}
+                  label={fieldLabel(labels, field.labelKey)}
                   value={values[field.id] ?? ""}
                   options={[
-                    ...(allLabel ? [{ value: "", label: allLabel }] : []),
+                    { value: "", label: allLabel },
                     ...field.options,
                   ]}
                   onChange={(event) => setValue(field.id, event.target.value)}
@@ -200,13 +227,15 @@ export function AdvancedFilters({
               return (
                 <div key={field.id} className="space-y-1 sm:col-span-2 md:col-span-1">
                   <p className="font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-text-muted">
-                    {labels[field.labelKey]}
+                    {fieldLabel(labels, field.labelKey)}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <Input
                       id={`filter-${minId}`}
                       label={
-                        field.minKey ? labels[field.minKey] : labels.creditsMin
+                        field.minKey
+                          ? fieldLabel(labels, field.minKey)
+                          : fieldLabel(labels, "creditsMin")
                       }
                       type="number"
                       value={values[minId] ?? ""}
@@ -215,7 +244,9 @@ export function AdvancedFilters({
                     <Input
                       id={`filter-${maxId}`}
                       label={
-                        field.maxKey ? labels[field.maxKey] : labels.creditsMax
+                        field.maxKey
+                          ? fieldLabel(labels, field.maxKey)
+                          : fieldLabel(labels, "creditsMax")
                       }
                       type="number"
                       value={values[maxId] ?? ""}

@@ -43,12 +43,42 @@ export function CompanySettingsView({
     setPreferredLocations((data.company.preferredLocations ?? []).join(", "));
     setRequirementTags((data.company.requirementTags ?? []).join(", "));
     setHiringNeeds(data.company.hiringNeeds ?? "");
-    setNotificationPreferences(data.company.notificationPreferences ?? {});
-  }, []);
+    const stored = data.company.notificationPreferences ?? {};
+    const nextPrefs: Record<string, boolean> = {};
+    for (const key of notificationKeys) {
+      nextPrefs[key] = Object.prototype.hasOwnProperty.call(stored, key)
+        ? Boolean(stored[key])
+        : true;
+    }
+    setNotificationPreferences(nextPrefs);
+  }, [notificationKeys]);
 
   useEffect(() => {
     void loadCompany();
   }, [loadCompany]);
+
+  const persistNotificationPreferences = async (
+    next: Record<string, boolean>,
+  ) => {
+    const response = await fetch("/api/employer/company", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationPreferences: next }),
+    });
+    if (response.ok) {
+      setStatusMessage(
+        labels.prefsSaved || labels.saveSuccess || "Preferences saved.",
+      );
+    } else {
+      setStatusMessage(labels.saveError || "Could not save.");
+    }
+  };
+
+  const toggleNotification = (key: string, checked: boolean) => {
+    const next = { ...notificationPreferences, [key]: checked };
+    setNotificationPreferences(next);
+    void persistNotificationPreferences(next);
+  };
 
   const saveSettings = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -96,7 +126,7 @@ export function CompanySettingsView({
         id="settings-company-name"
         required
         aria-label={labels.companyName ?? "company-name"}
-        label={labels.companyName}
+        label={labels.companyName || "Company name"}
         value={name}
         onChange={(event) => setName(event.target.value)}
       />
@@ -104,38 +134,38 @@ export function CompanySettingsView({
         id="settings-contact-email"
         type="email"
         required
-        aria-label={labels.contactEmail ?? "contact-email"}
-        label={labels.contactEmail}
+        aria-label={labels.contactEmail || "Contact email"}
+        label={labels.contactEmail || "Contact email"}
         value={contactEmail}
         onChange={(event) => setContactEmail(event.target.value)}
       />
       <Input
         id="settings-industry"
         aria-label={labels.industry ?? "industry"}
-        label={labels.industry}
+        label={labels.industry || "Industry"}
         value={industry}
         onChange={(event) => setIndustry(event.target.value)}
       />
       <Input
         id="settings-preferred-locations"
-        aria-label={labels.preferredLocations ?? "preferred-locations"}
-        label={labels.preferredLocations ?? "Preferred locations"}
+        aria-label={labels.preferredLocations || "Preferred locations"}
+        label={labels.preferredLocations || "Preferred locations"}
         value={preferredLocations}
         onChange={(event) => setPreferredLocations(event.target.value)}
-        placeholder={labels.preferredLocationsHint ?? "City1, City2"}
+        placeholder={labels.preferredLocationsHint || "City1, City2"}
       />
       <Input
         id="settings-requirement-tags"
-        aria-label={labels.requirementTags ?? "requirement-tags"}
-        label={labels.requirementTags ?? "Hiring requirement tags"}
+        aria-label={labels.requirementTags || "Hiring requirement tags"}
+        label={labels.requirementTags || "Hiring requirement tags"}
         value={requirementTags}
         onChange={(event) => setRequirementTags(event.target.value)}
-        placeholder={labels.requirementTagsHint ?? "skill, skill, skill"}
+        placeholder={labels.requirementTagsHint || "skill, skill, skill"}
       />
       <Input
         id="settings-hiring-needs"
-        aria-label={labels.hiringNeeds ?? "hiring-needs"}
-        label={labels.hiringNeeds ?? "Hiring needs"}
+        aria-label={labels.hiringNeeds || "Hiring needs"}
+        label={labels.hiringNeeds || "Hiring needs"}
         value={hiringNeeds}
         onChange={(event) => setHiringNeeds(event.target.value)}
       />
@@ -144,9 +174,9 @@ export function CompanySettingsView({
         uploadEndpoint="/api/employer/upload"
         uploadKind="logo"
         accept="image/*"
-        label={labels.logoUpload}
-        dropzoneContent={labels.logoDropzone}
-        progressLabel={labels.uploadProgress}
+        label={labels.logoUpload || "Company logo"}
+        dropzoneContent={labels.logoDropzone || "JPG or PNG"}
+        progressLabel={labels.uploadProgress || "Uploading…"}
         onUploadComplete={async (result: FileUploadMetadata) => {
           setLogoUrl(result.url);
           const response = await fetch("/api/employer/company", {
@@ -177,15 +207,13 @@ export function CompanySettingsView({
             <label key={key} className="flex items-center gap-2 text-sm text-text-primary">
               <input
                 type="checkbox"
+                className="h-4 w-4 accent-[var(--fill-accent)]"
                 checked={Boolean(notificationPreferences[key])}
                 onChange={(event) =>
-                  setNotificationPreferences((current) => ({
-                    ...current,
-                    [key]: event.target.checked,
-                  }))
+                  toggleNotification(key, event.target.checked)
                 }
               />
-              {labels[`notification_${key}`] ?? key}
+              {labels[`notification_${key}`] || key}
             </label>
           ))}
         </fieldset>
@@ -197,8 +225,8 @@ export function CompanySettingsView({
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSaving}>
-        {labels.save}
+      <Button type="submit" disabled={isSaving} className="!text-white">
+        {labels.save || "Save"}
       </Button>
     </form>
   );

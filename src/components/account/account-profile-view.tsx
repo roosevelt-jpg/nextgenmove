@@ -74,10 +74,18 @@ export function AccountProfileView({
       setDisplayName(data.account.displayName);
       setPhone(data.account.phone ?? "");
       setPhotoUrl(data.account.photoUrl);
-      setNotificationPreferences(data.account.notificationPreferences ?? {});
+      const stored = data.account.notificationPreferences ?? {};
+      const nextPrefs: Record<string, boolean> = {};
+      for (const key of notificationKeys) {
+        nextPrefs[key] =
+          Object.prototype.hasOwnProperty.call(stored, key)
+            ? Boolean(stored[key])
+            : true;
+      }
+      setNotificationPreferences(nextPrefs);
       if (data.warning === "account_degraded") {
         setStatusMessage(
-          labels.degradedWarning ??
+          labels.degradedWarning ||
             "Profile details may be incomplete while the database is slow.",
         );
       }
@@ -85,11 +93,35 @@ export function AccountProfileView({
     } catch {
       setLoadState("error");
     }
-  }, [labels.degradedWarning]);
+  }, [labels.degradedWarning, notificationKeys]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const persistNotificationPreferences = async (
+    next: Record<string, boolean>,
+  ) => {
+    const response = await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationPreferences: next }),
+    });
+    if (response.ok) {
+      setStatusMessage(labels.prefsSaved || labels.saveSuccess || "Preferences saved.");
+      router.refresh();
+      return true;
+    }
+    setStatusMessage(labels.saveError || "Could not save.");
+    return false;
+  };
+
+  const toggleNotification = async (key: string, checked: boolean) => {
+    const next = { ...notificationPreferences, [key]: checked };
+    setNotificationPreferences(next);
+    setStatusMessage(null);
+    await persistNotificationPreferences(next);
+  };
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -112,7 +144,7 @@ export function AccountProfileView({
     setIsSaving(false);
 
     if (response.ok) {
-      setStatusMessage(labels.saveSuccess ?? "");
+      setStatusMessage(labels.saveSuccess || "Saved.");
       setCurrentPassword("");
       setNewPassword("");
       await load();
@@ -122,16 +154,16 @@ export function AccountProfileView({
         | { error?: string }
         | null;
       setStatusMessage(
-        labels[payload?.error ?? ""] ??
+        labels[payload?.error ?? ""] ||
           (payload?.error === "invalid_current_password"
-            ? labels.invalid_current_password ??
+            ? labels.invalid_current_password ||
               "Current password is incorrect."
             : payload?.error === "current_password_required"
-              ? labels.current_password_required ??
+              ? labels.current_password_required ||
                 "Enter your current password to set a new one."
-              : null) ??
-          labels.saveError ??
-          payload?.error ??
+              : null) ||
+          labels.saveError ||
+          payload?.error ||
           "",
       );
     }
@@ -256,25 +288,25 @@ export function AccountProfileView({
         ) : null}
         <Input
           id="account-name"
-          label={labels.fullName}
+          label={labels.fullName || "Full name"}
           value={displayName}
           onChange={(event) => setDisplayName(event.target.value)}
         />
         <Input
           id="account-role"
-          label={labels.roleLabel}
+          label={labels.roleLabel || "Role"}
           value={roleLabel ?? account.role}
           readOnly
         />
         <Input
           id="account-email"
-          label={labels.email}
+          label={labels.email || "Email"}
           value={account.email}
           readOnly
         />
         <Input
           id="account-phone"
-          label={labels.phone}
+          label={labels.phone || "Phone"}
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
         />
@@ -283,20 +315,24 @@ export function AccountProfileView({
       <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
         {labels.passwordTitle ? (
           <h2 className="font-medium text-text-primary">{labels.passwordTitle}</h2>
-        ) : null}
+        ) : (
+          <h2 className="font-medium text-text-primary">Password</h2>
+        )}
         <Input
           id="account-current-password"
           type="password"
-          label={labels.currentPassword}
+          label={labels.currentPassword || "Current password"}
           value={currentPassword}
           onChange={(event) => setCurrentPassword(event.target.value)}
+          autoComplete="current-password"
         />
         <Input
           id="account-new-password"
           type="password"
-          label={labels.newPassword}
+          label={labels.newPassword || "New password"}
           value={newPassword}
           onChange={(event) => setNewPassword(event.target.value)}
+          autoComplete="new-password"
         />
       </section>
 
@@ -310,15 +346,27 @@ export function AccountProfileView({
               key={key}
               className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm last:border-0"
             >
-              <span>{labels[`notification_${key}`] ?? key}</span>
+              <span>
+                {labels[`notification_${key}`] ||
+                  ({
+                    pending_requests: "New pending requests",
+                    weekly_digest: "Weekly digest",
+                    sms_alerts: "SMS alerts",
+                    match_updates: "Match & pipeline updates",
+                    credit_receipts: "Credit receipts",
+                    low_balance: "Low credit balance alerts",
+                    referral: "Referral bonuses",
+                    login_alerts: "Login alerts",
+                    product_updates: "Product updates",
+                  }[key] ??
+                    key)}
+              </span>
               <input
                 type="checkbox"
+                className="h-4 w-4 accent-[var(--fill-accent)]"
                 checked={Boolean(notificationPreferences[key])}
                 onChange={(event) =>
-                  setNotificationPreferences((prev) => ({
-                    ...prev,
-                    [key]: event.target.checked,
-                  }))
+                  void toggleNotification(key, event.target.checked)
                 }
               />
             </label>
@@ -330,8 +378,8 @@ export function AccountProfileView({
         <p className="text-sm text-text-secondary">{statusMessage}</p>
       ) : null}
 
-      <Button type="submit" disabled={isSaving}>
-        {labels.saveChanges ?? labels.save}
+      <Button type="submit" disabled={isSaving} className="!text-white">
+        {labels.saveChanges || labels.save || "Save changes"}
       </Button>
     </form>
   );

@@ -23,11 +23,11 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "btn-brand",
-  brand: "btn-brand",
-  secondary: "btn-brand",
-  outline: "btn-brand btn-brand-outline",
-  ghost: "btn-brand btn-brand-ghost",
+  primary: "btn-brand !text-white",
+  brand: "btn-brand !text-white",
+  secondary: "btn-brand !text-white",
+  outline: "btn-brand btn-brand-outline !text-white",
+  ghost: "btn-brand btn-brand-ghost !text-white",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

@@ -212,38 +212,38 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           <Button
             size="xs"
             variant="outline"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
             disabled={actionLoadingId === row.uid}
             onClick={() => void openProfile(row.uid)}
           >
-            {labels.viewProfile ?? "View"}
+            {labels.viewProfile || "View"}
           </Button>
           <Button
             size="xs"
             variant="outline"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "promote_admin")}
           >
-            {labels.promoteAdmin ?? "Make admin"}
+            {labels.promoteAdmin || "Make admin"}
           </Button>
           <Button
             size="xs"
             variant="ghost"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "suspend")}
           >
-            {labels.suspend ?? "Suspend"}
+            {labels.suspend || "Suspend"}
           </Button>
           <Button
             size="xs"
             variant="ghost"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "activate")}
           >
-            {labels.activate ?? "Activate"}
+            {labels.activate || "Activate"}
           </Button>
         </div>
       ),
