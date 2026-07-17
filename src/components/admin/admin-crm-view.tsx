@@ -601,6 +601,20 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
     tab === "contacts"
       ? [
           {
+            key: "actions" as const,
+            header: labels.actions ?? "Actions",
+            className: "whitespace-nowrap",
+            render: (row: CrmRow) => (
+              <Button
+                size="xs"
+                type="button"
+                onClick={() => openContact(row)}
+              >
+                {labels.viewProfile || labels.view || "View profile"}
+              </Button>
+            ),
+          },
+          {
             key: "name" as const,
             header: labels.name,
             sortable: true,
@@ -656,11 +670,33 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
             key: "lastActivity" as const,
             header: labels.lastActivityColumn,
             sortable: true,
+            render: (row: CrmRow) => {
+              const raw = row.lastActivity;
+              if (!raw) return "—";
+              const date = new Date(String(raw));
+              return Number.isNaN(date.getTime())
+                ? String(raw)
+                : date.toLocaleString();
+            },
           },
           { key: "value" as const, header: labels.valueColumn, sortable: true },
         ]
       : tab === "companies"
         ? [
+            {
+              key: "actions" as const,
+              header: labels.actions ?? "Actions",
+              className: "whitespace-nowrap",
+              render: (row: CrmRow) => (
+                <Button
+                  size="xs"
+                  type="button"
+                  onClick={() => void openDetail(row.id, "companies")}
+                >
+                  {labels.viewProfile || labels.view || "View profile"}
+                </Button>
+              ),
+            },
             {
               key: "name" as const,
               header: labels.name,
@@ -669,7 +705,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 <button
                   type="button"
                   className="text-left text-text-accent hover:underline"
-                  onClick={() => openDetail(row.id, "companies")}
+                  onClick={() => void openDetail(row.id, "companies")}
                 >
                   {String(row.name ?? row.id)}
                 </button>
@@ -702,6 +738,20 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
           ]
         : [
             {
+              key: "actions" as const,
+              header: labels.actions ?? "Actions",
+              className: "whitespace-nowrap",
+              render: (row: CrmRow) => (
+                <Button
+                  size="xs"
+                  type="button"
+                  onClick={() => void openDetail(row.id, "students")}
+                >
+                  {labels.viewProfile || labels.view || "View profile"}
+                </Button>
+              ),
+            },
+            {
               key: "fullName" as const,
               header: labels.name,
               sortable: true,
@@ -709,7 +759,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 <button
                   type="button"
                   className="text-left text-text-accent hover:underline"
-                  onClick={() => openDetail(row.id, "students")}
+                  onClick={() => void openDetail(row.id, "students")}
                 >
                   {String(row.fullName ?? row.id)}
                 </button>
