@@ -18,6 +18,9 @@ export function generateReferralCode(length = 8): string {
 export async function ensureStudentReferralCode(studentId: string): Promise<string> {
   const ref = adminDb.collection("students").doc(studentId);
   const snap = await ref.get();
+  if (!snap.exists) {
+    throw new Error("student_not_found");
+  }
   const existing = snap.data()?.referralCode as string | undefined;
   if (existing) return existing;
 
@@ -30,12 +33,12 @@ export async function ensureStudentReferralCode(studentId: string): Promise<stri
       .get();
     if (!clash.empty) continue;
 
-    await ref.update(stripUndefined({ referralCode: code }));
+    await ref.set(stripUndefined({ referralCode: code }), { merge: true });
     return code;
   }
 
   const fallback = `NG${studentId.slice(0, 6).toUpperCase()}`;
-  await ref.update(stripUndefined({ referralCode: fallback }));
+  await ref.set(stripUndefined({ referralCode: fallback }), { merge: true });
   return fallback;
 }
 

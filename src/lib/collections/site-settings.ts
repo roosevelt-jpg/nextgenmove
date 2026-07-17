@@ -9,6 +9,7 @@ import type {
 import { isCmsPageInFooter, isCmsPageInHeader } from "@/lib/public/nav";
 import { cachedPublicCms } from "@/lib/public/cms-cache";
 import { FALLBACK_SITE_SETTINGS } from "@/lib/public/cms-fallbacks";
+import { serializeForClient } from "@/lib/firestore-utils";
 
 /** Normalize legacy Record socialLinks and array form into SocialLink[]. */
 export function normalizeSocialLinks(raw: unknown): SocialLink[] {
@@ -40,10 +41,10 @@ export function normalizeSocialLinks(raw: unknown): SocialLink[] {
 async function loadSiteSettings(): Promise<SiteSettingsDocument> {
   const snapshot = await adminDb.collection("site_settings").doc("default").get();
   const data = (snapshot.data() as SiteSettingsDocument | undefined) ?? {};
-  return {
+  return serializeForClient({
     ...data,
     socialLinks: normalizeSocialLinks(data.socialLinks),
-  };
+  });
 }
 
 function isValidSiteSettings(value: SiteSettingsDocument): boolean {
@@ -78,7 +79,10 @@ export async function getPublishedCmsPageBySlug(
 
     const doc = snapshot.docs[0];
     if (!doc) return null;
-    return { id: doc.id, ...(doc.data() as Omit<CmsPageDocument, "id">) };
+    return serializeForClient({
+      id: doc.id,
+      ...(doc.data() as Omit<CmsPageDocument, "id">),
+    });
   } catch {
     return null;
   }
@@ -90,10 +94,12 @@ async function loadPublishedCmsPages(): Promise<CmsPageDocument[]> {
     .where("status", "==", "published")
     .get();
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<CmsPageDocument, "id">),
-  }));
+  return snapshot.docs.map((doc) =>
+    serializeForClient({
+      id: doc.id,
+      ...(doc.data() as Omit<CmsPageDocument, "id">),
+    }),
+  );
 }
 
 const listPublishedCmsPages = cache(async () =>
@@ -130,7 +136,10 @@ export async function getPublishedCmsFormBySlug(
 
     const doc = snapshot.docs[0];
     if (!doc) return null;
-    return { id: doc.id, ...(doc.data() as Omit<CmsFormDocument, "id">) };
+    return serializeForClient({
+      id: doc.id,
+      ...(doc.data() as Omit<CmsFormDocument, "id">),
+    });
   } catch {
     return null;
   }

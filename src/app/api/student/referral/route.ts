@@ -15,14 +15,19 @@ export async function GET() {
   const session = await getStudentSession();
   if (!session) return unauthorizedResponse();
 
-  const referralCode = await ensureStudentReferralCode(session.studentId);
-  const bonusCredits = await getWayToEarnCredits("referral");
+  try {
+    const referralCode = await ensureStudentReferralCode(session.studentId);
+    const bonusCredits = await getWayToEarnCredits("referral");
 
-  return NextResponse.json({
-    referralCode,
-    bonusCredits,
-    referredBy: session.student.referredBy ?? null,
-  });
+    return NextResponse.json({
+      referralCode,
+      bonusCredits,
+      referredBy: session.student.referredBy ?? null,
+    });
+  } catch (error) {
+    console.error("referral_get_failed", error);
+    return NextResponse.json({ error: "referral_unavailable" }, { status: 500 });
+  }
 }
 
 const applySchema = z.object({

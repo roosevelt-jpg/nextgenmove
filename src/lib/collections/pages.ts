@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { adminDb } from "@/lib/firebase-admin";
-import { serializeTimestamp } from "@/lib/firestore-utils";
+import { serializeTimestamp, serializeForClient } from "@/lib/firestore-utils";
 import type {
   ArticleDocument,
   ContentItemDocument,
@@ -41,10 +41,12 @@ async function loadPageHome(): Promise<PageHomeDocument> {
         .filter(Boolean)
     : undefined;
 
-  return mergePageHome({
-    ...data,
-    ...(corridorChips ? { corridorChips } : {}),
-  });
+  return serializeForClient(
+    mergePageHome({
+      ...data,
+      ...(corridorChips ? { corridorChips } : {}),
+    }),
+  );
 }
 
 function isValidPageHome(value: PageHomeDocument): boolean {
@@ -127,7 +129,9 @@ export const getLivePodcastEpisodes = cache(async () => {
 export async function getPageAbout(): Promise<PageAboutDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_about").doc("default").get();
-    return (snapshot.data() as PageAboutDocument | undefined) ?? null;
+    const data = snapshot.data() as PageAboutDocument | undefined;
+    if (!data) return null;
+    return serializeForClient(data);
   } catch {
     return null;
   }
@@ -139,7 +143,9 @@ export async function getPageHowItWorks(): Promise<PageHowItWorksDocument | null
       .collection("page_how_it_works")
       .doc("default")
       .get();
-    return (snapshot.data() as PageHowItWorksDocument | undefined) ?? null;
+    const data = snapshot.data() as PageHowItWorksDocument | undefined;
+    if (!data) return null;
+    return serializeForClient(data);
   } catch {
     return null;
   }
@@ -148,7 +154,9 @@ export async function getPageHowItWorks(): Promise<PageHowItWorksDocument | null
 export async function getPagePricing(): Promise<PagePricingDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_pricing").doc("default").get();
-    return (snapshot.data() as PagePricingDocument | undefined) ?? null;
+    const data = snapshot.data() as PagePricingDocument | undefined;
+    if (!data) return null;
+    return serializeForClient(data);
   } catch {
     return null;
   }
@@ -157,7 +165,9 @@ export async function getPagePricing(): Promise<PagePricingDocument | null> {
 export async function getPageTracks(): Promise<PageTracksDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_tracks").doc("default").get();
-    return (snapshot.data() as PageTracksDocument | undefined) ?? null;
+    const data = snapshot.data() as PageTracksDocument | undefined;
+    if (!data) return null;
+    return serializeForClient(data);
   } catch {
     return null;
   }

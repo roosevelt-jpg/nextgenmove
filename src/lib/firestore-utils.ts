@@ -8,6 +8,16 @@ type TimestampLike = {
   _nanoseconds?: number;
 };
 
+function isTimestampLike(value: unknown): value is TimestampLike {
+  if (!value || typeof value !== "object") return false;
+  const v = value as TimestampLike;
+  return (
+    typeof v.toDate === "function" ||
+    typeof v.seconds === "number" ||
+    typeof v._seconds === "number"
+  );
+}
+
 export function serializeTimestamp(
   value: Timestamp | TimestampLike | string | null | undefined,
 ): string | null {
@@ -46,6 +56,39 @@ export function serializeTimestamp(
   }
 
   return null;
+}
+
+/**
+ * Deep-convert Firestore Timestamps into JSON-safe values so Server Components
+ * can pass CMS documents into Client Components.
+ */
+export function serializeForClient<T>(value: T): T {
+  return serializeValue(value) as T;
+}
+
+function serializeValue(value: unknown): unknown {
+  if (value == null || typeof value !== "object") {
+    return value;
+  }
+
+  if (isTimestampLike(value)) {
+    return serializeTimestamp(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(serializeValue);
+  }
+
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) {
+    return value;
+  }
+
+  const output: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    output[key] = serializeValue(nested);
+  }
+  return output;
 }
 
 export function mapDocument<T extends { id: string }>(
