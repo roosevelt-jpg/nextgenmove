@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Input, Select } from "@/components/ui";
 import type { SocialLink } from "@/types/cms";
 import { SOCIAL_PLATFORM_KEYS } from "@/lib/public/social";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 interface AdminSocialLinksEditorProps {
   labels: Record<string, string>;
@@ -49,13 +50,52 @@ export function AdminSocialLinksEditor({
   initialLinks,
 }: AdminSocialLinksEditorProps) {
   const [rows, setRows] = useState<DraftRow[]>(() => toDraft(initialLinks));
+  const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const suppressRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    suppressRef.current?.();
+    setRows(toDraft(initialLinks));
+    setHydrated(true);
+  }, [initialLinks]);
 
   const options = SOCIAL_PLATFORM_KEYS.map((key) => ({
     value: key,
     label: platformOptionLabel(key, labels),
   }));
+
+  const persistRows = async (nextRows: DraftRow[]) => {
+    const socialLinks: SocialLink[] = nextRows
+      .map((row) => ({
+        key: row.key.trim() || "other",
+        label: row.label.trim() || platformOptionLabel(row.key, labels),
+        url: row.url.trim(),
+      }))
+      .filter((link) => Boolean(link.url));
+
+    const response = await fetch("/api/admin/data/site_settings/default", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ socialLinks }),
+    });
+
+    if (!response.ok) {
+      setMessage(labels.saveError ?? "Could not save social links.");
+      return false;
+    }
+
+    setMessage(labels.saveSuccess ?? "Saved.");
+    return true;
+  };
+
+  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+    hydrated ? rows : null,
+    persistRows,
+    { enabled: hydrated, delayMs: 700 },
+  );
+  suppressRef.current = suppressNext;
 
   const updateRow = (id: string, patch: Partial<DraftRow>) => {
     setRows((prev) =>
@@ -82,30 +122,8 @@ export function AdminSocialLinksEditor({
   const save = async () => {
     setIsSaving(true);
     setMessage(null);
-
-    const socialLinks: SocialLink[] = rows
-      .map((row) => ({
-        key: row.key.trim() || "other",
-        label: row.label.trim() || platformOptionLabel(row.key, labels),
-        url: row.url.trim(),
-      }))
-      .filter((link) => Boolean(link.url));
-
-    const response = await fetch("/api/admin/data/site_settings/default", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ socialLinks }),
-    });
-
+    await persistRows(rows);
     setIsSaving(false);
-
-    if (!response.ok) {
-      setMessage(labels.saveError ?? "Could not save social links.");
-      return;
-    }
-
-    setRows(toDraft(socialLinks));
-    setMessage(labels.saveSuccess ?? "Saved.");
   };
 
   return (
@@ -167,12 +185,14 @@ export function AdminSocialLinksEditor({
           {labels.addSocialLink ?? labels.addRow ?? "Add link"}
         </Button>
         <Button type="button" onClick={() => void save()} disabled={isSaving}>
-          {isSaving
+          {isSaving || autosaveStatus === "saving"
             ? (labels.saving ?? "Saving…")
             : (labels.saveSocialLinks ?? labels.save ?? "Save")}
         </Button>
-        {message ? (
-          <p className="text-xs text-text-muted">{message}</p>
+        {message || autosaveStatus === "saved" ? (
+          <p className="text-xs text-text-muted">
+            {message ?? labels.saveSuccess ?? "Saved."}
+          </p>
         ) : null}
       </div>
     </div>

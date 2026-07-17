@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 interface WorkEntry {
   company: string;
@@ -60,6 +61,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
   const [completeness, setCompleteness] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const suppressRef = useRef<(() => void) | null>(null);
 
   const loadProfile = useCallback(async () => {
     const response = await fetch("/api/student/profile");
@@ -75,6 +77,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
       profileCompleteness: number;
     };
 
+    suppressRef.current?.();
     setProfile({
       ...data.student,
       githubUrl: data.student.githubUrl ?? null,
@@ -89,6 +92,54 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     setCompleteness(data.profileCompleteness);
   }, []);
 
+  const persistProfile = useCallback(async (next: StudentProfile) => {
+    const response = await fetch("/api/student/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullName: next.fullName,
+        sector: next.sector,
+        seniority: next.seniority,
+        currentCity: next.currentCity,
+        targetCities: next.targetCities,
+        bio: next.bio,
+        skills: next.skills,
+        cvUrl: next.cvUrl || null,
+        linkedinUrl: next.linkedinUrl || null,
+        portfolioUrl: next.portfolioUrl || null,
+        githubUrl: next.githubUrl || null,
+        availability: next.availability,
+        photoUrl: next.photoUrl || null,
+        workExperienceEntries: next.workExperienceEntries
+          .filter((e) => e.company.trim() && e.title.trim() && e.from.trim())
+          .map((e) => ({
+            company: e.company.trim(),
+            title: e.title.trim(),
+            from: e.from.trim(),
+            to: e.to.trim() || null,
+            description: e.description.trim(),
+          })),
+      }),
+    });
+
+    if (!response.ok) {
+      setStatusMessage(labels.saveError || "Could not save.");
+      return false;
+    }
+
+    const data = (await response.json()) as { profileCompleteness: number };
+    setCompleteness(data.profileCompleteness);
+    setStatusMessage(labels.saveSuccess || "Saved.");
+    return true;
+  }, [labels.saveError, labels.saveSuccess]);
+
+  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+    profile,
+    persistProfile,
+    { enabled: Boolean(profile), delayMs: 800 },
+  );
+  suppressRef.current = suppressNext;
+
   useEffect(() => {
     void loadProfile();
   }, [loadProfile]);
@@ -101,35 +152,10 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
 
     setIsSaving(true);
     setStatusMessage(null);
-
-    const response = await fetch("/api/student/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...profile,
-        workExperienceEntries: profile.workExperienceEntries
-          .filter((e) => e.company.trim() && e.title.trim() && e.from.trim())
-          .map((e) => ({
-            company: e.company.trim(),
-            title: e.title.trim(),
-            from: e.from.trim(),
-            to: e.to.trim() || null,
-            description: e.description.trim(),
-          })),
-      }),
-    });
-
+    const ok = await persistProfile(profile);
     setIsSaving(false);
-
-    if (response.ok) {
-      const data = (await response.json()) as {
-        profileCompleteness: number;
-      };
-      setCompleteness(data.profileCompleteness);
-      setStatusMessage(labels.saveSuccess ?? "");
+    if (ok) {
       await loadProfile();
-    } else {
-      setStatusMessage(labels.saveError ?? "");
     }
   };
 
@@ -395,13 +421,22 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
             setProfile({ ...profile, photoUrl: result.url })
           }
         />
-        {statusMessage ? (
+        {statusMessage || autosaveStatus !== "idle" ? (
           <p className="text-sm text-text-secondary" role="status">
-            {statusMessage}
+            {autosaveStatus === "saving"
+              ? labels.saving || "Saving…"
+              : autosaveStatus === "error"
+                ? labels.saveError || "Could not save."
+                : statusMessage ||
+                  (autosaveStatus === "saved"
+                    ? labels.saveSuccess || "Saved."
+                    : null)}
           </p>
         ) : null}
-        <Button type="submit" disabled={isSaving}>
-          {labels.save || "Save"}
+        <Button type="submit" disabled={isSaving || autosaveStatus === "saving"}>
+          {isSaving || autosaveStatus === "saving"
+            ? labels.saving || "Saving…"
+            : labels.save || "Save"}
         </Button>
       </aside>
     </form>

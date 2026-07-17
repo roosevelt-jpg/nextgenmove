@@ -1,14 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import type { CompanyDocument } from "@/lib/employer/session";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 export interface CompanySettingsViewProps {
   labels: Record<string, string>;
   notificationKeys: string[];
 }
+
+type CompanyDraft = {
+  name: string;
+  contactEmail: string;
+  logoUrl: string | null;
+  industry: string;
+  preferredLocations: string;
+  requirementTags: string;
+  hiringNeeds: string;
+  notificationPreferences: Record<string, boolean>;
+};
 
 export function CompanySettingsView({
   labels,
@@ -27,6 +39,74 @@ export function CompanySettingsView({
   >({});
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const suppressRef = useRef<(() => void) | null>(null);
+
+  const draft = useMemo<CompanyDraft | null>(() => {
+    if (!hydrated) return null;
+    return {
+      name,
+      contactEmail,
+      logoUrl,
+      industry,
+      preferredLocations,
+      requirementTags,
+      hiringNeeds,
+      notificationPreferences,
+    };
+  }, [
+    hydrated,
+    name,
+    contactEmail,
+    logoUrl,
+    industry,
+    preferredLocations,
+    requirementTags,
+    hiringNeeds,
+    notificationPreferences,
+  ]);
+
+  const persistDraft = useCallback(
+    async (next: CompanyDraft) => {
+      if (!next.name.trim() || !next.contactEmail.trim()) {
+        return false;
+      }
+      const response = await fetch("/api/employer/company", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: next.name,
+          contactEmail: next.contactEmail,
+          logoUrl: next.logoUrl || null,
+          industry: next.industry.trim() || undefined,
+          preferredLocations: next.preferredLocations
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          requirementTags: next.requirementTags
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          hiringNeeds: next.hiringNeeds.trim() || undefined,
+          notificationPreferences: next.notificationPreferences,
+        }),
+      });
+      if (!response.ok) {
+        setStatusMessage(labels.saveError || "Could not save.");
+        return false;
+      }
+      setStatusMessage(labels.saveSuccess || "Saved.");
+      return true;
+    },
+    [labels.saveError, labels.saveSuccess],
+  );
+
+  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+    draft,
+    persistDraft,
+    { enabled: hydrated, delayMs: 800 },
+  );
+  suppressRef.current = suppressNext;
 
   const loadCompany = useCallback(async () => {
     const response = await fetch("/api/employer/company");
@@ -35,6 +115,7 @@ export function CompanySettingsView({
     }
 
     const data = (await response.json()) as { company: CompanyDocument };
+    suppressRef.current?.();
     setCompany(data.company);
     setName(data.company.name);
     setContactEmail(data.company.contactEmail);
@@ -51,6 +132,7 @@ export function CompanySettingsView({
         : true;
     }
     setNotificationPreferences(nextPrefs);
+    setHydrated(true);
   }, [notificationKeys]);
 
   useEffect(() => {
@@ -82,37 +164,13 @@ export function CompanySettingsView({
 
   const saveSettings = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!draft) return;
     setIsSaving(true);
     setStatusMessage(null);
-
-    const response = await fetch("/api/employer/company", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        contactEmail,
-        logoUrl,
-        industry: industry.trim() || undefined,
-        preferredLocations: preferredLocations
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        requirementTags: requirementTags
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        hiringNeeds: hiringNeeds.trim() || undefined,
-        notificationPreferences,
-      }),
-    });
-
+    const ok = await persistDraft(draft);
     setIsSaving(false);
-
-    if (response.ok) {
-      setStatusMessage(labels.saveSuccess ?? "");
+    if (ok) {
       await loadCompany();
-    } else {
-      setStatusMessage(labels.saveError ?? "");
     }
   };
 
@@ -178,6 +236,7 @@ export function CompanySettingsView({
         dropzoneContent={labels.logoDropzone || "JPG or PNG"}
         progressLabel={labels.uploadProgress || "Uploading…"}
         onUploadComplete={async (result: FileUploadMetadata) => {
+          suppressRef.current?.();
           setLogoUrl(result.url);
           const response = await fetch("/api/employer/company", {
             method: "PATCH",
@@ -219,14 +278,23 @@ export function CompanySettingsView({
         </fieldset>
       ) : null}
 
-      {statusMessage ? (
+      {statusMessage || autosaveStatus !== "idle" ? (
         <p className="text-sm text-text-secondary" role="status">
-          {statusMessage}
+          {autosaveStatus === "saving"
+            ? labels.saving || "Saving…"
+            : autosaveStatus === "error"
+              ? labels.saveError || "Could not save."
+              : statusMessage ||
+                (autosaveStatus === "saved"
+                  ? labels.saveSuccess || "Saved."
+                  : null)}
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSaving}>
-        {labels.save || "Save"}
+      <Button type="submit" disabled={isSaving || autosaveStatus === "saving"}>
+        {isSaving || autosaveStatus === "saving"
+          ? labels.saving || "Saving…"
+          : labels.save || "Save"}
       </Button>
     </form>
   );

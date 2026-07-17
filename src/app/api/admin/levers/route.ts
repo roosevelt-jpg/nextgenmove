@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
-import { getProgramLevers, defaultProgramLevers } from "@/lib/collections/pages";
+import { getProgramLevers } from "@/lib/collections/pages";
 import { serializeTimestamp } from "@/lib/firestore-utils";
 import { withTimeout } from "@/lib/async/with-timeout";
 import {
@@ -12,6 +12,10 @@ import {
 } from "@/lib/admin/session";
 import { revalidateAdminCollection } from "@/lib/admin/revalidate";
 import { stripUndefined } from "@/lib/stripUndefined";
+import {
+  finiteNumber,
+  optionalString,
+} from "@/lib/validation/fields";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +27,13 @@ export async function GET() {
   }
 
   try {
-    const levers =
-      (await withTimeout(getProgramLevers(), 5000, "program_levers")) ??
-      defaultProgramLevers();
+    const levers = await withTimeout(getProgramLevers(), 5000, "program_levers");
+    if (!levers) {
+      return NextResponse.json(
+        { levers: null, warning: "levers_missing" },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
     return NextResponse.json(
       { levers },
       { headers: { "Cache-Control": "no-store" } },
@@ -33,32 +41,32 @@ export async function GET() {
   } catch (error) {
     console.error("levers_get_failed", error);
     return NextResponse.json(
-      { levers: defaultProgramLevers(), warning: "levers_degraded" },
+      { levers: null, warning: "levers_degraded" },
       { headers: { "Cache-Control": "no-store" } },
     );
   }
 }
 
 const waySchema = z.object({
-  id: z.string(),
-  action: z.string(),
-  credits: z.number(),
-  description: z.string(),
+  id: optionalString,
+  action: optionalString,
+  credits: finiteNumber,
+  description: optionalString,
 });
 
 const packageSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  credits: z.number(),
-  priceEur: z.number(),
+  id: optionalString,
+  label: optionalString,
+  credits: finiteNumber,
+  priceEur: finiteNumber,
 });
 
 const patchSchema = z.object({
-  trackAMonthly: z.number().optional(),
-  trackAMatchFee: z.number().optional(),
-  trackBMonthly: z.number().optional(),
-  placementFeeEur: z.number().optional(),
-  creditsPerEuro: z.number().optional(),
+  trackAMonthly: finiteNumber.optional(),
+  trackAMatchFee: finiteNumber.optional(),
+  trackBMonthly: finiteNumber.optional(),
+  placementFeeEur: finiteNumber.optional(),
+  creditsPerEuro: finiteNumber.optional(),
   creditTopUpPackages: z.array(packageSchema).optional(),
   waysToEarn: z.array(waySchema).optional(),
 });
@@ -71,7 +79,11 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const body = patchSchema.parse(await request.json());
+    const raw = (await request.json()) as Record<string, unknown>;
+    // Clients may echo hydrate fields; never write them back.
+    delete raw.updatedAt;
+    delete raw.id;
+    const body = patchSchema.parse(raw);
 
     await adminDb
       .collection("program_levers")
@@ -82,7 +94,6 @@ export async function PATCH(request: Request) {
             id: "default",
             ...body,
           }),
-          // Keep FieldValue outside stripUndefined (older builds ate the sentinel → {}).
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true },
@@ -115,7 +126,10 @@ export async function PATCH(request: Request) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
+      return NextResponse.json(
+        { error: "invalid_request", details: error.flatten() },
+        { status: 400 },
+      );
     }
 
     console.error("levers_patch_failed", error);

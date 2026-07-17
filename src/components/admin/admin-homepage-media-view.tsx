@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminEntityModal } from "@/components/admin/admin-entity-modal";
 import type { AdminEntitySchema } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
@@ -10,6 +10,7 @@ import {
   looksLikeGoogleApiKey,
   parseYoutubePlaylistId,
 } from "@/lib/media/youtube";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 function formatSyncTimestamp(value: string): string {
   if (!value || value === "[object Object]") return "";
@@ -100,6 +101,64 @@ export function AdminHomepageMediaView({
   const [syncBusy, setSyncBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [youtubeHydrated, setYoutubeHydrated] = useState(false);
+  const suppressYoutubeRef = useRef<(() => void) | null>(null);
+
+  const youtubeDraft = useMemo(
+    () => ({
+      youtubePlaylistUrl: youtube.youtubePlaylistUrl,
+      youtubeSyncEnabled: youtube.youtubeSyncEnabled,
+      youtubeHomepageLimit: youtube.youtubeHomepageLimit,
+      youtubeLibraryLimit: youtube.youtubeLibraryLimit,
+    }),
+    [
+      youtube.youtubePlaylistUrl,
+      youtube.youtubeSyncEnabled,
+      youtube.youtubeHomepageLimit,
+      youtube.youtubeLibraryLimit,
+    ],
+  );
+
+  const persistYoutubeDraft = useCallback(
+    async (draft: typeof youtubeDraft) => {
+      const playlist = draft.youtubePlaylistUrl.trim();
+      if (looksLikeGoogleApiKey(playlist)) {
+        setSyncMessage(
+          labels.playlist_looks_like_api_key ||
+            "That looks like a Google API key. Put the API key in Integrations → YouTube, and paste a playlist URL or PL… id here.",
+        );
+        return false;
+      }
+      if (playlist && !parseYoutubePlaylistId(playlist)) {
+        return false;
+      }
+      const res = await fetch("/api/admin/data/site_settings/default", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          youtubePlaylistUrl: playlist,
+          youtubeSyncEnabled: draft.youtubeSyncEnabled,
+          youtubeHomepageLimit: draft.youtubeHomepageLimit,
+          youtubeLibraryLimit: draft.youtubeLibraryLimit,
+        }),
+      });
+      if (!res.ok) {
+        setSyncMessage(labels.youtubeSaveFailed ?? "Could not save settings.");
+        return false;
+      }
+      setSyncMessage(labels.youtubeSaveOk ?? "Playlist settings saved.");
+      return true;
+    },
+    [labels],
+  );
+
+  const { status: _youtubeAutosaveStatus, suppressNext: suppressYoutube } =
+    useDebouncedAutosave(youtubeDraft, persistYoutubeDraft, {
+      enabled: youtubeHydrated,
+      delayMs: 800,
+    });
+  void _youtubeAutosaveStatus;
+  suppressYoutubeRef.current = suppressYoutube;
 
   const load = useCallback(async () => {
     const [vRes, pRes, sRes] = await Promise.all([
@@ -157,6 +216,7 @@ export function AdminHomepageMediaView({
     if (sRes.ok) {
       const payload = (await sRes.json()) as { item: Record<string, unknown> };
       const item = payload.item ?? {};
+      suppressYoutubeRef.current?.();
       setYoutube({
         youtubePlaylistUrl: String(item.youtubePlaylistUrl ?? ""),
         youtubeSyncEnabled: item.youtubeSyncEnabled !== false,
@@ -167,6 +227,7 @@ export function AdminHomepageMediaView({
         ),
         youtubeLastSyncError: String(item.youtubeLastSyncError ?? ""),
       });
+      setYoutubeHydrated(true);
     }
   }, [
     labels.youtubeSourceBadge,

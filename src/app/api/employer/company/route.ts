@@ -10,6 +10,7 @@ import {
   getEmployerSession,
   unauthorizedResponse,
 } from "@/lib/employer/session";
+import { optionalNullableUrl } from "@/lib/validation/fields";
 
 export async function GET() {
   const session = await getEmployerSession();
@@ -34,9 +35,9 @@ const patchSchema = z.object({
   name: z.string().trim().min(1).optional(),
   contactName: z.string().trim().min(1).max(120).optional(),
   contactEmail: z.string().email().optional(),
-  logoUrl: z.string().url().nullable().optional(),
+  logoUrl: optionalNullableUrl,
   industry: z.string().trim().max(80).optional(),
-  website: z.string().url().nullable().optional().or(z.literal("").transform(() => null)),
+  website: optionalNullableUrl,
   preferredLocations: z.array(z.string().trim()).optional(),
   requirementTags: z.array(z.string().trim().min(1)).max(40).optional(),
   hiringNeeds: z.string().trim().max(2000).optional(),
@@ -69,12 +70,12 @@ export async function PATCH(request: Request) {
     await adminDb
       .collection("companies")
       .doc(session.companyId)
-      .update(
-        stripUndefined({
+      .update({
+        ...stripUndefined({
           ...body,
-          updatedAt: FieldValue.serverTimestamp(),
         }),
-      );
+        updatedAt: FieldValue.serverTimestamp(),
+      });
 
     if (
       body.requirementTags !== undefined ||

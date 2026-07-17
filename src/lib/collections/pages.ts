@@ -201,7 +201,26 @@ export function defaultProgramLevers(): ProgramLeversDocument {
       { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },
       { id: "pack_1600", label: "Premium pack", credits: 1600, priceEur: 400 },
     ],
-    waysToEarn: [],
+    waysToEarn: [
+      {
+        id: "welcome",
+        action: "Welcome credit",
+        credits: 2000,
+        description: "On signup",
+      },
+      {
+        id: "referral",
+        action: "Referral bonus",
+        credits: 150,
+        description: "Per successful referral",
+      },
+      {
+        id: "profile_complete",
+        action: "Profile complete",
+        credits: 100,
+        description: "One-time",
+      },
+    ],
     updatedAt: null,
   };
 }

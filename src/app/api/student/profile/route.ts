@@ -12,6 +12,7 @@ import {
   unauthorizedResponse,
   type StudentDocument,
 } from "@/lib/student/session";
+import { optionalNullableUrl } from "@/lib/validation/fields";
 
 export async function GET() {
   const session = await getStudentSession();
@@ -42,12 +43,12 @@ const profileSchema = z.object({
   targetCities: z.array(z.string().trim()).optional(),
   bio: z.string().trim().optional(),
   skills: z.array(z.string().trim()).optional(),
-  cvUrl: z.string().url().nullable().optional(),
-  linkedinUrl: z.string().url().nullable().optional(),
-  portfolioUrl: z.string().url().nullable().optional(),
-  githubUrl: z.string().url().nullable().optional(),
+  cvUrl: optionalNullableUrl,
+  linkedinUrl: optionalNullableUrl,
+  portfolioUrl: optionalNullableUrl,
+  githubUrl: optionalNullableUrl,
   availability: z.string().trim().optional(),
-  photoUrl: z.string().url().nullable().optional(),
+  photoUrl: optionalNullableUrl,
   workExperienceEntries: z.array(workEntrySchema).max(20).optional(),
 });
 
@@ -112,13 +113,13 @@ export async function PATCH(request: Request) {
     await adminDb
       .collection("students")
       .doc(session.studentId)
-      .update(
-        stripUndefined({
+      .update({
+        ...stripUndefined({
           ...body,
           ...(entries ? { workExperienceEntries: entries } : {}),
-          updatedAt: FieldValue.serverTimestamp(),
         }),
-      );
+        updatedAt: FieldValue.serverTimestamp(),
+      });
 
     await syncLinkedProfile({
       uid: session.studentId,

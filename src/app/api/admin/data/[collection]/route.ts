@@ -94,13 +94,15 @@ export async function POST(
     );
     const ref = adminDb.collection(collection).doc();
 
-    await ref.set(
-      stripUndefined({
+    const { id: _bodyId, createdAt: _c, updatedAt: _u, ...rest } = body;
+    await ref.set({
+      ...stripUndefined({
         id: ref.id,
-        ...body,
-        createdAt: FieldValue.serverTimestamp(),
+        ...rest,
       }),
-    );
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 
     revalidateAdminCollection(collection);
 

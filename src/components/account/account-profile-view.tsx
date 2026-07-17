@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 export interface AccountProfileViewProps {
   labels: Record<string, string>;
@@ -41,7 +42,44 @@ export function AccountProfileView({
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
   );
+  const [hydrated, setHydrated] = useState(false);
+  const suppressRef = useRef<(() => void) | null>(null);
   const router = useRouter();
+
+  const profileDraft = useMemo(() => {
+    if (!hydrated) return null;
+    return { displayName, phone, photoUrl };
+  }, [hydrated, displayName, phone, photoUrl]);
+
+  const persistProfileDraft = useCallback(
+    async (next: { displayName: string; phone: string; photoUrl: string | null }) => {
+      if (!next.displayName.trim()) return false;
+      const response = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: next.displayName,
+          phone: next.phone || null,
+          photoUrl: next.photoUrl || null,
+        }),
+      });
+      if (!response.ok) {
+        setStatusMessage(labels.saveError || "Could not save.");
+        return false;
+      }
+      setStatusMessage(labels.saveSuccess || "Saved.");
+      router.refresh();
+      return true;
+    },
+    [labels.saveError, labels.saveSuccess, router],
+  );
+
+  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+    profileDraft,
+    persistProfileDraft,
+    { enabled: hydrated, delayMs: 800 },
+  );
+  suppressRef.current = suppressNext;
 
   const persistPhotoUrl = useCallback(
     async (nextUrl: string | null) => {
@@ -70,6 +108,7 @@ export function AccountProfileView({
         account: AccountPayload;
         warning?: string;
       };
+      suppressRef.current?.();
       setAccount(data.account);
       setDisplayName(data.account.displayName);
       setPhone(data.account.phone ?? "");
@@ -89,6 +128,7 @@ export function AccountProfileView({
             "Profile details may be incomplete while the database is slow.",
         );
       }
+      setHydrated(true);
       setLoadState("ready");
     } catch {
       setLoadState("error");
@@ -374,12 +414,23 @@ export function AccountProfileView({
         </section>
       ) : null}
 
-      {statusMessage ? (
-        <p className="text-sm text-text-secondary">{statusMessage}</p>
+      {statusMessage || autosaveStatus !== "idle" ? (
+        <p className="text-sm text-text-secondary" role="status">
+          {autosaveStatus === "saving"
+            ? labels.saving || "Saving…"
+            : autosaveStatus === "error"
+              ? labels.saveError || "Could not save."
+              : statusMessage ||
+                (autosaveStatus === "saved"
+                  ? labels.saveSuccess || "Saved."
+                  : null)}
+        </p>
       ) : null}
 
-      <Button type="submit" disabled={isSaving}>
-        {labels.saveChanges || labels.save || "Save changes"}
+      <Button type="submit" disabled={isSaving || autosaveStatus === "saving"}>
+        {isSaving || autosaveStatus === "saving"
+          ? labels.saving || "Saving…"
+          : labels.saveChanges || labels.save || "Save changes"}
       </Button>
     </form>
   );

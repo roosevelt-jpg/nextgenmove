@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Input } from "@/components/ui";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 interface AdminSecurityControlsProps {
   labels: Record<string, string>;
@@ -20,6 +21,15 @@ export function AdminSecurityControls({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const suppressRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    suppressRef.current?.();
+    setRequire2fa(initialRequire2fa);
+    setSessionExpireDays(String(initialSessionExpireDays));
+    setHydrated(true);
+  }, [initialRequire2fa, initialSessionExpireDays]);
 
   const save = async (next: {
     require2fa?: boolean;
@@ -38,17 +48,35 @@ export function AdminSecurityControls({
 
     if (!response.ok) {
       setMessage(labels.saveError ?? "Could not save security settings.");
-      return;
+      return false;
     }
 
     if (typeof next.require2fa === "boolean") {
       setRequire2fa(next.require2fa);
     }
     if (typeof next.sessionExpireDays === "number") {
+      suppressRef.current?.();
       setSessionExpireDays(String(next.sessionExpireDays));
     }
     setMessage(labels.saveSuccess ?? "Saved.");
+    return true;
   };
+
+  const persistDays = async (raw: string) => {
+    const days = Number(raw);
+    if (!Number.isFinite(days) || days < 1 || days > 14) {
+      setMessage(labels.sessionExpireInvalid ?? "Enter 1–14 days.");
+      return false;
+    }
+    return save({ sessionExpireDays: Math.round(days) });
+  };
+
+  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+    hydrated ? sessionExpireDays : null,
+    persistDays,
+    { enabled: hydrated, delayMs: 700 },
+  );
+  suppressRef.current = suppressNext;
 
   return (
     <div className="space-y-3">
@@ -98,17 +126,12 @@ export function AdminSecurityControls({
         <Button
           type="button"
           size="sm"
-          disabled={isSaving}
-          onClick={() => {
-            const days = Number(sessionExpireDays);
-            if (!Number.isFinite(days) || days < 1 || days > 14) {
-              setMessage(labels.sessionExpireInvalid ?? "Enter 1–14 days.");
-              return;
-            }
-            void save({ sessionExpireDays: Math.round(days) });
-          }}
+          disabled={isSaving || autosaveStatus === "saving"}
+          onClick={() => void persistDays(sessionExpireDays)}
         >
-          {labels.save ?? "Save"}
+          {isSaving || autosaveStatus === "saving"
+            ? (labels.saving ?? "Saving…")
+            : (labels.save ?? "Save")}
         </Button>
       </div>
 

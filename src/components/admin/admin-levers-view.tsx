@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ProgramLeversDocument, WayToEarn } from "@/types/cms";
 import type { PendingRequestItem } from "@/lib/admin/dashboard";
 import { AdminPromoteModal } from "@/components/admin/admin-promote-modal";
 import { Button, Input } from "@/components/ui";
+import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 interface AdminLeversViewProps {
   labels: Record<string, string>;
 }
 
+function toPersistBody(doc: ProgramLeversDocument) {
+  const { updatedAt: _updatedAt, ...rest } = doc;
+  return rest;
+}
+
 export function AdminLeversView({ labels }: AdminLeversViewProps) {
   const [levers, setLevers] = useState<ProgramLeversDocument | null>(null);
+  const [canPersist, setCanPersist] = useState(false);
   const [pending, setPending] = useState<PendingRequestItem[]>([]);
   const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [stages, setStages] = useState<{ id: string; name: string }[]>([]);
@@ -19,9 +26,35 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const suppressRef = useRef<(() => void) | null>(null);
+
+  const persistLevers = useCallback(async (doc: ProgramLeversDocument) => {
+    const response = await fetch("/api/admin/levers", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(toPersistBody(doc)),
+    });
+    if (!response.ok) {
+      setErrorCode("save_failed");
+      return false;
+    }
+    const payload = (await response.json()) as { levers: ProgramLeversDocument };
+    suppressRef.current?.();
+    setLevers(payload.levers);
+    setErrorCode(null);
+    return true;
+  }, []);
+
+  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+    levers,
+    persistLevers,
+    { enabled: canPersist, delayMs: 700 },
+  );
+  suppressRef.current = suppressNext;
 
   const load = async () => {
     setErrorCode(null);
+    setCanPersist(false);
     try {
       const [leversRes, pendingRes, companiesRes, stagesRes] = await Promise.all([
         fetch("/api/admin/levers", { cache: "no-store" }),
@@ -35,31 +68,30 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
           levers: ProgramLeversDocument | null;
           warning?: string;
         };
-        setLevers(payload.levers ?? {
-          trackAMonthly: 50,
-          trackAMatchFee: 200,
-          trackBMonthly: 125,
-          placementFeeEur: 350,
-          creditsPerEuro: 4,
-          creditTopUpPackages: [],
-          waysToEarn: [],
-          updatedAt: null,
-        });
-        if (payload.warning === "levers_degraded") {
-          setErrorCode("load_degraded");
+        suppressNext();
+        if (payload.levers) {
+          setLevers(payload.levers);
+          setCanPersist(!payload.warning);
+          if (payload.warning) {
+            setErrorCode(
+              payload.warning === "levers_degraded"
+                ? "load_degraded"
+                : "load_failed",
+            );
+          }
+        } else {
+          setLevers(null);
+          setCanPersist(false);
+          setErrorCode(
+            payload.warning === "levers_degraded"
+              ? "load_degraded"
+              : "load_failed",
+          );
         }
       } else {
+        setCanPersist(false);
         setErrorCode("load_failed");
-        setLevers({
-          trackAMonthly: 50,
-          trackAMatchFee: 200,
-          trackBMonthly: 125,
-          placementFeeEur: 350,
-          creditsPerEuro: 4,
-          creditTopUpPackages: [],
-          waysToEarn: [],
-          updatedAt: null,
-        });
+        setLevers(null);
       }
 
       if (pendingRes.ok) {
@@ -90,22 +122,15 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
         );
       }
     } catch {
+      setCanPersist(false);
       setErrorCode("load_failed");
-      setLevers({
-        trackAMonthly: 50,
-        trackAMatchFee: 200,
-        trackBMonthly: 125,
-        placementFeeEur: 350,
-        creditsPerEuro: 4,
-        creditTopUpPackages: [],
-        waysToEarn: [],
-        updatedAt: null,
-      });
+      setLevers(null);
     }
   };
 
   useEffect(() => {
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only hydrate
   }, []);
 
   const updateWay = (index: number, patch: Partial<WayToEarn>) => {
@@ -135,21 +160,12 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   };
 
   const save = async () => {
-    if (!levers) return;
+    if (!levers || !canPersist) return;
     setIsSaving(true);
     setErrorCode(null);
-    const response = await fetch("/api/admin/levers", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(levers),
-    });
+    const ok = await persistLevers(levers);
     setIsSaving(false);
-    if (!response.ok) {
-      setErrorCode("save_failed");
-      return;
-    }
-    const payload = (await response.json()) as { levers: ProgramLeversDocument };
-    setLevers(payload.levers);
+    if (!ok) setErrorCode("save_failed");
   };
 
   const resolvePending = async (item: PendingRequestItem, action: string) => {
@@ -177,7 +193,22 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
   };
 
   if (!levers) {
-    return <p className="text-sm text-text-muted">{labels.loading ?? "Loading…"}</p>;
+    return (
+      <div className="space-y-2">
+        <p className="text-sm text-text-muted">
+          {errorCode
+            ? labels[errorCode] ??
+              labels.loadError ??
+              "Could not load program levers. Refresh and try again."
+            : (labels.loading ?? "Loading…")}
+        </p>
+        {errorCode ? (
+          <Button size="sm" onClick={() => void load()}>
+            {labels.retry || "Retry"}
+          </Button>
+        ) : null}
+      </div>
+    );
   }
 
   const summaryRows = [
@@ -217,14 +248,31 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               {labels[errorCode] ??
                 labels.loadError ??
                 (errorCode === "load_degraded"
-                  ? "Could not refresh live levers — showing defaults."
-                  : "Could not load levers — showing defaults.")}
+                  ? "Could not refresh live levers — edits are paused."
+                  : errorCode === "save_failed"
+                    ? "Could not save — try again."
+                    : "Could not load levers.")}
             </p>
           ) : null}
         </div>
-        <Button disabled={isSaving} onClick={save}>
-          {labels.save || "Save"}
-        </Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button disabled={isSaving || !canPersist} onClick={() => void save()}>
+            {isSaving || autosaveStatus === "saving"
+              ? labels.saving || "Saving…"
+              : labels.save || "Save"}
+          </Button>
+          <p className="text-[11px] text-text-muted" aria-live="polite">
+            {!canPersist
+              ? labels.autosavePaused || "Autosave paused"
+              : autosaveStatus === "saving"
+                ? labels.saving || "Saving…"
+                : autosaveStatus === "saved"
+                  ? labels.saved || "Saved"
+                  : autosaveStatus === "error"
+                    ? labels.save_failed || "Save failed"
+                    : labels.autosaveHint || "Changes save automatically"}
+          </p>
+        </div>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-2">

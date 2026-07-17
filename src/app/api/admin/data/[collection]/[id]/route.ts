@@ -75,22 +75,19 @@ export async function PATCH(
     const snapshot = await ref.get();
 
     if (!snapshot.exists && collection.startsWith("page_")) {
-      await ref.set(
-        stripUndefined({
-          id,
-          ...body,
-          updatedAt: FieldValue.serverTimestamp(),
-        }),
-      );
+      const { id: _id, updatedAt: _u, createdAt: _c, ...rest } = body;
+      await ref.set({
+        ...stripUndefined({ id, ...rest }),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     } else if (!snapshot.exists) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     } else {
-      await ref.update(
-        stripUndefined({
-          ...body,
-          updatedAt: FieldValue.serverTimestamp(),
-        }),
-      );
+      const { id: _id, updatedAt: _u, createdAt: _c, ...rest } = body;
+      await ref.update({
+        ...stripUndefined(rest),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     }
 
     revalidateAdminCollection(collection);

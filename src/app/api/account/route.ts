@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { withTimeout } from "@/lib/async/with-timeout";
 import { syncLinkedProfile } from "@/lib/auth/profile-sync";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { optionalNullableUrl } from "@/lib/validation/fields";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -56,7 +57,7 @@ const patchSchema = z.object({
   displayName: z.string().trim().min(1).max(120).optional(),
   phone: z.string().trim().max(40).nullable().optional(),
   preferredLocale: z.string().trim().min(2).max(16).nullable().optional(),
-  photoUrl: z.string().url().nullable().optional(),
+  photoUrl: optionalNullableUrl,
   notificationPreferences: z.record(z.string(), z.boolean()).optional(),
   currentPassword: z.string().min(8).optional(),
   newPassword: z.string().min(8).optional(),
@@ -111,7 +112,6 @@ export async function PATCH(request: Request) {
     }
 
     const updates: Record<string, unknown> = {
-      updatedAt: FieldValue.serverTimestamp(),
       email: user.email ?? null,
       role: user.role,
     };
@@ -129,7 +129,13 @@ export async function PATCH(request: Request) {
     await adminDb
       .collection("users")
       .doc(user.uid)
-      .set(stripUndefined(updates), { merge: true });
+      .set(
+        {
+          ...stripUndefined(updates),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
 
     if (body.newPassword) {
       await adminAuth.updateUser(user.uid, { password: body.newPassword });
