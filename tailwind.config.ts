@@ -70,6 +70,7 @@ const config: Config = {
         "grad-card": "var(--grad-card)",
         "grad-dusk": "var(--grad-dusk)",
         "grad-route": "var(--grad-route)",
+        "grad-portal-wash": "var(--grad-portal-wash)",
       },
       maxWidth: {
         page: "var(--page-max)",

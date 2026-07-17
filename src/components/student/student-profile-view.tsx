@@ -151,15 +151,23 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
               {labels.profileCompleteness.replace("{percent}", String(completeness))}
             </p>
             <div
-              className="h-2 w-full overflow-hidden rounded-full bg-surface-2"
+              className="h-2.5 w-full overflow-hidden rounded-full bg-surface-2"
               role="progressbar"
               aria-valuenow={completeness}
               aria-valuemin={0}
               aria-valuemax={100}
             >
               <div
-                className="h-full bg-grad-rouse transition-[width] duration-300"
-                style={{ width: `${Math.min(100, Math.max(0, completeness))}%` }}
+                className="h-full transition-[width] duration-300"
+                style={{
+                  width: `${Math.min(100, Math.max(0, completeness))}%`,
+                  backgroundImage:
+                    completeness >= 80
+                      ? "linear-gradient(90deg, var(--fill-accent), var(--text-accent), var(--text-success))"
+                      : completeness >= 40
+                        ? "linear-gradient(90deg, var(--fill-accent), var(--text-accent))"
+                        : "linear-gradient(90deg, var(--fill-accent-strong), var(--fill-accent))",
+                }}
               />
             </div>
           </div>

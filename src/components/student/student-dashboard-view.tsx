@@ -6,10 +6,18 @@ import { StudentWalletPanel } from "@/components/student/student-wallet-panel";
 import { PortalVideosSection } from "@/components/portal/portal-videos-section";
 import { cn } from "@/lib/utils";
 
+interface PipelineStage {
+  id: string;
+  name: string;
+  order: number;
+  color: string;
+}
+
 interface DashboardMatch {
   id: string;
   stageId: string;
   stageName: string;
+  stageColor?: string;
   shortlisted: boolean;
   order?: number;
 }
@@ -30,12 +38,74 @@ interface CreditWeek {
   spent: number;
 }
 
-const JOURNEY = [
-  { key: "applied", match: /new|applied|intro/i },
-  { key: "shortlisted", match: /shortlist/i },
-  { key: "interviewing", match: /interview/i },
-  { key: "placed", match: /placed|offer/i },
-] as const;
+function hexToRgba(hex: string, alpha: number): string {
+  const raw = hex.replace("#", "").trim();
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw;
+  if (full.length !== 6) return `rgba(75, 63, 156, ${alpha})`;
+  const r = Number.parseInt(full.slice(0, 2), 16);
+  const g = Number.parseInt(full.slice(2, 4), 16);
+  const b = Number.parseInt(full.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function ProfileCompletenessRing({
+  value,
+  label,
+}: {
+  value: number;
+  label: string;
+}) {
+  const pct = Math.max(0, Math.min(100, value));
+  const r = 28;
+  const c = 2 * Math.PI * r;
+  const filled = (pct / 100) * c;
+  const stroke =
+    pct >= 80
+      ? "var(--text-success)"
+      : pct >= 40
+        ? "var(--text-accent)"
+        : "var(--fill-accent)";
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative h-16 w-16 shrink-0">
+        <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden>
+          <circle
+            cx="32"
+            cy="32"
+            r={r}
+            fill="none"
+            stroke="var(--border)"
+            strokeWidth="6"
+          />
+          <circle
+            cx="32"
+            cy="32"
+            r={r}
+            fill="none"
+            stroke={stroke}
+            strokeWidth="6"
+            strokeDasharray={`${filled} ${c - filled}`}
+            strokeLinecap="round"
+            transform="rotate(-90 32 32)"
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center font-serif text-sm font-semibold text-text-primary">
+          {pct}%
+        </span>
+      </div>
+      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+        {label}
+      </p>
+    </div>
+  );
+}
 
 export interface StudentDashboardViewProps {
   labels: Record<string, string>;
@@ -45,6 +115,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
   const [credits, setCredits] = useState(0);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
   const [matches, setMatches] = useState<DashboardMatch[]>([]);
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
   const [recommendedContent, setRecommendedContent] = useState<RecommendedItem[]>([]);
   const [creditActivity, setCreditActivity] = useState<CreditWeek[]>([]);
   const [earnSpendDeltaPct, setEarnSpendDeltaPct] = useState(0);
@@ -58,6 +129,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
       credits: number;
       profileCompleteness: number;
       matches: DashboardMatch[];
+      pipelineStages?: PipelineStage[];
       recommendedContent: RecommendedItem[];
       creditActivity: CreditWeek[];
       earnSpendDeltaPct: number;
@@ -65,6 +137,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
     setCredits(data.credits);
     setProfileCompleteness(data.profileCompleteness);
     setMatches(data.matches);
+    setPipelineStages(data.pipelineStages ?? []);
     setRecommendedContent(data.recommendedContent);
     setCreditActivity(data.creditActivity ?? []);
     setEarnSpendDeltaPct(data.earnSpendDeltaPct ?? 0);
@@ -74,21 +147,55 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
     void loadDashboard();
   }, [loadDashboard]);
 
-  const currentStageName = useMemo(() => {
-    if (!matches.length) return labels.stageEmpty ?? "Applied";
-    const ordered = [...matches].sort(
-      (a, b) => (b.order ?? 0) - (a.order ?? 0),
-    );
-    return ordered[0]?.stageName || labels.stageEmpty || "Applied";
-  }, [matches, labels.stageEmpty]);
+  const journeyStages = useMemo(() => {
+    if (pipelineStages.length) {
+      return [...pipelineStages].sort((a, b) => a.order - b.order);
+    }
+    return [
+      { id: "applied", name: labels.journey_applied ?? "Applied", order: 0, color: "#4b3f9c" },
+      {
+        id: "shortlisted",
+        name: labels.journey_shortlisted ?? "Shortlisted",
+        order: 1,
+        color: "#c97a2e",
+      },
+      {
+        id: "interviewing",
+        name: labels.journey_interviewing ?? "Interviewing",
+        order: 2,
+        color: "#2d6a4f",
+      },
+      { id: "placed", name: labels.journey_placed ?? "Placed", order: 3, color: "#27500a" },
+    ];
+  }, [pipelineStages, labels]);
+
+  const currentMatch = useMemo(() => {
+    if (!matches.length) return null;
+    return [...matches].sort((a, b) => (b.order ?? 0) - (a.order ?? 0))[0] ?? null;
+  }, [matches]);
+
+  const currentStageName =
+    currentMatch?.stageName || labels.stageEmpty || journeyStages[0]?.name || "Applied";
 
   const journeyIndex = useMemo(() => {
-    const name = currentStageName.toLowerCase();
-    if (/placed/.test(name)) return 3;
-    if (/interview/.test(name)) return 2;
-    if (/shortlist/.test(name) || matches.some((m) => m.shortlisted)) return 1;
-    return 0;
-  }, [currentStageName, matches]);
+    if (!currentMatch) return 0;
+    const byId = journeyStages.findIndex((s) => s.id === currentMatch.stageId);
+    if (byId >= 0) return byId;
+    const byName = journeyStages.findIndex(
+      (s) => s.name.toLowerCase() === currentMatch.stageName.toLowerCase(),
+    );
+    if (byName >= 0) return byName;
+    if (currentMatch.shortlisted) {
+      const shortIdx = journeyStages.findIndex((s) =>
+        /shortlist/i.test(s.name),
+      );
+      if (shortIdx >= 0) return shortIdx;
+    }
+    return Math.max(
+      0,
+      journeyStages.findIndex((s) => s.order === (currentMatch.order ?? 0)),
+    );
+  }, [currentMatch, journeyStages]);
 
   const featured = recommendedContent[0] ?? null;
 
@@ -150,12 +257,10 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
           </p>
         </div>
         <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
-            {labels.profileCompletenessLabel ?? "Profile complete"}
-          </p>
-          <p className="mt-1 font-serif text-[1.65rem] font-semibold text-text-success">
-            {profileCompleteness}%
-          </p>
+          <ProfileCompletenessRing
+            value={profileCompleteness}
+            label={labels.profileCompletenessLabel ?? "Profile complete"}
+          />
         </div>
         <div className="rounded-radius border border-border bg-grad-card px-4 py-3.5">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
@@ -232,40 +337,52 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
           {labels.pipelineTitle ?? "Your placement journey"}
         </h2>
         <ol className="flex items-start justify-between gap-2">
-          {JOURNEY.map((step, index) => {
+          {journeyStages.map((step, index) => {
             const done = index < journeyIndex;
             const current = index === journeyIndex;
-            const labelKey = `journey_${step.key}` as const;
+            const isIssue = /fail|reject|block|issue|hold/i.test(step.name);
+            const color = isIssue ? "var(--text-warning)" : step.color;
             return (
-              <li key={step.key} className="relative flex flex-1 flex-col items-center">
-                {index < JOURNEY.length - 1 ? (
+              <li key={step.id} className="relative flex flex-1 flex-col items-center">
+                {index < journeyStages.length - 1 ? (
                   <span
-                    className={cn(
-                      "absolute left-1/2 top-4 h-0.5 w-full",
-                      index < journeyIndex
-                        ? "bg-text-success"
-                        : index === journeyIndex
-                          ? "bg-fill-accent"
-                          : "bg-border",
-                    )}
+                    className="absolute left-1/2 top-4 h-0.5 w-full"
+                    style={{
+                      backgroundColor:
+                        index < journeyIndex
+                          ? journeyStages[index]?.color ?? color
+                          : "var(--border)",
+                      opacity: index < journeyIndex ? 0.85 : 1,
+                    }}
                     aria-hidden
                   />
                 ) : null}
                 <span
                   className={cn(
-                    "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold",
-                    done
-                      ? "bg-text-success text-on-primary"
-                      : current
-                        ? "bg-fill-accent text-on-accent"
-                        : "bg-surface-2 text-text-muted",
+                    "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold text-on-accent",
+                    !done && !current && "text-text-muted",
                   )}
+                  style={{
+                    backgroundColor: done
+                      ? color
+                      : current
+                        ? color
+                        : hexToRgba(step.color, 0.18),
+                    color: done || current ? "#fff" : undefined,
+                    boxShadow: current
+                      ? `0 0 0 3px ${hexToRgba(step.color, 0.35)}`
+                      : undefined,
+                  }}
                 >
                   {done ? "✓" : index + 1}
                 </span>
-                <p className="mt-2 text-center text-[12px] font-medium text-text-primary">
-                  {labels[labelKey] ??
-                    step.key.charAt(0).toUpperCase() + step.key.slice(1)}
+                <p
+                  className="mt-2 text-center text-[12px] font-medium"
+                  style={{
+                    color: current || done ? color : "var(--text-secondary)",
+                  }}
+                >
+                  {step.name}
                 </p>
               </li>
             );

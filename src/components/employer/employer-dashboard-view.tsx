@@ -16,6 +16,13 @@ interface DashboardPayload {
     shortlisted: number;
     inPipeline: number;
   };
+  stageBreakdown?: Array<{
+    id: string;
+    name: string;
+    order: number;
+    color: string;
+    count: number;
+  }>;
   degraded?: boolean;
 }
 
@@ -125,6 +132,42 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
           value={String(data.stats.inPipeline)}
         />
       </div>
+
+      {data.stageBreakdown && data.stageBreakdown.length > 0 ? (
+        <section className="rounded-radius border border-border bg-grad-card p-4">
+          <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
+            {labels.funnelTitle ?? "Pipeline by stage"}
+          </h2>
+          <ul className="space-y-2.5">
+            {data.stageBreakdown.map((stage) => {
+              const max = Math.max(
+                1,
+                ...data.stageBreakdown!.map((s) => s.count),
+              );
+              return (
+                <li key={stage.id} className="flex items-center gap-3">
+                  <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
+                    {stage.name}
+                  </span>
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${(stage.count / max) * 100}%`,
+                        backgroundColor: stage.color,
+                        minWidth: stage.count > 0 ? 6 : 0,
+                      }}
+                    />
+                  </div>
+                  <span className="w-6 text-right font-mono text-[12px]">
+                    {stage.count}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>

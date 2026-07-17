@@ -336,6 +336,15 @@ export function AdminDashboardView({
 
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-6">
+      {stats.degraded ? (
+        <p
+          className="rounded-radius border border-border bg-bg-warning px-3 py-2 text-sm text-text-warning"
+          role="status"
+        >
+          {labels.statsDegraded ??
+            "Live stats are temporarily unavailable. Showing last known or zero values."}
+        </p>
+      ) : null}
       <header className="space-y-1">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
           {labels.eyebrow ?? "Admin"}

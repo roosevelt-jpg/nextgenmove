@@ -50,10 +50,16 @@ export async function GET() {
       stagesSnapshot.docs.map((doc) => [
         doc.id,
         {
+          id: doc.id,
           name: String(doc.data().name ?? doc.id),
           order: Number(doc.data().order ?? 0),
+          color: String(doc.data().color ?? "#4b3f9c"),
         },
       ]),
+    );
+
+    const pipelineStages = [...stageMap.values()].sort(
+      (a, b) => a.order - b.order,
     );
 
     const matches = matchesSnapshot.docs.map((doc) => {
@@ -63,6 +69,7 @@ export async function GET() {
         id: doc.id,
         stageId: data.stageId ?? "",
         stageName: stage?.name ?? data.stageId ?? "",
+        stageColor: stage?.color ?? "#4b3f9c",
         order: stage?.order ?? 0,
         shortlisted: Boolean(data.shortlisted),
         companyId: data.companyId ?? "",
@@ -138,6 +145,7 @@ export async function GET() {
       credits: session.student.credits,
       profileCompleteness: calculateProfileCompleteness(session.student),
       matches,
+      pipelineStages,
       recommendedContent,
       creditActivity: weeks.map(({ label, earned, spent }) => ({
         label,
@@ -152,6 +160,7 @@ export async function GET() {
       credits: session.student.credits,
       profileCompleteness: calculateProfileCompleteness(session.student),
       matches: [],
+      pipelineStages: [],
       recommendedContent: [],
       creditActivity: Array.from({ length: 8 }, (_, i) => ({
         label: `W${i + 1}`,
@@ -159,6 +168,7 @@ export async function GET() {
         spent: 0,
       })),
       earnSpendDeltaPct: 0,
+      degraded: true,
     });
   }
 }

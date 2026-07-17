@@ -68,16 +68,62 @@ export function StudentWalletPanel({
     const params = new URLSearchParams(window.location.search);
     const topup = params.get("topup");
     if (topup === "success") {
-      setTopUpStatus(labels.topUpSuccess ?? "Top-up successful. Balance updated.");
-      void load();
+      setTopUpStatus(
+        labels.topUpSuccess ??
+          "Payment received. Updating your balance…",
+      );
+      let attempts = 0;
+      const baseline = credits;
+      const poll = async () => {
+        attempts += 1;
+        const response = await fetch(
+          `/api/student/credits/wallet?limit=${historyLimit}`,
+        );
+        if (response.ok) {
+          const data = (await response.json()) as {
+            credits: number;
+            packages: TopUpPackage[];
+            stripeEnabled: boolean;
+            transactions: WalletTransaction[];
+          };
+          setCredits(data.credits);
+          setPackages(data.packages ?? []);
+          setStripeEnabled(Boolean(data.stripeEnabled));
+          setTransactions(data.transactions ?? []);
+          if (data.credits > baseline || attempts >= 8) {
+            setTopUpStatus(
+              labels.topUpSuccess ?? "Top-up successful. Balance updated.",
+            );
+            window.history.replaceState({}, "", window.location.pathname);
+            return;
+          }
+        }
+        if (attempts < 8) {
+          window.setTimeout(() => void poll(), 1500);
+        } else {
+          setTopUpStatus(
+            labels.topUpSuccessPending ??
+              "Payment succeeded. Refresh in a moment if balance is unchanged.",
+          );
+        }
+      };
+      void poll();
     } else if (topup === "cancelled") {
       setTopUpStatus(labels.topUpCancelled ?? "Top-up cancelled.");
     }
-  }, [labels.topUpSuccess, labels.topUpCancelled, load]);
+    // Only run on mount for ?topup= query — credits baseline captured once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const buyPackage = async (packageId: string) => {
     setBuyingId(packageId);
     setTopUpStatus(null);
+    if (!stripeEnabled) {
+      setTopUpStatus(
+        labels.topUpStripeRequired ??
+          "Connect Stripe under Admin → Integrations before card top-ups work.",
+      );
+    }
     const response = await fetch("/api/student/credits/top-up", {
       method: "POST",
       headers: {
@@ -88,7 +134,14 @@ export function StudentWalletPanel({
     });
     setBuyingId(null);
     if (!response.ok) {
-      setTopUpStatus(labels.topUpFailed ?? "Could not start top-up. Try again.");
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setTopUpStatus(
+        labels[payload?.error ?? ""] ??
+          labels.topUpFailed ??
+          "Could not start top-up. Try again.",
+      );
       return;
     }
     const payload = (await response.json()) as {
@@ -96,6 +149,10 @@ export function StudentWalletPanel({
       url?: string;
     };
     if (payload.mode === "stripe" && payload.url) {
+      setTopUpStatus(
+        labels.topUpRedirecting ??
+          "Opening Stripe checkout to enter your card details…",
+      );
       window.location.href = payload.url;
       return;
     }
@@ -140,6 +197,11 @@ export function StudentWalletPanel({
           size="sm"
           type="button"
           disabled={!packages.length}
+          title={
+            !packages.length
+              ? labels.topUpNoPackages ?? "No packages available"
+              : undefined
+          }
           onClick={() => {
             setTopUpStatus(null);
             setTopUpOpen(true);
@@ -158,12 +220,13 @@ export function StudentWalletPanel({
         </p>
         {stripeEnabled ? (
           <p className="mt-1 text-xs text-text-muted">
-            {labels.walletStripeHint ?? "Card checkout available for top-ups."}
+            {labels.walletStripeHint ??
+              "Pay by card via Stripe Checkout — enter card details on the secure payment page."}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-text-muted">
+          <p className="mt-1 text-xs text-text-warning">
             {labels.walletManualHint ??
-              "Top-ups are requested for admin approval until Stripe is connected."}
+              "Stripe is not connected. Top-ups go to admin for approval, or connect keys under Admin → Integrations."}
           </p>
         )}
       </div>
@@ -246,8 +309,17 @@ export function StudentWalletPanel({
         }
       >
         <div className="space-y-3">
-          {labels.topUpIntro ? (
-            <p className="text-sm text-text-secondary">{labels.topUpIntro}</p>
+          <p className="text-sm text-text-secondary">
+            {labels.topUpIntro ??
+              (stripeEnabled
+                ? "Choose a pack. You’ll enter card details on Stripe’s secure checkout page — your card is charged there and credits appear after payment."
+                : "Choose a pack to request a top-up. Card checkout unlocks when Stripe is connected under Admin → Integrations.")}
+          </p>
+          {!stripeEnabled ? (
+            <p className="rounded-radius border border-border bg-bg-warning px-3 py-2 text-xs text-text-warning">
+              {labels.topUpStripeRequired ??
+                "Stripe is not live yet. Requests need admin approval until keys are connected."}
+            </p>
           ) : null}
           {!packages.length ? (
             <EmptyState
@@ -276,7 +348,9 @@ export function StudentWalletPanel({
                   >
                     {buyingId === pack.id
                       ? (labels.topUpBuying ?? "Starting…")
-                      : (labels.topUpAction ?? "Buy")}
+                      : stripeEnabled
+                        ? (labels.topUpPayCard ?? "Pay with card")
+                        : (labels.topUpAction ?? "Request")}
                   </Button>
                 </li>
               ))}

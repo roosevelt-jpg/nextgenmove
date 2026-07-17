@@ -62,6 +62,28 @@ const patchSchema = z.object({
   newPassword: z.string().min(8).optional(),
 });
 
+/** Verify email/password via Identity Toolkit before allowing password change. */
+async function verifyCurrentPassword(
+  email: string,
+  password: string,
+): Promise<boolean> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey || !email) return false;
+  const response = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        password,
+        returnSecureToken: false,
+      }),
+    },
+  );
+  return response.ok;
+}
+
 export async function PATCH(request: Request) {
   const user = await getCurrentUser();
   if (!user) {
@@ -70,8 +92,28 @@ export async function PATCH(request: Request) {
 
   try {
     const body = patchSchema.parse(await request.json());
+
+    if (body.newPassword) {
+      if (!body.currentPassword) {
+        return NextResponse.json(
+          { error: "current_password_required" },
+          { status: 400 },
+        );
+      }
+      const email = user.email ?? "";
+      const valid = await verifyCurrentPassword(email, body.currentPassword);
+      if (!valid) {
+        return NextResponse.json(
+          { error: "invalid_current_password" },
+          { status: 400 },
+        );
+      }
+    }
+
     const updates: Record<string, unknown> = {
       updatedAt: FieldValue.serverTimestamp(),
+      email: user.email ?? null,
+      role: user.role,
     };
 
     if (body.displayName !== undefined) updates.displayName = body.displayName;
@@ -84,12 +126,30 @@ export async function PATCH(request: Request) {
       updates.notificationPreferences = body.notificationPreferences;
     }
 
-    await adminDb.collection("users").doc(user.uid).update(stripUndefined(updates));
+    await adminDb
+      .collection("users")
+      .doc(user.uid)
+      .set(stripUndefined(updates), { merge: true });
 
     if (body.newPassword) {
       await adminAuth.updateUser(user.uid, { password: body.newPassword });
       const { notifyPasswordChanged } = await import("@/lib/email/notify");
       void notifyPasswordChanged({ userId: user.uid, request });
+    }
+
+    if (body.photoUrl !== undefined || body.displayName !== undefined) {
+      try {
+        await adminAuth.updateUser(user.uid, {
+          ...(body.displayName !== undefined
+            ? { displayName: body.displayName }
+            : {}),
+          ...(body.photoUrl !== undefined
+            ? { photoURL: body.photoUrl || undefined }
+            : {}),
+        });
+      } catch (authError) {
+        console.error("account_auth_profile_sync_failed", authError);
+      }
     }
 
     await syncLinkedProfile({
@@ -101,11 +161,15 @@ export async function PATCH(request: Request) {
       phone: body.phone,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      photoUrl: body.photoUrl !== undefined ? body.photoUrl : undefined,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
+    console.error("account_patch_failed", error);
     return NextResponse.json({ error: "update_failed" }, { status: 500 });
   }
 }

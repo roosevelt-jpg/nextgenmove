@@ -66,6 +66,15 @@ export default async function EmployerPortalLayout({
       previewMode={previewMode}
       impersonation={impersonating}
       showAdminWorkspace={showAdminWorkspace}
+      avatarUrl={user?.photoUrl ?? null}
+      avatarInitial={(
+        user?.displayName ||
+        user?.email ||
+        settings.brandMark ||
+        "N"
+      )
+        .slice(0, 1)
+        .toUpperCase()}
     >
       {children}
     </WorkspacePortalShell>

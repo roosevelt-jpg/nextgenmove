@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 
@@ -39,6 +40,22 @@ export function AccountProfileView({
   const [isSaving, setIsSaving] = useState(false);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
     "loading",
+  );
+  const router = useRouter();
+
+  const persistPhotoUrl = useCallback(
+    async (nextUrl: string | null) => {
+      const response = await fetch("/api/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl: nextUrl }),
+      });
+      if (response.ok) {
+        router.refresh();
+      }
+      return response.ok;
+    },
+    [router],
   );
 
   const load = useCallback(async () => {
@@ -99,12 +116,23 @@ export function AccountProfileView({
       setCurrentPassword("");
       setNewPassword("");
       await load();
+      router.refresh();
     } else {
       const payload = (await response.json().catch(() => null)) as
         | { error?: string }
         | null;
       setStatusMessage(
-        labels[payload?.error ?? ""] ?? labels.saveError ?? payload?.error ?? "",
+        labels[payload?.error ?? ""] ??
+          (payload?.error === "invalid_current_password"
+            ? labels.invalid_current_password ??
+              "Current password is incorrect."
+            : payload?.error === "current_password_required"
+              ? labels.current_password_required ??
+                "Enter your current password to set a new one."
+              : null) ??
+          labels.saveError ??
+          payload?.error ??
+          "",
       );
     }
   };
@@ -172,13 +200,8 @@ export function AccountProfileView({
             onUploadComplete={async (result: FileUploadMetadata) => {
               setPhotoUrl(result.url);
               setStatusMessage(null);
-              // Persist photo immediately so Save isn't required for the image.
-              const response = await fetch("/api/account", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ photoUrl: result.url }),
-              });
-              if (response.ok) {
+              const ok = await persistPhotoUrl(result.url);
+              if (ok) {
                 setStatusMessage(
                   labels.photoSaved ?? labels.photoReady ?? "Photo saved.",
                 );
@@ -208,7 +231,18 @@ export function AccountProfileView({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => setPhotoUrl(null)}
+              onClick={() => {
+                void (async () => {
+                  setPhotoUrl(null);
+                  const ok = await persistPhotoUrl(null);
+                  setStatusMessage(
+                    ok
+                      ? labels.photoRemoved ?? "Photo removed."
+                      : labels.saveError ?? "Could not remove photo.",
+                  );
+                  if (ok) await load();
+                })();
+              }}
             >
               {labels.removePhoto || "Remove"}
             </Button>

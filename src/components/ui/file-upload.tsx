@@ -17,6 +17,8 @@ export interface FileUploadProps {
   storagePath: string;
   /** When set, uploads via this session-authenticated API instead of client Storage. */
   uploadEndpoint?: string;
+  /** Optional kind hint sent to upload APIs (e.g. logo, photo, cv). */
+  uploadKind?: string;
   onUploadComplete: (result: FileUploadMetadata) => void;
   onError?: (error: Error) => void;
   accept?: string;
@@ -30,6 +32,7 @@ export interface FileUploadProps {
 export function FileUpload({
   storagePath,
   uploadEndpoint,
+  uploadKind,
   onUploadComplete,
   onError,
   accept,
@@ -63,6 +66,9 @@ export function FileUpload({
 
       const body = new FormData();
       body.append("file", file);
+      if (uploadKind) {
+        body.append("kind", uploadKind);
+      }
 
       const xhr = new XMLHttpRequest();
       xhr.open("POST", endpoint);
@@ -104,7 +110,7 @@ export function FileUpload({
       xhr.timeout = 120_000;
       xhr.send(body);
     },
-    [fail, onUploadComplete],
+    [fail, onUploadComplete, uploadKind],
   );
 
   const uploadViaStorage = useCallback(

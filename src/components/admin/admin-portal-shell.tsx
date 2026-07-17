@@ -106,6 +106,8 @@ export interface AdminPortalShellProps {
   siteName: string;
   brandMark: string;
   children: React.ReactNode;
+  avatarUrl?: string | null;
+  avatarInitial?: string;
 }
 
 export function AdminPortalShell({
@@ -113,6 +115,8 @@ export function AdminPortalShell({
   siteName,
   brandMark,
   children,
+  avatarUrl = null,
+  avatarInitial,
 }: AdminPortalShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -242,7 +246,7 @@ export function AdminPortalShell({
   );
 
   return (
-    <div className="dashboard-shell flex min-h-screen w-full bg-bg text-text-primary">
+    <div className="dashboard-shell flex min-h-screen w-full text-text-primary">
       <div className="sticky top-0 hidden h-screen shrink-0 min-[860px]:block">
         {sidebar}
       </div>
@@ -281,10 +285,19 @@ export function AdminPortalShell({
             <ThemeToggle />
             <Link
               href="/admin/account"
-              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
+              className="inline-flex min-h-7 min-w-7 items-center justify-center overflow-hidden rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
               aria-label="Account"
             >
-              {labels.avatarInitial ?? "N"}
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-7 w-7 object-cover"
+                />
+              ) : (
+                avatarInitial ?? labels.avatarInitial ?? "N"
+              )}
             </Link>
           </div>
         </header>

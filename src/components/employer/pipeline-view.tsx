@@ -13,7 +13,6 @@ import {
   applyClientFilters,
   uniqueOptionValues,
 } from "@/lib/filters/apply-client-filters";
-import { cn } from "@/lib/utils";
 
 interface PipelineStage {
   id: string;
@@ -82,58 +81,81 @@ export function PipelineView({ labels }: PipelineViewProps) {
     [findStage, matches],
   );
 
-  const stats = useMemo(
-    () => [
+  const stats = useMemo(() => {
+    const ordered = [...stages].sort((a, b) => a.order - b.order);
+    if (ordered.length) {
+      return ordered.map((stage) => ({
+        key: stage.id,
+        label: stage.name,
+        value: matches.filter((m) => m.stageId === stage.id).length,
+        color: stage.color,
+      }));
+    }
+    return [
       {
         key: "viewed",
         label: labels.statViewed ?? "Viewed",
-        value: matches.length || countFor(/view|new|intro/i),
-        tone: "text-fill-accent",
+        value: matches.length,
+        color: "#4b3f9c",
       },
       {
         key: "shortlisted",
         label: labels.statShortlisted ?? "Shortlisted",
-        value:
-          matches.filter((m) => m.shortlisted).length ||
-          countFor(/shortlist/i),
-        tone: "text-text-accent",
+        value: matches.filter((m) => m.shortlisted).length,
+        color: "#c97a2e",
       },
       {
         key: "interviews",
         label: labels.statInterviews ?? "Interviews planned",
         value: countFor(/interview/i),
-        tone: "text-text-success",
+        color: "#2d6a4f",
       },
       {
         key: "placed",
         label: labels.statPlaced ?? "Placed",
         value: countFor(/placed|offer/i),
-        tone: "text-text-primary",
+        color: "#27500a",
       },
-    ],
-    [countFor, labels, matches],
-  );
+    ];
+  }, [countFor, labels, matches, stages]);
 
   const funnel = useMemo(() => {
-    const rows = [
-      { key: "viewed", label: labels.funnelViewed ?? "Viewed", hint: /view|new|intro/i, tone: "bg-fill-accent" },
-      { key: "shortlisted", label: labels.funnelShortlisted ?? "Shortlisted", hint: /shortlist/i, tone: "bg-fill-accent-strong" },
-      { key: "interviewing", label: labels.funnelInterviewing ?? "Interviewing", hint: /interview/i, tone: "bg-bg-purple" },
-      { key: "placed", label: labels.funnelPlaced ?? "Placed", hint: /placed|offer/i, tone: "bg-text-accent" },
+    const ordered = [...stages].sort((a, b) => a.order - b.order);
+    if (ordered.length) {
+      return ordered.map((stage) => ({
+        key: stage.id,
+        label: stage.name,
+        value: matches.filter((m) => m.stageId === stage.id).length,
+        color: stage.color,
+      }));
+    }
+    return [
+      {
+        key: "viewed",
+        label: labels.funnelViewed ?? "Viewed",
+        value: matches.length,
+        color: "#4b3f9c",
+      },
+      {
+        key: "shortlisted",
+        label: labels.funnelShortlisted ?? "Shortlisted",
+        value: matches.filter((m) => m.shortlisted).length,
+        color: "#c97a2e",
+      },
+      {
+        key: "interviewing",
+        label: labels.funnelInterviewing ?? "Interviewing",
+        value: countFor(/interview/i),
+        color: "#2d6a4f",
+      },
+      {
+        key: "placed",
+        label: labels.funnelPlaced ?? "Placed",
+        value: countFor(/placed|offer/i),
+        color: "#c97a2e",
+      },
     ];
-    return rows.map((row) => ({
-      ...row,
-      value:
-        row.key === "viewed"
-          ? Math.max(matches.length, countFor(row.hint))
-          : row.key === "shortlisted"
-            ? Math.max(
-                matches.filter((m) => m.shortlisted).length,
-                countFor(row.hint),
-              )
-            : countFor(row.hint),
-    }));
-  }, [countFor, labels, matches]);
+  }, [countFor, labels, matches, stages]);
 
   const maxFunnel = Math.max(1, ...funnel.map((f) => f.value));
 
@@ -291,7 +313,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
         clearKey="clearFilters"
       />
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         {stats.map((card) => (
           <div
             key={card.key}
@@ -301,10 +323,8 @@ export function PipelineView({ labels }: PipelineViewProps) {
               {card.label}
             </p>
             <p
-              className={cn(
-                "mt-1 font-serif text-[1.65rem] font-semibold leading-none",
-                card.tone,
-              )}
+              className="mt-1 font-serif text-[1.65rem] font-semibold leading-none"
+              style={{ color: card.color }}
             >
               {card.value}
             </p>
@@ -315,7 +335,7 @@ export function PipelineView({ labels }: PipelineViewProps) {
       <section className="rounded-radius border border-border bg-grad-card p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[14px] font-semibold text-text-primary">
-            {labels.funnelTitle ?? "Hiring funnel, this quarter"}
+            {labels.funnelTitle ?? "Hiring funnel by stage"}
           </h2>
           <span className="inline-flex items-center gap-1.5 text-[11px] text-text-secondary">
             <span className="h-2.5 w-2.5 rounded-sm bg-fill-accent" />
@@ -325,13 +345,17 @@ export function PipelineView({ labels }: PipelineViewProps) {
         <ul className="space-y-3">
           {funnel.map((row) => (
             <li key={row.key} className="flex items-center gap-3">
-              <span className="w-24 shrink-0 text-[12.5px] text-text-secondary">
+              <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
                 {row.label}
               </span>
               <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface-2">
                 <div
-                  className={cn("h-full rounded-full", row.tone)}
-                  style={{ width: `${(row.value / maxFunnel) * 100}%` }}
+                  className="h-full rounded-full transition-[width]"
+                  style={{
+                    width: `${(row.value / maxFunnel) * 100}%`,
+                    backgroundColor: row.color,
+                    minWidth: row.value > 0 ? 8 : 0,
+                  }}
                 />
               </div>
               <span className="w-8 text-right font-mono text-[12px] text-text-primary">

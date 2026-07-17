@@ -39,6 +39,7 @@
   --background-image-grad-card: var(--grad-card);
   --background-image-grad-dusk: var(--grad-dusk);
   --background-image-grad-route: var(--grad-route);
+  --background-image-grad-portal-wash: var(--grad-portal-wash);
 }
 
 body {
@@ -152,9 +153,16 @@ video {
   min-height: 1.5rem;
 }
 
-/* Brand — grey → purple card / panel surface */
+/* Brand — soft white → lavender → cream card / panel surface */
 .card-panel {
   border-radius: var(--radius);
   border: 1px solid var(--border);
   background-image: var(--grad-card);
+}
+
+/* Portal main canvas — blended wash instead of flat --bg */
+.dashboard-shell {
+  background-color: var(--bg);
+  background-image: var(--grad-portal-wash);
+  background-attachment: fixed;
 }

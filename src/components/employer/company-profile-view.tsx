@@ -336,6 +336,8 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
             />
             <FileUpload
               storagePath={`companies/${company.id}/requirements`}
+              uploadEndpoint="/api/employer/upload"
+              uploadKind="requirements"
               label={labels.requirementUpload}
               dropzoneContent={labels.requirementDropzone}
               progressLabel={labels.uploadProgress}

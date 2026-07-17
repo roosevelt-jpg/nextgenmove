@@ -141,11 +141,25 @@ export function CompanySettingsView({
       />
       <FileUpload
         storagePath={`companies/${company.id}/logo`}
+        uploadEndpoint="/api/employer/upload"
+        uploadKind="logo"
         accept="image/*"
         label={labels.logoUpload}
         dropzoneContent={labels.logoDropzone}
         progressLabel={labels.uploadProgress}
-        onUploadComplete={(result: FileUploadMetadata) => setLogoUrl(result.url)}
+        onUploadComplete={async (result: FileUploadMetadata) => {
+          setLogoUrl(result.url);
+          const response = await fetch("/api/employer/company", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ logoUrl: result.url }),
+          });
+          setStatusMessage(
+            response.ok
+              ? labels.logoSaved ?? labels.saveSuccess ?? "Logo saved."
+              : labels.saveError ?? "Could not save logo.",
+          );
+        }}
       />
       {logoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element

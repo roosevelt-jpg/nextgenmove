@@ -16,6 +16,7 @@ export interface AdminDashboardStats {
   monthlyActiveStudents: number[];
   monthlyPlaced: number[];
   monthLabels: string[];
+  degraded?: boolean;
 }
 
 function quarterStart(date = new Date()): Date {
@@ -195,6 +196,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
       monthlyActiveStudents: [0, 0, 0, 0, 0, 0],
       monthlyPlaced: [0, 0, 0, 0, 0, 0],
       monthLabels: ["Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+      degraded: true,
     };
   }
 }

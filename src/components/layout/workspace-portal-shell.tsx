@@ -41,6 +41,9 @@ export interface WorkspacePortalShellProps {
   } | null;
   /** Only admins (or impersonating admins) see the Admin workspace pill. */
   showAdminWorkspace?: boolean;
+  /** Profile photo for the header account chip. */
+  avatarUrl?: string | null;
+  avatarInitial?: string;
 }
 
 function isActivePath(pathname: string, item: PortalNavItem) {
@@ -68,6 +71,8 @@ export function WorkspacePortalShell({
   previewMode = false,
   impersonation = null,
   showAdminWorkspace = false,
+  avatarUrl = null,
+  avatarInitial,
 }: WorkspacePortalShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -227,7 +232,7 @@ export function WorkspacePortalShell({
   );
 
   return (
-    <div className="dashboard-shell flex min-h-screen w-full bg-bg text-text-primary">
+    <div className="dashboard-shell flex min-h-screen w-full text-text-primary">
       <div className="sticky top-0 hidden h-screen shrink-0 min-[860px]:block">
         {sidebar}
       </div>
@@ -279,10 +284,19 @@ export function WorkspacePortalShell({
                     ? "/employer/settings"
                     : "/student/settings"
               }
-              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
+              className="inline-flex min-h-7 min-w-7 items-center justify-center overflow-hidden rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
               aria-label="Account"
             >
-              {labels.avatarInitial ?? "N"}
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="h-7 w-7 object-cover"
+                />
+              ) : (
+                avatarInitial ?? labels.avatarInitial ?? "N"
+              )}
             </Link>
           </div>
         </header>
