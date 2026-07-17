@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button, EmptyState, Input, Modal } from "@/components/ui";
+import { resolveIntegrationLogoUrl } from "@/lib/integrations/logos";
 
 interface IntegrationItem {
   id: string;
@@ -16,6 +17,36 @@ interface IntegrationItem {
 
 interface AdminIntegrationsViewProps {
   labels: Record<string, string>;
+}
+
+function IntegrationIcon({
+  id,
+  name,
+  iconUrl,
+}: {
+  id: string;
+  name: string;
+  iconUrl?: string;
+}) {
+  const src = resolveIntegrationLogoUrl(id, iconUrl);
+  if (src) {
+    return (
+      <div className="flex h-10 w-10 items-center justify-center rounded-radius-sm border border-border bg-surface-1 p-1.5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt=""
+          className="h-full w-full object-contain"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="flex h-10 w-10 items-center justify-center rounded-radius-sm bg-bg-purple font-mono text-xs font-bold text-fill-accent">
+      {(name || id).slice(0, 2).toUpperCase()}
+    </div>
+  );
 }
 
 export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
@@ -317,9 +348,11 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 className="flex flex-col rounded-radius border border-border bg-grad-card p-4"
               >
                 <div className="mb-3 flex items-start justify-between gap-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-radius-sm bg-bg-purple font-mono text-xs font-bold text-fill-accent">
-                    {(item.name || item.id).slice(0, 2).toUpperCase()}
-                  </div>
+                  <IntegrationIcon
+                    id={item.id}
+                    name={item.name}
+                    iconUrl={item.iconUrl}
+                  />
                   <span
                     className={
                       connected
