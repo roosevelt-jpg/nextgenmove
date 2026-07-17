@@ -35,6 +35,15 @@ describe("parseYoutubePlaylistId", () => {
     );
   });
 
+  it("rejects Google API keys pasted as playlist ids", () => {
+    expect(
+      parseYoutubePlaylistId("AIzaSyDWUXIlmNDEXARng1xYovwCP4XcbVp5kxU"),
+    ).toBeNull();
+    expect(
+      parseYoutubePlaylistId("AlzaSyDWUXIlmNDEXARng1xYovwCP4XcbVp5kxU"),
+    ).toBeNull();
+  });
+
   it("returns null for invalid input", () => {
     expect(parseYoutubePlaylistId("")).toBeNull();
     expect(parseYoutubePlaylistId("https://example.com")).toBeNull();

@@ -6,6 +6,43 @@ import type { AdminEntitySchema } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import {
+  looksLikeGoogleApiKey,
+  parseYoutubePlaylistId,
+} from "@/lib/media/youtube";
+
+function formatSyncTimestamp(value: string): string {
+  if (!value || value === "[object Object]") return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+function mapYoutubeSyncError(
+  error: string | undefined,
+  labels: Record<string, string>,
+): string {
+  if (!error) return labels.youtubeSyncFailed ?? "Sync failed";
+  const key = error.split(":")[0] ?? error;
+  const mapped =
+    labels[`youtube_error_${key}`] ||
+    labels[key] ||
+    (key === "playlist_looks_like_api_key"
+      ? labels.playlist_looks_like_api_key
+      : key === "missing_or_invalid_playlist"
+        ? labels.missing_or_invalid_playlist
+        : key === "missing_youtube_api_key"
+          ? labels.missing_youtube_api_key
+          : null);
+  if (mapped) return mapped;
+  if (error.startsWith("youtube_api_400")) {
+    return (
+      labels.youtube_error_invalid_playlist ||
+      "Invalid playlist. Use a playlist URL (youtube.com/playlist?list=PL…) — put the API key under Integrations → YouTube."
+    );
+  }
+  return error;
+}
 
 interface MediaRow {
   id: string;
@@ -125,7 +162,9 @@ export function AdminHomepageMediaView({
         youtubeSyncEnabled: item.youtubeSyncEnabled !== false,
         youtubeHomepageLimit: Number(item.youtubeHomepageLimit ?? 3) || 3,
         youtubeLibraryLimit: Number(item.youtubeLibraryLimit ?? 12) || 12,
-        youtubeLastSyncedAt: String(item.youtubeLastSyncedAt ?? ""),
+        youtubeLastSyncedAt: formatSyncTimestamp(
+          String(item.youtubeLastSyncedAt ?? ""),
+        ),
         youtubeLastSyncError: String(item.youtubeLastSyncError ?? ""),
       });
     }
@@ -154,15 +193,30 @@ export function AdminHomepageMediaView({
     setModalOpen(true);
   };
 
-  const saveYoutubeSettings = async () => {
+  const saveYoutubeSettings = async (): Promise<boolean> => {
     setSaveBusy(true);
     setSyncMessage(null);
     try {
+      const playlist = youtube.youtubePlaylistUrl.trim();
+      if (looksLikeGoogleApiKey(playlist)) {
+        setSyncMessage(
+          labels.playlist_looks_like_api_key ||
+            "That looks like a Google API key. Put the API key in Integrations → YouTube, and paste a playlist URL or PL… id here.",
+        );
+        return false;
+      }
+      if (playlist && !parseYoutubePlaylistId(playlist)) {
+        setSyncMessage(
+          labels.missing_or_invalid_playlist ||
+            "Enter a YouTube playlist URL or id (starts with PL…).",
+        );
+        return false;
+      }
       const res = await fetch("/api/admin/data/site_settings/default", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          youtubePlaylistUrl: youtube.youtubePlaylistUrl.trim(),
+          youtubePlaylistUrl: playlist,
           youtubeSyncEnabled: youtube.youtubeSyncEnabled,
           youtubeHomepageLimit: youtube.youtubeHomepageLimit,
           youtubeLibraryLimit: youtube.youtubeLibraryLimit,
@@ -170,10 +224,11 @@ export function AdminHomepageMediaView({
       });
       if (!res.ok) {
         setSyncMessage(labels.youtubeSaveFailed ?? "Could not save settings.");
-        return;
+        return false;
       }
       setSyncMessage(labels.youtubeSaveOk ?? "Playlist settings saved.");
       await load();
+      return true;
     } finally {
       setSaveBusy(false);
     }
@@ -183,7 +238,8 @@ export function AdminHomepageMediaView({
     setSyncBusy(true);
     setSyncMessage(null);
     try {
-      await saveYoutubeSettings();
+      const saved = await saveYoutubeSettings();
+      if (!saved) return;
       const res = await fetch("/api/admin/youtube/sync", { method: "POST" });
       const payload = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -194,19 +250,17 @@ export function AdminHomepageMediaView({
         reason?: string;
       };
       if (!res.ok || payload.ok === false) {
-        setSyncMessage(
-          payload.error
-            ? `${labels.youtubeSyncFailed ?? "Sync failed"}: ${payload.error}`
-            : labels.youtubeSyncFailed ?? "Sync failed",
-        );
+        setSyncMessage(mapYoutubeSyncError(payload.error, labels));
       } else if (payload.skipped) {
         setSyncMessage(
           `${labels.youtubeSyncSkipped ?? "Sync skipped"} (${payload.reason ?? ""})`,
         );
       } else {
         setSyncMessage(
-          (labels.youtubeSyncOk ?? "Synced {count} videos")
-            .replace("{count}", String(payload.upserted ?? 0)),
+          (labels.youtubeSyncOk ?? "Synced {count} videos").replace(
+            "{count}",
+            String(payload.upserted ?? 0),
+          ),
         );
       }
       await load();
@@ -233,7 +287,7 @@ export function AdminHomepageMediaView({
         </h2>
         <p className="text-[12.5px] text-text-secondary">
           {labels.youtubeSyncBody ??
-            "Paste a playlist URL. Daily sync (and Sync now) pulls videos into homepage Stories and paid portal libraries."}
+            "Paste a playlist URL (youtube.com/playlist?list=PL…). Connect the YouTube Data API key under Integrations → YouTube, then Sync now."}
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">
@@ -241,6 +295,10 @@ export function AdminHomepageMediaView({
           </span>
           <input
             type="text"
+            placeholder={
+              labels.youtubePlaylistPlaceholder ||
+              "https://www.youtube.com/playlist?list=PL…"
+            }
             value={youtube.youtubePlaylistUrl}
             onChange={(e) =>
               setYoutube((prev) => ({
@@ -302,13 +360,14 @@ export function AdminHomepageMediaView({
             />
           </label>
         </div>
-        {(youtube.youtubeLastSyncedAt || youtube.youtubeLastSyncError) && (
+        {(formatSyncTimestamp(youtube.youtubeLastSyncedAt) ||
+          youtube.youtubeLastSyncError) && (
           <p className="text-[11.5px] text-text-muted">
-            {youtube.youtubeLastSyncedAt
-              ? `${labels.youtubeLastSynced ?? "Last synced"}: ${youtube.youtubeLastSyncedAt}`
+            {formatSyncTimestamp(youtube.youtubeLastSyncedAt)
+              ? `${labels.youtubeLastSynced ?? "Last synced"}: ${formatSyncTimestamp(youtube.youtubeLastSyncedAt)}`
               : null}
             {youtube.youtubeLastSyncError
-              ? ` · ${labels.youtubeLastError ?? "Error"}: ${youtube.youtubeLastSyncError}`
+              ? ` · ${labels.youtubeLastError ?? "Error"}: ${mapYoutubeSyncError(youtube.youtubeLastSyncError, labels)}`
               : null}
           </p>
         )}

@@ -139,8 +139,9 @@ async function main() {
       "Homepage Stories shows the latest synced cards (default 3). Paid student and employer dashboards unlock the fuller private library.",
     youtubeSyncTitle: "YouTube playlist sync",
     youtubeSyncBody:
-      "Paste a playlist URL. Daily sync (and Sync now) pulls videos into homepage Stories and paid portal libraries.",
+      "Paste a playlist URL (youtube.com/playlist?list=PL…). Put the API key under Integrations → YouTube — not in this field.",
     youtubePlaylistUrl: "Playlist URL or ID",
+    youtubePlaylistPlaceholder: "https://www.youtube.com/playlist?list=PL…",
     youtubeSyncEnabled: "Sync enabled",
     youtubeHomepageLimit: "Homepage cards",
     youtubeLibraryLimit: "Library size",
@@ -156,6 +157,14 @@ async function main() {
     youtubeSyncFailed: "Sync failed",
     youtubeSyncSkipped: "Sync skipped",
     youtubeSourceBadge: "YouTube",
+    playlist_looks_like_api_key:
+      "That looks like a Google API key. Put the API key in Integrations → YouTube, and paste a playlist URL or PL… id here.",
+    missing_or_invalid_playlist:
+      "Enter a YouTube playlist URL or id (starts with PL…). Example: https://www.youtube.com/playlist?list=PLxxxx",
+    missing_youtube_api_key:
+      "Connect a YouTube Data API key under Admin → Integrations → YouTube first.",
+    youtube_error_invalid_playlist:
+      "Invalid playlist. Use a playlist URL (youtube.com/playlist?list=PL…) — put the API key under Integrations → YouTube.",
   };
 
   adminPageLabels.integrations = {

@@ -2,6 +2,7 @@ import { AdminHomepageMediaView } from "@/components/admin/admin-homepage-media-
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { getTaxonomies } from "@/lib/collections/taxonomies";
+import { serializeTimestamp } from "@/lib/firestore-utils";
 
 export default async function AdminHomepageVideosPage() {
   const [settings, taxonomies] = await Promise.all([
@@ -22,9 +23,8 @@ export default async function AdminHomepageVideosPage() {
         youtubeSyncEnabled: settings.youtubeSyncEnabled !== false,
         youtubeHomepageLimit: settings.youtubeHomepageLimit ?? 3,
         youtubeLibraryLimit: settings.youtubeLibraryLimit ?? 12,
-        youtubeLastSyncedAt: settings.youtubeLastSyncedAt
-          ? String(settings.youtubeLastSyncedAt)
-          : "",
+        youtubeLastSyncedAt:
+          serializeTimestamp(settings.youtubeLastSyncedAt as never) ?? "",
         youtubeLastSyncError: settings.youtubeLastSyncError ?? "",
       }}
     />

@@ -1,6 +1,15 @@
 const VIDEO_ID_RE = /^[\w-]{6,}$/;
-/** Playlist IDs are typically PL… / UU… / LL… / OL… */
-const PLAYLIST_ID_RE = /^[\w-]{10,}$/;
+/** Common YouTube playlist id prefixes (uploads, liked, mixes, etc.). */
+const PLAYLIST_PREFIX_RE = /^(PL|UU|LL|OL|RD|FL|WL)[\w-]{8,}$/i;
+/** Google API keys must never be treated as playlist ids. */
+const GOOGLE_API_KEY_RE = /^A[Il]zaSy[\w-]{20,}$/i;
+
+/** True when the value looks like a Google API key (often pasted into the wrong field). */
+export function looksLikeGoogleApiKey(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const trimmed = value.trim();
+  return GOOGLE_API_KEY_RE.test(trimmed) || /^AIza[\w-]{20,}$/i.test(trimmed);
+}
 
 /** Extract a YouTube video id from common URL shapes. */
 export function parseYoutubeVideoId(url: string | null | undefined): string | null {
@@ -50,14 +59,22 @@ export function parseYoutubePlaylistId(
   const trimmed = urlOrId.trim();
   if (!trimmed) return null;
 
-  if (PLAYLIST_ID_RE.test(trimmed) && !trimmed.includes("://")) {
+  // API keys match the old loose regex and cause youtube_api_400 "Invalid Value".
+  if (looksLikeGoogleApiKey(trimmed)) {
+    return null;
+  }
+
+  if (!trimmed.includes("://") && PLAYLIST_PREFIX_RE.test(trimmed)) {
     return trimmed;
   }
 
   try {
     const parsed = new URL(trimmed);
     const list = parsed.searchParams.get("list");
-    if (list && PLAYLIST_ID_RE.test(list)) return list;
+    if (list && (PLAYLIST_PREFIX_RE.test(list) || /^[\w-]{10,}$/.test(list))) {
+      if (looksLikeGoogleApiKey(list)) return null;
+      return list;
+    }
   } catch {
     return null;
   }

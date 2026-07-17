@@ -8,6 +8,7 @@ import { revalidateAdminCollection } from "@/lib/admin/revalidate";
 import { stripUndefined } from "@/lib/stripUndefined";
 import {
   formatYoutubeDuration,
+  looksLikeGoogleApiKey,
   parseYoutubePlaylistId,
   youtubeWatchUrl,
 } from "@/lib/media/youtube";
@@ -183,6 +184,18 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       upserted: 0,
       archived: 0,
     };
+  }
+
+  if (looksLikeGoogleApiKey(playlistRaw)) {
+    const error = "playlist_looks_like_api_key";
+    await settingsRef.set(
+      stripUndefined({
+        youtubeLastSyncError: error,
+        youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+      }),
+      { merge: true },
+    );
+    return { ok: false, upserted: 0, archived: 0, error };
   }
 
   const playlistId = parseYoutubePlaylistId(playlistRaw);
