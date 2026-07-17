@@ -8,6 +8,12 @@ import {
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
+import { looksLikeHtml, stripHtmlToPlainText } from "@/lib/content/plain-text";
+
+function asPlainText(value: unknown): string {
+  const raw = value == null ? "" : String(value);
+  return looksLikeHtml(raw) ? stripHtmlToPlainText(raw) : raw;
+}
 
 function getSelectOptions(
   field: AdminFieldSchema,
@@ -299,8 +305,16 @@ export function AdminFieldRenderer({
       <Textarea
         id={field.key}
         label={label}
-        value={String(value ?? "")}
-        onChange={(event) => onChange(setNestedValue(values, field.key, event.target.value))}
+        value={asPlainText(value)}
+        onChange={(event) =>
+          onChange(
+            setNestedValue(
+              values,
+              field.key,
+              stripHtmlToPlainText(event.target.value),
+            ),
+          )
+        }
       />
     );
   }
@@ -355,9 +369,17 @@ export function AdminFieldRenderer({
     <Input
       id={field.key}
       label={label}
-      value={String(value ?? "")}
+      value={asPlainText(value)}
       required={field.required}
-      onChange={(event) => onChange(setNestedValue(values, field.key, event.target.value))}
+      onChange={(event) =>
+        onChange(
+          setNestedValue(
+            values,
+            field.key,
+            stripHtmlToPlainText(event.target.value),
+          ),
+        )
+      }
     />
   );
 }

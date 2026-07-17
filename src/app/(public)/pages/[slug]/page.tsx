@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SectionEyebrow } from "@/components/ui";
+import { RichText } from "@/components/public/rich-text";
 import {
   getPublishedCmsPageBySlug,
   getSiteSettings,
@@ -48,12 +49,7 @@ export default async function CmsPageRoute({
           {page.headline || page.title}
         </h1>
       </header>
-      {page.body ? (
-        <div
-          className="prose prose-neutral max-w-none text-text-secondary"
-          dangerouslySetInnerHTML={{ __html: page.body }}
-        />
-      ) : null}
+      {page.body ? <RichText text={page.body} /> : null}
     </article>
   );
 }

@@ -10,6 +10,7 @@ import {
 import { isAdminCollection } from "@/lib/admin/entity-schemas";
 import { revalidateAdminCollection } from "@/lib/admin/revalidate";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { sanitizePlainTextFields } from "@/lib/admin/sanitize-plain-text";
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   const output: Record<string, unknown> = { id };
@@ -67,7 +68,9 @@ export async function PATCH(
   }
 
   try {
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = sanitizePlainTextFields(
+      (await request.json()) as Record<string, unknown>,
+    );
     const ref = adminDb.collection(collection).doc(id);
     const snapshot = await ref.get();
 

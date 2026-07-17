@@ -542,7 +542,14 @@ export function AdminHomepageMediaView({
         schema={schema}
         entityId={editing ? String(editing.id) : null}
         initialValues={editing ?? {}}
-        labels={formLabels}
+        labels={{
+          ...formLabels,
+          ...labels,
+          cancel: labels.cancel || formLabels.cancel || "Cancel",
+          save: labels.save || formLabels.save || "Save",
+          createTitle: labels.createTitle || formLabels.createTitle || "Create",
+          editTitle: labels.editTitle || formLabels.editTitle || "Edit",
+        }}
         taxonomies={taxonomies}
         onSaved={load}
       />

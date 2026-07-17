@@ -134,10 +134,10 @@ export function AdminEntityModal({
       footer={
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
-            {labels.cancel}
+            {labels.cancel || "Cancel"}
           </Button>
           <Button disabled={isSaving} onClick={save}>
-            {labels.save}
+            {labels.save || "Save"}
           </Button>
         </div>
       }

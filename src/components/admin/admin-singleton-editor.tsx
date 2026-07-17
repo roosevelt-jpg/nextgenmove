@@ -72,7 +72,17 @@ export function AdminSingletonEditor({
         schema={schema}
         entityId={schema.singletonId ?? "default"}
         initialValues={values}
-        labels={formLabels}
+        labels={{
+          ...formLabels,
+          ...labels,
+          cancel: labels.cancel || formLabels.cancel || "Cancel",
+          save: labels.save || formLabels.save || "Save",
+          createTitle:
+            labels.createTitle || formLabels.createTitle || "Create",
+          editTitle: labels.editTitle || formLabels.editTitle || "Edit",
+          addRow: labels.addRow || formLabels.addRow || "Add row",
+          removeRow: labels.removeRow || formLabels.removeRow || "Remove",
+        }}
         taxonomies={taxonomies}
         onSaved={load}
       />

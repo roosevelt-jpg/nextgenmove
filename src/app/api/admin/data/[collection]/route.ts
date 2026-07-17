@@ -14,6 +14,7 @@ import {
 } from "@/lib/admin/revalidate";
 import { isAdminCollection } from "@/lib/admin/entity-schemas";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { sanitizePlainTextFields } from "@/lib/admin/sanitize-plain-text";
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   const output: Record<string, unknown> = { id };
@@ -88,7 +89,9 @@ export async function POST(
   }
 
   try {
-    const body = (await request.json()) as Record<string, unknown>;
+    const body = sanitizePlainTextFields(
+      (await request.json()) as Record<string, unknown>,
+    );
     const ref = adminDb.collection(collection).doc();
 
     await ref.set(

@@ -303,7 +303,18 @@ export function AdminEntityListView({
         schema={schema}
         entityId={editingItem ? String(editingItem.id) : null}
         initialValues={editingItem ?? {}}
-        labels={formLabels}
+        labels={{
+          ...formLabels,
+          ...labels,
+          cancel: labels.cancel || formLabels.cancel || "Cancel",
+          save: labels.save || formLabels.save || "Save",
+          createTitle:
+            labels.createTitle || formLabels.createTitle || "Create",
+          editTitle: labels.editTitle || formLabels.editTitle || "Edit",
+          addRow: labels.addRow || formLabels.addRow || "Add field",
+          removeRow: labels.removeRow || formLabels.removeRow || "Remove",
+          formFields: labels.formFields || formLabels.formFields || "Form fields",
+        }}
         taxonomies={taxonomies}
         onSaved={load}
       />
