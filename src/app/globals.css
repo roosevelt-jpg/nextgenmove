@@ -108,7 +108,86 @@ video {
   padding-right: var(--page-gutter);
 }
 
-/* Brand — signature CTA (full-color blue→purple gradient + white label) */
+/* ——— Buttons (Brand Guidelines §05) ———
+   Primary = Ink · Brand = Purple · Signature = Horizon (rare) · Outline/Ghost = secondary */
+
+.btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 1.625rem;
+  min-width: fit-content;
+  padding: 0.2rem 0.55rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: opacity 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+}
+
+.btn-base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.btn-ink {
+  background-color: var(--fill-primary);
+  background-image: none;
+  color: var(--on-primary);
+}
+
+.btn-ink:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-purple {
+  background-color: var(--fill-accent);
+  background-image: none;
+  color: #ffffff;
+}
+
+.btn-purple:hover:not(:disabled) {
+  background-color: var(--fill-accent-strong);
+}
+
+/* Signature — Horizon once per screen for the primary marketing CTA */
+.btn-signature {
+  background-color: var(--brand-indigo-2);
+  background-image: var(--grad-horizon);
+  color: #ffffff;
+}
+
+.btn-signature:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.btn-outline {
+  background-color: transparent;
+  background-image: none;
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--surface-2);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  background-image: none;
+  color: var(--fill-accent);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-purple);
+}
+
+/* Legacy aliases — map old class names to purple solid (not gradient spam) */
 .btn-brand {
   display: inline-flex;
   align-items: center;
@@ -119,50 +198,39 @@ video {
   padding: 0.2rem 0.55rem;
   border: 0;
   border-radius: var(--radius-sm);
-  background-color: #3c3489;
-  background-image: var(--grad-rouse);
-  color: var(--on-gradient);
+  background-color: var(--fill-accent);
+  background-image: none;
+  color: #ffffff;
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
-  transition: opacity 0.15s ease, filter 0.15s ease;
+  transition: opacity 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
 }
 
-.btn-brand:hover {
-  opacity: 1;
-  filter: brightness(1.06);
+.btn-brand:hover:not(:disabled) {
+  background-color: var(--fill-accent-strong);
 }
 
-/* Outline / ghost — same full brand gradient + white label (Cancel must stay readable) */
 .btn-brand-outline,
 .btn-brand-ghost {
-  background-color: #3c3489;
-  background-image: var(--grad-rouse);
-  color: #ffffff;
-  border: 0;
-}
-
-.btn-brand-outline {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  background-color: transparent;
+  background-image: none;
+  color: var(--fill-accent);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .btn-brand-ghost {
-  filter: saturate(0.92);
+  box-shadow: none;
 }
 
-button.btn-brand,
-button.btn-brand-outline,
-button.btn-brand-ghost,
-a.btn-brand,
-.btn-brand,
-.btn-brand-outline,
-.btn-brand-ghost {
-  color: #ffffff !important;
+.btn-brand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* Text links — full-color gradient (purple → amber) */
+/* Text links — Route gradient (purple → amber), accent only */
 a.link-brand,
 .link-brand {
   background-image: var(--grad-route);
@@ -179,7 +247,6 @@ a.link-brand:hover,
   filter: brightness(1.08);
 }
 
-/* Fallback when background-clip unsupported */
 @supports not (background-clip: text) {
   a.link-brand,
   .link-brand {
@@ -189,26 +256,19 @@ a.link-brand:hover,
 }
 
 /* Dashboard chrome — compact action controls */
-.dashboard-shell .btn-brand {
+.dashboard-shell .btn-base,
+.dashboard-shell .btn-brand,
+.dashboard-shell .btn-ink,
+.dashboard-shell .btn-purple,
+.dashboard-shell .btn-signature {
   min-height: 1.5rem;
   padding: 0.15rem 0.5rem;
   font-size: 0.625rem;
 }
 
-.btn-brand:hover {
-  opacity: 1;
-  filter: brightness(1.06);
-}
-
-.btn-brand:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  filter: none;
-}
-
-/* Compact interactive controls inside dashboards */
 .dashboard-shell button:not([role="switch"]):not(.absolute),
 .dashboard-shell a.btn-brand,
+.dashboard-shell a.btn-base,
 .dashboard-shell a[class*="bg-grad-rouse"] {
   min-height: 1.5rem;
 }
@@ -221,7 +281,7 @@ a.link-brand:hover,
   background-image: none;
 }
 
-/* Portal + site canvas — force solid white (kill any leftover wash) */
+/* Portal + site canvas — solid white */
 .dashboard-shell,
 .dashboard-shell main,
 body,

@@ -20,8 +20,8 @@ function AudienceCtaCard({
     <div
       className={cn(
         "flex h-full min-w-0 flex-col rounded-radius p-5 sm:p-6",
-        variant === "lavender" && "border border-border bg-grad-card",
-        isGradient && "bg-[image:var(--grad-rouse)] text-on-gradient",
+        variant === "lavender" && "border border-border bg-grad-dusk",
+        isGradient && "bg-fill-accent text-on-accent",
         isInk && "border border-border bg-fill-primary text-on-primary",
       )}
     >

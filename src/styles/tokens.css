@@ -3,11 +3,11 @@
  * Never hardcode colors/fonts/radii in components; use these variables only.
  */
 :root {
-  /* Neutrals — pure white canvas (no cream / amber wash) */
+  /* Neutrals — white canvas (product choice) + brand Surface 2 / Border */
   --bg: #ffffff;
   --surface-1: #ffffff;
-  --surface-2: #f4f4f5;
-  --border: #e4e4e7;
+  --surface-2: #f1efe8; /* Surface 2 */
+  --border: #e7e4d9; /* Border */
 
   /* Text */
   --text-primary: #1a1a18; /* Ink */
@@ -87,19 +87,23 @@
     #9a6a3c 78%,
     #c97a2e 100%
   );
-  /* Rouse — signature CTA (blue → purple, white label) */
-  --grad-rouse: linear-gradient(105deg, #1a2f6b 0%, #3c3489 48%, #6b4fc4 100%);
-  /* Noon — deeper indigo → purple */
-  --grad-noon: linear-gradient(105deg, #152556 0%, #5239a0 55%, #7a68d4 100%);
-  /* Ink fade — purple → ink */
-  --grad-ink-fade: linear-gradient(90deg, #3b2e7d 0%, #141416 100%);
-  /* Card surface — solid white via 1-stop gradient (bg-grad-card uses background-image) */
-  --grad-card: linear-gradient(#ffffff, #ffffff);
-  --grad-dusk: linear-gradient(#ffffff, #ffffff);
+  /* Dusk — quiet card emphasis / empty states */
+  --grad-dusk: linear-gradient(135deg, #eeedfe 0%, #faeeda 100%);
+  /* Route — thin accent lines / progress (2–4px) */
   --grad-route: linear-gradient(90deg, #3c3489, #c97a2e);
-  /* Portal canvas — always white in light mode */
+  /* Ink fade — photo/illustration scrim for white text */
+  --grad-ink-fade: linear-gradient(
+    180deg,
+    rgba(26, 26, 24, 0) 0%,
+    rgba(26, 26, 24, 0.92) 100%
+  );
+  /* Card default — solid white; use bg-grad-dusk for quiet emphasis */
+  --grad-card: linear-gradient(#ffffff, #ffffff);
+  /* Portal canvas — solid white */
   --grad-portal-wash: linear-gradient(#ffffff, #ffffff);
-  /* Button text on gradient CTAs */
+  /* Legacy aliases (prefer Horizon / purple solid over these on new UI) */
+  --grad-rouse: linear-gradient(105deg, #1a2f6b 0%, #3c3489 48%, #6b4fc4 100%);
+  --grad-noon: linear-gradient(105deg, #152556 0%, #5239a0 55%, #7a68d4 100%);
   --on-gradient: #ffffff;
 
   /* Content column — wide marketing canvas (tracks viewport with gutters) */
@@ -155,9 +159,22 @@ html.dark {
   --bg-tag: #1e3320;
   --text-tag: #8fd48a;
   --border-accent: #9a7fe0;
+  --grad-horizon: linear-gradient(
+    115deg,
+    #2e2768 0%,
+    #4b3f9c 38%,
+    #9a6a3c 78%,
+    #c97a2e 100%
+  );
+  --grad-dusk: linear-gradient(135deg, #2a2550 0%, #3d2e1a 100%);
+  --grad-route: linear-gradient(90deg, #9a7fe0, #e8a85c);
+  --grad-ink-fade: linear-gradient(
+    180deg,
+    rgba(20, 18, 43, 0) 0%,
+    rgba(20, 18, 43, 0.92) 100%
+  );
   --grad-rouse: linear-gradient(105deg, #2a3f8f 0%, #5b4db8 50%, #8b7ae0 100%);
   --grad-noon: linear-gradient(105deg, #1e326e 0%, #6b4fc4 55%, #9a8aef 100%);
-  --grad-ink-fade: linear-gradient(90deg, #3b2e7d 0%, #0e0c1a 100%);
   --grad-card: linear-gradient(#252240, #252240);
   --grad-portal-wash: linear-gradient(#14122b, #14122b);
   --on-gradient: #ffffff;

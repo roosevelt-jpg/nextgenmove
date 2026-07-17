@@ -33,7 +33,7 @@ export function StatCard({
       </div>
       <div
         className={cn(
-          "mt-0.5 font-serif text-xl font-semibold text-text-primary",
+          "mt-0.5 font-serif text-xl font-semibold text-text-accent",
           valueClassName,
         )}
       >

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { clearSession } from "@/lib/auth-client";
+import { avatarToneClasses } from "@/lib/avatar-hue";
 import { resolveBrandIconUrl } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
@@ -285,7 +286,13 @@ export function AdminPortalShell({
             <ThemeToggle />
             <Link
               href="/admin/account"
-              className="inline-flex min-h-7 min-w-7 items-center justify-center overflow-hidden rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
+              className={`inline-flex min-h-7 min-w-7 items-center justify-center overflow-hidden rounded-full text-[11px] font-bold ${
+                avatarUrl
+                  ? "bg-bg-purple text-fill-accent"
+                  : avatarToneClasses(
+                      avatarInitial ?? labels.avatarInitial ?? "N",
+                    )
+              }`}
               aria-label="Account"
             >
               {avatarUrl ? (

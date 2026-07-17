@@ -3,7 +3,21 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "primary" | "ghost" | "outline" | "secondary" | "brand";
+/**
+ * Brand Guidelines §05:
+ * - primary → Ink fill
+ * - brand → Purple fill
+ * - signature → Horizon gradient (use once per screen)
+ * - outline / secondary → bordered secondary
+ * - ghost → text-only purple
+ */
+export type ButtonVariant =
+  | "primary"
+  | "brand"
+  | "signature"
+  | "ghost"
+  | "outline"
+  | "secondary";
 export type ButtonSize = "default" | "sm" | "xs" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -11,10 +25,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
 }
 
-/**
- * Signature CTAs use full-color brand gradients via `.btn-brand`.
- * Outline / ghost keep gradient washes so every action stays colorful.
- */
 const sizeClasses: Record<ButtonSize, string> = {
   default: "min-h-6 shrink-0 whitespace-nowrap px-2 py-0.5 text-[11px]",
   sm: "min-h-5 shrink-0 whitespace-nowrap px-1.5 py-0.5 text-[10px]",
@@ -23,11 +33,12 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "btn-brand !text-white",
-  brand: "btn-brand !text-white",
-  secondary: "btn-brand !text-white",
-  outline: "btn-brand btn-brand-outline !text-white",
-  ghost: "btn-brand btn-brand-ghost !text-white",
+  primary: "btn-base btn-ink",
+  brand: "btn-base btn-purple",
+  signature: "btn-base btn-signature",
+  secondary: "btn-base btn-outline",
+  outline: "btn-base btn-outline",
+  ghost: "btn-base btn-ghost",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

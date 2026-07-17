@@ -10,6 +10,7 @@ import {
   type AdvancedFilterValue,
 } from "@/components/ui";
 import { toSearchParams } from "@/lib/filters/apply-client-filters";
+import { avatarToneClasses, initialsFromName } from "@/lib/avatar-hue";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface TalentPoolRow extends Record<string, unknown> {
@@ -273,7 +274,9 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
                 className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border bg-grad-card px-3.5 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent">
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarToneClasses(row.fullName)}`}
+                  >
                     {initialsFromName(row.fullName)}
                   </span>
                   <div className="min-w-0">
@@ -406,9 +409,3 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
   );
 }
 
-function initialsFromName(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "";
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
-  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
-}

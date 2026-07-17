@@ -14,14 +14,15 @@ Canonical file: `NextGenMove_Brand_Guidelines.html` (repo root). Design tokens i
 - **Amber** `#C97A2E` — warm counter-accent (stats, secondary emphasis)
 - **Green** `#27500A` — success/positive only
 - **Oxblood** `#8B3A3A` — warning/churned only
-- Neutrals: bg `#FAFAF7`, surface `#FFFFFF`, surface-2 `#F1EFE8`, border `#E7E4D9`, muted `#9B9A91`, secondary `#6B6A63`
+- Neutrals: canvas `#FFFFFF` (product), surface `#FFFFFF`, surface-2 `#F1EFE8`, border `#E7E4D9`, muted `#9B9A91`, secondary `#6B6A63`
 - Tint backgrounds: purple `#EEEDFE`, amber `#FAEEDA`, green `#EAF3DE`, oxblood `#F5E9E7`
 
 ## Gradients
 
-- **Horizon** (indigo→amber, 115°) — signature; **one full-bleed use per screen** (hero/cover only). Never on buttons + tags + hero together.
+- **Horizon** (indigo→amber, 115°) — signature; **one full-bleed use per screen** (hero/cover / rare signature button only). Never on every button + tags + hero together.
 - **Dusk** — quiet card emphasis / empty states
 - **Route** — thin 2–4px progress/underline accents only
+- **Ink Fade** — photo scrim (transparent → ink), not a decorative purple bar
 
 ## Typography
 
@@ -31,20 +32,20 @@ Canonical file: `NextGenMove_Brand_Guidelines.html` (repo root). Design tokens i
 
 ## Layout
 
-- **Full-bleed backgrounds**, **constrained content**: section/hero backgrounds span the viewport; nav, cards, copy, and forms sit in `.page-container` / `.page-section` / `max-w-page` (`--page-max: 56rem`) so wide screens keep empty side margins
+- **Full-bleed backgrounds**, **constrained content**: section/hero backgrounds span the viewport; nav, cards, copy, and forms sit in `.page-container` / `.page-section`
 - Cards/forms: tight padding (8–14px); prefer compressed density over large empty gaps
 
 ## Components
 
-- Primary button = Ink fill; Brand button = Purple; Outline = Ink border; radius ~7px
+- Primary button = **Ink** fill; Brand button = **Purple** fill; Signature = **Horizon** (rare); Outline/Ghost = secondary
 - Status pills = tint bg + full-strength text (never solid pill fills)
-- Avatars = initials in purple/amber/green (hash by name) — no stock photos of people
-- Cards: tight padding/gaps (8–14px); radius ~8–10px
+- Avatars = initials hashed across purple/amber/green/oxblood (`avatar-hue.ts`) — no stock photos of people
+- Stat numbers default to **amber**
 
 ## Do / Don't
 
 - DO: Horizon once at top as full-bleed banner
-- DON'T: Multiple gradients on one screen
+- DON'T: Multiple gradients on one screen / gradient on every button
 - DO: Density that reads as precision
 - DON'T: Large empty “breathing room” gaps that dilute the itinerary feel
 - DON'T: Stock photography or generic illustrated people
