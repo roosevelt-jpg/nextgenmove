@@ -1,5 +1,5 @@
 /**
- * Venturo — operational config seed (Admin SDK only).
+ * Nextgenmove — operational config seed (Admin SDK only).
  *
  * Usage:
  *   npm run seed
@@ -188,7 +188,7 @@ const PAGE_HOME = {
   headline: "Your next step,",
   headlineEmphasis: "engineered.",
   subtext:
-    "Venturo pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
+    "Nextgenmove pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
   ctaPrimaryLabel: "Explore open roles",
   ctaPrimaryHref: "/careers-talent",
   ctaSecondaryLabel: "I'm hiring",
@@ -298,7 +298,7 @@ const PAGE_HOME = {
     classLabel: "Class",
     classValue: "Track B",
     refLabel: "Ref",
-    refValue: "VENTURO",
+    refValue: "NEXTGENMOVE",
   },
   itineraryEyebrow: "The itinerary",
   itineraryHeadline: "Three legs. One arrival.",
@@ -310,7 +310,7 @@ const PAGE_HOME = {
   podcastManagedLabel: "Managed in admin · Homepage content",
   testimonialQuote:
     "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai — and my coach was in my corner for every leg of it.",
-  testimonialAttribution: "Sara K. · Marketing lead · Placed via Venturo",
+  testimonialAttribution: "Sara K. · Marketing lead · Placed via Nextgenmove",
   testimonialBadge: "Placed {year}",
   talentCta: {
     eyebrow: "For talent",
@@ -393,9 +393,9 @@ const PAGE_HOME = {
 const PAGE_ABOUT = {
   heroHeadline: "We engineer the move.",
   heroSubtext:
-    "Venturo exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.",
+    "Nextgenmove exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.",
   missionBody:
-    "<p>Venturo exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.</p>",
+    "<p>Nextgenmove exists because relocating for a career should feel like a well-run itinerary, not a leap of faith. We pair every candidate with a coach and every employer with a pre-screened match.</p>",
   statBlocks: [
     { label: "Active students", value: "248" },
     { label: "Placed this quarter", value: "41" },
@@ -404,7 +404,7 @@ const PAGE_ABOUT = {
   ],
   teamMembers: [
     {
-      name: "Lemoni Grootkerk",
+      name: "Nextgenmove",
       role: "Founder & coach",
       photo: "",
       bio: "Leads coaching and placement strategy across every route.",
@@ -472,11 +472,11 @@ const PAGE_PRICING = {
   trackAFeatures: [
     "Full talent pool access",
     "Pipeline tracking",
-    "Introduction via Venturo",
+    "Introduction via Nextgenmove",
   ],
-  trackBHeadline: "Venturo does everything",
+  trackBHeadline: "Nextgenmove does everything",
   trackBFeatures: [
-    "Venturo searches for you",
+    "Nextgenmove searches for you",
     "Weekly updates",
     "Full placement support",
   ],
@@ -496,9 +496,9 @@ const PAGE_PRICING = {
 
 const PAGE_TRACKS = {
   trackABody:
-    "<p>Browse the talent pool yourself. You find the match. Venturo handles the introduction.</p>",
+    "<p>Browse the talent pool yourself. You find the match. Nextgenmove handles the introduction.</p>",
   trackBBody:
-    "<p>Full service. Venturo actively sources your match and coaches the placement through to day ninety.</p>",
+    "<p>Full service. Nextgenmove actively sources your match and coaches the placement through to day ninety.</p>",
   statBlocks: [
     {
       label: "Active talent",
@@ -533,7 +533,7 @@ const PAGE_TRACKS = {
     {
       feature: "Sourcing",
       trackAValue: "Self-serve",
-      trackBValue: "Venturo-led",
+      trackBValue: "Nextgenmove-led",
     },
     {
       feature: "Coaching support",
@@ -677,15 +677,15 @@ function mergeEmptyFields(
 }
 
 const OPERATIONAL_SITE_SETTINGS = {
-  siteName: "Venturo",
+  siteName: "Nextgenmove",
   tagline: "Relocation, engineered.",
   siteDescription: "Your next step, engineered.",
   logoUrl: "",
   faviconUrl: "",
-  defaultMetaTitle: "Venturo — Relocation, engineered.",
+  defaultMetaTitle: "Nextgenmove — Relocation, engineered.",
   defaultMetaDescription:
-    "Venturo matches pre-screened talent with employers. Free to join for talent; curated hiring for companies.",
-  brandMark: "V",
+    "Nextgenmove matches pre-screened talent with employers. Free to join for talent; curated hiring for companies.",
+  brandMark: "N",
   contactEmail: "",
   footerCopyright: "© {year} {siteName}",
   footerAttributionPrefix: "Made with ❤️ by",
@@ -708,7 +708,7 @@ const OPERATIONAL_SITE_SETTINGS = {
   youtubeLastSyncError: null as string | null,
   socialLinks: [] as Array<{ key: string; label: string; url: string }>,
   navLabels: {
-    siteName: "Venturo",
+    siteName: "Nextgenmove",
     companySection: "Company",
     talentSection: "Talent",
     employersSection: "Employers",
@@ -728,8 +728,8 @@ const OPERATIONAL_SITE_SETTINGS = {
     contact: "Contact",
   },
   authLabels: {
-    siteName: "Venturo",
-    brandMark: "V",
+    siteName: "Nextgenmove",
+    brandMark: "N",
     signInEyebrow: "Welcome back",
     signInTitle: "Sign in to your account.",
     signInSubtitle: "Pick up right where you left off.",
@@ -758,7 +758,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     forgotPasswordLinkLabel: "Forgot password?",
     panelQuote:
       "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai.",
-    panelAttribution: "Sara K. · Marketing Lead · Placed via Venturo",
+    panelAttribution: "Sara K. · Marketing Lead · Placed via Nextgenmove",
     panelQuoteCompany:
       "We moved from Track A to Track B once we needed three hires in a single quarter — sourcing alone cut our time-to-place in half.",
     panelAttributionCompany:
@@ -925,7 +925,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     timeline: "Timeline",
     timelinePlaceholder: "Select timeline",
     additionalRequirements: "Additional requirements",
-    additionalRequirementsPlaceholder: "Anything else Venturo should know…",
+    additionalRequirementsPlaceholder: "Anything else Nextgenmove should know…",
     jobDescriptionUpload: "Job description (optional)",
     jobDescriptionDropzone: "Upload PDF or DOCX",
     uploadProgress: "Uploading…",
@@ -975,11 +975,11 @@ const OPERATIONAL_SITE_SETTINGS = {
     aboutEyebrow: "About",
     contactEyebrow: "Contact",
     contactTitle: "Get in touch.",
-    contactSubtitle: "Reach the Venturo team by email or on social.",
+    contactSubtitle: "Reach the Nextgenmove team by email or on social.",
     contactEmailLabel: "Email",
     contactSocialTitle: "Social",
     contactMetaTitle: "Contact",
-    contactMetaDescription: "Contact Venturo by email or social media.",
+    contactMetaDescription: "Contact Nextgenmove by email or social media.",
     requestTalentEyebrow: "Request talent",
     requestTalentHeadline: "Tell us who you need.",
     browseRolesEyebrow: "Browse roles",
@@ -1055,7 +1055,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       shortlistAction: "Shortlist",
       unshortlistAction: "Remove star",
       shortlistedLabel: "Shortlisted",
-      emptyState: "No candidates in your pool yet. Ask Venturo to curate matches.",
+      emptyState: "No candidates in your pool yet. Ask Nextgenmove to curate matches.",
       backToPool: "← Talent pool",
       matchScoreLabel: "match",
       bioLabel: "Bio",
@@ -1361,7 +1361,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       alreadyReferred: "You already used a referral code.",
       topUpTitle: "Buy credits",
       topUpIntro:
-        "Buy a credit pack. When Stripe is connected you pay by card at Checkout; otherwise Venturo confirms payment manually.",
+        "Buy a credit pack. When Stripe is connected you pay by card at Checkout; otherwise Nextgenmove confirms payment manually.",
       topUpAction: "Buy / request",
       topUpRequested: "Request sent — pending admin approval.",
       topUpFailed: "Could not start top-up. Try again.",
@@ -1445,7 +1445,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       eyebrow: "Admin",
       title: "Operations dashboard.",
       subtitle:
-        "Real-time overview of Venturo placements and activity.",
+        "Real-time overview of Nextgenmove placements and activity.",
       activeCompanies: "Active companies",
       activeStudents: "Active students",
       openJobsCount: "Open jobs",
@@ -1733,7 +1733,7 @@ const OPERATIONAL_SITE_SETTINGS = {
     settings: {
       settingsTitle: "Workspace settings.",
       workspaceEyebrow: "Admin · Settings",
-      workspaceSubtitle: "General configuration for the Venturo workspace.",
+      workspaceSubtitle: "General configuration for the Nextgenmove workspace.",
       teamMembersTitle: "Team members",
       teamMembersBody: "Invite and manage admin users.",
       manageTeam: "Manage team →",
@@ -1891,11 +1891,11 @@ const OPERATIONAL_SITE_SETTINGS = {
         "In Stripe Dashboard → Developers → Webhooks, add endpoint: {APP_URL}/api/webhooks/stripe — events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed",
       stripeWebhookPath: "/api/webhooks/stripe",
       sendgridHint:
-        "Legacy SendGrid — Venturo sends transactional email via Resend.",
+        "Legacy SendGrid — Nextgenmove sends transactional email via Resend.",
       sendgridApiKey: "API key (SG.…)",
       sendgridFromEmail: "From email (verified sender)",
       sendgridFromName: "From name",
-      sendgridDefaultFromName: "Venturo",
+      sendgridDefaultFromName: "Nextgenmove",
       sendgridHelp:
         "Prefer connecting Resend. Templates live in email_templates.",
       resendHint:
@@ -1903,7 +1903,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       resendApiKey: "API key (re_…)",
       resendFromEmail: "From email (verified domain)",
       resendFromName: "From name",
-      resendDefaultFromName: "Venturo",
+      resendDefaultFromName: "Nextgenmove",
       resendHelp:
         "Verify your domain in Resend. Templates live in email_templates and use site branding from Site settings.",
       twilioAccountSid: "Account SID",
@@ -1913,7 +1913,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       twilioHelp:
         "Used for CRM outreach only. Signup phone verification uses Firebase Phone Auth OTP.",
       youtubeHint:
-        "Connect a YouTube Data API key so Venturo can sync your playlist into homepage Stories and paid portal libraries.",
+        "Connect a YouTube Data API key so Nextgenmove can sync your playlist into homepage Stories and paid portal libraries.",
       youtubeApiKey: "YouTube Data API key",
       youtubeHelp:
         "Create a key in Google Cloud Console → APIs & Services → Credentials, enable YouTube Data API v3, then paste the key here. Playlist URL is set under Admin → Homepage Content.",
@@ -2210,7 +2210,7 @@ async function seedIntegrations(db: Firestore) {
       name: "SendGrid (legacy)",
       category: "Transactional email",
       description:
-        "Legacy email provider — Venturo now sends via Resend. Kept for reference only.",
+        "Legacy email provider — Nextgenmove now sends via Resend. Kept for reference only.",
       iconUrl: "",
       status: "not_connected",
       connectedAt: null,
@@ -2299,7 +2299,7 @@ async function seedPipelineStages(db: Firestore) {
 }
 
 async function main() {
-  console.log("Venturo seed — operational config only\n");
+  console.log("Nextgenmove seed — operational config only\n");
 
   initFirebaseAdmin();
 

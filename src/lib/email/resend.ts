@@ -49,7 +49,7 @@ export async function getResendFrom(): Promise<{
     config.fromName?.trim() ||
     secrets.fromName?.trim() ||
     process.env.RESEND_FROM_NAME?.trim() ||
-    "Venturo";
+    "Nextgenmove";
 
   if (!email || !email.includes("@")) {
     throw new ResendNotConfiguredError("resend_missing_from_email");

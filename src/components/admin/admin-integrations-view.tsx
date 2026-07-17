@@ -121,7 +121,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               host: configHost || "smtp.gmail.com",
               port: smtpPort || "465",
               fromEmail: fromEmail || smtpUser,
-              fromName: fromName || labels.smtpDefaultFromName || "Venturo",
+              fromName: fromName || labels.smtpDefaultFromName || "Nextgenmove",
               secure: "true",
               category: "Transactional email",
             },
@@ -144,8 +144,8 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               fromName:
                 fromName ||
                 (isResend
-                  ? labels.resendDefaultFromName || "Venturo"
-                  : labels.sendgridDefaultFromName || "Venturo"),
+                  ? labels.resendDefaultFromName || "Nextgenmove"
+                  : labels.sendgridDefaultFromName || "Nextgenmove"),
             },
             secrets: {
               ...(apiKey ? { apiKey } : {}),

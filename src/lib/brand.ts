@@ -1,7 +1,7 @@
-/** Hardcoded Venturo brand assets (public/). Always preferred over CMS uploads. */
+/** Hardcoded Nextgenmove brand assets (public/). Always preferred over CMS uploads. */
 
-export const BRAND_LOGO_PATH = "/brand/venturo-logo.png";
-export const BRAND_ICON_PATH = "/brand/venturo-favicon.png";
+export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo.png";
+export const BRAND_ICON_PATH = "/brand/nextgenmove-favicon.png";
 export const BRAND_FAVICON_PATH = BRAND_ICON_PATH;
 
 /** Ignore CMS overrides — brand files are committed under /public/brand. */

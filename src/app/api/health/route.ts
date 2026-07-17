@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const requestId = createRequestId(request.headers.get("x-request-id"));
   const body = {
     ok: true,
-    service: "Venturo",
+    service: "Nextgenmove",
     ts: new Date().toISOString(),
     requestId,
   };

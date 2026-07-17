@@ -1,4 +1,4 @@
-# Firestore Schema — Venturo
+# Firestore Schema — Nextgenmove
 
 Reference document for all Firestore collections. Collections are **not** created by this phase — this schema is the contract for later phases.
 
@@ -116,7 +116,7 @@ Generic inbound requests table — sourcing requests, plan change requests, etc.
 
 ## `job_postings`
 
-Internal Venturo Careers page.
+Internal Nextgenmove Careers page.
 
 | Field | Type | Notes |
 |---|---|---|

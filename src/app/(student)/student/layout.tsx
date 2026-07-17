@@ -62,8 +62,8 @@ export default async function StudentPortalLayout({
       sectionLabel={labels.studentSection ?? "Student"}
       navItems={NAV_ITEMS}
       labels={labels}
-      siteName={settings.siteName ?? "Venturo"}
-      brandMark={settings.brandMark ?? "V"}
+      siteName={settings.siteName ?? "Nextgenmove"}
+      brandMark={settings.brandMark ?? "N"}
       previewMode={previewMode}
       impersonation={impersonating}
       showAdminWorkspace={showAdminWorkspace}

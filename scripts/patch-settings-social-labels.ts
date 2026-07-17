@@ -77,11 +77,11 @@ async function main() {
     ...((existing.pageLabels as Record<string, string>) || {}),
     contactEyebrow: "Contact",
     contactTitle: "Get in touch.",
-    contactSubtitle: "Reach the Venturo team by email or on social.",
+    contactSubtitle: "Reach the Nextgenmove team by email or on social.",
     contactEmailLabel: "Email",
     contactSocialTitle: "Social",
     contactMetaTitle: "Contact",
-    contactMetaDescription: "Contact Venturo by email or social media.",
+    contactMetaDescription: "Contact Nextgenmove by email or social media.",
   };
 
   const formLabels = {

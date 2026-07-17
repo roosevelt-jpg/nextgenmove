@@ -1,6 +1,6 @@
 /** Cookie + locale helpers shared by client and server. */
 
-export const LOCALE_COOKIE = "venturo_locale";
+export const LOCALE_COOKIE = "nextgenmove_locale";
 
 export const RTL_LOCALES = new Set([
   "ar",

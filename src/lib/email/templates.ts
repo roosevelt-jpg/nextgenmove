@@ -59,10 +59,10 @@ export async function buildBrandVars(request?: Request): Promise<EmailVars> {
   const base = appBaseUrl(request);
 
   return {
-    siteName: settings.siteName || "Venturo",
+    siteName: settings.siteName || "Nextgenmove",
     tagline: settings.tagline || "",
     logoUrl: absoluteBrandAssetUrl(resolveBrandLogoUrl(settings.logoUrl)),
-    brandMark: settings.brandMark || "V",
+    brandMark: settings.brandMark || "N",
     contactEmail: settings.contactEmail || "",
     appUrl: base,
     signInUrl: `${base}/sign-in`,
@@ -75,7 +75,7 @@ export async function buildBrandVars(request?: Request): Promise<EmailVars> {
 
 /** Branded HTML shell around template inner body. */
 export function wrapBrandedHtml(innerHtml: string, vars: EmailVars): string {
-  const siteName = String(vars.siteName ?? "Venturo");
+  const siteName = String(vars.siteName ?? "Nextgenmove");
   const logoUrl = String(vars.logoUrl ?? "");
   const tagline = String(vars.tagline ?? "");
   const brandMark = String(vars.brandMark ?? "NG");

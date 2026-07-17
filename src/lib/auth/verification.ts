@@ -65,8 +65,8 @@ export async function issueEmailOtp(options: {
     const raw = await sendRawEmail({
       to: options.email,
       subject: "Your verification code",
-      html: `<p>Your Venturo verification code is <strong>${code}</strong>.</p><p>It expires in 10 minutes.</p>`,
-      text: `Your Venturo verification code is ${code}. It expires in 10 minutes.`,
+      html: `<p>Your Nextgenmove verification code is <strong>${code}</strong>.</p><p>It expires in 10 minutes.</p>`,
+      text: `Your Nextgenmove verification code is ${code}. It expires in 10 minutes.`,
     });
     return raw.sent ? { sent: true } : result;
   }

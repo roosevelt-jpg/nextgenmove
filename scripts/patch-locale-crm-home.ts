@@ -1,6 +1,6 @@
 /**
  * Patch locale labels, nationality taxonomy, auth/CRM labels, Twilio integration,
- * and Venturo homepage CMS copy.
+ * and Nextgenmove homepage CMS copy.
  *
  * Run: npx tsx scripts/patch-locale-crm-home.ts
  */
@@ -124,8 +124,8 @@ async function main() {
 
   await settingsRef.set(
     stripUndefined({
-      siteName: "Venturo",
-      brandMark: "V",
+      siteName: "Nextgenmove",
+      brandMark: "N",
       tagline: existing.tagline || "Your next step, engineered.",
       localeLabels: {
         ...((existing.localeLabels as Record<string, string>) || {}),
@@ -158,7 +158,7 @@ async function main() {
       headline: "Your next step,",
       headlineEmphasis: "engineered.",
       subtext:
-        "Venturo pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
+        "Nextgenmove pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
       ctaPrimaryLabel: "Explore open roles",
       ctaPrimaryHref: "/careers-talent",
       ctaSecondaryLabel: "I'm hiring",
@@ -251,7 +251,7 @@ async function main() {
       },
       testimonialBadge: "Placed {year}",
       testimonialAttribution:
-        "Sara K., Marketing Lead — placed via Venturo",
+        "Sara K., Marketing Lead — placed via Nextgenmove",
       boardingPass: {
         routeLabel: "AMS → DXB",
         passengerLabel: "Passenger",
@@ -263,7 +263,7 @@ async function main() {
         classLabel: "Class",
         classValue: "Track B",
         refLabel: "Ref",
-        refValue: "VENTURO",
+        refValue: "NEXTGENMOVE",
       },
       steps: [
         {
@@ -350,7 +350,7 @@ async function main() {
     );
   }
 
-  console.log("Patched locale, nationality, CRM messaging labels, and Venturo home.");
+  console.log("Patched locale, nationality, CRM messaging labels, and Nextgenmove home.");
 }
 
 main().catch((error) => {

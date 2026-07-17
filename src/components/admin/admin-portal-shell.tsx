@@ -139,7 +139,7 @@ export function AdminPortalShell({
           aria-hidden
         />
         <span className="font-serif text-[15px] font-semibold text-text-primary">
-          {siteName || "Venturo"}
+          {siteName || "Nextgenmove"}
         </span>
       </div>
 
@@ -284,7 +284,7 @@ export function AdminPortalShell({
               className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-full bg-bg-purple text-[11px] font-bold text-fill-accent"
               aria-label="Account"
             >
-              {labels.avatarInitial ?? "V"}
+              {labels.avatarInitial ?? "N"}
             </Link>
           </div>
         </header>

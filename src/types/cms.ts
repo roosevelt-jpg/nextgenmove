@@ -293,7 +293,7 @@ export interface SiteSettingsDocument {
   defaultMetaTitle?: string;
   defaultMetaDescription?: string;
   contactEmail?: string;
-  /** Brand mark when logo image is empty — e.g. "V" */
+  /** Brand mark when logo image is empty — e.g. "N" */
   brandMark?: string;
   timezone?: string;
   defaultCurrency?: string;

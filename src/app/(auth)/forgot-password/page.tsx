@@ -20,8 +20,8 @@ export default async function ForgotPasswordPage() {
   return (
     <AuthSplitShell
       labels={labels}
-      siteName={settings.siteName || "Venturo"}
-      brandMark={settings.brandMark || "V"}
+      siteName={settings.siteName || "Nextgenmove"}
+      brandMark={settings.brandMark || "N"}
       logoUrl={undefined}
       panel="signIn"
     >

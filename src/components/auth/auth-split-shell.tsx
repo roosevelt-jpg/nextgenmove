@@ -23,7 +23,7 @@ function BrandMark({
   logoUrl?: string | null;
   variant: "light" | "dark";
 }) {
-  const name = siteName || "Venturo";
+  const name = siteName || "Nextgenmove";
 
   return (
     <span className="inline-flex items-center gap-2.5">
@@ -56,7 +56,7 @@ export function AuthSplitShell({
   panel = "signIn",
   children,
 }: AuthSplitShellProps) {
-  const name = siteName || "Venturo";
+  const name = siteName || "Nextgenmove";
 
   const quote =
     panel === "signUpCompany"

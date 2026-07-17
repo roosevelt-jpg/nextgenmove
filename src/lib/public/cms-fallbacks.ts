@@ -6,10 +6,10 @@ import type { PageHomeDocument, SiteSettingsDocument } from "@/types/cms";
  * during quota / outage windows instead of rendering a blank page.
  */
 export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
-  siteName: "Venturo",
+  siteName: "Nextgenmove",
   tagline: "Your next step, engineered.",
   siteDescription: "Your next step, engineered.",
-  brandMark: "V",
+  brandMark: "N",
   footerCopyright: "© {year} {siteName}",
   footerAttributionPrefix: "Made with ❤️ by",
   footerAttributionName: "FLYN.AI",
@@ -19,7 +19,7 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
   youtubeHomepageLimit: 3,
   youtubeLibraryLimit: 12,
   navLabels: {
-    siteName: "Venturo",
+    siteName: "Nextgenmove",
     companySection: "Company",
     talentSection: "Talent",
     employersSection: "Employers",
@@ -71,7 +71,7 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   headline: "Your next step,",
   headlineEmphasis: "engineered.",
   subtext:
-    "Venturo pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
+    "Nextgenmove pairs you with a personal coach, a vetted employer, and a visa-ready path abroad — from first application to first day.",
   ctaPrimaryLabel: "Explore open roles",
   ctaPrimaryHref: "/careers-talent",
   ctaSecondaryLabel: "I'm hiring",
@@ -181,7 +181,7 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
     classLabel: "Class",
     classValue: "Track B",
     refLabel: "Ref",
-    refValue: "VENTURO",
+    refValue: "NEXTGENMOVE",
   },
   itineraryEyebrow: "The itinerary",
   itineraryHeadline: "Three legs. One arrival.",
@@ -193,7 +193,7 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   podcastManagedLabel: "Managed in admin · Homepage content",
   testimonialQuote:
     "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai — and my coach was in my corner for every leg of it.",
-  testimonialAttribution: "Sara K. · Marketing lead · Placed via Venturo",
+  testimonialAttribution: "Sara K. · Marketing lead · Placed via Nextgenmove",
   testimonialBadge: "Placed {year}",
   talentCta: {
     eyebrow: "For talent",

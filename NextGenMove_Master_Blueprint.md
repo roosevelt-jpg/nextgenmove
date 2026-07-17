@@ -15,13 +15,13 @@ This replaces every earlier version of this document (the original React/Express
 
 ## 1. Product overview
 
-NextGen Move is a three-sided relocation-and-placement platform run by an agency ("Lemoni"). Students/candidates get coached and placed into jobs abroad (Dubai is the flagship destination corridor); companies pay to access a pre-screened, coached talent pool.
+NextGen Move is a three-sided relocation-and-placement platform run by an agency ("Nextgenmove"). Students/candidates get coached and placed into jobs abroad (Dubai is the flagship destination corridor); companies pay to access a pre-screened, coached talent pool.
 
 | Role | Who they are | Core job to be done |
 |---|---|---|
 | **Student** | Job-seeker being coached/placed | Build profile, earn credits, redeem coaching content, track placement progress |
 | **Company** (Employer) | Pays for access to talent | Browse/search candidates, shortlist, track hiring pipeline, request full-service sourcing |
-| **Admin** (Lemoni ops) | Runs the marketplace | Monitor KPIs/analytics, manage content, tune platform economics, approve requests |
+| **Admin** (Nextgenmove ops) | Runs the marketplace | Monitor KPIs/analytics, manage content, tune platform economics, approve requests |
 
 ### Business model
 - **Two company tracks**: Track A — self-service (€50/mo + €200 one-time per match). Track B — full service (€125/mo per placed student).

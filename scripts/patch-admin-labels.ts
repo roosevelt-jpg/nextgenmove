@@ -67,7 +67,7 @@ async function main() {
       sendgridApiKey: "API key (SG.…)",
       sendgridFromEmail: "From email (verified sender)",
       sendgridFromName: "From name",
-      sendgridDefaultFromName: "Venturo",
+      sendgridDefaultFromName: "Nextgenmove",
       sendgridHelp:
         "Verify the from-address in SendGrid. Templates live in email_templates.",
     },
@@ -124,7 +124,7 @@ async function main() {
     settings: {
       settingsTitle: "Workspace settings.",
       workspaceEyebrow: "Admin · Settings",
-      workspaceSubtitle: "General configuration for the Venturo workspace.",
+      workspaceSubtitle: "General configuration for the Nextgenmove workspace.",
       teamMembersTitle: "Team members",
       teamMembersBody: "Invite and manage admin users.",
       manageTeam: "Manage team →",
@@ -151,7 +151,7 @@ async function main() {
       formLabels,
       adminPageLabels,
       brandMark: existing.brandMark || "NG",
-      siteName: existing.siteName || "Venturo",
+      siteName: existing.siteName || "Nextgenmove",
       updatedAt: FieldValue.serverTimestamp(),
     }),
     { merge: true },

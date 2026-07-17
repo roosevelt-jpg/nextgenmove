@@ -52,7 +52,7 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     name: "SendGrid (legacy)",
     category: "Transactional email",
     description:
-      "Legacy email provider — Venturo prefers Gmail SMTP, then Resend. Kept for reference only.",
+      "Legacy email provider — Nextgenmove prefers Gmail SMTP, then Resend. Kept for reference only.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,

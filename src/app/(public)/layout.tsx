@@ -20,7 +20,7 @@ export default async function PublicLayout({
       <main className="w-full min-w-0 flex-1 overflow-x-hidden">{children}</main>
       <SiteFooter />
       <CookieConsentBanner
-        siteName={settings.siteName || "Venturo"}
+        siteName={settings.siteName || "Nextgenmove"}
         message={cookieLabels.cookieMessage}
         acceptLabel={cookieLabels.cookieAccept || "Accept"}
         declineLabel={cookieLabels.cookieDecline || "Decline"}

@@ -30,7 +30,7 @@ export async function SiteFooter() {
   const navLabels = settings.navLabels ?? {};
   const formLabels = settings.formLabels ?? {};
   const groups = resolveFooterGroups(settings.footerLinks, navLabels, cmsPages);
-  const siteName = settings.siteName ?? navLabels.siteName ?? "Venturo";
+  const siteName = settings.siteName ?? navLabels.siteName ?? "Nextgenmove";
   const socialLinks = settings.socialLinks ?? [];
   const contactEmail = settings.contactEmail?.trim() ?? "";
   const description =

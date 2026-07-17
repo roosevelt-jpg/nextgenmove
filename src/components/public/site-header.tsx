@@ -24,7 +24,7 @@ export async function SiteHeader() {
       label: page.navLabel || page.title,
     })),
   ];
-  const siteName = settings.siteName ?? navLabels.siteName ?? "Venturo";
+  const siteName = settings.siteName ?? navLabels.siteName ?? "Nextgenmove";
   const ctaLabel = navLabels.headerCta;
   const ctaHref = navLabels.headerCtaHref || "/sign-up";
 

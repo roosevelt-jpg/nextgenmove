@@ -66,8 +66,8 @@ export async function GET(request: Request) {
   const csv = buildCsvTemplate(target);
   const filename =
     target === "students"
-      ? "venturo-students-import.csv"
-      : "venturo-companies-import.csv";
+      ? "nextgenmove-students-import.csv"
+      : "nextgenmove-companies-import.csv";
 
   return new NextResponse(csv, {
     status: 200,

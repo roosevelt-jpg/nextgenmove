@@ -29,7 +29,7 @@ async function main() {
     ...((adminPageLabels.dashboard as Record<string, string>) || {}),
     eyebrow: "Admin",
     title: "Operations dashboard.",
-    subtitle: "Real-time overview of Venturo placements and activity.",
+    subtitle: "Real-time overview of Nextgenmove placements and activity.",
     activeStudents: "Active students",
     pendingRequestsCount: "Open requests",
     placedThisQuarter: "Placed this Q",
@@ -94,7 +94,7 @@ async function main() {
     eyebrow: "Admin · Integrations",
     title: "Connect your stack.",
     subtitle:
-      "Every API Venturo talks to, in one place. Connect, rotate keys, and watch sync status.",
+      "Every API Nextgenmove talks to, in one place. Connect, rotate keys, and watch sync status.",
     statusConnected: "Connected",
     statusNotConnected: "Not connected",
     neverSynced: "Never synced",
@@ -107,7 +107,7 @@ async function main() {
     ...((adminPageLabels.settings as Record<string, string>) || {}),
     workspaceEyebrow: "Admin · Settings",
     settingsTitle: "Workspace settings.",
-    workspaceSubtitle: "General configuration for the Venturo workspace.",
+    workspaceSubtitle: "General configuration for the Nextgenmove workspace.",
     teamMembersTitle: "Team members",
     manageTeam: "Manage team →",
     securityTitle: "Security",
@@ -161,7 +161,7 @@ async function main() {
   adminPageLabels.integrations = {
     ...((adminPageLabels.integrations as Record<string, string>) || {}),
     youtubeHint:
-      "Connect a YouTube Data API key so Venturo can sync your playlist into homepage Stories and paid portal libraries.",
+      "Connect a YouTube Data API key so Nextgenmove can sync your playlist into homepage Stories and paid portal libraries.",
     youtubeApiKey: "YouTube Data API key",
     youtubeHelp:
       "Create a key in Google Cloud Console → APIs & Services → Credentials, enable YouTube Data API v3, then paste the key here. Playlist URL is set under Admin → Homepage Content.",
@@ -228,7 +228,7 @@ async function main() {
     eyebrow: "Talent Pool",
     title: "Find your next great hire.",
     subtitle:
-      "Every candidate is pre-screened and coached by Venturo. No noise — just quality.",
+      "Every candidate is pre-screened and coached by Nextgenmove. No noise — just quality.",
     statCandidates: "Available",
     statShortlisted: "Shortlisted",
     statInterviewing: "Interviewing",

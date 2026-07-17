@@ -31,7 +31,7 @@ const EPISODES = [
     id: "demo_pod_10",
     episodeNumber: 10,
     title: "Why we built Track A and Track B",
-    guestName: "Lemoni Grootkerk",
+    guestName: "Nextgenmove",
     duration: "28 min",
   },
   {

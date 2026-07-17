@@ -34,7 +34,7 @@ export async function getSendGridFrom(): Promise<{
     config.fromEmail?.trim() ||
     secrets.fromEmail?.trim() ||
     "";
-  const name = config.fromName?.trim() || "Venturo";
+  const name = config.fromName?.trim() || "Nextgenmove";
 
   if (!email || !email.includes("@")) {
     throw new SendGridNotConfiguredError("sendgrid_missing_from_email");

@@ -22,8 +22,8 @@ async function main() {
   const existing = (await ref.get()).data() || {};
   const authLabels = {
     ...((existing.authLabels as Record<string, string>) || {}),
-    siteName: "Venturo",
-    brandMark: "V",
+    siteName: "Nextgenmove",
+    brandMark: "N",
     signInEyebrow: "Welcome back",
     signInTitle: "Sign in to your account.",
     signInSubtitle: "Pick up right where you left off.",
@@ -48,7 +48,7 @@ async function main() {
     forgotPasswordLinkLabel: "Forgot password?",
     panelQuote:
       "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai.",
-    panelAttribution: "Sara K. · Marketing Lead · Placed via Venturo",
+    panelAttribution: "Sara K. · Marketing Lead · Placed via Nextgenmove",
     panelQuoteCompany:
       "We moved from Track A to Track B once we needed three hires in a single quarter — sourcing alone cut our time-to-place in half.",
     panelAttributionCompany:
@@ -79,20 +79,20 @@ async function main() {
 
   const navLabels = {
     ...((existing.navLabels as Record<string, string>) || {}),
-    siteName: "Venturo",
+    siteName: "Nextgenmove",
   };
 
   await ref.set(
     stripUndefined({
-      siteName: "Venturo",
-      brandMark: "V",
+      siteName: "Nextgenmove",
+      brandMark: "N",
       authLabels,
       navLabels,
       updatedAt: FieldValue.serverTimestamp(),
     }),
     { merge: true },
   );
-  console.log("Venturo branding + auth labels patched");
+  console.log("Nextgenmove branding + auth labels patched");
 }
 
 main().catch((e) => {

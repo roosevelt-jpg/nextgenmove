@@ -81,9 +81,9 @@ async function main() {
     }
     await sendViaResend({
       to,
-      subject: "Venturo Resend probe",
-      html: "<p>Realtime Resend probe from Venturo. If you received this, delivery works.</p>",
-      text: "Realtime Resend probe from Venturo. If you received this, delivery works.",
+      subject: "Nextgenmove Resend probe",
+      html: "<p>Realtime Resend probe from Nextgenmove. If you received this, delivery works.</p>",
+      text: "Realtime Resend probe from Nextgenmove. If you received this, delivery works.",
     });
     console.log("--- Probe sent ---");
     console.log("ok: true");

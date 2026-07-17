@@ -67,7 +67,7 @@ async function main() {
         uid,
         email,
         role: "admin",
-        displayName: "Venturo Admin",
+        displayName: "Nextgenmove Admin",
         photoUrl: null,
         status: "active",
         updatedAt: FieldValue.serverTimestamp(),

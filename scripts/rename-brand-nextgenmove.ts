@@ -1,8 +1,8 @@
 /**
- * One-shot brand rename: NextGen Move / agency Lemoni copy → Venturo
+ * One-shot brand rename: Venturo / Lemoni → Nextgenmove
  * in site_settings and common CMS page docs.
  *
- * Usage: npx tsx scripts/rename-brand-venturo.ts
+ * Usage: npx tsx scripts/rename-brand-nextgenmove.ts
  */
 import { config as loadEnv } from "dotenv";
 import { resolve } from "node:path";
@@ -29,23 +29,29 @@ function initAdmin(): App {
 
 function renameBrandString(value: string): string {
   return value
-    .replace(/NextGen\s*Move/gi, "Venturo")
-    .replace(/NextGenMove/gi, "Venturo")
-    .replace(/nextgenmove\.agency/gi, "venturo.ae")
-    .replace(/Introduction via Lemoni/g, "Introduction via Venturo")
-    .replace(/Lemoni does everything/g, "Venturo does everything")
-    .replace(/Lemoni searches for you/g, "Venturo searches for you")
-    .replace(/Lemoni handles the introduction/g, "Venturo handles the introduction")
-    .replace(/Lemoni actively sources/g, "Venturo actively sources")
-    .replace(/Lemoni-led/g, "Venturo-led")
-    .replace(/Ask Lemoni/g, "Ask Venturo")
-    .replace(/else Lemoni should/g, "else Venturo should")
-    .replace(/otherwise Lemoni confirms/g, "otherwise Venturo confirms")
-    .replace(/coached by Lemoni/g, "coached by Venturo")
-    .replace(/let Lemoni source/g, "let Venturo source")
+    .replace(/Lemoni Grootkerk/g, "Nextgenmove")
+    .replace(/Lemoni Retail Co\.?/g, "Nextgenmove Retail Co.")
+    .replace(/Introduction via Lemoni/g, "Introduction via Nextgenmove")
+    .replace(/Lemoni does everything/g, "Nextgenmove does everything")
+    .replace(/Lemoni searches for you/g, "Nextgenmove searches for you")
+    .replace(/Lemoni handles the introduction/g, "Nextgenmove handles the introduction")
+    .replace(/Lemoni actively sources/g, "Nextgenmove actively sources")
+    .replace(/Lemoni-led/g, "Nextgenmove-led")
+    .replace(/Ask Lemoni/g, "Ask Nextgenmove")
+    .replace(/else Lemoni should/g, "else Nextgenmove should")
+    .replace(/otherwise Lemoni confirms/g, "otherwise Nextgenmove confirms")
+    .replace(/coached by Lemoni/g, "coached by Nextgenmove")
+    .replace(/let Lemoni source/g, "let Nextgenmove source")
     .replace(/Meet your coach: Lemoni/g, "Meet your coach")
-    .replace(/PLACED VIA NEXTGEN MOVE/gi, "PLACED VIA VENTURO")
-    .replace(/placed via NextGen Move/gi, "placed via Venturo");
+    .replace(/with Lemoni/g, "with Nextgenmove")
+    .replace(/Lemoni/g, "Nextgenmove")
+    .replace(/lemoni/g, "nextgenmove")
+    .replace(/Venturo/g, "Nextgenmove")
+    .replace(/VENTURO/g, "NEXTGENMOVE")
+    .replace(/venturo\.ae/gi, "nextgenmove.ae")
+    .replace(/venturo/g, "nextgenmove")
+    .replace(/PLACED VIA VENTURO/gi, "PLACED VIA NEXTGENMOVE")
+    .replace(/placed via Venturo/gi, "placed via Nextgenmove");
 }
 
 function renameDeep(value: unknown): { next: unknown; changed: boolean } {
@@ -79,17 +85,16 @@ async function main() {
   initAdmin();
   const db = getFirestore();
 
-  const targets: Array<{ collection: string; id: string }> = [
+  const singletonTargets: Array<{ collection: string; id: string }> = [
     { collection: "site_settings", id: "default" },
-    { collection: "pages", id: "home" },
-    { collection: "pages", id: "about" },
-    { collection: "pages", id: "pricing" },
-    { collection: "pages", id: "tracks" },
-    { collection: "pages", id: "how_it_works" },
-    { collection: "pages", id: "request_talent" },
+    { collection: "page_home", id: "default" },
+    { collection: "page_about", id: "default" },
+    { collection: "page_pricing", id: "default" },
+    { collection: "page_tracks", id: "default" },
+    { collection: "page_how_it_works", id: "default" },
   ];
 
-  for (const target of targets) {
+  for (const target of singletonTargets) {
     const ref = db.collection(target.collection).doc(target.id);
     const snap = await ref.get();
     if (!snap.exists) {
@@ -98,11 +103,20 @@ async function main() {
     }
     const { next, changed } = renameDeep(snap.data());
     if (!changed) {
-      console.log(`  ok   ${target.collection}/${target.id} (already Venturo)`);
+      console.log(`  ok   ${target.collection}/${target.id} (already Nextgenmove)`);
       continue;
     }
     await ref.set(next as Record<string, unknown>, { merge: true });
     console.log(`  fixed ${target.collection}/${target.id}`);
+  }
+
+  // Also scan email templates
+  const templates = await db.collection("email_templates").get();
+  for (const doc of templates.docs) {
+    const { next, changed } = renameDeep(doc.data());
+    if (!changed) continue;
+    await doc.ref.set(next as Record<string, unknown>, { merge: true });
+    console.log(`  fixed email_templates/${doc.id}`);
   }
 
   console.log("\nBrand rename complete.");

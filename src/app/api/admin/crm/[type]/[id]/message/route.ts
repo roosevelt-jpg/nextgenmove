@@ -81,7 +81,7 @@ export async function POST(
       }
       const sent = await sendRawEmail({
         to: email,
-        subject: body.subject?.trim() || "Message from Venturo",
+        subject: body.subject?.trim() || "Message from Nextgenmove",
         html: `<p>${body.body.replace(/\n/g, "<br/>")}</p>`,
         text: body.body,
       });

@@ -63,7 +63,7 @@ async function resolveSmtpConfig() {
     config.fromName?.trim() ||
     secrets.fromName?.trim() ||
     process.env.SMTP_FROM_NAME?.trim() ||
-    "Venturo";
+    "Nextgenmove";
   const secureRaw =
     config.secure?.trim() ||
     secrets.secure?.trim() ||

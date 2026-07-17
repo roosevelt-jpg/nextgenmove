@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 
-const STORAGE_KEY = "venturo_cookie_consent";
+const STORAGE_KEY = "nextgenmove_cookie_consent";
 
 export function CookieConsentBanner({
-  siteName = "Venturo",
+  siteName = "Nextgenmove",
   message,
   acceptLabel = "Accept",
   declineLabel = "Decline",

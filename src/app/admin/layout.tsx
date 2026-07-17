@@ -22,8 +22,8 @@ export default async function AdminLayout({
     <RoleGate allowedRoles={["admin"]}>
       <AdminPortalShell
         labels={labels}
-        siteName={settings.siteName ?? "Venturo"}
-        brandMark={settings.brandMark ?? "V"}
+        siteName={settings.siteName ?? "Nextgenmove"}
+        brandMark={settings.brandMark ?? "N"}
       >
         {children}
       </AdminPortalShell>
