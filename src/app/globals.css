@@ -108,8 +108,9 @@ video {
   padding-right: var(--page-gutter);
 }
 
-/* ——— Buttons (Brand Guidelines §05) ———
-   Primary = Ink · Brand = Purple · Signature = Horizon (rare) · Outline/Ghost = secondary */
+/* ——— Buttons ———
+   Dashboard product rule: blue gradient fill + white label on every action button.
+   Outline/ghost aliases keep the same look so action rows stay readable. */
 
 .btn-base {
   display: inline-flex;
@@ -126,7 +127,7 @@ video {
   line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
-  transition: opacity 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+  transition: opacity 0.15s ease, filter 0.15s ease;
 }
 
 .btn-base:disabled {
@@ -135,60 +136,29 @@ video {
   filter: none;
 }
 
-.btn-ink {
-  background-color: var(--fill-primary);
-  background-image: none;
-  color: var(--on-primary);
+.btn-ink,
+.btn-purple,
+.btn-signature,
+.btn-outline,
+.btn-ghost {
+  background-color: var(--brand-indigo-1);
+  background-image: var(--grad-rouse);
+  color: var(--on-gradient) !important;
+  box-shadow: none;
 }
 
-.btn-ink:hover:not(:disabled) {
+.btn-ink:hover:not(:disabled),
+.btn-purple:hover:not(:disabled),
+.btn-signature:hover:not(:disabled),
+.btn-outline:hover:not(:disabled),
+.btn-ghost:hover:not(:disabled) {
   filter: brightness(1.08);
 }
 
-.btn-purple {
-  background-color: var(--fill-accent);
-  background-image: none;
-  color: #ffffff;
-}
-
-.btn-purple:hover:not(:disabled) {
-  background-color: var(--fill-accent-strong);
-}
-
-/* Signature — Horizon once per screen for the primary marketing CTA */
-.btn-signature {
-  background-color: var(--brand-indigo-2);
-  background-image: var(--grad-horizon);
-  color: #ffffff;
-}
-
-.btn-signature:hover:not(:disabled) {
-  filter: brightness(1.05);
-}
-
-.btn-outline {
-  background-color: transparent;
-  background-image: none;
-  color: var(--text-primary);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.btn-outline:hover:not(:disabled) {
-  background-color: var(--surface-2);
-}
-
-.btn-ghost {
-  background-color: transparent;
-  background-image: none;
-  color: var(--fill-accent);
-}
-
-.btn-ghost:hover:not(:disabled) {
-  background-color: var(--bg-purple);
-}
-
-/* Legacy aliases — map old class names to purple solid (not gradient spam) */
-.btn-brand {
+/* Legacy aliases — same gradient + white text */
+.btn-brand,
+.btn-brand-outline,
+.btn-brand-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -198,36 +168,30 @@ video {
   padding: 0.2rem 0.55rem;
   border: 0;
   border-radius: var(--radius-sm);
-  background-color: var(--fill-accent);
-  background-image: none;
-  color: #ffffff;
+  background-color: var(--brand-indigo-1);
+  background-image: var(--grad-rouse);
+  color: var(--on-gradient) !important;
+  box-shadow: none;
   font-size: 0.6875rem;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
-  transition: opacity 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+  transition: opacity 0.15s ease, filter 0.15s ease;
 }
 
-.btn-brand:hover:not(:disabled) {
-  background-color: var(--fill-accent-strong);
+.btn-brand:hover:not(:disabled),
+.btn-brand-outline:hover:not(:disabled),
+.btn-brand-ghost:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
-.btn-brand-outline,
-.btn-brand-ghost {
-  background-color: transparent;
-  background-image: none;
-  color: var(--fill-accent);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.btn-brand-ghost {
-  box-shadow: none;
-}
-
-.btn-brand:disabled {
+.btn-brand:disabled,
+.btn-brand-outline:disabled,
+.btn-brand-ghost:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  filter: none;
 }
 
 /* Text links — Route gradient (purple → amber), accent only */

@@ -212,7 +212,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           <Button
             size="xs"
             variant="outline"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
             disabled={actionLoadingId === row.uid}
             onClick={() => void openProfile(row.uid)}
           >
@@ -221,7 +221,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           <Button
             size="xs"
             variant="outline"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "promote_admin")}
           >
@@ -230,7 +230,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           <Button
             size="xs"
             variant="ghost"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "suspend")}
           >
@@ -239,7 +239,7 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
           <Button
             size="xs"
             variant="ghost"
-            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px] !text-white"
+            className="!min-h-6 !px-1.5 !py-0.5 !text-[10px]"
             disabled={actionLoadingId === row.uid}
             onClick={() => runAction(row.uid, "activate")}
           >

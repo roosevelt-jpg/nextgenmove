@@ -4,12 +4,8 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Brand Guidelines §05:
- * - primary → Ink fill
- * - brand → Purple fill
- * - signature → Horizon gradient (use once per screen)
- * - outline / secondary → bordered secondary
- * - ghost → text-only purple
+ * Product buttons: blue gradient fill + white label (all variants).
+ * Variants are kept for call-site clarity; visual treatment is shared.
  */
 export type ButtonVariant =
   | "primary"

@@ -225,7 +225,7 @@ export function CompanySettingsView({
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isSaving} className="!text-white">
+      <Button type="submit" disabled={isSaving}>
         {labels.save || "Save"}
       </Button>
     </form>

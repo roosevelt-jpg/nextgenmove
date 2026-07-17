@@ -316,7 +316,7 @@ export function StudentSettingsView({
             {labels[errorCode] ?? errorCode}
           </p>
         ) : null}
-        <Button type="submit" className="!text-white">
+        <Button type="submit">
           {labels.changePassword || "Change password"}
         </Button>
       </form>
@@ -344,7 +344,7 @@ export function StudentSettingsView({
               {statusMessage}
             </p>
           ) : null}
-          <Button type="submit" disabled={isSaving} className="!text-white">
+          <Button type="submit" disabled={isSaving}>
             {labels.saveNotifications || "Save notifications"}
           </Button>
         </form>

@@ -378,7 +378,7 @@ export function AccountProfileView({
         <p className="text-sm text-text-secondary">{statusMessage}</p>
       ) : null}
 
-      <Button type="submit" disabled={isSaving} className="!text-white">
+      <Button type="submit" disabled={isSaving}>
         {labels.saveChanges || labels.save || "Save changes"}
       </Button>
     </form>

@@ -400,7 +400,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
             {statusMessage}
           </p>
         ) : null}
-        <Button type="submit" disabled={isSaving} className="!text-white">
+        <Button type="submit" disabled={isSaving}>
           {labels.save || "Save"}
         </Button>
       </aside>

@@ -444,7 +444,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="min-w-fit px-2.5 !text-white"
+                className="min-w-fit px-2.5"
                 onClick={() =>
                   setLevers({
                     ...levers,
@@ -504,7 +504,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="min-w-fit px-2.5 !text-white"
+                className="min-w-fit px-2.5"
                 onClick={() => removeWay(index)}
               >
                 {labels.removeRow || "Remove"}
