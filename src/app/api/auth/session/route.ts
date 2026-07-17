@@ -41,14 +41,24 @@ function isUserRole(value: unknown): value is UserRole {
   return value === "admin" || value === "company" || value === "student";
 }
 
-function seedAdminEmail(): string {
-  return process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase() ?? "";
+function seedAdminEmails(): Set<string> {
+  const emails = new Set<string>();
+  const primary = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  if (primary) emails.add(primary);
+  const extra = process.env.SEED_ADMIN_EMAILS?.split(",") ?? [];
+  for (const raw of extra) {
+    const email = raw.trim().toLowerCase();
+    if (email) emails.add(email);
+  }
+  // Domain migration aliases — keep login working across cutover
+  emails.add("admin@venturo.ae");
+  emails.add("admin@nextgenmove.agency");
+  return emails;
 }
 
 function isSeedAdminEmail(email: string | null | undefined): boolean {
-  const seed = seedAdminEmail();
   const normalized = (email ?? "").trim().toLowerCase();
-  return Boolean(seed && normalized && normalized === seed);
+  return Boolean(normalized && seedAdminEmails().has(normalized));
 }
 
 async function resolveLoginUser(decoded: {

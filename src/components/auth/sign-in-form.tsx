@@ -31,6 +31,10 @@ export function SignInForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const mapError = (code: string, message: string) => {
+    if (code === "auth/unauthorized-domain") {
+      setErrorCode("unauthorized_domain");
+      return;
+    }
     if (code === "auth/invalid-email" || code === "auth/missing-email") {
       setEmailError(labels.invalid_email || "Email is invalid");
       return;
@@ -38,20 +42,17 @@ export function SignInForm({
     if (
       code === "auth/wrong-password" ||
       code === "auth/invalid-credential" ||
-      code === "auth/user-not-found"
+      code === "auth/user-not-found" ||
+      code === "auth/invalid-login-credentials"
     ) {
-      setPasswordError(
-        labels.sign_in_failed || "Check your email and password.",
-      );
+      setPasswordError(labels.sign_in_failed || message);
       return;
     }
-    if (code.startsWith("auth/")) {
-      setErrorCode(code);
-    } else if (message && message !== "sign_in_failed") {
-      setErrorCode(message);
-    } else {
-      setErrorCode("sign_in_failed");
+    if (code === "auth/too-many-requests") {
+      setErrorCode("rate_limited");
+      return;
     }
+    setErrorCode(message || code || "sign_in_failed");
   };
 
   const finishLogin = async (idToken: string) => {

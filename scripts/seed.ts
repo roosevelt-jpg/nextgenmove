@@ -777,6 +777,8 @@ const OPERATIONAL_SITE_SETTINGS = {
     statCorridorsLabel: "Live corridors",
     genericErrorLabel: "Something went wrong. Please try again.",
     sign_in_failed: "Sign in failed. Check your email and password.",
+    unauthorized_domain:
+      "This domain is not authorized for sign-in. Add www.nextgenmove.agency in Firebase Authentication → Settings → Authorized domains.",
     session_timeout: "Sign in timed out. Please try again.",
     service_unavailable:
       "Sign in is temporarily unavailable. Please try again in a moment.",
