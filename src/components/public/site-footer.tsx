@@ -5,22 +5,12 @@ import {
   getSiteSettings,
   listFooterCmsPages,
 } from "@/lib/collections/site-settings";
-import { BRAND_ICON_PATH } from "@/lib/brand";
+import {
+  BRAND_ICON_PATH,
+  FOOTER_ATTRIBUTION,
+  formatFooterCopyright,
+} from "@/lib/brand";
 import { resolveFooterGroups } from "@/lib/public/nav";
-
-function resolveCopyright(
-  template: string | undefined,
-  siteName: string,
-  year: number,
-): string {
-  const raw = template?.trim();
-  if (raw) {
-    return raw
-      .replaceAll("{year}", String(year))
-      .replaceAll("{siteName}", siteName);
-  }
-  return `© ${year} ${siteName}`;
-}
 
 export async function SiteFooter() {
   const [settings, cmsPages] = await Promise.all([
@@ -35,24 +25,7 @@ export async function SiteFooter() {
   const contactEmail = settings.contactEmail?.trim() ?? "";
   const description =
     settings.siteDescription?.trim() || settings.tagline?.trim() || "";
-  const year = new Date().getFullYear();
-  const copyright = resolveCopyright(
-    settings.footerCopyright ?? formLabels.footerCopyright,
-    siteName,
-    year,
-  );
-  const attributionPrefix =
-    settings.footerAttributionPrefix?.trim() ||
-    formLabels.footerAttributionPrefix?.trim() ||
-    "";
-  const attributionName =
-    settings.footerAttributionName?.trim() ||
-    formLabels.footerAttributionName?.trim() ||
-    "";
-  const attributionUrl =
-    settings.footerAttributionUrl?.trim() ||
-    formLabels.footerAttributionUrl?.trim() ||
-    "";
+  const copyright = formatFooterCopyright(siteName);
 
   return (
     <footer className="mt-auto bg-grad-rouse text-on-gradient">
@@ -123,19 +96,17 @@ export async function SiteFooter() {
       <div className="border-t border-white/20">
         <div className="page-container mx-auto flex w-full max-w-page flex-col gap-2 py-4 text-sm text-on-gradient/75 sm:flex-row sm:items-center sm:justify-between">
           <p>{copyright}</p>
-          {attributionPrefix && attributionName && attributionUrl ? (
-            <p>
-              {attributionPrefix}{" "}
-              <a
-                href={attributionUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-on-gradient underline-offset-2 hover:underline"
-              >
-                {attributionName}
-              </a>
-            </p>
-          ) : null}
+          <p>
+            {FOOTER_ATTRIBUTION.prefix}{" "}
+            <a
+              href={FOOTER_ATTRIBUTION.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-on-gradient underline-offset-2 hover:underline"
+            >
+              {FOOTER_ATTRIBUTION.name}
+            </a>
+          </p>
         </div>
       </div>
     </footer>
