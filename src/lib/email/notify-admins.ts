@@ -7,7 +7,11 @@ import { shouldSendEmail } from "@/lib/email/preferences";
 export async function notifyAdminsOfPending(
   summary: string,
   request?: Request,
+  options?: { link?: string; title?: string },
 ) {
+  const link = options?.link ?? "/admin/dashboard";
+  const title = options?.title ?? "New pending request";
+
   try {
     const snap = await adminDb
       .collection("users")
@@ -39,9 +43,9 @@ export async function notifyAdminsOfPending(
       void createNotification({
         userId: adminId,
         type: "pending",
-        title: "New pending request",
+        title,
         body: summary,
-        link: "/admin/dashboard",
+        link,
       });
     }
   } catch (error) {

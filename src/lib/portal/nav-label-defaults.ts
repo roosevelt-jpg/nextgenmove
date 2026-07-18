@@ -3,6 +3,7 @@
 export const DEFAULT_ADMIN_NAV_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   crm: "CRM",
+  contact: "Contact",
   integrations: "Integrations",
   library: "Content Library",
   content: "Homepage Content",

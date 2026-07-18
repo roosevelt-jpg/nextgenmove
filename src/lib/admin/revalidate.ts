@@ -38,6 +38,7 @@ const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
     "/journal",
     "/careers",
     "/tracks",
+    "/contact",
     "/sign-in",
     "/sign-up",
     "/pages",

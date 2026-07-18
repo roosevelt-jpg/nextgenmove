@@ -342,12 +342,36 @@ Singleton. Document ID: `'default'`.
 | `siteName` | string | |
 | `tagline` | string | |
 | `logoUrl` | string | Storage download URL |
-| `contactEmail` | string | |
-| `socialLinks` | object | Platform → URL map |
+| `contactEmail` | string | Public contact email |
+| `contactPhone` | string | Public contact phone |
+| `contactAddress` | string | Public mailing / office address |
+| `socialLinks` | array | `{ key, url, label? }[]` — footer + contact page |
 | `navLabels` | object | Nav key → label map |
 | `footerLinks` | array | Footer link objects |
 | `formLabels` | object | Public form field labels keyed by identifier |
 | `pageLabels` | object | Public page section titles and template strings |
+
+---
+
+## `contact_submissions`
+
+Public contact form inbox. Written only via Admin SDK (`POST /api/contact/submit`). Client SDK denied.
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Document ID |
+| `name` | string | |
+| `email` | string | |
+| `phone` | string \| null | |
+| `subject` | string | |
+| `message` | string | |
+| `status` | enum | `'new'` \| `'read'` \| `'replied'` \| `'archived'` |
+| `replyNotes` | string | Internal admin notes |
+| `lastReplyAt` | timestamp \| null | |
+| `lastReplySubject` | string \| null | |
+| `lastReplyPreview` | string \| null | |
+| `createdAt` | timestamp | |
+| `updatedAt` | timestamp | |
 
 ---
 

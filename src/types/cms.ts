@@ -293,6 +293,10 @@ export interface SiteSettingsDocument {
   defaultMetaTitle?: string;
   defaultMetaDescription?: string;
   contactEmail?: string;
+  /** Public contact page phone (tel: link) */
+  contactPhone?: string;
+  /** Public contact page mailing / office address */
+  contactAddress?: string;
   /** Brand mark when logo image is empty — e.g. "N" */
   brandMark?: string;
   timezone?: string;

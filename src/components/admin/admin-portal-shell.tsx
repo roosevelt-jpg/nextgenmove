@@ -15,6 +15,7 @@ import { DEFAULT_ADMIN_NAV_LABELS } from "@/lib/portal/nav-label-defaults";
 const NAV_ITEMS = [
   { key: "dashboard", href: "/admin/dashboard", match: "exact" as const },
   { key: "crm", href: "/admin/crm", match: "prefix" as const },
+  { key: "contact", href: "/admin/contact", match: "prefix" as const },
   { key: "integrations", href: "/admin/integrations", match: "prefix" as const },
   { key: "library", href: "/admin/content", match: "exact" as const },
   { key: "content", href: "/admin/content/videos", match: "homepage" as const },
@@ -37,6 +38,13 @@ function NavIcon({ name }: { name: string }) {
         <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           <circle cx="8" cy="8" r="5.25" />
           <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "contact":
+      return (
+        <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <rect x="2.5" y="3.5" width="11" height="9" rx="1.5" />
+          <path d="M2.5 5.5 8 9.25 13.5 5.5" />
         </svg>
       );
     case "integrations":

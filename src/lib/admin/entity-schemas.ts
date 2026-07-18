@@ -503,6 +503,8 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "defaultMetaDescription", type: "textarea", labelKey: "defaultMetaDescription" },
       { key: "brandMark", type: "text", labelKey: "brandMark" },
       { key: "contactEmail", type: "text", labelKey: "contactEmail" },
+      { key: "contactPhone", type: "text", labelKey: "contactPhone" },
+      { key: "contactAddress", type: "textarea", labelKey: "contactAddress" },
       { key: "footerCopyright", type: "text", labelKey: "footerCopyright" },
       {
         key: "footerAttributionPrefix",
