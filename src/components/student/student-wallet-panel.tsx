@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button, EmptyState, Modal } from "@/components/ui";
+import { currencySymbol as resolveCurrencySymbol } from "@/lib/public/currency";
 
 export interface StudentWalletPanelProps {
   labels: Record<string, string>;
@@ -27,6 +28,55 @@ interface WalletTransaction {
   createdAt: string | null;
 }
 
+function EmvChip() {
+  return (
+    <svg
+      viewBox="0 0 40 30"
+      className="h-8 w-10 shrink-0 drop-shadow-sm sm:h-9 sm:w-11"
+      aria-hidden
+    >
+      <rect
+        x="0.5"
+        y="0.5"
+        width="39"
+        height="29"
+        rx="4"
+        fill="url(#walletChipGrad)"
+        stroke="rgba(255,255,255,0.35)"
+      />
+      <path
+        d="M0 10h40M0 20h40M14 0v30M26 0v30"
+        stroke="rgba(26,26,24,0.22)"
+        strokeWidth="1"
+      />
+      <defs>
+        <linearGradient id="walletChipGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f4d9a8" />
+          <stop offset="55%" stopColor="#c97a2e" />
+          <stop offset="100%" stopColor="#9a6a3c" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function ContactlessIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 text-white/80"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      aria-hidden
+    >
+      <path d="M8.5 8.2c1.6 1.5 1.6 6.1 0 7.6" strokeLinecap="round" />
+      <path d="M11.5 6c2.5 2.3 2.5 9.7 0 12" strokeLinecap="round" />
+      <path d="M14.5 3.8c3.4 3.1 3.4 13.3 0 16.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function StudentWalletPanel({
   labels,
   compact = false,
@@ -36,10 +86,37 @@ export function StudentWalletPanel({
   const [packages, setPackages] = useState<TopUpPackage[]>([]);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [currency, setCurrency] = useState("EUR");
+  const [currencySymbol, setCurrencySymbol] = useState("€");
+  const [creditsPerEuro, setCreditsPerEuro] = useState(4);
   const [loading, setLoading] = useState(true);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [topUpStatus, setTopUpStatus] = useState<string | null>(null);
   const [buyingId, setBuyingId] = useState<string | null>(null);
+
+  const applyWalletPayload = (data: {
+    credits: number;
+    packages: TopUpPackage[];
+    stripeEnabled: boolean;
+    transactions: WalletTransaction[];
+    currency?: string;
+    currencySymbol?: string;
+    creditsPerEuro?: number;
+  }) => {
+    setCredits(data.credits);
+    setPackages(data.packages ?? []);
+    setStripeEnabled(Boolean(data.stripeEnabled));
+    setTransactions(data.transactions ?? []);
+    if (data.currency) setCurrency(data.currency);
+    if (data.currencySymbol) {
+      setCurrencySymbol(data.currencySymbol);
+    } else if (data.currency) {
+      setCurrencySymbol(resolveCurrencySymbol(data.currency));
+    }
+    if (typeof data.creditsPerEuro === "number" && data.creditsPerEuro > 0) {
+      setCreditsPerEuro(data.creditsPerEuro);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,11 +130,11 @@ export function StudentWalletPanel({
       packages: TopUpPackage[];
       stripeEnabled: boolean;
       transactions: WalletTransaction[];
+      currency?: string;
+      currencySymbol?: string;
+      creditsPerEuro?: number;
     };
-    setCredits(data.credits);
-    setPackages(data.packages ?? []);
-    setStripeEnabled(Boolean(data.stripeEnabled));
-    setTransactions(data.transactions ?? []);
+    applyWalletPayload(data);
   }, [historyLimit]);
 
   useEffect(() => {
@@ -85,11 +162,11 @@ export function StudentWalletPanel({
             packages: TopUpPackage[];
             stripeEnabled: boolean;
             transactions: WalletTransaction[];
+            currency?: string;
+            currencySymbol?: string;
+            creditsPerEuro?: number;
           };
-          setCredits(data.credits);
-          setPackages(data.packages ?? []);
-          setStripeEnabled(Boolean(data.stripeEnabled));
-          setTransactions(data.transactions ?? []);
+          applyWalletPayload(data);
           if (data.credits > baseline || attempts >= 8) {
             setTopUpStatus(
               labels.topUpSuccess ?? "Top-up successful. Balance updated.",
@@ -164,6 +241,8 @@ export function StudentWalletPanel({
   };
 
   const visibleTx = compact ? transactions.slice(0, 8) : transactions;
+  const fiatApprox =
+    creditsPerEuro > 0 ? credits / creditsPerEuro : null;
 
   const formatWhen = (iso: string | null) => {
     if (!iso) return "—";
@@ -176,6 +255,11 @@ export function StudentWalletPanel({
 
   const txLabel = (tx: WalletTransaction) =>
     labels[tx.sourceKey] ?? tx.sourceLabel ?? tx.source;
+
+  const openTopUp = () => {
+    setTopUpStatus(null);
+    setTopUpOpen(true);
+  };
 
   return (
     <section className="space-y-4 rounded-radius border border-border bg-grad-card p-4">
@@ -202,34 +286,102 @@ export function StudentWalletPanel({
               ? labels.topUpNoPackages ?? "No packages available"
               : undefined
           }
-          onClick={() => {
-            setTopUpStatus(null);
-            setTopUpOpen(true);
-          }}
+          onClick={openTopUp}
         >
           {labels.topUpButton ?? "Top up"}
         </Button>
       </div>
 
-      <div className="rounded-radius border border-border bg-bg px-4 py-3">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
-          {labels.creditsLabel ?? "Credit balance"}
-        </p>
-        <p className="mt-1 font-serif text-[2rem] font-semibold text-fill-accent">
-          {loading ? "…" : credits.toLocaleString()}
-        </p>
-        {stripeEnabled ? (
-          <p className="mt-1 text-xs text-text-muted">
-            {labels.walletStripeHint ??
-              "Pay by card via Stripe Checkout — enter card details on the secure payment page."}
-          </p>
-        ) : (
-          <p className="mt-1 text-xs text-text-warning">
-            {labels.walletManualHint ??
-              "Stripe is not connected. Top-ups go to admin for approval, or connect keys under Admin → Integrations."}
-          </p>
-        )}
+      <div className="wallet-atm-card relative z-0 p-5 sm:p-6">
+        <div className="relative z-10 flex h-full flex-col justify-between gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                {labels.walletCardBrand ?? "Nextgenmove"}
+              </p>
+              <p className="mt-1 font-serif text-sm font-medium text-white/90">
+                {labels.walletCardType ?? "Credit wallet"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <ContactlessIcon />
+              <EmvChip />
+            </div>
+          </div>
+
+          <div>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65">
+              {labels.walletCardBalanceLabel ?? "Available balance"}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="font-serif text-[clamp(1.85rem,5vw,2.35rem)] font-semibold leading-none tracking-tight text-white">
+                {loading ? "…" : credits.toLocaleString()}
+              </span>
+              <span className="font-mono text-sm font-semibold uppercase tracking-[0.14em] text-white/85">
+                {labels.walletCreditsUnit ?? "CR"}
+              </span>
+            </div>
+            {fiatApprox != null && Number.isFinite(fiatApprox) ? (
+              <p className="mt-2 flex items-center gap-1.5 font-mono text-sm text-white/80">
+                <span className="text-base font-semibold text-white">
+                  {currencySymbol}
+                </span>
+                <span>
+                  {loading
+                    ? "…"
+                    : fiatApprox.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
+                  {currency}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-2 font-mono text-sm text-white/80">
+                <span className="text-base font-semibold text-white">
+                  {currencySymbol}
+                </span>{" "}
+                <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
+                  {currency}
+                </span>
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/50">
+                {labels.walletCardNumberLabel ?? "Card"}
+              </p>
+              <p className="mt-0.5 font-mono text-xs tracking-[0.2em] text-white/85">
+                •••• •••• •••• CRDT
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={!packages.length}
+              onClick={openTopUp}
+              className="rounded-radius-sm bg-white px-3 py-1.5 text-[11px] font-semibold text-fill-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {labels.topUpButton ?? "Top up"}
+            </button>
+          </div>
+        </div>
       </div>
+
+      {stripeEnabled ? (
+        <p className="text-xs text-text-muted">
+          {labels.walletStripeHint ??
+            "Pay by card via Stripe Checkout — enter card details on the secure payment page."}
+        </p>
+      ) : (
+        <p className="text-xs text-text-warning">
+          {labels.walletManualHint ??
+            "Stripe is not connected. Top-ups go to admin for approval, or connect keys under Admin → Integrations."}
+        </p>
+      )}
 
       {topUpStatus ? (
         <p className="text-sm text-text-secondary" role="status">
@@ -337,7 +489,9 @@ export function StudentWalletPanel({
                       {pack.label}
                     </p>
                     <p className="font-mono text-xs text-text-muted">
-                      {pack.credits} cr · €{pack.priceEur}
+                      {pack.credits} {labels.walletCreditsUnit ?? "CR"} ·{" "}
+                      {currencySymbol}
+                      {pack.priceEur}
                     </p>
                   </div>
                   <Button

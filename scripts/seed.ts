@@ -1264,6 +1264,11 @@ const OPERATIONAL_SITE_SETTINGS = {
       walletEyebrow: "Wallet",
       walletTitle: "Your credits",
       walletSubtitle: "Balance, top-ups, and every credit movement in one place.",
+      walletCardBrand: "Nextgenmove",
+      walletCardType: "Credit wallet",
+      walletCardBalanceLabel: "Available balance",
+      walletCreditsUnit: "CR",
+      walletCardNumberLabel: "Card",
       topUpButton: "Top up",
       topUpTitle: "Buy credits",
       topUpIntro:

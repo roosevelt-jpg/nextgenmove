@@ -341,6 +341,57 @@ a.link-brand:hover,
   box-shadow: var(--dash-employer-card-shadow);
 }
 
+/* Student wallet — plastic ATM / debit card */
+.wallet-atm-card {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1.586 / 1;
+  width: 100%;
+  max-width: 26rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--on-gradient);
+  background-color: var(--brand-indigo-1);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(201, 122, 46, 0.35), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, rgba(107, 79, 196, 0.45), transparent 50%),
+    linear-gradient(145deg, #1a2f6b 0%, #3c3489 42%, #5b4db8 78%, #2e2768 100%);
+  box-shadow:
+    0 18px 40px -16px rgba(60, 52, 137, 0.55),
+    0 8px 18px -10px rgba(26, 26, 24, 0.35);
+}
+
+.wallet-atm-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.02) 38%,
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.wallet-atm-card::after {
+  content: "";
+  position: absolute;
+  right: -12%;
+  bottom: -28%;
+  width: 55%;
+  height: 70%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+html.dark .wallet-atm-card {
+  box-shadow:
+    0 18px 40px -16px rgba(90, 70, 180, 0.55),
+    0 8px 18px -10px rgba(0, 0, 0, 0.45);
+}
+
 /* Brand — white card / panel surface */
 .card-panel {
   border-radius: var(--radius);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { serializeTimestamp } from "@/lib/firestore-utils";
 import { getProgramLevers } from "@/lib/collections/pages";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 import { isStripeLive } from "@/lib/billing/stripe";
 import {
   creditSourceLabelKey,
@@ -11,6 +12,10 @@ import {
   getStudentSession,
   unauthorizedResponse,
 } from "@/lib/student/session";
+import {
+  currencySymbol,
+  normalizeCurrencyCode,
+} from "@/lib/public/currency";
 
 export const dynamic = "force-dynamic";
 
@@ -28,14 +33,18 @@ export async function GET(request: Request) {
   );
 
   try {
-    const [levers, stripeEnabled, txSnap] = await Promise.all([
+    const [levers, stripeEnabled, settings, txSnap] = await Promise.all([
       getProgramLevers(),
       isStripeLive(),
+      getSiteSettings(),
       adminDb
         .collection("credit_transactions")
         .where("studentId", "==", session.studentId)
         .get(),
     ]);
+
+    const currency = normalizeCurrencyCode(settings.defaultCurrency);
+    const creditsPerEuro = Number(levers?.creditsPerEuro ?? 4) || 4;
 
     const transactions = txSnap.docs
       .map((doc) => {
@@ -64,7 +73,9 @@ export async function GET(request: Request) {
     return NextResponse.json({
       credits: session.student.credits,
       packages: levers?.creditTopUpPackages ?? [],
-      creditsPerEuro: levers?.creditsPerEuro ?? 4,
+      creditsPerEuro,
+      currency,
+      currencySymbol: currencySymbol(currency),
       stripeEnabled,
       transactions,
     });
