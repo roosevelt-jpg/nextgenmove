@@ -3,13 +3,16 @@
 import { useMemo, useState } from "react";
 import { listWorldLanguages } from "@/lib/i18n/locales";
 import { useLocale } from "@/components/i18n/locale-provider";
+import { cn } from "@/lib/utils";
 
 export function LanguageSwitcher({
   className,
+  triggerClassName,
   searchPlaceholder,
   ariaLabel,
 }: {
   className?: string;
+  triggerClassName?: string;
   searchPlaceholder?: string;
   ariaLabel?: string;
 }) {
@@ -36,7 +39,10 @@ export function LanguageSwitcher({
     <div className={className ? `relative ${className}` : "relative"}>
       <button
         type="button"
-        className="inline-flex min-h-7 max-w-[9rem] items-center gap-1.5 rounded-radius-sm border border-border px-2 text-[11px] text-text-secondary"
+        className={cn(
+          "inline-flex min-h-7 max-w-[9rem] items-center gap-1.5 rounded-radius-sm border border-border px-2 text-[11px] text-text-secondary",
+          triggerClassName,
+        )}
         aria-label={ariaLabel ?? "Language"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}

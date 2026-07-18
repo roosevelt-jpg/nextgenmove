@@ -55,7 +55,7 @@ export async function SiteFooter() {
     "";
 
   return (
-    <footer className="mt-auto border-t border-border bg-bg">
+    <footer className="mt-auto bg-grad-rouse text-on-gradient">
       <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
@@ -67,17 +67,17 @@ export async function SiteFooter() {
               className="h-8 w-8 rounded-radius-sm object-cover"
               aria-hidden
             />
-            <span className="font-serif text-lg font-semibold text-text-primary">
+            <span className="font-serif text-lg font-semibold text-on-gradient">
               {siteName}
             </span>
           </div>
           {description ? (
-            <p className="text-sm text-text-secondary">{description}</p>
+            <p className="text-sm text-on-gradient/80">{description}</p>
           ) : null}
           {contactEmail ? (
             <a
               href={`mailto:${contactEmail}`}
-              className="block text-sm text-text-secondary hover:text-text-primary"
+              className="block text-sm text-on-gradient/85 transition-opacity hover:text-on-gradient"
             >
               {contactEmail}
             </a>
@@ -89,7 +89,7 @@ export async function SiteFooter() {
             {groups.map((group) => (
               <div key={group.key}>
                 {group.label ? (
-                  <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
+                  <h2 className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-on-gradient/70">
                     {group.label}
                   </h2>
                 ) : null}
@@ -99,7 +99,7 @@ export async function SiteFooter() {
                       <li key={link.key}>
                         <Link
                           href={link.href}
-                          className="text-sm text-text-secondary hover:text-text-primary"
+                          className="text-sm text-on-gradient/85 transition-opacity hover:text-on-gradient"
                         >
                           {link.label}
                         </Link>
@@ -115,12 +115,13 @@ export async function SiteFooter() {
             links={socialLinks}
             platformLabels={formLabels}
             className="justify-end"
+            iconClassName="border-white/35 text-on-gradient hover:border-white/60 hover:text-white"
           />
         </div>
       </div>
 
-      <div className="border-t border-border">
-        <div className="page-container mx-auto flex w-full max-w-page flex-col gap-2 py-4 text-sm text-text-muted sm:flex-row sm:items-center sm:justify-between">
+      <div className="border-t border-white/20">
+        <div className="page-container mx-auto flex w-full max-w-page flex-col gap-2 py-4 text-sm text-on-gradient/75 sm:flex-row sm:items-center sm:justify-between">
           <p>{copyright}</p>
           {attributionPrefix && attributionName && attributionUrl ? (
             <p>
@@ -129,7 +130,7 @@ export async function SiteFooter() {
                 href={attributionUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-text-secondary underline-offset-2 hover:text-text-primary hover:underline"
+                className="text-on-gradient underline-offset-2 hover:underline"
               >
                 {attributionName}
               </a>
