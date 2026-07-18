@@ -25,20 +25,22 @@ export default async function CmsFormRoute({
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="page-section mx-auto max-w-xl space-y-6">
-      <header className="space-y-3">
-        {pageLabels.cmsFormEyebrow ? (
-          <SectionEyebrow>{pageLabels.cmsFormEyebrow}</SectionEyebrow>
-        ) : null}
-        <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
-          {form.title}
-        </h1>
-      </header>
-      <Card>
-        <CardBody>
-          <CmsFormView form={form} labels={formLabels} />
-        </CardBody>
-      </Card>
+    <div className="page-section">
+      <div className="mx-auto flex w-full max-w-xl flex-col items-center space-y-6">
+        <header className="w-full space-y-3 text-center">
+          {pageLabels.cmsFormEyebrow ? (
+            <SectionEyebrow>{pageLabels.cmsFormEyebrow}</SectionEyebrow>
+          ) : null}
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
+            {form.title}
+          </h1>
+        </header>
+        <Card className="w-full">
+          <CardBody>
+            <CmsFormView form={form} labels={formLabels} />
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }

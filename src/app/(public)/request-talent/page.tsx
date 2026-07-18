@@ -8,36 +8,41 @@ export default async function RequestTalentPage() {
   const formLabels = settings.formLabels ?? {};
 
   return (
-    <div className="page-section space-y-6">
-      <header className="max-w-2xl space-y-3">
-        {pageLabels.requestTalentEyebrow ||
-        pageLabels.requestTalentTitle ||
-        settings.navLabels?.requestTalent ? (
-          <SectionEyebrow>
-            {pageLabels.requestTalentEyebrow ??
-              pageLabels.requestTalentTitle ??
-              settings.navLabels?.requestTalent}
-          </SectionEyebrow>
-        ) : null}
-        {pageLabels.requestTalentHeadline ? (
-          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
-            {pageLabels.requestTalentHeadline}
-          </h1>
-        ) : pageLabels.requestTalentTitle || settings.navLabels?.requestTalent ? (
-          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
-            {pageLabels.requestTalentTitle ?? settings.navLabels?.requestTalent}
-          </h1>
-        ) : null}
-        {pageLabels.requestTalentIntro ? (
-          <p className="text-sm text-text-secondary sm:text-base">{pageLabels.requestTalentIntro}</p>
-        ) : null}
-      </header>
+    <div className="page-section">
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center space-y-6">
+        <header className="w-full space-y-3 text-center">
+          {pageLabels.requestTalentEyebrow ||
+          pageLabels.requestTalentTitle ||
+          settings.navLabels?.requestTalent ? (
+            <SectionEyebrow>
+              {pageLabels.requestTalentEyebrow ??
+                pageLabels.requestTalentTitle ??
+                settings.navLabels?.requestTalent}
+            </SectionEyebrow>
+          ) : null}
+          {pageLabels.requestTalentHeadline ? (
+            <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
+              {pageLabels.requestTalentHeadline}
+            </h1>
+          ) : pageLabels.requestTalentTitle ||
+            settings.navLabels?.requestTalent ? (
+            <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
+              {pageLabels.requestTalentTitle ?? settings.navLabels?.requestTalent}
+            </h1>
+          ) : null}
+          {pageLabels.requestTalentIntro ? (
+            <p className="text-sm text-text-secondary sm:text-base">
+              {pageLabels.requestTalentIntro}
+            </p>
+          ) : null}
+        </header>
 
-      <Card className="max-w-xl">
-        <CardBody>
-          <RequestTalentForm labels={formLabels} />
-        </CardBody>
-      </Card>
+        <Card className="w-full">
+          <CardBody>
+            <RequestTalentForm labels={formLabels} />
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }
