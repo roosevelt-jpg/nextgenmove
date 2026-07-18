@@ -138,7 +138,9 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     persistProfile,
     { enabled: Boolean(profile), delayMs: 800 },
   );
-  suppressRef.current = suppressNext;
+  useEffect(() => {
+    suppressRef.current = suppressNext;
+  }, [suppressNext]);
 
   useEffect(() => {
     void loadProfile();

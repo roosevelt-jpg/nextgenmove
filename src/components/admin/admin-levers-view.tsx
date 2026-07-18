@@ -50,7 +50,9 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
     persistLevers,
     { enabled: canPersist, delayMs: 700 },
   );
-  suppressRef.current = suppressNext;
+  useEffect(() => {
+    suppressRef.current = suppressNext;
+  }, [suppressNext]);
 
   const load = async () => {
     setErrorCode(null);

@@ -76,7 +76,9 @@ export function AdminSecurityControls({
     persistDays,
     { enabled: hydrated, delayMs: 700 },
   );
-  suppressRef.current = suppressNext;
+  useEffect(() => {
+    suppressRef.current = suppressNext;
+  }, [suppressNext]);
 
   return (
     <div className="space-y-3">

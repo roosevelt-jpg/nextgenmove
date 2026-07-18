@@ -158,7 +158,9 @@ export function AdminHomepageMediaView({
       delayMs: 800,
     });
   void _youtubeAutosaveStatus;
-  suppressYoutubeRef.current = suppressYoutube;
+  useEffect(() => {
+    suppressYoutubeRef.current = suppressYoutube;
+  }, [suppressYoutube]);
 
   const load = useCallback(async () => {
     const [vRes, pRes, sRes] = await Promise.all([

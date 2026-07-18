@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
@@ -43,7 +43,6 @@ export function AccountProfileView({
     "loading",
   );
   const [hydrated, setHydrated] = useState(false);
-  const suppressRef = useRef<(() => void) | null>(null);
   const router = useRouter();
 
   const profileDraft = useMemo(() => {
@@ -105,7 +104,6 @@ export function AccountProfileView({
     persistProfileDraft,
     { enabled: hydrated, delayMs: 800 },
   );
-  suppressRef.current = suppressNext;
 
   const persistPhotoUrl = useCallback(
     async (nextUrl: string | null) => {
@@ -134,7 +132,7 @@ export function AccountProfileView({
         account: AccountPayload;
         warning?: string;
       };
-      suppressRef.current?.();
+      suppressNext();
       setAccount(data.account);
       setDisplayName(data.account.displayName);
       setPhone(data.account.phone ?? "");
@@ -159,7 +157,7 @@ export function AccountProfileView({
     } catch {
       setLoadState("error");
     }
-  }, [labels.degradedWarning, notificationKeys]);
+  }, [labels.degradedWarning, notificationKeys, suppressNext]);
 
   useEffect(() => {
     void load();

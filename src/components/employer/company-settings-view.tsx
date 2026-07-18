@@ -106,7 +106,9 @@ export function CompanySettingsView({
     persistDraft,
     { enabled: hydrated, delayMs: 800 },
   );
-  suppressRef.current = suppressNext;
+  useEffect(() => {
+    suppressRef.current = suppressNext;
+  }, [suppressNext]);
 
   const loadCompany = useCallback(async () => {
     const response = await fetch("/api/employer/company");

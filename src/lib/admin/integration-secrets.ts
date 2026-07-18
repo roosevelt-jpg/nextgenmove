@@ -138,7 +138,7 @@ export async function getIntegrationSecrets(
   integrationId: string,
 ): Promise<Record<string, string>> {
   const fromEnv = envFallbackSecrets(integrationId);
-  let fromStore: Record<string, string> = {};
+  const fromStore: Record<string, string> = {};
 
   try {
     const snap = await adminDb

@@ -230,7 +230,9 @@ export function StudentWalletPanel({
         labels.topUpRedirecting ??
           "Opening Stripe checkout to enter your card details…",
       );
-      window.location.href = payload.url;
+      // Navigate to Stripe hosted checkout (external redirect).
+      // eslint-disable-next-line react-hooks/immutability -- intentional full-page redirect
+      window.location.assign(payload.url);
       return;
     }
     setTopUpStatus(

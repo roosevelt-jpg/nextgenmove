@@ -95,7 +95,9 @@ export function AdminSocialLinksEditor({
     persistRows,
     { enabled: hydrated, delayMs: 700 },
   );
-  suppressRef.current = suppressNext;
+  useEffect(() => {
+    suppressRef.current = suppressNext;
+  }, [suppressNext]);
 
   const updateRow = (id: string, patch: Partial<DraftRow>) => {
     setRows((prev) =>

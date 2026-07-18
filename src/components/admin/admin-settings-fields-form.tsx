@@ -133,7 +133,9 @@ export function AdminSettingsFieldsForm({
     persist,
     { enabled: hydrated, delayMs: 700 },
   );
-  suppressRef.current = suppressNext;
+  useEffect(() => {
+    suppressRef.current = suppressNext;
+  }, [suppressNext]);
 
   const statusLabel =
     status === "saving"

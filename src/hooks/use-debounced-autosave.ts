@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -23,11 +23,13 @@ export function useDebouncedAutosave<T>(
   const skipRef = useRef(true);
   const [status, setStatus] = useState<AutosaveStatus>("idle");
 
-  persistRef.current = persist;
+  useEffect(() => {
+    persistRef.current = persist;
+  }, [persist]);
 
-  const suppressNext = () => {
+  const suppressNext = useCallback(() => {
     skipRef.current = true;
-  };
+  }, []);
 
   useEffect(() => {
     if (!enabled || value == null) {
