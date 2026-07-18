@@ -1,12 +1,16 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+export type DashboardCardTone = "admin" | "student" | "employer";
+
 export interface StatCardProps {
   label: ReactNode;
   value: ReactNode;
   className?: string;
   labelClassName?: string;
   valueClassName?: string;
+  /** Workspace-colored wash + glow for portal dashboards */
+  tone?: DashboardCardTone;
 }
 
 export function StatCard({
@@ -15,11 +19,14 @@ export function StatCard({
   className,
   labelClassName,
   valueClassName,
+  tone,
 }: StatCardProps) {
   return (
     <div
       className={cn(
         "rounded-radius border border-border bg-grad-card px-3.5 py-3",
+        tone && "dashboard-stat-card",
+        tone && `dashboard-stat-card--${tone}`,
         className,
       )}
     >

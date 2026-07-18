@@ -50,7 +50,7 @@ function PlacementsChart({
     .join(" ");
 
   return (
-    <div className="rounded-radius border border-border bg-grad-card p-4">
+    <div className="dashboard-panel--admin rounded-radius border p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-[14px] font-semibold text-text-primary">
           {labels.chartPlacementsTitle ??
@@ -171,7 +171,7 @@ function TrackDonut({
   const aLen = (aPct / 100) * c;
 
   return (
-    <div className="rounded-radius border border-border bg-grad-card p-4">
+    <div className="dashboard-panel--admin rounded-radius border p-4">
       <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
         {labels.chartTracksTitle ?? "Track A vs Track B"}
       </h2>
@@ -362,7 +362,7 @@ export function AdminDashboardView({
           labels[card.key] ? (
             <div
               key={card.key}
-              className="rounded-radius border border-border bg-grad-card px-4 py-3.5"
+              className="dashboard-stat-card dashboard-stat-card--admin rounded-radius border px-4 py-3.5"
             >
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 {labels[card.key]}

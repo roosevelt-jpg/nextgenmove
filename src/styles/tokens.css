@@ -106,6 +106,23 @@
   --grad-noon: linear-gradient(105deg, #152556 0%, #5239a0 55%, #7a68d4 100%);
   --on-gradient: #ffffff;
 
+  /* Dashboard workspace cards — tinted wash + colored glow */
+  --dash-admin-card-bg: linear-gradient(155deg, #ffffff 0%, #f4f2ff 55%, #eeedfe 100%);
+  --dash-admin-card-border: rgba(75, 63, 156, 0.22);
+  --dash-admin-card-shadow:
+    0 14px 32px -14px rgba(60, 52, 137, 0.48),
+    0 6px 14px -8px rgba(75, 63, 156, 0.28);
+  --dash-student-card-bg: linear-gradient(155deg, #ffffff 0%, #faf4f2 55%, #f5e9e7 100%);
+  --dash-student-card-border: rgba(139, 58, 58, 0.22);
+  --dash-student-card-shadow:
+    0 14px 32px -14px rgba(139, 58, 58, 0.42),
+    0 6px 14px -8px rgba(139, 58, 58, 0.24);
+  --dash-employer-card-bg: linear-gradient(155deg, #ffffff 0%, #f4f8ee 55%, #eaf3de 100%);
+  --dash-employer-card-border: rgba(39, 80, 10, 0.2);
+  --dash-employer-card-shadow:
+    0 14px 32px -14px rgba(39, 80, 10, 0.36),
+    0 6px 14px -8px rgba(39, 80, 10, 0.22);
+
   /* Content column — wide marketing canvas (tracks viewport with gutters) */
   --page-max: 90rem; /* 1440px */
   --page-gutter: var(--space-10); /* 40px desktop */
@@ -178,6 +195,23 @@ html.dark {
   --grad-card: linear-gradient(#252240, #252240);
   --grad-portal-wash: linear-gradient(#14122b, #14122b);
   --on-gradient: #ffffff;
+
+  --dash-admin-card-bg: linear-gradient(155deg, #252240 0%, #2a2550 100%);
+  --dash-admin-card-border: rgba(154, 127, 224, 0.28);
+  --dash-admin-card-shadow:
+    0 14px 32px -14px rgba(90, 70, 180, 0.55),
+    0 6px 14px -8px rgba(60, 52, 137, 0.4);
+  --dash-student-card-bg: linear-gradient(155deg, #252240 0%, #3a2220 100%);
+  --dash-student-card-border: rgba(232, 160, 144, 0.28);
+  --dash-student-card-shadow:
+    0 14px 32px -14px rgba(180, 70, 70, 0.45),
+    0 6px 14px -8px rgba(139, 58, 58, 0.35);
+  --dash-employer-card-bg: linear-gradient(155deg, #252240 0%, #1e3320 100%);
+  --dash-employer-card-border: rgba(143, 212, 138, 0.26);
+  --dash-employer-card-shadow:
+    0 14px 32px -14px rgba(50, 120, 40, 0.45),
+    0 6px 14px -8px rgba(39, 80, 10, 0.35);
+
   /* Keep horizon hero readable when the rest of the site is in dark mode */
   --hero-on: #fffdf8;
   --brand-hero-muted: #e8d9be;

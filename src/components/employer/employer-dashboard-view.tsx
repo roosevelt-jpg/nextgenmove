@@ -124,21 +124,24 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
+          tone="employer"
           label={labels.statTalentPool || "Talent pool"}
           value={String(data.stats.talentPool)}
         />
         <StatCard
+          tone="employer"
           label={labels.statShortlisted || "Shortlisted"}
           value={String(data.stats.shortlisted)}
         />
         <StatCard
+          tone="employer"
           label={labels.statPipeline || "In pipeline"}
           value={String(data.stats.inPipeline)}
         />
       </div>
 
       {data.stageBreakdown && data.stageBreakdown.length > 0 ? (
-        <section className="rounded-radius border border-border bg-grad-card p-4">
+        <section className="dashboard-panel--employer rounded-radius border p-4">
           <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
             {labels.funnelTitle ?? "Pipeline by stage"}
           </h2>
@@ -182,7 +185,7 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
+        <Card className="dashboard-stat-card dashboard-stat-card--employer">
           <CardBody>
             <Link
               href="/employer/talent-pool"
@@ -192,7 +195,7 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
             </Link>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="dashboard-stat-card dashboard-stat-card--employer">
           <CardBody>
             <Link
               href="/employer/pipeline"
@@ -202,7 +205,7 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
             </Link>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="dashboard-stat-card dashboard-stat-card--employer">
           <CardBody>
             <Link
               href="/employer/profile"

@@ -288,6 +288,59 @@ a.link-brand:hover,
   color: #ffffff !important;
 }
 
+/* Workspace dashboard KPI / panel cards */
+.dashboard-stat-card {
+  border-radius: var(--radius);
+  border-width: 1px;
+  border-style: solid;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.dashboard-stat-card--admin {
+  border-color: var(--dash-admin-card-border);
+  background-color: transparent;
+  background-image: var(--dash-admin-card-bg);
+  box-shadow: var(--dash-admin-card-shadow);
+}
+
+.dashboard-stat-card--student {
+  border-color: var(--dash-student-card-border);
+  background-color: transparent;
+  background-image: var(--dash-student-card-bg);
+  box-shadow: var(--dash-student-card-shadow);
+}
+
+.dashboard-stat-card--employer {
+  border-color: var(--dash-employer-card-border);
+  background-color: transparent;
+  background-image: var(--dash-employer-card-bg);
+  box-shadow: var(--dash-employer-card-shadow);
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-1px);
+}
+
+.dashboard-panel--admin {
+  border-color: var(--dash-admin-card-border);
+  background-image: var(--dash-admin-card-bg);
+  box-shadow: var(--dash-admin-card-shadow);
+}
+
+.dashboard-panel--student {
+  border-color: var(--dash-student-card-border);
+  background-image: var(--dash-student-card-bg);
+  box-shadow: var(--dash-student-card-shadow);
+}
+
+.dashboard-panel--employer {
+  border-color: var(--dash-employer-card-border);
+  background-image: var(--dash-employer-card-bg);
+  box-shadow: var(--dash-employer-card-shadow);
+}
+
 /* Brand — white card / panel surface */
 .card-panel {
   border-radius: var(--radius);
