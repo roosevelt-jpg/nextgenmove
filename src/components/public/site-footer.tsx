@@ -5,11 +5,13 @@ import {
   getSiteSettings,
   listFooterCmsPages,
 } from "@/lib/collections/site-settings";
+import { BRAND_ICON_PATH } from "@/lib/brand";
 import {
-  BRAND_ICON_PATH,
-  FOOTER_ATTRIBUTION,
+  FOOTER_ATTRIBUTION_NAME,
+  FOOTER_ATTRIBUTION_PREFIX,
+  FOOTER_ATTRIBUTION_URL,
   formatFooterCopyright,
-} from "@/lib/brand";
+} from "@/lib/public/footer-constants";
 import { resolveFooterGroups } from "@/lib/public/nav";
 
 export async function SiteFooter() {
@@ -97,14 +99,14 @@ export async function SiteFooter() {
         <div className="page-container mx-auto flex w-full max-w-page flex-col gap-2 py-4 text-sm text-on-gradient/75 sm:flex-row sm:items-center sm:justify-between">
           <p>{copyright}</p>
           <p>
-            {FOOTER_ATTRIBUTION.prefix}{" "}
+            {FOOTER_ATTRIBUTION_PREFIX}{" "}
             <a
-              href={FOOTER_ATTRIBUTION.url}
+              href={FOOTER_ATTRIBUTION_URL}
               target="_blank"
               rel="noreferrer"
               className="text-on-gradient underline-offset-2 hover:underline"
             >
-              {FOOTER_ATTRIBUTION.name}
+              {FOOTER_ATTRIBUTION_NAME}
             </a>
           </p>
         </div>

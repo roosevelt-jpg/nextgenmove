@@ -95,13 +95,7 @@ export function AdminSettingsFieldsForm({
     }
     setValues(next);
     setHydrated(true);
-    // Hydrate from server snapshot keys only — avoid resetting on new object identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    fields,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    fields.map((f) => `${f.key}:${String(initialValues[f.key] ?? "")}`).join("|"),
-  ]);
+  }, [fields, initialValues]);
 
   const persist = async (draft: Record<string, string | boolean>) => {
     const body: Record<string, unknown> = {};

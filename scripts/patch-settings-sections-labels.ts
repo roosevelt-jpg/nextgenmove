@@ -1,6 +1,6 @@
 /**
- * Patch admin settings tab / section labels.
- * Run: npx tsx scripts/patch-settings-ui-labels.ts
+ * Patch sectioned admin settings labels.
+ * Run: npx tsx scripts/patch-settings-sections-labels.ts
  */
 import { config as loadEnv } from "dotenv";
 import { resolve } from "node:path";
@@ -37,10 +37,6 @@ async function main() {
 
   adminPageLabels.settings = {
     ...((adminPageLabels.settings as Record<string, string>) || {}),
-    settingsTitle: "Workspace settings",
-    workspaceEyebrow: "Admin · Settings",
-    workspaceSubtitle:
-      "Brand, contact, social, security, and media — edited in focused sections.",
     settingsNavAria: "Settings sections",
     settingsNavBrand: "Brand",
     settingsNavContact: "Contact",
@@ -54,26 +50,11 @@ async function main() {
     settingsContactHelp: "Shown on the contact page and in the site footer.",
     settingsMediaHelp:
       "YouTube playlist sync for the homepage and portal libraries.",
-    socialMediaTitle: "Social media",
+    contactPhone: "Contact phone",
+    contactAddress: "Contact address",
     socialLinksHelp:
       "These links show as icons in the site footer and on the contact page.",
-    saveSuccess: "Saved.",
-    saveError: "Could not save.",
-    saving: "Saving…",
   };
-
-  const settingsMap = adminPageLabels.settings as Record<string, string>;
-  delete settingsMap.footerCopyright;
-  delete settingsMap.footerAttributionPrefix;
-  delete settingsMap.footerAttributionName;
-  delete settingsMap.footerAttributionUrl;
-  delete settingsMap.tabBrand;
-  delete settingsMap.tabContact;
-  delete settingsMap.tabSocial;
-  delete settingsMap.tabSecurity;
-  delete settingsMap.tabBilling;
-  delete settingsMap.tabMedia;
-  delete settingsMap.tabTeam;
 
   await ref.set(
     stripUndefined({
@@ -83,7 +64,7 @@ async function main() {
     { merge: true },
   );
 
-  console.log("Patched admin settings UI labels");
+  console.log("Patched sectioned settings labels");
 }
 
 main().catch((error) => {

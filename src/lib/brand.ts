@@ -4,17 +4,6 @@ export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo.png";
 export const BRAND_ICON_PATH = "/brand/nextgenmove-favicon.png";
 export const BRAND_FAVICON_PATH = BRAND_ICON_PATH;
 
-/** Footer copyright + attribution — not CMS-editable. */
-export function formatFooterCopyright(siteName: string, year = new Date().getFullYear()) {
-  return `© ${year} ${siteName}`;
-}
-
-export const FOOTER_ATTRIBUTION = {
-  prefix: "Made with ❤️ by",
-  name: "FLYN.AI",
-  url: "https://myflynai.com/",
-} as const;
-
 /** Ignore CMS overrides — brand files are committed under /public/brand. */
 export function resolveBrandLogoUrl(_cmsUrl?: string | null): string {
   return BRAND_LOGO_PATH;

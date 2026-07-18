@@ -8,22 +8,59 @@ import {
   type SettingsFieldDef,
 } from "@/components/admin/admin-settings-fields-form";
 import { AdminSocialLinksEditor } from "@/components/admin/admin-social-links-editor";
-import type { SocialLink } from "@/types/cms";
+import { labelOr } from "@/lib/portal/nav-label-defaults";
 import { cn } from "@/lib/utils";
+import type { SocialLink } from "@/types/cms";
 
-export type SettingsTabId =
+type SettingsSection =
   | "brand"
   | "contact"
   | "social"
   | "security"
-  | "billing"
   | "media"
+  | "billing"
   | "team";
+
+const SECTION_FALLBACKS: Record<SettingsSection, string> = {
+  brand: "Brand",
+  contact: "Contact",
+  social: "Social",
+  security: "Security",
+  media: "Media",
+  billing: "Billing",
+  team: "Team",
+};
 
 interface AdminSettingsViewProps {
   labels: Record<string, string>;
-  settings: Record<string, unknown>;
-  socialLinks: SocialLink[];
+  settings: {
+    siteName?: string;
+    tagline?: string;
+    siteDescription?: string;
+    brandMark?: string;
+    logoUrl?: string;
+    faviconUrl?: string;
+    defaultMetaTitle?: string;
+    defaultMetaDescription?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    contactAddress?: string;
+    timezone?: string;
+    defaultCurrency?: string;
+    require2fa?: boolean;
+    googleSignInEnabled?: boolean;
+    sessionExpireDays?: number;
+    operatorPlanLabel?: string;
+    operatorPlanDetail?: string;
+    billingManageUrl?: string;
+    youtubePlaylistUrl?: string;
+    youtubeSyncEnabled?: boolean;
+    youtubeHomepageLimit?: number;
+    youtubeLibraryLimit?: number;
+    youtubeLastSyncedAt?: string | null;
+    youtubeLastSyncError?: string | null;
+    socialLinks?: SocialLink[];
+  };
 }
 
 const BRAND_FIELDS: SettingsFieldDef[] = [
@@ -37,6 +74,8 @@ const BRAND_FIELDS: SettingsFieldDef[] = [
     kind: "textarea",
     labelKey: "siteDescription",
   },
+  { key: "logoUrl", kind: "url", labelKey: "logoUrl" },
+  { key: "faviconUrl", kind: "url", labelKey: "faviconUrl" },
   { key: "defaultMetaTitle", kind: "text", labelKey: "defaultMetaTitle" },
   {
     key: "defaultMetaDescription",
@@ -51,19 +90,16 @@ const CONTACT_FIELDS: SettingsFieldDef[] = [
   { key: "contactAddress", kind: "textarea", labelKey: "contactAddress" },
 ];
 
-const BILLING_FIELDS: SettingsFieldDef[] = [
-  { key: "operatorPlanLabel", kind: "text", labelKey: "operatorPlanLabel" },
-  { key: "operatorPlanDetail", kind: "text", labelKey: "operatorPlanDetail" },
-  { key: "billingManageUrl", kind: "url", labelKey: "billingManageUrl" },
-];
-
 const MEDIA_FIELDS: SettingsFieldDef[] = [
-  { key: "youtubePlaylistUrl", kind: "url", labelKey: "youtubePlaylistUrl" },
+  {
+    key: "youtubePlaylistUrl",
+    kind: "url",
+    labelKey: "youtubePlaylistUrl",
+  },
   {
     key: "youtubeSyncEnabled",
     kind: "boolean",
     labelKey: "youtubeSyncEnabled",
-    helpKey: "youtubeSyncEnabledHelp",
   },
   {
     key: "youtubeHomepageLimit",
@@ -83,91 +119,57 @@ const MEDIA_FIELDS: SettingsFieldDef[] = [
   },
   {
     key: "youtubeLastSyncError",
-    kind: "textarea",
+    kind: "text",
     labelKey: "youtubeLastSyncError",
     readOnly: true,
   },
 ];
 
-const SECURITY_EXTRA_FIELDS: SettingsFieldDef[] = [
-  {
-    key: "googleSignInEnabled",
-    kind: "boolean",
-    labelKey: "googleSignInEnabled",
-    helpKey: "googleSignInEnabledHelp",
-  },
+const BILLING_FIELDS: SettingsFieldDef[] = [
+  { key: "operatorPlanLabel", kind: "text", labelKey: "operatorPlanLabel" },
+  { key: "operatorPlanDetail", kind: "text", labelKey: "operatorPlanDetail" },
+  { key: "billingManageUrl", kind: "url", labelKey: "billingManageUrl" },
 ];
 
-function pickValues(
-  settings: Record<string, unknown>,
-  fields: SettingsFieldDef[],
-) {
-  const next: Record<string, string | number | boolean | null | undefined> = {};
-  for (const field of fields) {
-    next[field.key] = settings[field.key] as
-      | string
-      | number
-      | boolean
-      | null
-      | undefined;
-  }
-  return next;
-}
+export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) {
+  const [section, setSection] = useState<SettingsSection>("brand");
 
-export function AdminSettingsView({
-  labels,
-  settings,
-  socialLinks,
-}: AdminSettingsViewProps) {
-  const tabs = useMemo(
-    () => [
-      { id: "brand" as const, label: labels.tabBrand || "Brand" },
-      { id: "contact" as const, label: labels.tabContact || "Contact" },
-      { id: "social" as const, label: labels.tabSocial || "Social" },
-      { id: "security" as const, label: labels.tabSecurity || "Security" },
-      { id: "billing" as const, label: labels.tabBilling || "Billing" },
-      { id: "media" as const, label: labels.tabMedia || "Media" },
-      { id: "team" as const, label: labels.tabTeam || "Team" },
-    ],
+  const nav = useMemo(
+    () =>
+      [
+        {
+          id: "brand" as const,
+          label: labelOr(labels.settingsNavBrand, SECTION_FALLBACKS.brand),
+        },
+        {
+          id: "contact" as const,
+          label: labelOr(labels.settingsNavContact, SECTION_FALLBACKS.contact),
+        },
+        {
+          id: "social" as const,
+          label: labelOr(labels.settingsNavSocial, SECTION_FALLBACKS.social),
+        },
+        {
+          id: "security" as const,
+          label: labelOr(labels.settingsNavSecurity, SECTION_FALLBACKS.security),
+        },
+        {
+          id: "media" as const,
+          label: labelOr(labels.settingsNavMedia, SECTION_FALLBACKS.media),
+        },
+        {
+          id: "billing" as const,
+          label: labelOr(labels.settingsNavBilling, SECTION_FALLBACKS.billing),
+        },
+        {
+          id: "team" as const,
+          label: labelOr(labels.settingsNavTeam, SECTION_FALLBACKS.team),
+        },
+      ] as const,
     [labels],
   );
 
-  const [tab, setTab] = useState<SettingsTabId>("brand");
-
-  const active = tabs.some((item) => item.id === tab) ? tab : tabs[0]?.id ?? "brand";
-
-  const sectionCopy: Record<
-    SettingsTabId,
-    { title?: string; body?: string }
-  > = {
-    brand: { title: labels.brandSectionTitle, body: labels.brandSectionBody },
-    contact: {
-      title: labels.contactSectionTitle,
-      body: labels.contactSectionBody,
-    },
-    social: {
-      title: labels.socialMediaTitle,
-      body: labels.socialLinksHelp,
-    },
-    security: {
-      title: labels.securityTitle,
-      body: labels.securitySectionBody,
-    },
-    billing: {
-      title: labels.billingTitle,
-      body: labels.billingSectionBody,
-    },
-    media: {
-      title: labels.mediaSectionTitle,
-      body: labels.mediaSectionBody,
-    },
-    team: {
-      title: labels.teamMembersTitle,
-      body: labels.teamMembersBody,
-    },
-  };
-
-  const copy = sectionCopy[active];
+  const activeMeta = nav.find((item) => item.id === section);
 
   return (
     <div className="space-y-8">
@@ -178,34 +180,34 @@ export function AdminSettingsView({
           </p>
         ) : null}
         {labels.settingsTitle ? (
-          <h1 className="font-serif text-3xl text-text-primary">
+          <h1 className="font-serif text-3xl text-text-primary md:text-4xl">
             {labels.settingsTitle}
           </h1>
         ) : null}
         {labels.workspaceSubtitle ? (
-          <p className="max-w-2xl text-sm text-text-secondary">
+          <p className="max-w-xl text-sm text-text-secondary">
             {labels.workspaceSubtitle}
           </p>
         ) : null}
       </header>
 
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+      <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
         <nav
           aria-label={labels.settingsNavAria}
-          className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0"
+          className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible"
         >
-          {tabs.map((item) => {
-            const selected = item.id === active;
+          {nav.map((item) => {
+            const active = item.id === section;
             return (
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setTab(item.id)}
+                onClick={() => setSection(item.id)}
                 className={cn(
-                  "shrink-0 rounded-radius px-3 py-2 text-left text-sm font-medium transition-colors",
-                  selected
+                  "shrink-0 rounded-radius-sm px-3 py-2 text-left text-sm font-medium transition-colors",
+                  active
                     ? "bg-grad-rouse text-on-gradient shadow-sm"
-                    : "text-text-secondary hover:bg-surface-1 hover:text-text-primary",
+                    : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
                 )}
               >
                 {item.label}
@@ -214,81 +216,166 @@ export function AdminSettingsView({
           })}
         </nav>
 
-        <section className="min-w-0 rounded-radius border border-border bg-grad-card p-5 sm:p-6">
-          <div className="mb-6 space-y-1 border-b border-border pb-4">
-            {copy.title ? (
-              <h2 className="font-serif text-xl text-text-primary">{copy.title}</h2>
-            ) : null}
-            {copy.body ? (
-              <p className="text-sm text-text-secondary">{copy.body}</p>
-            ) : null}
-          </div>
-
-          {active === "brand" ? (
-            <AdminSettingsFieldsForm
-              labels={labels}
-              fields={BRAND_FIELDS}
-              initialValues={pickValues(settings, BRAND_FIELDS)}
-            />
+        <div className="min-w-0 space-y-4">
+          {activeMeta?.label ? (
+            <div className="border-b border-border pb-3">
+              <h2 className="font-serif text-xl text-text-primary">
+                {activeMeta.label}
+              </h2>
+              {section === "brand" && labels.settingsBrandHelp ? (
+                <p className="mt-1 text-sm text-text-secondary">
+                  {labels.settingsBrandHelp}
+                </p>
+              ) : null}
+              {section === "contact" && labels.settingsContactHelp ? (
+                <p className="mt-1 text-sm text-text-secondary">
+                  {labels.settingsContactHelp}
+                </p>
+              ) : null}
+              {section === "social" && labels.socialLinksHelp ? (
+                <p className="mt-1 text-sm text-text-secondary">
+                  {labels.socialLinksHelp}
+                </p>
+              ) : null}
+              {section === "media" && labels.settingsMediaHelp ? (
+                <p className="mt-1 text-sm text-text-secondary">
+                  {labels.settingsMediaHelp}
+                </p>
+              ) : null}
+            </div>
           ) : null}
 
-          {active === "contact" ? (
-            <AdminSettingsFieldsForm
-              labels={labels}
-              fields={CONTACT_FIELDS}
-              initialValues={pickValues(settings, CONTACT_FIELDS)}
-            />
-          ) : null}
-
-          {active === "social" ? (
-            <AdminSocialLinksEditor
-              labels={labels}
-              initialLinks={socialLinks}
-            />
-          ) : null}
-
-          {active === "security" ? (
-            <div className="space-y-6">
-              <AdminSecurityControls
-                labels={labels}
-                initialRequire2fa={Boolean(settings.require2fa)}
-                initialSessionExpireDays={Number(settings.sessionExpireDays ?? 5)}
-              />
+          <section className="rounded-radius border border-border bg-grad-card p-4 sm:p-5">
+            {section === "brand" ? (
               <AdminSettingsFieldsForm
                 labels={labels}
-                fields={SECURITY_EXTRA_FIELDS}
-                initialValues={pickValues(settings, SECURITY_EXTRA_FIELDS)}
+                fields={BRAND_FIELDS}
+                initialValues={{
+                  siteName: settings.siteName,
+                  brandMark: settings.brandMark,
+                  tagline: settings.tagline,
+                  timezone: settings.timezone,
+                  defaultCurrency: settings.defaultCurrency,
+                  siteDescription: settings.siteDescription,
+                  logoUrl: settings.logoUrl,
+                  faviconUrl: settings.faviconUrl,
+                  defaultMetaTitle: settings.defaultMetaTitle,
+                  defaultMetaDescription: settings.defaultMetaDescription,
+                }}
               />
-            </div>
-          ) : null}
+            ) : null}
 
-          {active === "billing" ? (
-            <AdminSettingsFieldsForm
-              labels={labels}
-              fields={BILLING_FIELDS}
-              initialValues={pickValues(settings, BILLING_FIELDS)}
-            />
-          ) : null}
+            {section === "contact" ? (
+              <AdminSettingsFieldsForm
+                labels={labels}
+                fields={CONTACT_FIELDS}
+                initialValues={{
+                  contactEmail: settings.contactEmail,
+                  contactPhone: settings.contactPhone,
+                  contactAddress: settings.contactAddress,
+                }}
+              />
+            ) : null}
 
-          {active === "media" ? (
-            <AdminSettingsFieldsForm
-              labels={labels}
-              fields={MEDIA_FIELDS}
-              initialValues={pickValues(settings, MEDIA_FIELDS)}
-            />
-          ) : null}
+            {section === "social" ? (
+              <AdminSocialLinksEditor
+                labels={labels}
+                initialLinks={settings.socialLinks ?? []}
+              />
+            ) : null}
 
-          {active === "team" ? (
-            <div className="space-y-4">
-              <Link
-                href="/admin/users"
-                className="inline-flex rounded-radius-sm bg-grad-rouse px-3 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
-              >
-                {labels.manageTeam ?? labels.users}
-              </Link>
-            </div>
-          ) : null}
-        </section>
+            {section === "security" ? (
+              <div className="space-y-6">
+                <AdminSecurityControls
+                  labels={labels}
+                  initialRequire2fa={Boolean(settings.require2fa)}
+                  initialSessionExpireDays={Number(
+                    settings.sessionExpireDays ?? 5,
+                  )}
+                />
+                <AdminSettingsFieldsForm
+                  labels={labels}
+                  fields={[
+                    {
+                      key: "googleSignInEnabled",
+                      kind: "boolean",
+                      labelKey: "googleSignInEnabled",
+                      helpKey: "googleSignInEnabledHelp",
+                    },
+                  ]}
+                  initialValues={{
+                    googleSignInEnabled: settings.googleSignInEnabled,
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {section === "media" ? (
+              <AdminSettingsFieldsForm
+                labels={labels}
+                fields={MEDIA_FIELDS}
+                initialValues={{
+                  youtubePlaylistUrl: settings.youtubePlaylistUrl,
+                  youtubeSyncEnabled: settings.youtubeSyncEnabled,
+                  youtubeHomepageLimit: settings.youtubeHomepageLimit,
+                  youtubeLibraryLimit: settings.youtubeLibraryLimit,
+                  youtubeLastSyncedAt: settings.youtubeLastSyncedAt,
+                  youtubeLastSyncError: settings.youtubeLastSyncError,
+                }}
+              />
+            ) : null}
+
+            {section === "billing" ? (
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-radius-sm border border-border bg-surface-1/50 px-3 py-3">
+                  <div>
+                    <p className="font-medium text-text-primary">
+                      {settings.operatorPlanLabel ?? labels.operatorPlanLabel}
+                    </p>
+                    <p className="text-xs text-text-muted">
+                      {settings.operatorPlanDetail ?? labels.operatorPlanDetail}
+                    </p>
+                  </div>
+                  {settings.billingManageUrl ? (
+                    <a
+                      href={settings.billingManageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-radius-sm bg-grad-rouse px-2.5 py-1 text-xs font-medium text-on-gradient hover:opacity-90"
+                    >
+                      {labels.manageBilling}
+                    </a>
+                  ) : null}
+                </div>
+                <AdminSettingsFieldsForm
+                  labels={labels}
+                  fields={BILLING_FIELDS}
+                  initialValues={{
+                    operatorPlanLabel: settings.operatorPlanLabel,
+                    operatorPlanDetail: settings.operatorPlanDetail,
+                    billingManageUrl: settings.billingManageUrl,
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {section === "team" ? (
+              <div className="space-y-3">
+                {labels.teamMembersBody ? (
+                  <p className="text-sm text-text-secondary">
+                    {labels.teamMembersBody}
+                  </p>
+                ) : null}
+                <Link
+                  href="/admin/users"
+                  className="inline-flex rounded-radius-sm bg-grad-rouse px-3 py-1.5 text-sm font-medium text-on-gradient hover:opacity-90"
+                >
+                  {labels.manageTeam ?? labels.users}
+                </Link>
+              </div>
+            ) : null}
+          </section>
+        </div>
       </div>
     </div>
   );
