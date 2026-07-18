@@ -48,12 +48,31 @@ export function AccountProfileView({
 
   const profileDraft = useMemo(() => {
     if (!hydrated) return null;
-    return { displayName, phone, photoUrl };
-  }, [hydrated, displayName, phone, photoUrl]);
+    return { displayName, phone, photoUrl, notificationPreferences };
+  }, [hydrated, displayName, phone, photoUrl, notificationPreferences]);
+
+  const completePreferences = useCallback(
+    (partial: Record<string, boolean>) => {
+      const next: Record<string, boolean> = {};
+      for (const key of notificationKeys) {
+        next[key] = Object.prototype.hasOwnProperty.call(partial, key)
+          ? Boolean(partial[key])
+          : true;
+      }
+      return next;
+    },
+    [notificationKeys],
+  );
 
   const persistProfileDraft = useCallback(
-    async (next: { displayName: string; phone: string; photoUrl: string | null }) => {
+    async (next: {
+      displayName: string;
+      phone: string;
+      photoUrl: string | null;
+      notificationPreferences: Record<string, boolean>;
+    }) => {
       if (!next.displayName.trim()) return false;
+      const prefs = completePreferences(next.notificationPreferences);
       const response = await fetch("/api/account", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -61,17 +80,24 @@ export function AccountProfileView({
           displayName: next.displayName,
           phone: next.phone || null,
           photoUrl: next.photoUrl || null,
+          notificationPreferences: prefs,
         }),
       });
       if (!response.ok) {
         setStatusMessage(labels.saveError || "Could not save.");
         return false;
       }
+      setNotificationPreferences(prefs);
       setStatusMessage(labels.saveSuccess || "Saved.");
       router.refresh();
       return true;
     },
-    [labels.saveError, labels.saveSuccess, router],
+    [
+      completePreferences,
+      labels.saveError,
+      labels.saveSuccess,
+      router,
+    ],
   );
 
   const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
@@ -142,13 +168,17 @@ export function AccountProfileView({
   const persistNotificationPreferences = async (
     next: Record<string, boolean>,
   ) => {
+    const payload = completePreferences(next);
     const response = await fetch("/api/account", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notificationPreferences: next }),
+      body: JSON.stringify({ notificationPreferences: payload }),
     });
     if (response.ok) {
-      setStatusMessage(labels.prefsSaved || labels.saveSuccess || "Preferences saved.");
+      setNotificationPreferences(payload);
+      setStatusMessage(
+        labels.prefsSaved || labels.saveSuccess || "Preferences saved.",
+      );
       router.refresh();
       return true;
     }
@@ -157,10 +187,17 @@ export function AccountProfileView({
   };
 
   const toggleNotification = async (key: string, checked: boolean) => {
-    const next = { ...notificationPreferences, [key]: checked };
+    const previous = notificationPreferences;
+    const next = completePreferences({
+      ...notificationPreferences,
+      [key]: checked,
+    });
     setNotificationPreferences(next);
     setStatusMessage(null);
-    await persistNotificationPreferences(next);
+    const ok = await persistNotificationPreferences(next);
+    if (!ok) {
+      setNotificationPreferences(previous);
+    }
   };
 
   const save = async (event: React.FormEvent) => {
@@ -168,6 +205,7 @@ export function AccountProfileView({
     setIsSaving(true);
     setStatusMessage(null);
 
+    const prefsPayload = completePreferences(notificationPreferences);
     const response = await fetch("/api/account", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -175,7 +213,7 @@ export function AccountProfileView({
         displayName,
         phone: phone || null,
         photoUrl,
-        notificationPreferences,
+        notificationPreferences: prefsPayload,
         currentPassword: currentPassword || undefined,
         newPassword: newPassword || undefined,
       }),
@@ -184,6 +222,7 @@ export function AccountProfileView({
     setIsSaving(false);
 
     if (response.ok) {
+      setNotificationPreferences(prefsPayload);
       setStatusMessage(labels.saveSuccess || "Saved.");
       setCurrentPassword("");
       setNewPassword("");

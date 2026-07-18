@@ -123,7 +123,14 @@ export async function PATCH(request: Request) {
     }
     if (body.photoUrl !== undefined) updates.photoUrl = body.photoUrl;
     if (body.notificationPreferences !== undefined) {
-      updates.notificationPreferences = body.notificationPreferences;
+      // Full map replace (merge replaces top-level fields) so false values stick.
+      const prefs: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(body.notificationPreferences)) {
+        if (typeof key === "string" && key.trim()) {
+          prefs[key.trim()] = Boolean(value);
+        }
+      }
+      updates.notificationPreferences = prefs;
     }
 
     await adminDb
