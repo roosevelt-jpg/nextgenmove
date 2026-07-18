@@ -237,6 +237,57 @@ a.link-brand:hover,
   min-height: 1.5rem;
 }
 
+/* Sidebar + top bar — purple gradient chrome with white text */
+.dashboard-chrome {
+  background-color: var(--brand-indigo-1);
+  background-image: linear-gradient(
+    165deg,
+    #1a2f6b 0%,
+    #3c3489 42%,
+    #5b4db8 78%,
+    #6b4fc4 100%
+  );
+  color: var(--on-gradient);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.dashboard-chrome-text {
+  color: var(--on-gradient);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.dashboard-chrome-muted {
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.dashboard-chrome-link {
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.dashboard-chrome-link:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.dashboard-chrome-link-active {
+  background-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.dashboard-chrome-control {
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.dashboard-chrome-control:hover {
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
+}
+
 /* Brand — white card / panel surface */
 .card-panel {
   border-radius: var(--radius);

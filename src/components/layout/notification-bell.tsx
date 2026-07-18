@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 interface NotificationItem {
   id: string;
@@ -14,7 +15,13 @@ interface NotificationItem {
   createdAt: string | null;
 }
 
-export function NotificationBell({ labels }: { labels: Record<string, string> }) {
+export function NotificationBell({
+  labels,
+  className,
+}: {
+  labels: Record<string, string>;
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -58,7 +65,10 @@ export function NotificationBell({ labels }: { labels: Record<string, string> })
     <div className="relative">
       <button
         type="button"
-        className="relative inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary"
+        className={cn(
+          "relative inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary",
+          className,
+        )}
         aria-label={labels.notificationsLabel || "Notifications"}
         onClick={() => setOpen((v) => !v)}
       >

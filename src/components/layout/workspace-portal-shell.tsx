@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { clearSession } from "@/lib/auth-client";
-import { avatarToneClasses } from "@/lib/avatar-hue";
 import { resolveBrandIconUrl } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
@@ -134,35 +133,35 @@ export function WorkspacePortalShell({
   );
 
   const sidebar = (
-    <aside className="flex h-full w-[240px] flex-col border-r border-border bg-surface-1">
-      <div className="flex items-center gap-2.5 border-b border-border px-4 py-4">
+    <aside className="dashboard-chrome flex h-full w-[240px] flex-col border-r">
+      <div className="flex items-center gap-2.5 border-b border-white/20 px-4 py-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={resolveBrandIconUrl()}
           alt=""
-          className="h-8 w-8 rounded-radius-sm object-cover"
+          className="h-8 w-8 rounded-radius-sm object-cover shadow-sm"
           aria-hidden
         />
-        <span className="font-serif text-[15px] font-semibold text-text-primary">
+        <span className="dashboard-chrome-text font-serif text-[15px] font-semibold">
           {siteName || "Nextgenmove"}
         </span>
       </div>
 
       <div className="px-3 pt-4">
-        <p className="mb-2 px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+        <p className="dashboard-chrome-muted mb-2 px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
           {labels.workspaceSection ?? "Workspace"}
         </p>
-        <div className="flex gap-1 rounded-full bg-surface-2 p-1">
+        <div className="flex gap-1 rounded-full bg-black/20 p-1 ring-1 ring-white/15">
           {workspaceLinks.map(([key, href, label]) => (
             <Link
               key={key}
               href={href}
               onClick={key === "admin" ? goAdmin : undefined}
               className={cn(
-                "flex min-h-7 flex-1 items-center justify-center rounded-full bg-grad-rouse px-2 text-center text-[11px] font-semibold text-on-gradient transition-opacity",
+                "dashboard-chrome-text flex min-h-7 flex-1 items-center justify-center rounded-full px-2 text-center text-[11px] font-semibold transition-colors",
                 workspace === key
-                  ? "opacity-100 shadow-sm ring-2 ring-white/40"
-                  : "opacity-70 hover:opacity-100",
+                  ? "bg-white/25 shadow-sm ring-1 ring-white/40"
+                  : "bg-white/10 hover:bg-white/18",
               )}
             >
               {label}
@@ -172,7 +171,7 @@ export function WorkspacePortalShell({
       </div>
 
       <div className="mt-5 flex-1 overflow-y-auto px-3 pb-4">
-        <p className="mb-2 px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+        <p className="dashboard-chrome-muted mb-2 px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
           {sectionLabel}
         </p>
         <nav className="space-y-0.5" aria-label={workspace}>
@@ -188,13 +187,13 @@ export function WorkspacePortalShell({
                 className={cn(
                   "relative flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs font-medium transition-colors",
                   active
-                    ? "bg-bg-purple text-fill-accent"
-                    : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
+                    ? "dashboard-chrome-link-active"
+                    : "dashboard-chrome-link",
                 )}
               >
                 {active ? (
                   <span
-                    className="absolute bottom-1.5 left-0 top-1.5 w-[3px] rounded-r-sm bg-fill-accent"
+                    className="absolute bottom-1.5 left-0 top-1.5 w-[3px] rounded-r-sm bg-white shadow-sm"
                     aria-hidden
                   />
                 ) : null}
@@ -205,26 +204,26 @@ export function WorkspacePortalShell({
         </nav>
       </div>
 
-      <div className="space-y-2 border-t border-border px-3 py-3">
+      <div className="space-y-2 border-t border-white/20 px-3 py-3">
         <div className="px-1 sm:hidden">
-          <LanguageSwitcher />
+          <LanguageSwitcher triggerClassName="dashboard-chrome-control" />
         </div>
         <Link
           href={settingsHref}
-          className="flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs text-text-secondary hover:bg-surface-2"
+          className="dashboard-chrome-link flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs"
         >
           {labels.settings ?? "Settings"}
         </Link>
         <Link
           href="/"
-          className="flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs text-text-secondary hover:bg-surface-2"
+          className="dashboard-chrome-link flex min-h-7 items-center gap-2 rounded-radius px-2.5 py-1.5 text-xs"
         >
           {labels.publicSite ?? "Public site"}
         </Link>
         <button
           type="button"
           onClick={signOut}
-          className="flex min-h-7 w-full items-center gap-2 rounded-radius px-2.5 py-1.5 text-left text-xs text-text-secondary hover:bg-surface-2"
+          className="dashboard-chrome-link flex min-h-7 w-full items-center gap-2 rounded-radius px-2.5 py-1.5 text-left text-xs"
         >
           {labels.signOut ?? "Sign out"}
         </button>
@@ -251,28 +250,34 @@ export function WorkspacePortalShell({
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 flex min-h-14 items-center justify-between gap-2 border-b border-border bg-surface-1 px-4 min-[860px]:px-6">
+        <header className="dashboard-chrome sticky top-0 z-40 flex min-h-14 items-center justify-between gap-2 border-b px-4 min-[860px]:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              className="inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-sm min-[860px]:hidden"
+              className="dashboard-chrome-control inline-flex min-h-7 min-w-7 items-center justify-center rounded-radius-sm border text-sm min-[860px]:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >
               ☰
             </button>
-            <h1 className="truncate text-[15px] font-medium text-text-primary">
+            <h1 className="dashboard-chrome-text truncate text-[15px] font-medium">
               {titleLabel}
             </h1>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <LiveDateTime className="mr-1 hidden text-[12px] text-text-secondary min-[860px]:inline" />
-            <LanguageSwitcher className="hidden sm:block" />
-            <NotificationBell labels={labels} />
-            <ThemeToggle />
+            <LiveDateTime className="dashboard-chrome-muted mr-1 hidden text-[12px] min-[860px]:inline" />
+            <LanguageSwitcher
+              className="hidden sm:block"
+              triggerClassName="dashboard-chrome-control"
+            />
+            <NotificationBell
+              labels={labels}
+              className="dashboard-chrome-control"
+            />
+            <ThemeToggle className="dashboard-chrome-control" />
             <Link
               href={settingsHref}
-              className="hidden min-h-7 min-w-7 items-center justify-center rounded-radius-sm border border-border text-text-secondary sm:inline-flex"
+              className="dashboard-chrome-control hidden min-h-7 min-w-7 items-center justify-center rounded-radius-sm border sm:inline-flex"
               aria-label="Settings"
             >
               ⚙
@@ -285,13 +290,7 @@ export function WorkspacePortalShell({
                     ? "/employer/settings"
                     : "/student/settings"
               }
-              className={`inline-flex min-h-7 min-w-7 items-center justify-center overflow-hidden rounded-full text-[11px] font-bold ${
-                avatarUrl
-                  ? "bg-bg-purple text-fill-accent"
-                  : avatarToneClasses(
-                      avatarInitial ?? labels.avatarInitial ?? "N",
-                    )
-              }`}
+              className="inline-flex min-h-7 min-w-7 items-center justify-center overflow-hidden rounded-full bg-white/20 text-[11px] font-bold text-white shadow-sm ring-1 ring-white/35"
               aria-label="Account"
             >
               {avatarUrl ? (
