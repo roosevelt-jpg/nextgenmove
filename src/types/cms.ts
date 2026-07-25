@@ -442,6 +442,8 @@ export interface ProgramLeversDocument {
   trackBMonthly: number;
   placementFeeEur: number;
   creditsPerEuro: number;
+  /** Notify students when wallet balance falls at or below this amount. */
+  lowCreditThreshold: number;
   creditTopUpPackages: CreditTopUpPackage[];
   waysToEarn: WayToEarn[];
   updatedAt: string | null;

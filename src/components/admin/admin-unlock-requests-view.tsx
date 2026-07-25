@@ -1,7 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AdvancedFilters,
+  Button,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 
 export interface UnlockRequestItem {
   id: string;
@@ -37,6 +43,10 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
   const [loading, setLoading] = useState(true);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    status: "",
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +90,48 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
     }
   };
 
+  const statusOptions = useMemo(
+    () => uniqueOptionValues(items.map((i) => i.status)),
+    [items],
+  );
+
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "status",
+        type: "select",
+        labelKey: "filterStatus",
+        allKey: "filterAll",
+        options: statusOptions,
+      },
+    ],
+    [statusOptions],
+  );
+
+  const filteredItems = useMemo(
+    () =>
+      applyClientFilters(items, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (row) => row.companyName,
+            (row) => row.companyId,
+            (row) => row.candidateLabel,
+            (row) => row.studentFullName,
+            (row) => row.studentId,
+          ],
+        },
+        equals: [{ value: filters.status, accessor: (row) => row.status }],
+      }),
+    [items, filters],
+  );
+
   if (loading) {
     return (
       <p className="text-sm text-text-muted">{labels.loading || "Loading…"}</p>
@@ -94,7 +146,22 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
         </p>
       ) : null}
 
-      {!items.length ? (
+      <AdvancedFilters
+        labels={{
+          ...labels,
+          search: labels.search || "Search",
+          searchPlaceholder: labels.searchPlaceholder || "Search requests…",
+          filterStatus: labels.filterStatus || "Status",
+          filterAll: labels.filterAll || "All",
+          clearFilters: labels.clearFilters || "Clear filters",
+        }}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
+
+      {!filteredItems.length ? (
         <p className="text-sm text-text-secondary">
           {labels.empty || "No unlock requests yet."}
         </p>
@@ -111,7 +178,7 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <tr key={item.id} className="border-b border-border last:border-0">
                   <td className="px-3 py-3 align-top">
                     <p className="font-medium text-text-primary">

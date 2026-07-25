@@ -963,6 +963,30 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                   {String(detail.subscriptionStatus ?? detail.status ?? detail.stage ?? "")}
                 </dd>
               </div>
+              {detail.referredBy || detail.referralCode ? (
+                <>
+                  {detail.referralCode ? (
+                    <div>
+                      <dt className="text-text-muted">
+                        {labels.referralCode ?? "Referral code"}
+                      </dt>
+                      <dd className="font-mono text-xs">
+                        {String(detail.referralCode)}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {detail.referredBy ? (
+                    <div>
+                      <dt className="text-text-muted">
+                        {labels.referredBy ?? "Referred by"}
+                      </dt>
+                      <dd className="font-mono text-xs">
+                        {String(detail.referredBy)}
+                      </dd>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
               {detail.lastActivity ? (
                 <div>
                   <dt className="text-text-muted">{labels.lastActivityColumn}</dt>

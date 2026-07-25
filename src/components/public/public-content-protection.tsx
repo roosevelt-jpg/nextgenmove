@@ -21,11 +21,20 @@ export function PublicContentProtection({
         event.preventDefault();
       }
     };
+    const onCopy = (event: ClipboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable='true']")) {
+        return;
+      }
+      event.preventDefault();
+    };
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("dragstart", onDragStart);
+    document.addEventListener("copy", onCopy);
     return () => {
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("dragstart", onDragStart);
+      document.removeEventListener("copy", onCopy);
     };
   }, []);
 

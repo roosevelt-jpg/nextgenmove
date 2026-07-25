@@ -24,7 +24,7 @@ export const EMAIL_TEMPLATES = [
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">Your <strong>{{roleLabel}}</strong> account on {{siteName}} has been created successfully.</p>
 <p style="margin:0 0 16px;">Next, verify your email and complete your profile so we can match you with the right opportunities.</p>
-<p style="margin:0;"><a href="{{signInUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Sign in</a></p>`,
+<p style="margin:0;"><a href="{{signInUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Sign in</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nYour {{roleLabel}} account on {{siteName}} has been created.\nSign in: {{signInUrl}}\n",
   }),
@@ -38,7 +38,7 @@ export const EMAIL_TEMPLATES = [
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">Welcome to {{siteName}}. {{tagline}}</p>
 <p style="margin:0 0 16px;">Your profile is live. Open your dashboard to continue your journey.</p>
-<p style="margin:0;"><a href="{{dashboardUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Open dashboard</a></p>`,
+<p style="margin:0;"><a href="{{dashboardUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Open dashboard</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nWelcome to {{siteName}}.\nDashboard: {{dashboardUrl}}\n",
   }),
@@ -65,7 +65,7 @@ export const EMAIL_TEMPLATES = [
     category: "security",
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">Please confirm this email belongs to you.</p>
-<p style="margin:0 0 16px;"><a href="{{verifyUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Verify email</a></p>
+<p style="margin:0 0 16px;"><a href="{{verifyUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Verify email</a></p>
 <p style="margin:0;font-size:13px;color:#6b6478;">If you did not create an account, you can ignore this message.</p>`,
     textBody:
       "Hi {{displayName}},\n\nVerify your email: {{verifyUrl}}\n\nIf you did not create an account, ignore this message.\n",
@@ -104,7 +104,7 @@ export const EMAIL_TEMPLATES = [
   <li>Device: {{userAgent}}</li>
 </ul>
 <p style="margin:0 0 16px;">If this was you, you can ignore this email. If not, reset your password now and contact support.</p>
-<p style="margin:0;"><a href="{{signInUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Secure my account</a></p>`,
+<p style="margin:0;"><a href="{{signInUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Secure my account</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nUnusual sign-in at {{when}}\nNew IP: {{ip}}\nPrevious IP: {{previousIp}}\n\nIf this was not you, reset your password: {{signInUrl}}\n",
   }),
@@ -117,7 +117,7 @@ export const EMAIL_TEMPLATES = [
     category: "security",
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">We received a request to reset your password.</p>
-<p style="margin:0 0 16px;"><a href="{{resetUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Reset password</a></p>
+<p style="margin:0 0 16px;"><a href="{{resetUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Reset password</a></p>
 <p style="margin:0;font-size:13px;color:#6b6478;">This link expires soon. If you did not request a reset, you can safely ignore this email.</p>`,
     textBody:
       "Hi {{displayName}},\n\nReset your password: {{resetUrl}}\n\nIf you did not request this, ignore this email.\n",
@@ -158,7 +158,7 @@ export const EMAIL_TEMPLATES = [
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">Your balance is <strong>{{credits}} credits</strong> (below {{threshold}}).</p>
 <p style="margin:0 0 16px;">Top up now so you do not miss coaching or store unlocks.</p>
-<p style="margin:0;"><a href="{{topUpUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Top up credits</a></p>`,
+<p style="margin:0;"><a href="{{topUpUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Top up credits</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nBalance {{credits}} is below {{threshold}}. Top up: {{topUpUrl}}\n",
   }),
@@ -238,7 +238,7 @@ export const EMAIL_TEMPLATES = [
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">We could not process your latest subscription payment.</p>
 <p style="margin:0 0 16px;">Please update your payment method to keep access uninterrupted.</p>
-<p style="margin:0;"><a href="{{billingUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Manage billing</a></p>`,
+<p style="margin:0;"><a href="{{billingUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Manage billing</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nPayment failed. Update billing: {{billingUrl}}\n",
   }),
@@ -251,7 +251,7 @@ export const EMAIL_TEMPLATES = [
     category: "product",
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">Your match status moved to <strong>{{stageName}}</strong>.</p>
-<p style="margin:0;"><a href="{{dashboardUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">View journey</a></p>`,
+<p style="margin:0;"><a href="{{dashboardUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">View journey</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nYour match moved to {{stageName}}. Dashboard: {{dashboardUrl}}\n",
   }),
@@ -277,7 +277,7 @@ export const EMAIL_TEMPLATES = [
     category: "product",
     htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
 <p style="margin:0 0 16px;">Your unlock request for <strong>{{candidateLabel}}</strong> was approved. Full name, photo, and contact details are now available.</p>
-<p style="margin:0;"><a href="{{profileUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">View profile</a></p>`,
+<p style="margin:0;"><a href="{{profileUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">View profile</a></p>`,
     textBody:
       "Hi {{displayName}},\n\nUnlock approved for {{candidateLabel}}. View profile: {{profileUrl}}\n",
   }),
@@ -290,7 +290,7 @@ export const EMAIL_TEMPLATES = [
     category: "ops",
     htmlBody: `<p style="margin:0 0 16px;">Hello,</p>
 <p style="margin:0 0 16px;">{{summary}}</p>
-<p style="margin:0;"><a href="{{adminUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Open admin</a></p>`,
+<p style="margin:0;"><a href="{{adminUrl}}" style="display:inline-block;background:#3C3489;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">Open admin</a></p>`,
     textBody: "{{summary}}\n\nAdmin: {{adminUrl}}\n",
   }),
 ] as const;

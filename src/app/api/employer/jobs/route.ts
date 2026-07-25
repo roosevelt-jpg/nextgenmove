@@ -81,15 +81,15 @@ export async function POST(request: Request) {
       categories: body.categories,
       skills: body.skills ?? [],
       department: body.categories[0] ?? "",
-      status: "pending",
-      moderationStatus: "pending",
+      status: "open",
+      moderationStatus: "approved",
       postedAt: body.postedAt ? new Date(body.postedAt) : now,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
       createdAt: now,
       updatedAt: now,
     });
     await ref.set(payload);
-    return NextResponse.json({ id: ref.id, status: "pending" }, { status: 201 });
+    return NextResponse.json({ id: ref.id, status: "open" }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

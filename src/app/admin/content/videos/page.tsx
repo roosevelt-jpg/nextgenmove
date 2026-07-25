@@ -21,7 +21,7 @@ export default async function AdminHomepageVideosPage() {
       initialYoutube={{
         youtubePlaylistUrl: settings.youtubePlaylistUrl ?? "",
         youtubeSyncEnabled: settings.youtubeSyncEnabled !== false,
-        youtubeHomepageLimit: settings.youtubeHomepageLimit ?? 3,
+        youtubeHomepageLimit: settings.youtubeHomepageLimit ?? 12,
         youtubeLibraryLimit: settings.youtubeLibraryLimit ?? 12,
         youtubeLastSyncedAt:
           serializeTimestamp(settings.youtubeLastSyncedAt as never) ?? "",

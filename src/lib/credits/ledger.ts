@@ -118,13 +118,8 @@ export async function getWayToEarnCredits(wayId: string): Promise<number> {
     [];
   const way = ways.find((item) => item.id === wayId);
   if (typeof way?.credits === "number" && Number.isFinite(way.credits)) {
-    return way.credits;
+    return Math.max(0, way.credits);
   }
-  // Fallbacks when levers doc is missing a way (legacy seeds).
-  const defaults: Record<string, number> = {
-    welcome: 2000,
-    referral: 150,
-    profile_complete: 100,
-  };
-  return defaults[wayId] ?? 0;
+  // No hardcoded bonus — missing lever rows yield 0 until admin configures them.
+  return 0;
 }

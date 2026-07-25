@@ -70,7 +70,16 @@ export const getPageHome = cache(async () =>
 
 async function loadLiveVideoCards(): Promise<VideoCardDocument[]> {
   const settings = await getSiteSettings();
-  const limit = Math.max(1, Number(settings.youtubeHomepageLimit ?? 3) || 3);
+  // Prefer full library size for the homepage marquee; homepage limit is an optional cap.
+  const libraryLimit = Math.max(
+    1,
+    Number(settings.youtubeLibraryLimit ?? 12) || 12,
+  );
+  const homepageCap = Number(settings.youtubeHomepageLimit);
+  const limit =
+    Number.isFinite(homepageCap) && homepageCap > 0
+      ? Math.min(libraryLimit, Math.max(1, homepageCap))
+      : libraryLimit;
   return listLiveVideoCards(limit);
 }
 
@@ -188,6 +197,7 @@ export async function getProgramLevers(): Promise<ProgramLeversDocument | null> 
       trackBMonthly: data.trackBMonthly ?? 0,
       placementFeeEur: data.placementFeeEur ?? 350,
       creditsPerEuro: data.creditsPerEuro ?? 4,
+      lowCreditThreshold: Number(data.lowCreditThreshold ?? 50) || 50,
       creditTopUpPackages: data.creditTopUpPackages ?? [],
       waysToEarn: data.waysToEarn ?? [],
       updatedAt: serializeTimestamp(data.updatedAt),
@@ -206,6 +216,7 @@ export function defaultProgramLevers(): ProgramLeversDocument {
     trackBMonthly: 125,
     placementFeeEur: 350,
     creditsPerEuro: 4,
+    lowCreditThreshold: 50,
     creditTopUpPackages: [
       { id: "pack_400", label: "Starter pack", credits: 400, priceEur: 100 },
       { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },

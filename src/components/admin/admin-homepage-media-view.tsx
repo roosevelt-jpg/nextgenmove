@@ -75,7 +75,7 @@ interface AdminHomepageMediaViewProps {
 const emptyYoutube: YoutubeSyncState = {
   youtubePlaylistUrl: "",
   youtubeSyncEnabled: true,
-  youtubeHomepageLimit: 3,
+  youtubeHomepageLimit: 12,
   youtubeLibraryLimit: 12,
   youtubeLastSyncedAt: "",
   youtubeLastSyncError: "",
@@ -125,12 +125,20 @@ export function AdminHomepageMediaView({
       if (looksLikeGoogleApiKey(playlist)) {
         setSyncMessage(
           labels.playlist_looks_like_api_key ||
-            "That looks like a Google API key. Put the API key in Integrations → YouTube, and paste a playlist URL or PL… id here.",
+            "That looks like a Google API key. Put the API key in Integrations → YouTube, and paste a playlist URL, channel URL, or @handle here.",
         );
-        return false;
+        return "skipped" as const;
       }
-      if (playlist && !parseYoutubePlaylistId(playlist)) {
-        return false;
+      // Incomplete drafts (still typing a channel/playlist) should not error.
+      if (
+        playlist &&
+        !parseYoutubePlaylistId(playlist) &&
+        !playlist.includes("youtube.com") &&
+        !playlist.startsWith("@") &&
+        !/^UC[\w-]{8,}$/i.test(playlist) &&
+        !/^UU[\w-]{8,}$/i.test(playlist)
+      ) {
+        return "skipped" as const;
       }
       const res = await fetch("/api/admin/data/site_settings/default", {
         method: "PATCH",
@@ -230,7 +238,7 @@ export function AdminHomepageMediaView({
       setYoutube({
         youtubePlaylistUrl: String(item.youtubePlaylistUrl ?? ""),
         youtubeSyncEnabled: item.youtubeSyncEnabled !== false,
-        youtubeHomepageLimit: Number(item.youtubeHomepageLimit ?? 3) || 3,
+        youtubeHomepageLimit: Number(item.youtubeHomepageLimit ?? 12) || 12,
         youtubeLibraryLimit: Number(item.youtubeLibraryLimit ?? 12) || 12,
         youtubeLastSyncedAt: formatSyncTimestamp(
           String(item.youtubeLastSyncedAt ?? ""),
@@ -381,13 +389,13 @@ export function AdminHomepageMediaView({
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">
-            {labels.youtubePlaylistUrl ?? "Playlist URL or ID"}
+            {labels.youtubePlaylistUrl ?? "Playlist / channel URL or ID"}
           </span>
           <input
             type="text"
             placeholder={
               labels.youtubePlaylistPlaceholder ||
-              "https://www.youtube.com/playlist?list=PL…"
+              "https://youtube.com/@handle, channel URL, or playlist PL… / UU…"
             }
             value={youtube.youtubePlaylistUrl}
             onChange={(e) =>
@@ -425,7 +433,7 @@ export function AdminHomepageMediaView({
               onChange={(e) =>
                 setYoutube((prev) => ({
                   ...prev,
-                  youtubeHomepageLimit: Number(e.target.value) || 3,
+                  youtubeHomepageLimit: Number(e.target.value) || 12,
                 }))
               }
               className="w-16 rounded-radius-sm border border-border bg-surface-1 px-2 py-1 text-sm"
@@ -483,9 +491,10 @@ export function AdminHomepageMediaView({
           <h2 className="text-[14.5px] font-bold text-text-primary">
             {labels.videosTitle ?? "Video cards"}
           </h2>
-          <Button size="sm" onClick={() => openCreate(videoSchema)}>
-            {labels.addVideo ?? "+ Add video card"}
-          </Button>
+          <p className="text-[11.5px] text-text-muted">
+            {labels.youtubeSyncOnlyHint ??
+              "Videos sync from YouTube. Edit status or metadata below — no manual cards."}
+          </p>
         </div>
         <ul className="space-y-2">
           {videos.map((item) => (

@@ -17,6 +17,7 @@ export interface PlaceLocationParts {
   countryCode: string;
   city: string;
   town: string;
+  suburb: string;
   region: string;
 }
 
@@ -163,11 +164,14 @@ export async function getPlaceLocationParts(
     component(parts, "locality") ||
     component(parts, "postal_town") ||
     component(parts, "administrative_area_level_2");
-  const town =
+  const suburb =
     component(parts, "sublocality") ||
     component(parts, "sublocality_level_1") ||
     component(parts, "neighborhood") ||
+    "";
+  const town =
     component(parts, "administrative_area_level_3") ||
+    suburb ||
     city;
   const region = component(parts, "administrative_area_level_1");
 
@@ -178,6 +182,7 @@ export async function getPlaceLocationParts(
     countryCode,
     city,
     town,
+    suburb,
     region,
   };
 }

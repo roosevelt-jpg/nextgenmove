@@ -382,6 +382,8 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
                     field(labels, "seniority", "Seniority", linked?.seniority),
                     field(labels, "availability", "Availability", linked?.availability),
                     field(labels, "skills", "Skills", linked?.skills),
+                    field(labels, "referralCode", "Referral code", linked?.referralCode),
+                    field(labels, "referredBy", "Referred by", linked?.referredBy),
                   ]
                 : null}
               {kind === "company"

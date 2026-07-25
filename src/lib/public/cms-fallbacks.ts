@@ -15,7 +15,7 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
   contactAddress: "",
   youtubePlaylistUrl: "",
   youtubeSyncEnabled: true,
-  youtubeHomepageLimit: 3,
+  youtubeHomepageLimit: 12,
   youtubeLibraryLimit: 12,
   navLabels: {
     siteName: "Nextgenmove",

@@ -5,6 +5,7 @@ import {
   generateGeminiReply,
   NGM_ASSISTANT_SYSTEM,
 } from "@/lib/ai/gemini";
+import { buildAssistantContext } from "@/lib/ai/assistant-context";
 
 const schema = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -27,8 +28,9 @@ export async function POST(request: Request) {
 
   try {
     const body = schema.parse(await request.json());
+    const context = await buildAssistantContext();
     const reply = await generateGeminiReply({
-      system: `${NGM_ASSISTANT_SYSTEM}\nCaller role: ${user.role}.`,
+      system: `${NGM_ASSISTANT_SYSTEM}\nCaller role: ${user.role}.\n\n${context}`,
       userMessage: body.message,
       history: body.history,
     });

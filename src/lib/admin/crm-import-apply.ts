@@ -147,6 +147,18 @@ export async function applyCrmImportRows(options: {
         continue;
       }
 
+      const phoneRaw = (row.phone ?? "").trim();
+      if (phoneRaw && !normalizeToE164(phoneRaw)) {
+        skipped += 1;
+        results.push({
+          row: rowNumber,
+          email,
+          action: "skipped",
+          error: "invalid_phone_e164",
+        });
+        continue;
+      }
+
       const payload = buildStudentPayload(row);
       const existingId = emailIndex.get(email);
 
@@ -198,6 +210,18 @@ export async function applyCrmImportRows(options: {
         email,
         action: "skipped",
         error: "missing_or_invalid_required",
+      });
+      continue;
+    }
+
+    const phoneRaw = (row.contactPhone ?? row.phone ?? "").trim();
+    if (phoneRaw && !normalizeToE164(phoneRaw)) {
+      skipped += 1;
+      results.push({
+        row: rowNumber,
+        email,
+        action: "skipped",
+        error: "invalid_phone_e164",
       });
       continue;
     }

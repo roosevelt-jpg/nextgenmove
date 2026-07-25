@@ -32,6 +32,7 @@ export interface RegisterStudentProfile {
   targetCities: string[];
   country?: string;
   town?: string;
+  suburb?: string;
   placeId?: string;
   bio?: string;
   skills?: string[];
@@ -52,6 +53,7 @@ export interface RegisterCompanyProfile {
   country?: string;
   city?: string;
   town?: string;
+  suburb?: string;
   placeId?: string;
   hiringNeeds?: string;
 }
@@ -112,7 +114,12 @@ export async function registerAccount(input: {
   consentRequiredAt?: string;
   student?: RegisterStudentProfile;
   company?: RegisterCompanyProfile;
-}): Promise<{ uid: string; role: "company" | "student"; nextStep: string }> {
+}): Promise<{
+  uid: string;
+  role: "company" | "student";
+  nextStep: string;
+  referralWarning?: string;
+}> {
   const response = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -130,5 +137,6 @@ export async function registerAccount(input: {
     uid: string;
     role: "company" | "student";
     nextStep: string;
+    referralWarning?: string;
   }>;
 }

@@ -90,6 +90,66 @@ export function youtubeWatchUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+/** Resolve a channel uploads playlist (UU…) from a channel URL, @handle, or channel id. */
+export async function resolveYoutubeUploadsPlaylistId(
+  apiKey: string,
+  channelRaw: string,
+): Promise<string | null> {
+  const trimmed = channelRaw.trim();
+  if (!trimmed || looksLikeGoogleApiKey(trimmed)) return null;
+
+  // Already a uploads playlist id.
+  if (/^UU[\w-]{8,}$/i.test(trimmed)) return trimmed;
+
+  let channelId: string | null = null;
+  let forHandle: string | null = null;
+  let forUsername: string | null = null;
+
+  if (/^UC[\w-]{8,}$/i.test(trimmed)) {
+    channelId = trimmed;
+  } else {
+    try {
+      const parsed = new URL(
+        trimmed.includes("://") ? trimmed : `https://youtube.com/${trimmed.replace(/^@/, "@")}`,
+      );
+      const host = parsed.hostname.replace(/^www\./, "");
+      if (host.includes("youtube.com")) {
+        const parts = parsed.pathname.split("/").filter(Boolean);
+        if (parts[0]?.startsWith("@")) {
+          forHandle = parts[0].slice(1);
+        } else if (parts[0] === "channel" && parts[1]) {
+          channelId = parts[1];
+        } else if (parts[0] === "c" && parts[1]) {
+          forUsername = parts[1];
+        } else if (parts[0] === "user" && parts[1]) {
+          forUsername = parts[1];
+        }
+      }
+    } catch {
+      if (trimmed.startsWith("@")) forHandle = trimmed.slice(1);
+    }
+  }
+
+  const params = new URLSearchParams({
+    part: "contentDetails",
+    key: apiKey,
+  });
+  if (channelId) params.set("id", channelId);
+  else if (forHandle) params.set("forHandle", forHandle);
+  else if (forUsername) params.set("forUsername", forUsername);
+  else return null;
+
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/channels?${params}`,
+    { next: { revalidate: 0 } },
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    items?: Array<{ contentDetails?: { relatedPlaylists?: { uploads?: string } } }>;
+  };
+  return data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads ?? null;
+}
+
 /** Convert ISO-8601 duration (PT#H#M#S) to mm:ss or h:mm:ss. */
 export function formatYoutubeDuration(iso: string | null | undefined): string {
   if (!iso) return "";

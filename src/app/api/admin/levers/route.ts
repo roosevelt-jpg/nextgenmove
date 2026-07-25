@@ -67,6 +67,7 @@ const patchSchema = z.object({
   trackBMonthly: finiteNumber.optional(),
   placementFeeEur: finiteNumber.optional(),
   creditsPerEuro: finiteNumber.optional(),
+  lowCreditThreshold: finiteNumber.optional(),
   creditTopUpPackages: z.array(packageSchema).optional(),
   waysToEarn: z.array(waySchema).optional(),
 });
@@ -119,6 +120,7 @@ export async function PATCH(request: Request) {
         trackBMonthly: data.trackBMonthly ?? 0,
         placementFeeEur: data.placementFeeEur ?? 350,
         creditsPerEuro: data.creditsPerEuro ?? 4,
+        lowCreditThreshold: Number(data.lowCreditThreshold ?? 50) || 50,
         creditTopUpPackages: data.creditTopUpPackages ?? [],
         waysToEarn: data.waysToEarn ?? [],
         updatedAt: serializeTimestamp(data.updatedAt),

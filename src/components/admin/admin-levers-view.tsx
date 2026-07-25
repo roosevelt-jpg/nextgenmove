@@ -409,6 +409,18 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               })
             }
           />
+          <Input
+            id="lowCreditThreshold"
+            type="number"
+            label={labels.lowCreditThreshold || "Low credit alert threshold"}
+            value={String(levers.lowCreditThreshold ?? 50)}
+            onChange={(event) =>
+              setLevers({
+                ...levers,
+                lowCreditThreshold: Number(event.target.value),
+              })
+            }
+          />
         </div>
       </section>
 

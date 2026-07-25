@@ -16,7 +16,34 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
     undefined;
 
   const favicon = resolveBrandFaviconUrl(settings.faviconUrl);
-  const faviconVersion = encodeURIComponent(favicon).slice(0, 48);
+  const icons = favicon
+    ? {
+        icon: [
+          {
+            url: `${favicon}?v=${encodeURIComponent(favicon).slice(0, 48)}`,
+            type: "image/png",
+            sizes: "32x32",
+          },
+          {
+            url: `${favicon}?v=${encodeURIComponent(favicon).slice(0, 48)}`,
+            type: "image/png",
+            sizes: "192x192",
+          },
+        ],
+        shortcut: [
+          {
+            url: `${favicon}?v=${encodeURIComponent(favicon).slice(0, 48)}`,
+            type: "image/png",
+          },
+        ],
+        apple: [
+          {
+            url: `${favicon}?v=${encodeURIComponent(favicon).slice(0, 48)}`,
+            type: "image/png",
+          },
+        ],
+      }
+    : undefined;
 
   return {
     title: title
@@ -26,15 +53,7 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
         }
       : undefined,
     description,
-    icons: {
-      icon: [
-        { url: `${favicon}?v=${faviconVersion}`, type: "image/png", sizes: "32x32" },
-        { url: `${favicon}?v=${faviconVersion}`, type: "image/png", sizes: "192x192" },
-        { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
-      ],
-      shortcut: [{ url: `${favicon}?v=${faviconVersion}`, type: "image/png" }],
-      apple: [{ url: `${favicon}?v=${faviconVersion}`, type: "image/png" }],
-    },
+    icons,
     openGraph: {
       title: title || undefined,
       description,

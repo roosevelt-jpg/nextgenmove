@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { EmptyState } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AdvancedFilters,
+  EmptyState,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 
 interface ApplicationItem {
   id: string;
@@ -19,6 +25,10 @@ export function StudentApplicationsView({
   labels: Record<string, string>;
 }) {
   const [items, setItems] = useState<ApplicationItem[]>([]);
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    status: "",
+  });
 
   const load = useCallback(async () => {
     const res = await fetch("/api/student/applications");
@@ -30,6 +40,48 @@ export function StudentApplicationsView({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const statusOptions = useMemo(
+    () => uniqueOptionValues(items.map((i) => i.applicationStatus)),
+    [items],
+  );
+
+  const fields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "status",
+        type: "select",
+        labelKey: "filterStatus",
+        allKey: "filterAll",
+        options: statusOptions,
+      },
+    ],
+    [statusOptions],
+  );
+
+  const filtered = useMemo(
+    () =>
+      applyClientFilters(items, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (row) => row.jobTitle,
+            (row) => row.companyName,
+            (row) => row.applicationStatus,
+          ],
+        },
+        equals: [
+          { value: filters.status, accessor: (row) => row.applicationStatus },
+        ],
+      }),
+    [items, filters],
+  );
 
   const statusLabel = (status: string) =>
     labels[`status_${status}`] || status;
@@ -51,11 +103,26 @@ export function StudentApplicationsView({
         </Link>
       </header>
 
-      {items.length === 0 ? (
+      <AdvancedFilters
+        labels={{
+          ...labels,
+          search: labels.search || "Search",
+          searchPlaceholder: labels.searchPlaceholder || "Search applications…",
+          filterStatus: labels.filterStatus || "Status",
+          filterAll: labels.filterAll || "All",
+          clearFilters: labels.clearFilters || "Clear filters",
+        }}
+        fields={fields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
+
+      {filtered.length === 0 ? (
         <EmptyState title={labels.empty || "You have not applied to any jobs yet."} />
       ) : (
         <ul className="divide-y divide-border rounded-radius border border-border">
-          {items.map((item) => (
+          {filtered.map((item) => (
             <li
               key={item.id}
               className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"

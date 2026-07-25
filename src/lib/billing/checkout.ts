@@ -55,6 +55,17 @@ export async function createEmployerSubscriptionCheckout(options: {
       .update(stripUndefined({ stripeCustomerId: customerId }));
   }
 
+  const settings = await getSiteSettings();
+  const displayCurrency = normalizeCurrencyCode(settings.defaultCurrency);
+  const converted = await convertToMinorUnitsSafe(
+    amountEur,
+    "EUR",
+    displayCurrency,
+  );
+  const currency = converted.currency;
+  const unitAmount =
+    currency === "eur" ? eurosToCents(amountEur) : converted.amountMinor;
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
@@ -65,6 +76,11 @@ export async function createEmployerSubscriptionCheckout(options: {
       kind: "employer_plan",
       companyId: options.companyId,
       plan: options.plan,
+      priceEur: String(amountEur),
+      fxRate: converted.fxRate != null ? String(converted.fxRate) : "",
+      fxDate: converted.fxDate ?? "",
+      fxFrom: "EUR",
+      fxTo: currency.toUpperCase(),
     },
     subscription_data: {
       metadata: {
@@ -76,8 +92,8 @@ export async function createEmployerSubscriptionCheckout(options: {
       {
         quantity: 1,
         price_data: {
-          currency: "eur",
-          unit_amount: eurosToCents(amountEur),
+          currency,
+          unit_amount: unitAmount,
           recurring: { interval: "month" },
           product_data: {
             name: productName,

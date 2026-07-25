@@ -83,9 +83,13 @@ export function wrapBrandedHtml(innerHtml: string, vars: EmailVars): string {
   const appUrl = String(vars.appUrl ?? "");
   const year = String(vars.year ?? new Date().getFullYear());
 
+  // Brand tokens: purple #3C3489, amber #C97A2E
+  const brandPurple = "#3C3489";
+  const brandAmber = "#C97A2E";
+
   const logoBlock = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(siteName)}" width="140" style="display:block;max-width:140px;height:auto;border:0;" />`
-    : `<div style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#1a1625;letter-spacing:-0.02em;">${escapeHtml(brandMark)}</div>`;
+    : `<div style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:${brandPurple};letter-spacing:-0.02em;">${escapeHtml(brandMark)}</div>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -94,28 +98,28 @@ export function wrapBrandedHtml(innerHtml: string, vars: EmailVars): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(siteName)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f4f2f7;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1625;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f2f7;padding:32px 16px;">
+<body style="margin:0;padding:0;background:#f3f1f8;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f1a2e;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f1f8;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #e6e1ef;border-radius:12px;overflow:hidden;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #ddd6eb;border-radius:12px;overflow:hidden;">
           <tr>
-            <td style="padding:28px 28px 16px;border-bottom:1px solid #e6e1ef;background:#1a1625;">
+            <td style="padding:28px 28px 16px;border-bottom:3px solid ${brandAmber};background:${brandPurple};">
               <a href="${escapeHtml(appUrl)}" style="text-decoration:none;color:#ffffff;">
                 ${logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(siteName)}" width="140" style="display:block;max-width:140px;height:auto;border:0;" />` : `<div style="font-family:Georgia,serif;font-size:24px;color:#ffffff;">${escapeHtml(siteName)}</div>`}
               </a>
-              ${tagline ? `<p style="margin:8px 0 0;font-size:12px;color:#c9bfd9;letter-spacing:0.04em;">${escapeHtml(tagline)}</p>` : ""}
+              ${tagline ? `<p style="margin:8px 0 0;font-size:12px;color:#d6d0e8;letter-spacing:0.04em;">${escapeHtml(tagline)}</p>` : ""}
             </td>
           </tr>
           <tr>
-            <td style="padding:28px;font-size:15px;line-height:1.6;color:#1a1625;">
+            <td style="padding:28px;font-size:15px;line-height:1.6;color:#1f1a2e;">
               ${innerHtml}
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 28px;background:#faf8fc;border-top:1px solid #e6e1ef;font-size:12px;line-height:1.5;color:#6b6478;">
+            <td style="padding:20px 28px;background:#faf8fc;border-top:1px solid #ddd6eb;font-size:12px;line-height:1.5;color:#6b6478;">
               <p style="margin:0 0 8px;">${escapeHtml(siteName)}${tagline ? ` · ${escapeHtml(tagline)}` : ""}</p>
-              ${contactEmail ? `<p style="margin:0 0 8px;">Support: <a href="mailto:${escapeHtml(contactEmail)}" style="color:#5b3d8f;">${escapeHtml(contactEmail)}</a></p>` : ""}
+              ${contactEmail ? `<p style="margin:0 0 8px;">Support: <a href="mailto:${escapeHtml(contactEmail)}" style="color:${brandPurple};">${escapeHtml(contactEmail)}</a></p>` : ""}
               <p style="margin:0;">© ${escapeHtml(year)} ${escapeHtml(siteName)}. All rights reserved.</p>
               <p style="margin:12px 0 0;">${logoBlock}</p>
             </td>

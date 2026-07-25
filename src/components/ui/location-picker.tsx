@@ -8,6 +8,7 @@ export interface LocationValue {
   countryCode: string;
   city: string;
   town: string;
+  suburb: string;
   formattedAddress: string;
   placeId: string;
 }
@@ -29,13 +30,14 @@ interface Prediction {
   secondaryText: string;
 }
 
-type FieldKey = "country" | "city" | "town";
+type FieldKey = "country" | "city" | "town" | "suburb";
 
 const EMPTY: LocationValue = {
   country: "",
   countryCode: "",
   city: "",
   town: "",
+  suburb: "",
   formattedAddress: "",
   placeId: "",
 };
@@ -77,7 +79,7 @@ export function LocationPicker({
       const params = new URLSearchParams({
         action: "autocomplete",
         query: query.trim(),
-        type: field,
+        type: field === "suburb" ? "town" : field,
         sessionToken: tokenRef.current,
       });
       if (field !== "country" && value.countryCode) {
@@ -114,11 +116,14 @@ export function LocationPicker({
         countryCode: "",
         city: value.city,
         town: value.town,
+        suburb: value.suburb,
       });
     } else if (field === "city") {
       onChange({ ...value, city: next });
-    } else {
+    } else if (field === "town") {
       onChange({ ...value, town: next });
+    } else {
+      onChange({ ...value, suburb: next });
     }
 
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -143,8 +148,10 @@ export function LocationPicker({
           onChange({ ...value, country: prediction.mainText, countryCode: "" });
         } else if (field === "city") {
           onChange({ ...value, city: prediction.mainText });
-        } else {
+        } else if (field === "town") {
           onChange({ ...value, town: prediction.mainText });
+        } else {
+          onChange({ ...value, suburb: prediction.mainText });
         }
         return;
       }
@@ -156,6 +163,7 @@ export function LocationPicker({
           countryCode: string;
           city: string;
           town: string;
+          suburb?: string;
         };
       };
       const place = data.place;
@@ -174,6 +182,18 @@ export function LocationPicker({
           countryCode: place.countryCode || value.countryCode,
           city: place.city || prediction.mainText,
           town: value.town || place.town,
+          suburb: value.suburb || place.suburb || "",
+          placeId: place.placeId,
+          formattedAddress: place.formattedAddress,
+        });
+      } else if (field === "town") {
+        onChange({
+          ...value,
+          country: place.country || value.country,
+          countryCode: place.countryCode || value.countryCode,
+          city: place.city || value.city,
+          town: place.town || prediction.mainText,
+          suburb: value.suburb || place.suburb || "",
           placeId: place.placeId,
           formattedAddress: place.formattedAddress,
         });
@@ -183,7 +203,8 @@ export function LocationPicker({
           country: place.country || value.country,
           countryCode: place.countryCode || value.countryCode,
           city: place.city || value.city,
-          town: place.town || prediction.mainText,
+          town: place.town || value.town,
+          suburb: place.suburb || prediction.mainText,
           placeId: place.placeId,
           formattedAddress: place.formattedAddress,
         });
@@ -261,7 +282,7 @@ export function LocationPicker({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {field(
           "country",
           labels.countryLabel ?? "Country",
@@ -270,11 +291,17 @@ export function LocationPicker({
         )}
         {field("city", labels.cityLabel ?? "City", value.city, required)}
         {field("town", labels.townLabel ?? "Town / area", value.town, false)}
+        {field(
+          "suburb",
+          labels.suburbLabel ?? "Suburb",
+          value.suburb,
+          false,
+        )}
       </div>
       {!placesLive ? (
         <p className="text-xs text-text-muted">
           {labels.locationManualHint ??
-            "Type your country, city, and town. Connect Google Places under Admin → Integrations for autocomplete."}
+            "Type your country, city, town, and suburb. Connect Google Places under Admin → Integrations for autocomplete."}
         </p>
       ) : null}
     </div>

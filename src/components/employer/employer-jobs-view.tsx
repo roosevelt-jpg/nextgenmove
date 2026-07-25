@@ -1,7 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Button, Input, Modal, Select, Textarea } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AdvancedFilters,
+  Button,
+  Input,
+  Modal,
+  Select,
+  Textarea,
+  type AdvancedFilterField,
+  type AdvancedFilterValue,
+} from "@/components/ui";
+import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface JobItem {
@@ -42,6 +52,10 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
+    search: "",
+    status: "",
+  });
 
   const load = useCallback(async () => {
     const res = await fetch("/api/employer/jobs");
@@ -53,6 +67,47 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
   useEffect(() => {
     void load();
   }, [load]);
+
+  const statusOptions = useMemo(
+    () => uniqueOptionValues(items.map((i) => i.status)),
+    [items],
+  );
+
+  const filterFields = useMemo<AdvancedFilterField[]>(
+    () => [
+      {
+        id: "search",
+        type: "search",
+        labelKey: "search",
+        placeholderKey: "searchPlaceholder",
+      },
+      {
+        id: "status",
+        type: "select",
+        labelKey: "filterStatus",
+        allKey: "filterAll",
+        options: statusOptions,
+      },
+    ],
+    [statusOptions],
+  );
+
+  const filteredItems = useMemo(
+    () =>
+      applyClientFilters(items, {
+        search: {
+          value: filters.search,
+          accessors: [
+            (job) => job.title,
+            (job) => job.companyName,
+            (job) => job.location,
+            (job) => job.categories,
+          ],
+        },
+        equals: [{ value: filters.status, accessor: (job) => job.status }],
+      }),
+    [items, filters],
+  );
 
   const openCreate = () => {
     setEditing(null);
@@ -148,6 +203,21 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
         <Button onClick={openCreate}>{labels.postJob || "Post a Job"}</Button>
       </header>
 
+      <AdvancedFilters
+        labels={{
+          ...labels,
+          search: labels.search || "Search",
+          searchPlaceholder: labels.searchPlaceholder || "Search jobs…",
+          filterStatus: labels.filterStatus || "Status",
+          filterAll: labels.filterAll || "All",
+          clearFilters: labels.clearFilters || "Clear filters",
+        }}
+        fields={filterFields}
+        values={filters}
+        onChange={setFilters}
+        clearKey="clearFilters"
+      />
+
       <div className="overflow-x-auto rounded-radius border border-border">
         <table className="w-full min-w-0 text-left text-sm md:min-w-[40rem]">
           <thead>
@@ -160,14 +230,14 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 ? (
+            {filteredItems.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-3 py-8 text-center text-text-muted">
                   {labels.empty || "No opportunities yet."}
                 </td>
               </tr>
             ) : (
-              items.map((item) => (
+              filteredItems.map((item) => (
                 <tr key={item.id} className="border-t border-border">
                   <td className="px-3 py-3 font-medium text-text-primary">
                     {item.title}

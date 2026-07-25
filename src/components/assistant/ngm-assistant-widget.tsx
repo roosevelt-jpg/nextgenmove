@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-type ChatTurn = { role: "user" | "model"; text: string };
+type ChatTurn = { role: "user" | "model" | "admin"; text: string };
 
 export interface NgmAssistantWidgetProps {
   labels?: Record<string, string>;
@@ -24,9 +24,13 @@ export function NgmAssistantWidget({
   const [error, setError] = useState<string | null>(null);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [visitorName, setVisitorName] = useState("");
+  const [visitorEmail, setVisitorEmail] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
-  const title = labels.assistantTitle ?? "NGM Assistant";
+  const title =
+    labels.assistantTitle ??
+    (publicMode ? "Chat with us" : "NGM Assistant");
   const placeholder =
     labels.assistantPlaceholder ?? "Ask about NextGen Move…";
   const sendLabel = labels.assistantSend ?? "Send";
@@ -45,6 +49,43 @@ export function NgmAssistantWidget({
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [turns, open, busy]);
 
+  useEffect(() => {
+    if (!publicMode || !threadId || !open) return;
+
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const response = await fetch(
+          `/api/public/chat?threadId=${encodeURIComponent(threadId)}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok || cancelled) return;
+        const payload = (await response.json()) as {
+          messages?: Array<{ role: string; text: string }>;
+        };
+        const next = (payload.messages ?? []).map((message) => {
+          const role =
+            message.role === "user"
+              ? "user"
+              : message.role === "admin"
+                ? "admin"
+                : "model";
+          return { role, text: message.text } as ChatTurn;
+        });
+        if (!cancelled && next.length) setTurns(next);
+      } catch {
+        // ignore poll errors
+      }
+    };
+
+    void load();
+    const timer = window.setInterval(() => void load(), 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [publicMode, threadId, open]);
+
   const send = async () => {
     const message = input.trim();
     if (!message || busy) return;
@@ -59,13 +100,27 @@ export function NgmAssistantWidget({
       const endpoint = publicMode
         ? "/api/public/chat"
         : "/api/assistant/chat";
+      const history = turns
+        .filter((turn) => turn.role === "user" || turn.role === "model")
+        .slice(-10)
+        .map((turn) => ({
+          role: turn.role === "user" ? ("user" as const) : ("model" as const),
+          text: turn.text,
+        }));
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message,
-          history: turns.slice(-10),
+          history,
           ...(publicMode && threadId ? { threadId } : {}),
+          ...(publicMode && visitorName.trim()
+            ? { visitorName: visitorName.trim() }
+            : {}),
+          ...(publicMode && visitorEmail.trim()
+            ? { visitorEmail: visitorEmail.trim() }
+            : {}),
         }),
       });
 
@@ -127,6 +182,24 @@ export function NgmAssistantWidget({
             </button>
           </div>
 
+          {publicMode ? (
+            <div className="grid grid-cols-2 gap-2 border-b border-border px-3 py-2">
+              <input
+                value={visitorName}
+                onChange={(event) => setVisitorName(event.target.value)}
+                placeholder={labels.visitorNamePlaceholder ?? "Your name"}
+                className="rounded-radius-sm border border-border bg-bg px-2 py-1 text-[11px] text-text-primary outline-none"
+              />
+              <input
+                value={visitorEmail}
+                onChange={(event) => setVisitorEmail(event.target.value)}
+                placeholder={labels.visitorEmailPlaceholder ?? "Email (optional)"}
+                type="email"
+                className="rounded-radius-sm border border-border bg-bg px-2 py-1 text-[11px] text-text-primary outline-none"
+              />
+            </div>
+          ) : null}
+
           <div
             ref={listRef}
             className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3"
@@ -141,9 +214,16 @@ export function NgmAssistantWidget({
                     "max-w-[90%] rounded-radius px-2.5 py-1.5 text-xs leading-relaxed",
                     turn.role === "user"
                       ? "ml-auto bg-fill-accent text-white"
-                      : "mr-auto bg-surface-2 text-text-primary",
+                      : turn.role === "admin"
+                        ? "mr-auto border border-fill-accent/30 bg-bg-purple text-text-primary"
+                        : "mr-auto bg-surface-2 text-text-primary",
                   )}
                 >
+                  {turn.role === "admin" ? (
+                    <p className="mb-0.5 font-mono text-[9px] uppercase tracking-wide text-text-label">
+                      {labels.staffReplyLabel ?? "Staff"}
+                    </p>
+                  ) : null}
                   {turn.text}
                 </div>
               ))

@@ -37,6 +37,7 @@ const studentProfileSchema = z.object({
   targetCities: z.array(z.string().trim().min(1)).min(1).max(12),
   country: z.string().trim().max(120).optional(),
   town: z.string().trim().max(120).optional(),
+  suburb: z.string().trim().max(120).optional(),
   placeId: z.string().trim().max(256).optional(),
   bio: z.string().trim().max(2000).optional(),
   skills: z.array(z.string().trim().min(1)).max(40).optional(),
@@ -58,6 +59,7 @@ const companyProfileSchema = z.object({
   country: z.string().trim().max(120).optional(),
   city: z.string().trim().max(120).optional(),
   town: z.string().trim().max(120).optional(),
+  suburb: z.string().trim().max(120).optional(),
   placeId: z.string().trim().max(256).optional(),
   hiringNeeds: z.string().trim().max(2000).optional(),
 });
@@ -168,6 +170,7 @@ export async function POST(request: Request) {
             country: company.country?.trim() || "",
             city: company.city?.trim() || "",
             town: company.town?.trim() || "",
+            suburb: company.suburb?.trim() || "",
             placeId: company.placeId?.trim() || "",
             requirementTags: [],
             hiringNeeds: company.hiringNeeds?.trim() || "",
@@ -196,6 +199,7 @@ export async function POST(request: Request) {
             targetCities: student.targetCities,
             country: student.country?.trim() || "",
             town: student.town?.trim() || "",
+            suburb: student.suburb?.trim() || "",
             placeId: student.placeId?.trim() || "",
             gender: student.gender?.trim() || "",
             cvUrl: null,
@@ -264,6 +268,7 @@ export async function POST(request: Request) {
         // Verification email is best-effort at signup
       }
 
+      let referralWarning: string | undefined;
       if (body.role === "student") {
         const welcomeCredits = await getWayToEarnCredits("welcome");
         if (welcomeCredits > 0) {
@@ -287,7 +292,13 @@ export async function POST(request: Request) {
 
         const referral = body.student?.referralCode?.trim();
         if (referral) {
-          await applyReferralCode({ studentId: uid, code: referral });
+          const referralResult = await applyReferralCode({
+            studentId: uid,
+            code: referral,
+          });
+          if (!referralResult.ok) {
+            referralWarning = referralResult.error;
+          }
         }
       }
 
@@ -295,6 +306,7 @@ export async function POST(request: Request) {
         uid,
         role: body.role,
         nextStep: "verify",
+        ...(referralWarning ? { referralWarning } : {}),
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

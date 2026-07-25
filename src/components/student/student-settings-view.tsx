@@ -179,19 +179,45 @@ export function StudentSettingsView({
           </p>
         ) : null}
         {referralCode ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <code className="rounded-radius bg-surface-2 px-3 py-1.5 font-mono text-sm">
-              {referralCode}
-            </code>
-            <Button
-              size="sm"
-              variant="outline"
-              type="button"
-              onClick={() => void navigator.clipboard.writeText(referralCode)}
-            >
-              {labels.copyCode ?? "Copy"}
-            </Button>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="rounded-radius bg-surface-2 px-3 py-1.5 font-mono text-sm">
+                {referralCode}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => void navigator.clipboard.writeText(referralCode)}
+              >
+                {labels.copyCode ?? "Copy"}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <code className="max-w-full truncate rounded-radius bg-surface-2 px-3 py-1.5 font-mono text-xs">
+                {`/sign-up?ref=${encodeURIComponent(referralCode)}`}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  const url = `${window.location.origin}/sign-up?ref=${encodeURIComponent(referralCode)}`;
+                  void navigator.clipboard.writeText(url);
+                }}
+              >
+                {labels.copyReferralLink ?? "Copy invite link"}
+              </Button>
+            </div>
           </div>
+        ) : null}
+        {referredBy ? (
+          <p className="text-sm text-text-secondary">
+            {(labels.referredByLabel ?? "Referred by").replace(
+              "{id}",
+              referredBy,
+            )}
+          </p>
         ) : null}
         {!referredBy ? (
           <form
@@ -320,31 +346,6 @@ export function StudentSettingsView({
                   );
                 }}
                 onError={(message) => setTopUpStatus(message)}
-                onFallbackCheckout={async () => {
-                  const packageId = elementSession.packageId;
-                  setElementSession(null);
-                  const response = await fetch("/api/student/credits/top-up", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "Idempotency-Key": crypto.randomUUID(),
-                    },
-                    body: JSON.stringify({ packageId, flow: "checkout" }),
-                  });
-                  if (!response.ok) {
-                    setTopUpStatus(labels.topUpFailed ?? "");
-                    return;
-                  }
-                  const payload = (await response.json()) as {
-                    mode?: string;
-                    url?: string;
-                  };
-                  if (payload.mode === "stripe" && payload.url) {
-                    window.location.href = payload.url;
-                    return;
-                  }
-                  setTopUpStatus(labels.topUpFailed ?? "");
-                }}
               />
             </div>
           ) : null}

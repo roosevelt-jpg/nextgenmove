@@ -199,39 +199,6 @@ export function StudentWalletPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const redirectToCheckout = async (packageId: string) => {
-    const response = await fetch("/api/student/credits/top-up", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": crypto.randomUUID(),
-      },
-      body: JSON.stringify({ packageId, flow: "checkout" }),
-    });
-    if (!response.ok) {
-      setTopUpStatus(
-        labels.topUpFailed ?? "Could not start top-up. Try again.",
-      );
-      return;
-    }
-    const payload = (await response.json()) as {
-      mode?: string;
-      url?: string;
-    };
-    if (payload.mode === "stripe" && payload.url) {
-      setTopUpStatus(
-        labels.topUpRedirecting ??
-          "Opening Stripe checkout to enter your card details…",
-      );
-      // eslint-disable-next-line react-hooks/immutability -- intentional full-page redirect
-      window.location.assign(payload.url);
-      return;
-    }
-    setTopUpStatus(
-      labels.topUpRequested ?? "Request sent — pending admin approval.",
-    );
-  };
-
   const buyPackage = async (packageId: string) => {
     setBuyingId(packageId);
     setTopUpStatus(null);
@@ -282,11 +249,9 @@ export function StudentWalletPanel({
     }
     if (payload.mode === "stripe" && payload.url) {
       setTopUpStatus(
-        labels.topUpRedirecting ??
-          "Opening Stripe checkout to enter your card details…",
+        labels.payment_element_required ??
+          "In-app card payment is required. Hosted Checkout is disabled.",
       );
-      // eslint-disable-next-line react-hooks/immutability -- intentional full-page redirect
-      window.location.assign(payload.url);
       return;
     }
     setTopUpStatus(
@@ -450,7 +415,7 @@ export function StudentWalletPanel({
       {stripeEnabled ? (
         <p className="text-xs text-text-muted">
           {labels.walletStripeHint ??
-            "Pay by card in-app (Stripe Payment Element). Hosted Checkout is used if the form cannot load."}
+            "Pay by card in-app with Stripe Payment Element."}
         </p>
       ) : (
         <p className="text-xs text-text-warning">
@@ -554,18 +519,13 @@ export function StudentWalletPanel({
               labels={labels}
               onSuccess={() => void onElementSuccess()}
               onError={(message) => setTopUpStatus(message)}
-              onFallbackCheckout={() => {
-                const packageId = elementSession.packageId;
-                setElementSession(null);
-                void redirectToCheckout(packageId);
-              }}
             />
           ) : (
             <>
               <p className="text-sm text-text-secondary">
                 {labels.topUpIntro ??
                   (stripeEnabled
-                    ? "Choose a pack and pay by card here. If the form cannot load, we open Stripe Checkout instead."
+                    ? "Choose a pack and pay by card here."
                     : "Choose a pack to request a top-up. Card checkout unlocks when Stripe is connected under Admin → Integrations.")}
               </p>
               {!stripeEnabled ? (

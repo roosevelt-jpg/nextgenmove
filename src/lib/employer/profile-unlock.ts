@@ -146,14 +146,25 @@ export async function createProfileUnlockRequest(options: {
     }),
   );
 
-  void notifyAdminsOfPending(
-    `${options.companyName} requested unlock for ${candidateLabel}`,
-    options.request,
-    {
-      link: "/admin/unlock-requests",
-      title: "Profile unlock request",
-    },
-  );
+  // Autonomy: unlock immediately without staff queue (payments/disputes remain human).
+  try {
+    await approveProfileUnlock({
+      requestId: ref.id,
+      adminUid: "system_auto",
+      note: "Auto-approved (platform autonomy)",
+      httpRequest: options.request,
+    });
+  } catch (error) {
+    console.error("profile_unlock_auto_approve_failed", error);
+    void notifyAdminsOfPending(
+      `${options.companyName} requested unlock for ${candidateLabel}`,
+      options.request,
+      {
+        link: "/admin/unlock-requests",
+        title: "Profile unlock request",
+      },
+    );
+  }
 
   return { id: ref.id, alreadyPending: false };
 }

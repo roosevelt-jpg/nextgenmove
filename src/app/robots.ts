@@ -24,6 +24,10 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
       {
+        userAgent: "PerplexityBot",
+        allow: "/",
+      },
+      {
         userAgent: "GPTBot",
         disallow: "/",
       },
@@ -36,11 +40,19 @@ export default function robots(): MetadataRoute.Robots {
         disallow: "/",
       },
       {
+        userAgent: "anthropic-ai",
+        disallow: "/",
+      },
+      {
         userAgent: "Google-Extended",
         disallow: "/",
       },
       {
         userAgent: "Bytespider",
+        disallow: "/",
+      },
+      {
+        userAgent: "CursorBot",
         disallow: "/",
       },
     ],

@@ -25,22 +25,19 @@ interface ConfirmFormProps {
   labels: Record<string, string>;
   onSuccess: () => void;
   onError: (message: string) => void;
-  onFallbackCheckout: () => void;
 }
 
-function ConfirmForm({
-  labels,
-  onSuccess,
-  onError,
-  onFallbackCheckout,
-}: ConfirmFormProps) {
+function ConfirmForm({ labels, onSuccess, onError }: ConfirmFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
 
   const pay = async () => {
     if (!stripe || !elements) {
-      onFallbackCheckout();
+      onError(
+        labels.topUpElementUnavailable ??
+          "Card form is still loading. Try again in a moment.",
+      );
       return;
     }
 
@@ -55,15 +52,7 @@ function ConfirmForm({
     setSubmitting(false);
 
     if (error) {
-      if (
-        error.type === "validation_error" ||
-        error.type === "card_error"
-      ) {
-        onError(error.message ?? labels.topUpFailed ?? "Payment failed.");
-        return;
-      }
       onError(error.message ?? labels.topUpFailed ?? "Payment failed.");
-      onFallbackCheckout();
       return;
     }
 
@@ -75,7 +64,7 @@ function ConfirmForm({
       return;
     }
 
-    onFallbackCheckout();
+    onError(labels.topUpFailed ?? "Payment did not complete. Try again.");
   };
 
   return (
@@ -107,7 +96,8 @@ export interface StripePaymentElementPanelProps {
   labels: Record<string, string>;
   onSuccess: () => void;
   onError: (message: string) => void;
-  onFallbackCheckout: () => void;
+  /** @deprecated Checkout fallback removed — optional no-op for callers. */
+  onFallbackCheckout?: () => void;
 }
 
 export function StripePaymentElementPanel({
@@ -116,24 +106,7 @@ export function StripePaymentElementPanel({
   labels,
   onSuccess,
   onError,
-  onFallbackCheckout,
 }: StripePaymentElementPanelProps) {
-  const [loadFailed, setLoadFailed] = useState(false);
-
-  if (loadFailed) {
-    return (
-      <div className="space-y-3">
-        <p className="text-sm text-text-secondary">
-          {labels.topUpElementUnavailable ??
-            "Inline card form could not load. Continue to Stripe Checkout."}
-        </p>
-        <Button size="sm" type="button" onClick={onFallbackCheckout}>
-          {labels.topUpPayCheckout ?? "Open Stripe Checkout"}
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <Elements
       stripe={stripePromiseFor(publishableKey)}
@@ -148,17 +121,7 @@ export function StripePaymentElementPanel({
         },
       }}
     >
-      <ConfirmForm
-        labels={labels}
-        onSuccess={onSuccess}
-        onError={(message) => {
-          onError(message);
-        }}
-        onFallbackCheckout={() => {
-          setLoadFailed(true);
-          onFallbackCheckout();
-        }}
-      />
+      <ConfirmForm labels={labels} onSuccess={onSuccess} onError={onError} />
     </Elements>
   );
 }

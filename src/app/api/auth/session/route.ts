@@ -220,6 +220,30 @@ export async function POST(request: Request) {
         }
       }
 
+      // Always require verified email for student/employer once profile is complete.
+      if (
+        !decoded.email_verified &&
+        (user.role === "student" || user.role === "company")
+      ) {
+        let profileComplete = false;
+        try {
+          const profileSnap = await withTimeout(
+            adminDb.collection("users").doc(user.uid).get(),
+            1500,
+            "email_verified_gate",
+          );
+          profileComplete = Boolean(profileSnap.data()?.profileComplete);
+        } catch {
+          profileComplete = false;
+        }
+        if (profileComplete) {
+          return NextResponse.json(
+            { error: "email_verification_required" },
+            { status: 403 },
+          );
+        }
+      }
+
       const expiresInMs = Math.min(Math.max(expireDays, 1), 14) * 24 * 60 * 60 * 1000;
 
       const sessionCookie = await withTimeout(

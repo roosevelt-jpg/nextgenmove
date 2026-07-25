@@ -21,6 +21,10 @@ const CLEAR_COOKIE = {
   path: "/",
 };
 
+/** Known AI scrapers disallowed in robots.ts — soft block on HTML navigations. */
+const BLOCKED_BOT_UA =
+  /GPTBot|CCBot|ClaudeBot|anthropic-ai|Google-Extended|Bytespider|CursorBot/i;
+
 function clearAuthCookies(response: NextResponse) {
   response.cookies.set(SESSION_COOKIE_NAME, "", CLEAR_COOKIE);
   response.cookies.set(ROLE_COOKIE_NAME, "", CLEAR_COOKIE);
@@ -28,7 +32,26 @@ function clearAuthCookies(response: NextResponse) {
   return response;
 }
 
+function isBlockedBot(request: NextRequest): boolean {
+  const ua = request.headers.get("user-agent") ?? "";
+  if (!ua || !BLOCKED_BOT_UA.test(ua)) return false;
+  // Allow API/cron/static asset paths through so ops tooling is unaffected.
+  const { pathname } = request.nextUrl;
+  if (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next/") ||
+    pathname.includes(".")
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export async function middleware(request: NextRequest) {
+  if (isBlockedBot(request)) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
   const { pathname } = request.nextUrl;
   const requiredRole = getRequiredRoleForPath(pathname);
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -116,14 +139,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin",
-    "/admin/:path*",
-    "/employer",
-    "/employer/:path*",
-    "/student",
-    "/student/:path*",
-    "/sign-in",
-    "/sign-up",
-    "/forgot-password",
+    /*
+     * Match public HTML + portals for bot challenge; skip static assets via
+     * isBlockedBot pathname checks.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

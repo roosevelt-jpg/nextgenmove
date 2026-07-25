@@ -49,7 +49,7 @@ export default async function CmsPageRoute({
           {page.headline || page.title}
         </h1>
       </header>
-      {page.body ? <RichText text={page.body} /> : null}
+      {page.body ? <RichText html={page.body} allowSafeHtml /> : null}
     </article>
   );
 }

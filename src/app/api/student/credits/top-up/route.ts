@@ -167,13 +167,23 @@ export async function POST(request: Request) {
           return NextResponse.json(responseBody);
         } catch (elementError) {
           console.warn(
-            "credit_topup_element_fallback",
+            "credit_topup_element_failed",
             elementError instanceof Error
               ? elementError.message
               : String(elementError),
           );
-          // Fall through to Checkout Session.
+          return NextResponse.json(
+            { error: "payment_element_unavailable" },
+            { status: 503 },
+          );
         }
+      }
+
+      if (flow !== "checkout") {
+        return NextResponse.json(
+          { error: "payment_element_required" },
+          { status: 400 },
+        );
       }
 
       const checkout = await createCreditTopUpCheckout({

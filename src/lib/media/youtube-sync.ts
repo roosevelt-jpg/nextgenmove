@@ -10,6 +10,7 @@ import {
   formatYoutubeDuration,
   looksLikeGoogleApiKey,
   parseYoutubePlaylistId,
+  resolveYoutubeUploadsPlaylistId,
   youtubeWatchUrl,
 } from "@/lib/media/youtube";
 
@@ -198,19 +199,6 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
     return { ok: false, upserted: 0, archived: 0, error };
   }
 
-  const playlistId = parseYoutubePlaylistId(playlistRaw);
-  if (!playlistId) {
-    const error = "missing_or_invalid_playlist";
-    await settingsRef.set(
-      stripUndefined({
-        youtubeLastSyncError: error,
-        youtubeLastSyncedAt: FieldValue.serverTimestamp(),
-      }),
-      { merge: true },
-    );
-    return { ok: false, upserted: 0, archived: 0, error };
-  }
-
   const apiKey = await resolveYoutubeApiKey();
   if (!apiKey) {
     const error = "missing_youtube_api_key";
@@ -221,7 +209,28 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       }),
       { merge: true },
     );
-    return { ok: false, upserted: 0, archived: 0, error, playlistId };
+    return { ok: false, upserted: 0, archived: 0, error };
+  }
+
+  let playlistId = parseYoutubePlaylistId(playlistRaw);
+  if (!playlistId) {
+    // Allow channel URL / @handle — resolve to uploads playlist (UU…).
+    try {
+      playlistId = await resolveYoutubeUploadsPlaylistId(apiKey, playlistRaw);
+    } catch {
+      playlistId = null;
+    }
+  }
+  if (!playlistId) {
+    const error = "missing_or_invalid_playlist";
+    await settingsRef.set(
+      stripUndefined({
+        youtubeLastSyncError: error,
+        youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+      }),
+      { merge: true },
+    );
+    return { ok: false, upserted: 0, archived: 0, error };
   }
 
   try {

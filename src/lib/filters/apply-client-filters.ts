@@ -46,14 +46,20 @@ export function applyClientFilters<T>(
   config: ClientFilterConfig<T>,
 ): T[] {
   const query = config.search?.value?.trim().toLowerCase() ?? "";
+  const keywords = query
+    ? query.split(/[\s,]+/).map((k) => k.trim()).filter(Boolean)
+    : [];
 
   return rows.filter((row) => {
-    if (query && config.search) {
+    if (keywords.length && config.search) {
       const haystack = config.search.accessors
         .map((accessor) => asString(accessor(row)))
         .join(" ")
         .toLowerCase();
-      if (!haystack.includes(query)) return false;
+      // Multi-keyword: every token must appear somewhere in the searchable fields.
+      if (!keywords.every((keyword) => haystack.includes(keyword))) {
+        return false;
+      }
     }
 
     if (config.equals) {

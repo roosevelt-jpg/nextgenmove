@@ -70,7 +70,7 @@ export function AccountProfileView({
       photoUrl: string | null;
       notificationPreferences: Record<string, boolean>;
     }) => {
-      if (!next.displayName.trim()) return false;
+      if (!next.displayName.trim()) return "skipped" as const;
       const prefs = completePreferences(next.notificationPreferences);
       const response = await fetch("/api/account", {
         method: "PATCH",

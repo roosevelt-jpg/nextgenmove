@@ -284,6 +284,7 @@ export function SignUpForm({
                 targetCities: splitList(targetCities),
                 country: studentLocation.country || undefined,
                 town: studentLocation.town || undefined,
+                suburb: studentLocation.suburb || undefined,
                 placeId: studentLocation.placeId || undefined,
                 bio: bio.trim() || undefined,
                 skills: splitList(skills),
@@ -305,6 +306,7 @@ export function SignUpForm({
                 preferredLocations: (() => {
                   const fromList = splitList(preferredLocations);
                   const hq = [
+                    companyLocation.suburb,
                     companyLocation.town,
                     companyLocation.city,
                     companyLocation.country,
@@ -317,6 +319,7 @@ export function SignUpForm({
                 country: companyLocation.country || undefined,
                 city: companyLocation.city || undefined,
                 town: companyLocation.town || undefined,
+                suburb: companyLocation.suburb || undefined,
                 placeId: companyLocation.placeId || undefined,
                 hiringNeeds: hiringNeeds.trim() || undefined,
               }
@@ -329,6 +332,9 @@ export function SignUpForm({
       await establishSession(idToken);
 
       setUid(result.uid);
+      if (result.referralWarning) {
+        setErrorCode(`referral_${result.referralWarning}`);
+      }
       setStep("verify");
       // Kick off email OTP resend in case register-time send failed
       void fetch("/api/auth/verification", {
@@ -745,14 +751,7 @@ export function SignUpForm({
               ]}
               onChange={(event) => setGender(event.target.value)}
             />
-          ) : (
-            <Input
-              id="student-gender"
-              label={labels.genderLabel || "Gender"}
-              value={gender}
-              onChange={(event) => setGender(event.target.value)}
-            />
-          )}
+          ) : null}
           <Textarea
             id="student-work-experience"
             required
