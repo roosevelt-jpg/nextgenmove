@@ -68,7 +68,7 @@ export function StudentSettingsView({
         referredBy: string | null;
       };
       setReferralCode(data.referralCode);
-      setReferralBonus(data.bonusCredits);
+      setReferralBonus(Number(data.bonusCredits) || 0);
       setReferredBy(data.referredBy);
     }
 

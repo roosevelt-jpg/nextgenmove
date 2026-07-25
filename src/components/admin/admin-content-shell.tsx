@@ -18,10 +18,10 @@ export function AdminContentShell({
       {isLibrary ? (
         <header className="mb-4 space-y-1">
           <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
-            {labels.libraryEyebrow ?? "Admin"}
+            {labels.libraryEyebrow}
           </p>
           <h1 className="font-serif text-[clamp(1.5rem,3.2vw,2.125rem)] font-semibold leading-tight text-text-primary">
-            {labels.libraryTitle ?? labels.library ?? "Content library"}
+            {labels.libraryTitle ?? labels.library}
           </h1>
           {labels.librarySubtitle ? (
             <p className="max-w-2xl text-sm text-text-secondary">
@@ -32,10 +32,10 @@ export function AdminContentShell({
       ) : (
         <header className="mb-4 space-y-1">
           <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
-            {labels.eyebrow ?? "Admin · Homepage Content"}
+            {labels.eyebrow}
           </p>
           <h1 className="font-serif text-[clamp(1.5rem,3.2vw,2.125rem)] font-semibold leading-tight text-text-primary">
-            {labels.title ?? "Video cards & podcast episodes."}
+            {labels.title}
           </h1>
           {labels.subtitle ? (
             <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>

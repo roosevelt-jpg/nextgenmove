@@ -64,6 +64,7 @@ export default async function StudentPortalLayout({
       labels={labels}
       siteName={settings.siteName ?? "Nextgenmove"}
       brandMark={settings.brandMark ?? "N"}
+      brandIconUrl={settings.logoUrl || settings.faviconUrl}
       previewMode={previewMode}
       impersonation={impersonating}
       showAdminWorkspace={showAdminWorkspace}

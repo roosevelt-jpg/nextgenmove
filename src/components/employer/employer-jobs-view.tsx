@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Button, Input, Modal, Textarea } from "@/components/ui";
+import { Button, Input, Modal, Select, Textarea } from "@/components/ui";
+import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 
 interface JobItem {
   id: string;
@@ -33,6 +34,8 @@ const EMPTY = {
 };
 
 export function EmployerJobsView({ labels }: { labels: Record<string, string> }) {
+  const { taxonomies } = useTaxonomies();
+  const genderOptions = taxonomies.gender ?? [];
   const [items, setItems] = useState<JobItem[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<JobItem | null>(null);
@@ -254,10 +257,20 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
               <option value="freelance">{labels.typeFreelance || "Freelance"}</option>
             </select>
           </label>
-          <Input
+          <Select
+            id="job-gender"
             label={labels.fieldGender || "Gender"}
             value={form.gender}
-            placeholder={labels.genderPlaceholder || "Any / optional"}
+            options={[
+              {
+                value: "",
+                label: labels.genderPlaceholder || "Any / optional",
+              },
+              ...genderOptions.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+              })),
+            ]}
             onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
           />
           <Input

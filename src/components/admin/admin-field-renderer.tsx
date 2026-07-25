@@ -8,11 +8,11 @@ import {
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
-import { looksLikeHtml, stripHtmlToPlainText } from "@/lib/content/plain-text";
+import { looksLikeHtml, stripHtmlPreservingSpaces } from "@/lib/content/plain-text";
 
 function asPlainText(value: unknown): string {
   const raw = value == null ? "" : String(value);
-  return looksLikeHtml(raw) ? stripHtmlToPlainText(raw) : raw;
+  return looksLikeHtml(raw) ? stripHtmlPreservingSpaces(raw) : raw;
 }
 
 function getSelectOptions(
@@ -311,7 +311,7 @@ export function AdminFieldRenderer({
             setNestedValue(
               values,
               field.key,
-              stripHtmlToPlainText(event.target.value),
+              stripHtmlPreservingSpaces(event.target.value),
             ),
           )
         }
@@ -376,7 +376,7 @@ export function AdminFieldRenderer({
           setNestedValue(
             values,
             field.key,
-            stripHtmlToPlainText(event.target.value),
+            stripHtmlPreservingSpaces(event.target.value),
           ),
         )
       }

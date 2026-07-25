@@ -28,6 +28,7 @@ export default async function AdminLayout({
         labels={labels}
         siteName={settings.siteName ?? "Nextgenmove"}
         brandMark={settings.brandMark ?? "N"}
+        brandIconUrl={settings.logoUrl || settings.faviconUrl}
         avatarUrl={user?.photoUrl ?? null}
         avatarInitial={(
           user?.displayName ||

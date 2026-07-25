@@ -74,8 +74,8 @@ const BRAND_FIELDS: SettingsFieldDef[] = [
     kind: "textarea",
     labelKey: "siteDescription",
   },
-  { key: "logoUrl", kind: "url", labelKey: "logoUrl" },
-  { key: "faviconUrl", kind: "url", labelKey: "faviconUrl" },
+  { key: "logoUrl", kind: "image", labelKey: "logoUrl" },
+  { key: "faviconUrl", kind: "image", labelKey: "faviconUrl" },
   { key: "defaultMetaTitle", kind: "text", labelKey: "defaultMetaTitle" },
   {
     key: "defaultMetaDescription",

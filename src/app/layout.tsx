@@ -25,7 +25,18 @@ const jetbrainsMono = JetBrains_Mono({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
-  return buildRootMetadata(settings);
+  const meta = buildRootMetadata(settings);
+  return {
+    ...meta,
+    robots: {
+      index: true,
+      follow: true,
+    },
+    other: {
+      ...(typeof meta.other === "object" && meta.other ? meta.other : {}),
+      robots: "index, follow, noai, noimageai",
+    },
+  };
 }
 
 export default async function RootLayout({

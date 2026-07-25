@@ -65,6 +65,7 @@ async function main() {
     "plan_activated",
     "payment_failed",
     "match_update",
+    "profile_unlocked",
     "form_submission_ack",
     "admin_pending_alert",
   ];

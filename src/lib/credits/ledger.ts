@@ -117,5 +117,14 @@ export async function getWayToEarnCredits(wayId: string): Promise<number> {
     (snap.data()?.waysToEarn as Array<{ id?: string; credits?: number }> | undefined) ??
     [];
   const way = ways.find((item) => item.id === wayId);
-  return typeof way?.credits === "number" ? way.credits : 0;
+  if (typeof way?.credits === "number" && Number.isFinite(way.credits)) {
+    return way.credits;
+  }
+  // Fallbacks when levers doc is missing a way (legacy seeds).
+  const defaults: Record<string, number> = {
+    welcome: 2000,
+    referral: 150,
+    profile_complete: 100,
+  };
+  return defaults[wayId] ?? 0;
 }

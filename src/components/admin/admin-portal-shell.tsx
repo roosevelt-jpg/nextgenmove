@@ -10,12 +10,15 @@ import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { NgmAssistantWidget } from "@/components/assistant/ngm-assistant-widget";
 import { DEFAULT_ADMIN_NAV_LABELS } from "@/lib/portal/nav-label-defaults";
 
 const NAV_ITEMS = [
   { key: "dashboard", href: "/admin/dashboard", match: "exact" as const },
   { key: "crm", href: "/admin/crm", match: "prefix" as const },
   { key: "contact", href: "/admin/contact", match: "prefix" as const },
+  { key: "chatInbox", href: "/admin/chat-inbox", match: "prefix" as const },
+  { key: "unlockRequests", href: "/admin/unlock-requests", match: "prefix" as const },
   { key: "integrations", href: "/admin/integrations", match: "prefix" as const },
   { key: "library", href: "/admin/content", match: "exact" as const },
   { key: "content", href: "/admin/content/videos", match: "homepage" as const },
@@ -45,6 +48,19 @@ function NavIcon({ name }: { name: string }) {
         <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           <rect x="2.5" y="3.5" width="11" height="9" rx="1.5" />
           <path d="M2.5 5.5 8 9.25 13.5 5.5" />
+        </svg>
+      );
+    case "chatInbox":
+      return (
+        <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <path d="M3 3.5h10v7.5H7.5L4.5 13.5V11H3V3.5z" />
+        </svg>
+      );
+    case "unlockRequests":
+      return (
+        <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <rect x="3.5" y="7" width="9" height="6.5" rx="1.25" />
+          <path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7" />
         </svg>
       );
     case "integrations":
@@ -113,6 +129,7 @@ export interface AdminPortalShellProps {
   labels: Record<string, string>;
   siteName: string;
   brandMark: string;
+  brandIconUrl?: string | null;
   children: React.ReactNode;
   avatarUrl?: string | null;
   avatarInitial?: string;
@@ -122,6 +139,7 @@ export function AdminPortalShell({
   labels,
   siteName,
   brandMark,
+  brandIconUrl,
   children,
   avatarUrl = null,
   avatarInitial,
@@ -145,7 +163,7 @@ export function AdminPortalShell({
       <div className="flex items-center gap-2.5 border-b border-white/20 px-4 py-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={resolveBrandIconUrl()}
+          src={resolveBrandIconUrl(brandIconUrl)}
           alt=""
           className="h-8 w-8 rounded-radius-sm object-cover shadow-sm"
           aria-hidden
@@ -320,6 +338,7 @@ export function AdminPortalShell({
           {children}
         </main>
       </div>
+      <NgmAssistantWidget labels={labels} />
     </div>
   );
 }

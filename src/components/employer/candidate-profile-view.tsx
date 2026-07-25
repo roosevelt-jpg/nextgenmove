@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button, EmptyState, Input, Modal } from "@/components/ui";
+import { avatarToneClasses, initialsFromName } from "@/lib/avatar-hue";
 
 interface CandidateDetail {
   match: {
@@ -11,11 +12,17 @@ interface CandidateDetail {
     stageId: string;
     shortlisted: boolean;
     matchScore: number | null;
+    identityUnlocked?: boolean;
+    unlockRequestStatus?: "none" | "pending" | "approved" | "declined";
   };
   student: {
     id: string;
+    displayName?: string;
     fullName: string;
+    identityUnlocked?: boolean;
+    unlockRequestStatus?: "none" | "pending" | "approved" | "declined";
     email: string;
+    phone?: string | null;
     sector: string;
     seniority: string;
     currentCity: string;
@@ -35,6 +42,12 @@ interface CandidateDetail {
       to?: string | null;
       description?: string;
     }>;
+    education?: Array<{
+      institution: string;
+      degree?: string;
+      year?: string;
+    }>;
+    assessment?: unknown;
     githubUrl?: string | null;
   };
 }
@@ -89,6 +102,30 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
     return true;
   };
 
+  const requestUnlock = async () => {
+    setBusy(true);
+    setActionMessage(null);
+    const response = await fetch("/api/employer/unlock-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matchId }),
+    });
+    setBusy(false);
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (payload?.error === "already_unlocked") {
+        setActionMessage(labels.unlockAlreadyApproved || "Already unlocked.");
+      } else {
+        setActionMessage(labels.unlockRequestError || "Could not submit unlock request.");
+      }
+      return;
+    }
+    setActionMessage(labels.unlockRequestSubmitted || "Unlock request submitted.");
+    await load();
+  };
+
   const toggleShortlist = async () => {
     if (!data) return;
     await patchMatch({ shortlisted: !data.match.shortlisted });
@@ -103,6 +140,12 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
   }
 
   const { student, match } = data;
+  const unlocked =
+    student.identityUnlocked === true || match.identityUnlocked === true;
+  const unlockStatus =
+    student.unlockRequestStatus ?? match.unlockRequestStatus ?? "none";
+  const displayName =
+    student.displayName || student.fullName || labels.anonymizedCandidate || "Candidate";
 
   return (
     <div className="space-y-6">
@@ -117,23 +160,36 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
 
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex gap-3">
-          {student.photoUrl ? (
+          {unlocked && student.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={student.photoUrl}
               alt=""
               className="h-16 w-16 rounded-radius object-cover"
             />
-          ) : null}
+          ) : (
+            <div
+              className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-radius text-sm font-bold ${avatarToneClasses(displayName)}`}
+              aria-hidden
+            >
+              {initialsFromName(displayName)}
+            </div>
+          )}
           <div>
             <h1 className="font-serif text-3xl text-text-primary">
-              {student.fullName}
+              {displayName}
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
               {[student.seniority, student.sector, student.currentCity]
                 .filter(Boolean)
                 .join(" · ")}
             </p>
+            {!unlocked ? (
+              <p className="mt-2 text-xs text-text-muted">
+                {labels.anonymizedNotice ||
+                  "Identity is hidden until Nextgenmove approves an unlock request."}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -143,6 +199,21 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
               {labels.matchScoreLabel ? ` ${labels.matchScoreLabel}` : ""}
             </span>
           ) : null}
+          {!unlocked ? (
+            unlockStatus === "pending" ? (
+              <span className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-text-secondary">
+                {labels.unlockPending || "Unlock pending"}
+              </span>
+            ) : (
+              <Button size="sm" disabled={busy} onClick={() => void requestUnlock()}>
+                {labels.requestUnlock || "Request unlock"}
+              </Button>
+            )
+          ) : (
+            <span className="rounded-full bg-bg-purple px-3 py-1.5 text-xs font-medium text-text-label">
+              {labels.unlockApproved || "Identity unlocked"}
+            </span>
+          )}
           <Button size="sm" disabled={busy} onClick={() => void toggleShortlist()}>
             {match.shortlisted
               ? (labels.unshortlistAction ?? labels.shortlistedLabel)
@@ -151,14 +222,14 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
           <Button
             size="sm"
             variant="outline"
-            disabled={busy}
+            disabled={busy || !unlocked}
             onClick={() => setInterviewOpen(true)}
           >
             {labels.scheduleInterview || "Schedule Interview"}
           </Button>
           <Button
             size="sm"
-            disabled={busy}
+            disabled={busy || !unlocked}
             onClick={() => void patchMatch({ action: "hire" })}
           >
             {labels.hireAction || "Hire"}
@@ -180,6 +251,13 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
         </p>
       ) : null}
 
+      {unlockStatus === "declined" && !unlocked ? (
+        <p className="text-sm text-text-secondary" role="status">
+          {labels.unlockDeclined ||
+            "Unlock was declined. You may submit a new request."}
+        </p>
+      ) : null}
+
       {student.bio ? (
         <section className="rounded-radius border border-border bg-grad-card p-4">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
@@ -191,6 +269,29 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
         </section>
       ) : null}
 
+      {student.education && student.education.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+            {labels.educationLabel || "Education"}
+          </h2>
+          {student.education.map((entry, index) => (
+            <div
+              key={`${entry.degree}-${entry.year}-${index}`}
+              className="rounded-radius border border-border bg-grad-card p-4"
+            >
+              <p className="font-medium text-text-primary">
+                {[entry.degree, unlocked ? entry.institution : null]
+                  .filter(Boolean)
+                  .join(" · ") || labels.educationEntryFallback || "Education"}
+              </p>
+              {entry.year ? (
+                <p className="mt-0.5 text-xs text-text-muted">{entry.year}</p>
+              ) : null}
+            </div>
+          ))}
+        </section>
+      ) : null}
+
       {student.workExperienceEntries && student.workExperienceEntries.length > 0 ? (
         <section className="space-y-3">
           <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
@@ -198,12 +299,12 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
           </h2>
           {student.workExperienceEntries.map((entry, index) => (
             <div
-              key={`${entry.company}-${entry.title}-${index}`}
+              key={`${entry.title}-${index}`}
               className="rounded-radius border border-border bg-grad-card p-4"
             >
               <p className="font-medium text-text-primary">
                 {entry.title}
-                {entry.company ? ` · ${entry.company}` : ""}
+                {unlocked && entry.company ? ` · ${entry.company}` : ""}
               </p>
               <p className="mt-0.5 text-xs text-text-muted">
                 {[entry.from, entry.to].filter(Boolean).join(" – ")}
@@ -264,7 +365,7 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
             </dd>
           </div>
         ) : null}
-        {student.email ? (
+        {unlocked && student.email ? (
           <div>
             <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
               {labels.emailLabel ?? "Email"}
@@ -272,50 +373,60 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
             <dd className="mt-1 text-sm text-text-primary">{student.email}</dd>
           </div>
         ) : null}
+        {unlocked && student.phone ? (
+          <div>
+            <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+              {labels.phoneLabel || "Phone"}
+            </dt>
+            <dd className="mt-1 text-sm text-text-primary">{student.phone}</dd>
+          </div>
+        ) : null}
       </dl>
 
-      <div className="flex flex-wrap gap-3">
-        {student.linkedinUrl ? (
-          <a
-            href={student.linkedinUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-text-label hover:text-fill-accent"
-          >
-            {labels.linkedinLabel ?? "LinkedIn"}
-          </a>
-        ) : null}
-        {student.githubUrl ? (
-          <a
-            href={student.githubUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-text-label hover:text-fill-accent"
-          >
-            {labels.githubLabel || "GitHub"}
-          </a>
-        ) : null}
-        {student.portfolioUrl ? (
-          <a
-            href={student.portfolioUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-text-label hover:text-fill-accent"
-          >
-            {labels.portfolioLabel ?? "Portfolio"}
-          </a>
-        ) : null}
-        {student.cvUrl ? (
-          <a
-            href={student.cvUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-text-label hover:text-fill-accent"
-          >
-            {labels.cvLabel ?? "Resume"}
-          </a>
-        ) : null}
-      </div>
+      {unlocked ? (
+        <div className="flex flex-wrap gap-3">
+          {student.linkedinUrl ? (
+            <a
+              href={student.linkedinUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-text-label hover:text-fill-accent"
+            >
+              {labels.linkedinLabel ?? "LinkedIn"}
+            </a>
+          ) : null}
+          {student.githubUrl ? (
+            <a
+              href={student.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-text-label hover:text-fill-accent"
+            >
+              {labels.githubLabel || "GitHub"}
+            </a>
+          ) : null}
+          {student.portfolioUrl ? (
+            <a
+              href={student.portfolioUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-text-label hover:text-fill-accent"
+            >
+              {labels.portfolioLabel ?? "Portfolio"}
+            </a>
+          ) : null}
+          {student.cvUrl ? (
+            <a
+              href={student.cvUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-text-label hover:text-fill-accent"
+            >
+              {labels.cvLabel ?? "Resume"}
+            </a>
+          ) : null}
+        </div>
+      ) : null}
 
       <Modal
         open={interviewOpen}

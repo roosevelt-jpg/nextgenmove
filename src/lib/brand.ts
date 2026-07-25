@@ -1,20 +1,27 @@
-/** Hardcoded Nextgenmove brand assets (public/). Always preferred over CMS uploads. */
+/** Brand asset paths — CMS Storage URLs win; public/brand is fallback only. */
 
 export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo.png";
 export const BRAND_ICON_PATH = "/brand/nextgenmove-favicon.png";
 export const BRAND_FAVICON_PATH = BRAND_ICON_PATH;
 
-/** Ignore CMS overrides — brand files are committed under /public/brand. */
-export function resolveBrandLogoUrl(_cmsUrl?: string | null): string {
-  return BRAND_LOGO_PATH;
+function pickCmsUrl(cmsUrl?: string | null): string | null {
+  const trimmed = typeof cmsUrl === "string" ? cmsUrl.trim() : "";
+  return trimmed || null;
 }
 
-export function resolveBrandIconUrl(_cmsUrl?: string | null): string {
-  return BRAND_ICON_PATH;
+/** Prefer CMS-uploaded logo; fall back to committed public brand asset. */
+export function resolveBrandLogoUrl(cmsUrl?: string | null): string {
+  return pickCmsUrl(cmsUrl) ?? BRAND_LOGO_PATH;
 }
 
-export function resolveBrandFaviconUrl(_cmsUrl?: string | null): string {
-  return BRAND_FAVICON_PATH;
+/** Prefer CMS-uploaded icon; fall back to committed public brand asset. */
+export function resolveBrandIconUrl(cmsUrl?: string | null): string {
+  return pickCmsUrl(cmsUrl) ?? BRAND_ICON_PATH;
+}
+
+/** Prefer CMS-uploaded favicon; fall back to committed public brand asset. */
+export function resolveBrandFaviconUrl(cmsUrl?: string | null): string {
+  return pickCmsUrl(cmsUrl) ?? BRAND_FAVICON_PATH;
 }
 
 /** Absolute URL for emails / Open Graph when a public origin is configured. */

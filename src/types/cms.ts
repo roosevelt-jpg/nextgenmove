@@ -357,6 +357,7 @@ export interface TaxonomiesDocument {
   timeline?: TaxonomyOption[];
   category?: TaxonomyOption[];
   preferredTrack?: TaxonomyOption[];
+  gender?: TaxonomyOption[];
   articleTag?: TaxonomyOption[];
   nationality?: TaxonomyOption[];
 }

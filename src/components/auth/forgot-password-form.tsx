@@ -34,7 +34,7 @@ export function ForgotPasswordForm({ labels }: ForgotPasswordFormProps) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-4 py-4">
+    <div className="flex w-full max-w-[22.5rem] flex-col gap-4">
       {labels.forgotPasswordTitle ? (
         <h1 className="font-serif text-2xl text-text-primary">
           {labels.forgotPasswordTitle}

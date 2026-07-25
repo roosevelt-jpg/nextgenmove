@@ -4,7 +4,6 @@ import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { computeMatchScore } from "@/lib/matching/score";
 import { matchDocId } from "@/lib/matching/recompute";
-import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
@@ -12,6 +11,11 @@ import {
   unauthorizedResponse,
 } from "@/lib/employer/session";
 import { getProgramLevers } from "@/lib/collections/pages";
+import {
+  anonymizedDisplayName,
+  anonymizedSearchHaystack,
+  projectStudentForEmployer,
+} from "@/lib/employer/student-visibility";
 
 function canBrowsePool(session: NonNullable<Awaited<ReturnType<typeof getEmployerSession>>>) {
   return (
@@ -60,16 +64,7 @@ export async function GET(request: Request) {
       if (location && student.currentCity !== location) continue;
 
       if (search) {
-        const haystack = [
-          student.fullName,
-          student.email,
-          student.currentCity,
-          student.sector,
-          ...(student.skills ?? []),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        const haystack = anonymizedSearchHaystack({ id: doc.id, ...student });
         if (!haystack.includes(search)) continue;
       }
 
@@ -95,14 +90,23 @@ export async function GET(request: Request) {
         },
       });
 
+      const projected = projectStudentForEmployer(
+        { id: doc.id, ...student },
+        { identityUnlocked: false, unlockRequestStatus: "none" },
+      );
+
       rows.push({
         studentId: doc.id,
-        fullName: student.fullName ?? "",
-        sector: student.sector ?? "",
-        seniority: student.seniority ?? "",
-        currentCity: student.currentCity ?? "",
-        skills: (student.skills ?? []).slice(0, 3),
+        displayName: projected.displayName,
+        fullName: projected.displayName,
+        identityUnlocked: false,
+        unlockRequestStatus: "none" as const,
+        sector: projected.sector,
+        seniority: projected.seniority,
+        currentCity: projected.currentCity,
+        skills: projected.skills.slice(0, 3),
         matchScore,
+        candidateLabel: anonymizedDisplayName(doc.id),
       });
     }
 
@@ -119,7 +123,7 @@ const openSchema = z.object({
   studentId: z.string().min(1),
 });
 
-/** Create a company_browsed match so the candidate enters the company's pool. */
+/** Create a company_browsed match so the candidate enters the company's pool (identity still locked). */
 export async function POST(request: Request) {
   const session = await getEmployerSession();
   if (!session) return unauthorizedResponse();
@@ -202,15 +206,17 @@ export async function POST(request: Request) {
         shortlisted: false,
         matchScore,
         source: "company_browsed",
+        identityUnlocked: false,
         notes: [],
         viewedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       }),
     );
-    await upsertMatchAccess(session.companyId, studentId);
+    // Phase 5 autonomy: identity unlock / match_access self-serve remains deferred —
+    // employers still request unlock; admin approval grants access (no one-liner flip).
+    // match_access is deferred until admin approves a profile unlock.
 
-    // Blueprint Track A: one-time match fee tracked as an admin-billable request.
     if (matchFeeEur > 0) {
       const feeRef = adminDb.collection("requests").doc();
       await feeRef.set(

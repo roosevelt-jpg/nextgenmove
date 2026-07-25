@@ -16,7 +16,7 @@ export default async function AdminHomepagePodcastPage() {
       formLabels={settings.formLabels ?? {}}
       taxonomies={taxonomies}
       schema={ENTITY_SCHEMAS.podcast_episodes!}
-      title={labels.podcastTitle ?? "Podcast episodes"}
+      title={labels.podcastTitle ?? labels.podcast}
     />
   );
 }

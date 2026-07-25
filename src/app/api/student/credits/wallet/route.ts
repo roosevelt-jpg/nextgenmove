@@ -16,6 +16,7 @@ import {
   currencySymbol,
   normalizeCurrencyCode,
 } from "@/lib/public/currency";
+import { convertAmount } from "@/lib/public/fx";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,26 @@ export async function GET(request: Request) {
 
     const currency = normalizeCurrencyCode(settings.defaultCurrency);
     const creditsPerEuro = Number(levers?.creditsPerEuro ?? 4) || 4;
+    const packs = levers?.creditTopUpPackages ?? [];
+
+    let fxRate: number | null = null;
+    let packages = packs.map((pack) => ({
+      ...pack,
+      priceDisplay: pack.priceEur,
+    }));
+
+    if (currency !== "EUR") {
+      try {
+        const { quote } = await convertAmount(1, "EUR", currency);
+        fxRate = quote.rate;
+        packages = packs.map((pack) => ({
+          ...pack,
+          priceDisplay: Math.round(pack.priceEur * quote.rate * 100) / 100,
+        }));
+      } catch {
+        // Keep EUR amounts when FX is down.
+      }
+    }
 
     const transactions = txSnap.docs
       .map((doc) => {
@@ -72,10 +93,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       credits: session.student.credits,
-      packages: levers?.creditTopUpPackages ?? [],
+      packages,
       creditsPerEuro,
       currency,
       currencySymbol: currencySymbol(currency),
+      fxRate,
       stripeEnabled,
       transactions,
     });

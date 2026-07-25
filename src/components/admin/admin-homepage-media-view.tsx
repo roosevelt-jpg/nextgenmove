@@ -152,16 +152,24 @@ export function AdminHomepageMediaView({
     [labels],
   );
 
-  const { status: _youtubeAutosaveStatus, suppressNext: suppressYoutube } =
+  const { status: youtubeAutosaveStatus, suppressNext: suppressYoutube } =
     useDebouncedAutosave(youtubeDraft, persistYoutubeDraft, {
       enabled: youtubeHydrated,
       delayMs: 800,
     });
-  void _youtubeAutosaveStatus;
   useEffect(() => {
     suppressYoutubeRef.current = suppressYoutube;
   }, [suppressYoutube]);
 
+  useEffect(() => {
+    if (youtubeAutosaveStatus === "error") {
+      setSyncMessage(labels.youtubeSaveFailed ?? "Could not save settings.");
+    } else if (youtubeAutosaveStatus === "saved") {
+      setSyncMessage(labels.youtubeSaveOk ?? "Playlist settings saved.");
+    } else if (youtubeAutosaveStatus === "saving") {
+      setSyncMessage(labels.saving ?? "Saving…");
+    }
+  }, [youtubeAutosaveStatus, labels]);
   const load = useCallback(async () => {
     const [vRes, pRes, sRes] = await Promise.all([
       fetch(`/api/admin/data/${videoSchema.collection}`),

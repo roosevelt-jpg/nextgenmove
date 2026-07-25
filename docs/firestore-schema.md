@@ -77,6 +77,9 @@ Pipeline + Shortlist live here.
 | `stageId` | string | → `pipeline_stages` |
 | `shortlisted` | boolean | |
 | `source` | enum | `'admin_curated'` \| `'company_browsed'` \| `'role_interest_promoted'` |
+| `identityUnlocked` | boolean | Default `false`. When true, company APIs return full student identity |
+| `identityUnlockedAt` | timestamp \| null | Set when admin approves unlock |
+| `identityUnlockedBy` | string \| null | Admin UID who approved |
 | `notes` | array | `{ authorId, text, createdAt }[]` |
 | `createdAt` | timestamp | |
 | `updatedAt` | timestamp | |
@@ -99,18 +102,51 @@ CMS-managed — powers the Pipeline kanban columns (not hardcoded).
 
 ## `requests`
 
-Generic inbound requests table — sourcing requests, plan change requests, etc.
+Generic inbound requests table — sourcing requests, plan change requests, profile unlocks, etc.
 
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string | Document ID |
-| `type` | enum | `'sourcing_request'` \| `'plan_request'` \| `'other'` |
+| `type` | enum | `'sourcing_request'` \| `'plan_request'` \| `'profile_unlock'` \| `'match_fee'` \| `'other'` |
 | `companyId` | string \| null | → `companies` when applicable |
+| `studentId` | string \| null | → `students` for `profile_unlock` |
+| `matchId` | string \| null | → `matches` when known |
 | `payload` | object | Form fields (shape varies by `type`) |
-| `status` | enum | `'pending'` \| `'reviewed'` \| `'actioned'` \| `'dismissed'` |
+| `status` | enum | `'pending'` \| `'approved'` \| `'declined'` \| `'reviewed'` \| `'actioned'` \| `'dismissed'` |
+| `resolvedAt` | timestamp \| null | |
+| `resolvedBy` | string \| null | Admin UID |
+| `note` | string \| null | Admin note |
 | `createdAt` | timestamp | |
 
 **`sourcing_request` payload** (from Request talent form): `companyName`, `contactName`, `workEmail`, `phone`, `roleTitleNeeded`, `sector`, `location`, `numberOfHires`, `preferredTrack`, `timeline`, `additionalRequirements`, `jobDescriptionFileUrl` (optional).
+
+**`profile_unlock` payload:** `companyName`, `studentId`, `matchId`, `candidateLabel` (anonymized display label). One pending unlock per company+student pair. Approving sets `matches.identityUnlocked` and writes `match_access`. Students never see unlock requests.
+
+---
+
+## `chat_threads`
+
+Public website chatbot transcripts (Admin SDK only; client R/W denied).
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Document ID |
+| `source` | string | e.g. `'public_widget'` |
+| `visitorName` | string \| null | Optional |
+| `visitorEmail` | string \| null | Optional |
+| `status` | string | e.g. `'open'` |
+| `lastMessage` | string | Preview snippet |
+| `createdAt` | timestamp | |
+| `updatedAt` | timestamp | |
+
+### `chat_threads/{id}/messages`
+
+| Field | Type | Notes |
+|---|---|---|
+| `role` | enum | `'user'` \| `'assistant'` \| `'admin'` |
+| `text` | string | |
+| `adminId` | string \| null | Set when an admin replies |
+| `createdAt` | timestamp | |
 
 ---
 

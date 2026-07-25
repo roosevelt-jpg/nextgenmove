@@ -10,6 +10,11 @@ import {
   unauthorizedResponse,
   verifyMatchOwnership,
 } from "@/lib/employer/session";
+import {
+  isMatchIdentityUnlocked,
+  projectStudentForEmployer,
+} from "@/lib/employer/student-visibility";
+import { getUnlockRequestStatus } from "@/lib/employer/profile-unlock";
 
 const patchSchema = z.object({
   shortlisted: z.boolean().optional(),
@@ -38,16 +43,19 @@ export async function GET(
     return forbiddenResponse();
   }
 
-  const studentSnap = await adminDb
-    .collection("students")
-    .doc(String(match.studentId))
-    .get();
+  const studentId = String(match.studentId);
+  const studentSnap = await adminDb.collection("students").doc(studentId).get();
 
   if (!studentSnap.exists) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
   const student = studentSnap.data()!;
+  const identityUnlocked = isMatchIdentityUnlocked(match);
+  const unlockRequestStatus = await getUnlockRequestStatus(
+    session.companyId,
+    studentId,
+  );
 
   if (!match.viewedAt) {
     await adminDb
@@ -61,32 +69,48 @@ export async function GET(
       );
   }
 
+  const projected = projectStudentForEmployer(
+    { id: studentSnap.id, ...student },
+    {
+      identityUnlocked,
+      unlockRequestStatus: identityUnlocked ? "approved" : unlockRequestStatus,
+    },
+  );
+
   return NextResponse.json({
     match: {
       id,
       stageId: String(match.stageId ?? ""),
       shortlisted: Boolean(match.shortlisted),
       matchScore: typeof match.matchScore === "number" ? match.matchScore : null,
+      identityUnlocked,
+      unlockRequestStatus: projected.unlockRequestStatus,
       notes: match.notes ?? [],
     },
     student: {
-      id: studentSnap.id,
-      fullName: student.fullName ?? "",
-      email: student.email ?? "",
-      sector: student.sector ?? "",
-      seniority: student.seniority ?? "",
-      currentCity: student.currentCity ?? "",
-      targetCities: student.targetCities ?? [],
-      skills: student.skills ?? [],
-      bio: student.bio ?? "",
-      availability: student.availability ?? "",
-      linkedinUrl: student.linkedinUrl ?? null,
-      portfolioUrl: student.portfolioUrl ?? null,
-      cvUrl: student.cvUrl ?? null,
-      photoUrl: student.photoUrl ?? null,
-      workExperience: student.workExperience ?? null,
-      workExperienceEntries: student.workExperienceEntries ?? [],
-      githubUrl: student.githubUrl ?? null,
+      id: projected.id,
+      displayName: projected.displayName,
+      fullName: projected.displayName,
+      identityUnlocked: projected.identityUnlocked,
+      unlockRequestStatus: projected.unlockRequestStatus,
+      email: projected.email,
+      phone: projected.phone,
+      sector: projected.sector,
+      seniority: projected.seniority,
+      currentCity: projected.currentCity,
+      targetCities: projected.targetCities,
+      skills: projected.skills,
+      bio: projected.bio,
+      availability: projected.availability,
+      linkedinUrl: projected.linkedinUrl,
+      portfolioUrl: projected.portfolioUrl,
+      cvUrl: projected.cvUrl,
+      photoUrl: projected.photoUrl,
+      workExperience: projected.workExperience,
+      workExperienceEntries: projected.workExperienceEntries,
+      education: projected.education,
+      assessment: projected.assessment,
+      githubUrl: projected.githubUrl,
     },
   });
 }

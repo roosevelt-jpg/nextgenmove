@@ -41,7 +41,7 @@ Document IDs for `companies` and `students` match the owner's Firebase Auth UID.
 
 **Legend:** R = read, W = write, — = denied.
 
-† Companies can read a student profile in Firestore when a denormalized `match_access/{companyId}_{studentId}` document exists (written by Admin SDK when a `matches` row is created).
+† Companies can read a student profile in Firestore when a denormalized `match_access/{companyId}_{studentId}` document exists. `match_access` is written by Admin SDK **only after** an admin approves a `profile_unlock` request (not when a match is merely created). Until then, employer UIs receive an anonymized projection via employer APIs (no name, photo, email, CV, or contact links).
 
 ---
 
@@ -99,14 +99,22 @@ The route verifies `content_purchases` for the signed-in student, then streams t
 
 ---
 
+## Chat threads
+
+`chat_threads` (and `messages` subcollection) are written only via Admin SDK API routes (`/api/public/chat`, `/api/admin/chat-threads`). Client Firestore access is denied.
+
+---
+
 ## Match access index
 
-Storage and Firestore rules cannot query the `matches` collection. When a match is created, Admin SDK routes write:
+Storage and Firestore rules cannot query the `matches` collection. When a **profile unlock** is approved, Admin SDK routes write:
 
 ```
 match_access/{companyId}_{studentId}
   companyId, studentId, active: true
 ```
+
+Creating a match alone does **not** grant identity access. Until unlock, employers only see anonymized student DTOs from API routes.
 
 This document is client-inaccessible (`allow read, write: if false`) and exists solely for rules evaluation.
 

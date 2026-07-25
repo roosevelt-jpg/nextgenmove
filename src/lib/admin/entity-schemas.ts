@@ -154,7 +154,7 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "location", type: "text", labelKey: "location" },
       { key: "salary", type: "text", labelKey: "salary" },
       { key: "employmentType", type: "select", labelKey: "employmentType", taxonomyKey: "employmentType" },
-      { key: "gender", type: "text", labelKey: "gender" },
+      { key: "gender", type: "select", labelKey: "gender", taxonomyKey: "gender" },
       { key: "categories", type: "multiselect", labelKey: "categories" },
       { key: "skills", type: "multiselect", labelKey: "skills" },
       { key: "description", type: "textarea", labelKey: "description" },

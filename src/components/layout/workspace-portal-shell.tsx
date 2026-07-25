@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { NgmAssistantWidget } from "@/components/assistant/ngm-assistant-widget";
 import {
   DEFAULT_EMPLOYER_NAV_LABELS,
   DEFAULT_STUDENT_NAV_LABELS,
@@ -30,6 +31,7 @@ export interface WorkspacePortalShellProps {
   labels: Record<string, string>;
   siteName: string;
   brandMark: string;
+  brandIconUrl?: string | null;
   children: React.ReactNode;
   /** Admin browsing portal without impersonation. */
   previewMode?: boolean;
@@ -67,6 +69,7 @@ export function WorkspacePortalShell({
   labels,
   siteName,
   brandMark,
+  brandIconUrl,
   children,
   previewMode = false,
   impersonation = null,
@@ -137,7 +140,7 @@ export function WorkspacePortalShell({
       <div className="flex items-center gap-2.5 border-b border-white/20 px-4 py-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={resolveBrandIconUrl()}
+          src={resolveBrandIconUrl(brandIconUrl)}
           alt=""
           className="h-8 w-8 rounded-radius-sm object-cover shadow-sm"
           aria-hidden
@@ -350,6 +353,7 @@ export function WorkspacePortalShell({
           {children}
         </main>
       </div>
+      <NgmAssistantWidget labels={labels} />
     </div>
   );
 }

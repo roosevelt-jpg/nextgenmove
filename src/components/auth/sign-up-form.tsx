@@ -125,6 +125,19 @@ export function SignUpForm({
   }, []);
 
   useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromQuery =
+        params.get("ref")?.trim() || params.get("referral")?.trim() || "";
+      if (fromQuery) {
+        setReferralCode(fromQuery);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
     void fetch("/api/taxonomies")
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
@@ -490,14 +503,14 @@ export function SignUpForm({
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full max-w-[22.5rem] flex-col gap-4">
       {step === "account" ? (
         <>
           <header className="space-y-1.5">
             <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
               {labels.signUpEyebrow ?? "Get started"}
             </p>
-            <h1 className="font-serif text-[clamp(1.5rem,3vw,2rem)] font-semibold leading-tight text-text-primary">
+            <h1 className="font-serif text-[clamp(1.5rem,3vw,1.85rem)] font-semibold leading-tight text-text-primary">
               {labels.signUpTitle ?? "Create your account."}
             </h1>
             {labels.signUpSubtitle ? (
@@ -530,7 +543,7 @@ export function SignUpForm({
             </button>
           </div>
 
-          <form className="flex flex-col gap-3.5" onSubmit={goToDetails}>
+          <form className="flex flex-col gap-3" onSubmit={goToDetails}>
             {role === "company" ? (
               <>
                 <Input

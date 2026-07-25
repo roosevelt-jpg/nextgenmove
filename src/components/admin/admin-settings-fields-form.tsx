@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Input, Textarea } from "@/components/ui";
+import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 import { cn } from "@/lib/utils";
 
-export type SettingsFieldKind = "text" | "textarea" | "number" | "boolean" | "url";
+export type SettingsFieldKind =
+  | "text"
+  | "textarea"
+  | "number"
+  | "boolean"
+  | "url"
+  | "image";
 
 export interface SettingsFieldDef {
   key: string;
@@ -113,19 +120,24 @@ export function AdminSettingsFieldsForm({
       }
     }
 
-    const response = await fetch("/api/admin/data/site_settings/default", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      const response = await fetch("/api/admin/data/site_settings/default", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        setMessage(labels.saveError ?? "Could not save.");
+        return false;
+      }
+
+      setMessage(labels.saveSuccess ?? "Saved.");
+      return true;
+    } catch {
       setMessage(labels.saveError ?? "Could not save.");
       return false;
     }
-
-    setMessage(labels.saveSuccess ?? "Saved.");
-    return true;
   };
 
   const { status, suppressNext } = useDebouncedAutosave(
@@ -143,7 +155,7 @@ export function AdminSettingsFieldsForm({
       : status === "saved"
         ? labels.saveSuccess
         : status === "error"
-          ? labels.saveError
+          ? labels.saveError ?? message ?? "Could not save."
           : message;
 
   return (
@@ -175,6 +187,47 @@ export function AdminSettingsFieldsForm({
                   onLabel={labels.toggleOn}
                   offLabel={labels.toggleOff}
                 />
+              </div>
+            );
+          }
+
+          if (field.kind === "image") {
+            const url = String(value ?? "");
+            return (
+              <div key={field.key} className="space-y-2 sm:col-span-2">
+                <p className="text-sm font-medium text-text-primary">{label}</p>
+                {url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={url}
+                    alt=""
+                    className="h-16 w-16 rounded-radius-sm border border-border object-cover"
+                  />
+                ) : null}
+                {!field.readOnly ? (
+                  <FileUpload
+                    storagePath={`site-branding/${field.key}`}
+                    accept="image/*"
+                    uploadKind={field.key}
+                    label={labels.uploadImage || "Upload image"}
+                    dropzoneContent={
+                      labels.uploadDropzone || "Drop an image or choose a file"
+                    }
+                    progressLabel={labels.uploadProgress}
+                    onUploadComplete={(result: FileUploadMetadata) => {
+                      setValues((prev) => ({
+                        ...prev,
+                        [field.key]: result.url,
+                      }));
+                    }}
+                    onError={() =>
+                      setMessage(labels.uploadError || "Upload failed.")
+                    }
+                  />
+                ) : null}
+                {help ? (
+                  <p className="mt-1 text-xs text-text-muted">{help}</p>
+                ) : null}
               </div>
             );
           }

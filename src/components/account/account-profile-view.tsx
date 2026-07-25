@@ -198,6 +198,24 @@ export function AccountProfileView({
     }
   };
 
+  const toggleAllNotifications = async (checked: boolean) => {
+    const previous = notificationPreferences;
+    const next: Record<string, boolean> = {};
+    for (const key of notificationKeys) {
+      next[key] = checked;
+    }
+    setNotificationPreferences(next);
+    setStatusMessage(null);
+    const ok = await persistNotificationPreferences(next);
+    if (!ok) {
+      setNotificationPreferences(previous);
+    }
+  };
+
+  const allNotificationsEnabled =
+    notificationKeys.length > 0 &&
+    notificationKeys.every((key) => Boolean(notificationPreferences[key]));
+
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSaving(true);
@@ -418,6 +436,21 @@ export function AccountProfileView({
           {labels.notificationsTitle ? (
             <h2 className="font-medium text-text-primary">{labels.notificationsTitle}</h2>
           ) : null}
+          <label className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm font-medium">
+            <span>
+              {labels.notificationsMaster ||
+                labels.enableNotifications ||
+                "Enable notifications"}
+            </span>
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--fill-accent)]"
+              checked={allNotificationsEnabled}
+              onChange={(event) =>
+                void toggleAllNotifications(event.target.checked)
+              }
+            />
+          </label>
           {notificationKeys.map((key) => (
             <label
               key={key}

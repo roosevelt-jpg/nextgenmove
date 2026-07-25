@@ -4,6 +4,8 @@ export const DEFAULT_ADMIN_NAV_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   crm: "CRM",
   contact: "Contact",
+  chatInbox: "Chat inbox",
+  unlockRequests: "Unlock Requests",
   integrations: "Integrations",
   library: "Content Library",
   content: "Homepage Content",
@@ -19,6 +21,8 @@ export const DEFAULT_ADMIN_NAV_LABELS: Record<string, string> = {
   publicSite: "Public site",
   signOut: "Sign out",
   globalSettings: "Settings",
+  assistantButton: "NGM Assistant",
+  assistantTitle: "NGM Assistant",
 };
 
 export const DEFAULT_STUDENT_NAV_LABELS: Record<string, string> = {

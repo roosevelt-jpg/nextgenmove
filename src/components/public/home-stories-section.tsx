@@ -1,24 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import type { PageHomeDocument, VideoCardDocument } from "@/types/cms";
-import { SectionEyebrow, Modal } from "@/components/ui";
-import { parseYoutubeVideoId, youtubeEmbedUrl } from "@/lib/media/youtube";
+import { SectionEyebrow } from "@/components/ui";
+import { parseYoutubeVideoId } from "@/lib/media/youtube";
 
-function toEmbedUrl(url: string): string | null {
-  const youtubeId = parseYoutubeVideoId(url);
-  if (youtubeId) return youtubeEmbedUrl(youtubeId);
-
-  try {
-    const parsed = new URL(url);
-    if (parsed.hostname.includes("vimeo.com")) {
-      const id = parsed.pathname.split("/").filter(Boolean).pop();
-      return id ? `https://player.vimeo.com/video/${id}` : null;
-    }
-  } catch {
-    return null;
+function youtubeWatchUrl(card: VideoCardDocument): string | null {
+  if (card.videoUrl) {
+    const id = parseYoutubeVideoId(card.videoUrl);
+    if (id) return `https://www.youtube.com/watch?v=${id}`;
+    if (/^https?:\/\//i.test(card.videoUrl)) return card.videoUrl;
   }
   return null;
+}
+
+function VideoCard({
+  card,
+  index,
+}: {
+  card: VideoCardDocument;
+  index: number;
+}) {
+  const href = youtubeWatchUrl(card);
+
+  const inner = (
+    <>
+      <div
+        className="relative aspect-[16/10] bg-fill-accent"
+        style={
+          card.thumbnailUrl
+            ? {
+                backgroundImage: `url(${card.thumbnailUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : {
+                background:
+                  index % 3 === 1
+                    ? "linear-gradient(135deg, #27500A, #9A6A3C)"
+                    : index % 3 === 2
+                      ? "linear-gradient(135deg, #8B3A3A, #4B3F9C)"
+                      : "linear-gradient(135deg, #4B3F9C, #C97A2E)",
+              }
+        }
+      >
+        <span className="absolute inset-0 flex items-center justify-center">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-1 text-sm text-fill-accent shadow-sm">
+            ▶
+          </span>
+        </span>
+        {card.duration ? (
+          <span className="absolute bottom-2 right-2 rounded bg-fill-primary/70 px-1.5 py-0.5 font-mono text-[10px] text-on-primary">
+            {card.duration}
+          </span>
+        ) : null}
+      </div>
+      <div className="space-y-0.5 px-3 py-2.5">
+        {card.title ? (
+          <p className="text-sm font-semibold text-text-primary">{card.title}</p>
+        ) : null}
+        {card.subtitle ? (
+          <p className="text-xs text-text-secondary">{card.subtitle}</p>
+        ) : null}
+      </div>
+    </>
+  );
+
+  const className =
+    "w-[min(280px,70vw)] shrink-0 overflow-hidden rounded-radius border border-border bg-grad-card text-left transition-opacity hover:opacity-95";
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        className={className}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return <div className={className}>{inner}</div>;
 }
 
 export function HomeStoriesSection({
@@ -28,13 +92,16 @@ export function HomeStoriesSection({
   page: PageHomeDocument | null;
   cards: VideoCardDocument[];
 }) {
-  const [active, setActive] = useState<VideoCardDocument | null>(null);
+  const loopCards = useMemo(() => {
+    if (!cards.length) return [];
+    // Duplicate for seamless marquee when few videos
+    if (cards.length < 3) return [...cards, ...cards, ...cards];
+    return [...cards, ...cards];
+  }, [cards]);
 
   if (!cards.length && !page?.storiesEyebrow && !page?.storiesHeadline) {
     return null;
   }
-
-  const embed = active ? toEmbedUrl(active.videoUrl) : null;
 
   return (
     <section className="page-section space-y-5">
@@ -56,91 +123,21 @@ export function HomeStoriesSection({
         ) : null}
       </div>
 
-      {cards.length ? (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card, index) => (
-          <button
-            key={card.id}
-            type="button"
-            onClick={() => setActive(card)}
-            className="overflow-hidden rounded-radius border border-border bg-grad-card text-left transition-opacity hover:opacity-95"
-          >
-            <div
-              className="relative aspect-[16/10] bg-fill-accent"
-              style={
-                card.thumbnailUrl
-                  ? {
-                      backgroundImage: `url(${card.thumbnailUrl})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }
-                  : {
-                      background:
-                        index % 3 === 1
-                          ? "linear-gradient(135deg, #27500A, #9A6A3C)"
-                          : index % 3 === 2
-                            ? "linear-gradient(135deg, #8B3A3A, #4B3F9C)"
-                            : "linear-gradient(135deg, #4B3F9C, #C97A2E)",
-                    }
-              }
-            >
-              <span className="absolute inset-0 flex items-center justify-center">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-1 text-sm text-fill-accent shadow-sm">
-                  ▶
-                </span>
-              </span>
-              {card.duration ? (
-                <span className="absolute bottom-2 right-2 rounded bg-fill-primary/70 px-1.5 py-0.5 font-mono text-[10px] text-on-primary">
-                  {card.duration}
-                </span>
-              ) : null}
-            </div>
-            <div className="space-y-0.5 px-3 py-2.5">
-              {card.title ? (
-                <p className="text-sm font-semibold text-text-primary">{card.title}</p>
-              ) : null}
-              {card.subtitle ? (
-                <p className="text-xs text-text-secondary">{card.subtitle}</p>
-              ) : null}
-            </div>
-          </button>
-        ))}
-      </div>
-      ) : null}
-
-      <Modal
-        open={Boolean(active)}
-        onClose={() => setActive(null)}
-        title={active?.title}
-      >
-        {active ? (
-          <div className="space-y-3">
-            {embed ? (
-              <div className="aspect-video overflow-hidden rounded-radius-sm bg-fill-primary">
-                <iframe
-                  title={active.title}
-                  src={embed}
-                  className="h-full w-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ) : active.videoUrl ? (
-              <a
-                href={active.videoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-text-accent underline"
-              >
-                {active.videoUrl}
-              </a>
-            ) : null}
-            {active.subtitle ? (
-              <p className="text-sm text-text-secondary">{active.subtitle}</p>
-            ) : null}
+      {loopCards.length ? (
+        <div className="relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-bg to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-bg to-transparent" />
+          <div className="home-stories-marquee flex w-max gap-3">
+            {loopCards.map((card, index) => (
+              <VideoCard
+                key={`${card.id}-${index}`}
+                card={card}
+                index={index}
+              />
+            ))}
           </div>
-        ) : null}
-      </Modal>
+        </div>
+      ) : null}
     </section>
   );
 }

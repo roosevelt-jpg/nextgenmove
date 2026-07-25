@@ -5,7 +5,7 @@ import {
   getSiteSettings,
   listNavCmsPages,
 } from "@/lib/collections/site-settings";
-import { BRAND_ICON_PATH } from "@/lib/brand";
+import { resolveBrandIconUrl } from "@/lib/brand";
 import { buildHeaderPrimaryLinks } from "@/lib/public/nav";
 
 export async function SiteHeader() {
@@ -27,20 +27,32 @@ export async function SiteHeader() {
   const siteName = settings.siteName ?? navLabels.siteName ?? "Nextgenmove";
   const ctaLabel = navLabels.headerCta;
   const ctaHref = navLabels.headerCtaHref || "/sign-up";
+  const brandIcon = resolveBrandIconUrl(settings.logoUrl || settings.faviconUrl);
+  const isRemote = /^https?:\/\//i.test(brandIcon);
 
   return (
     <header className="bg-grad-rouse text-on-gradient">
       <div className="page-container mx-auto flex w-full max-w-page items-center justify-between gap-4 py-3">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          <Image
-            src={BRAND_ICON_PATH}
-            alt=""
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-radius-sm object-cover"
-            priority
-            aria-hidden
-          />
+          {isRemote ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brandIcon}
+              alt=""
+              className="h-9 w-9 rounded-radius-sm object-cover"
+              aria-hidden
+            />
+          ) : (
+            <Image
+              src={brandIcon}
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 rounded-radius-sm object-cover"
+              priority
+              aria-hidden
+            />
+          )}
           <span className="font-serif text-lg font-semibold text-on-gradient">
             {siteName}
           </span>

@@ -282,6 +282,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Public website chatbot transcripts — Admin SDK only (no client access).
+    match /chat_threads/{threadId} {
+      allow read, write: if false;
+
+      match /messages/{messageId} {
+        allow read, write: if false;
+      }
+    }
+
     // ── Default deny ──────────────────────────────────────────────────────
 
     match /{document=**} {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button, EmptyState, Modal } from "@/components/ui";
+import { StripePaymentElementPanel } from "@/components/student/stripe-payment-element-panel";
 import { currencySymbol as resolveCurrencySymbol } from "@/lib/public/currency";
 
 export interface StudentWalletPanelProps {
@@ -16,6 +17,7 @@ interface TopUpPackage {
   label: string;
   credits: number;
   priceEur: number;
+  priceDisplay?: number;
 }
 
 interface WalletTransaction {
@@ -93,6 +95,11 @@ export function StudentWalletPanel({
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [topUpStatus, setTopUpStatus] = useState<string | null>(null);
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [elementSession, setElementSession] = useState<{
+    packageId: string;
+    clientSecret: string;
+    publishableKey: string;
+  } | null>(null);
 
   const applyWalletPayload = (data: {
     credits: number;
@@ -192,9 +199,43 @@ export function StudentWalletPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const redirectToCheckout = async (packageId: string) => {
+    const response = await fetch("/api/student/credits/top-up", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": crypto.randomUUID(),
+      },
+      body: JSON.stringify({ packageId, flow: "checkout" }),
+    });
+    if (!response.ok) {
+      setTopUpStatus(
+        labels.topUpFailed ?? "Could not start top-up. Try again.",
+      );
+      return;
+    }
+    const payload = (await response.json()) as {
+      mode?: string;
+      url?: string;
+    };
+    if (payload.mode === "stripe" && payload.url) {
+      setTopUpStatus(
+        labels.topUpRedirecting ??
+          "Opening Stripe checkout to enter your card details…",
+      );
+      // eslint-disable-next-line react-hooks/immutability -- intentional full-page redirect
+      window.location.assign(payload.url);
+      return;
+    }
+    setTopUpStatus(
+      labels.topUpRequested ?? "Request sent — pending admin approval.",
+    );
+  };
+
   const buyPackage = async (packageId: string) => {
     setBuyingId(packageId);
     setTopUpStatus(null);
+    setElementSession(null);
     if (!stripeEnabled) {
       setTopUpStatus(
         labels.topUpStripeRequired ??
@@ -207,7 +248,7 @@ export function StudentWalletPanel({
         "Content-Type": "application/json",
         "Idempotency-Key": crypto.randomUUID(),
       },
-      body: JSON.stringify({ packageId }),
+      body: JSON.stringify({ packageId, flow: "element" }),
     });
     setBuyingId(null);
     if (!response.ok) {
@@ -224,13 +265,26 @@ export function StudentWalletPanel({
     const payload = (await response.json()) as {
       mode?: string;
       url?: string;
+      clientSecret?: string;
+      publishableKey?: string;
     };
+    if (
+      payload.mode === "payment_element" &&
+      payload.clientSecret &&
+      payload.publishableKey
+    ) {
+      setElementSession({
+        packageId,
+        clientSecret: payload.clientSecret,
+        publishableKey: payload.publishableKey,
+      });
+      return;
+    }
     if (payload.mode === "stripe" && payload.url) {
       setTopUpStatus(
         labels.topUpRedirecting ??
           "Opening Stripe checkout to enter your card details…",
       );
-      // Navigate to Stripe hosted checkout (external redirect).
       // eslint-disable-next-line react-hooks/immutability -- intentional full-page redirect
       window.location.assign(payload.url);
       return;
@@ -240,6 +294,25 @@ export function StudentWalletPanel({
     );
     setTopUpOpen(false);
     await load();
+  };
+
+  const onElementSuccess = async () => {
+    setElementSession(null);
+    setTopUpOpen(false);
+    setTopUpStatus(
+      labels.topUpSuccess ?? "Top-up successful. Balance updating…",
+    );
+    let attempts = 0;
+    const baseline = credits;
+    const poll = async () => {
+      attempts += 1;
+      await load();
+      if (attempts < 8) {
+        window.setTimeout(() => void poll(), 1500);
+      }
+    };
+    void poll();
+    void baseline;
   };
 
   const visibleTx = compact ? transactions.slice(0, 8) : transactions;
@@ -260,6 +333,7 @@ export function StudentWalletPanel({
 
   const openTopUp = () => {
     setTopUpStatus(null);
+    setElementSession(null);
     setTopUpOpen(true);
   };
 
@@ -376,7 +450,7 @@ export function StudentWalletPanel({
       {stripeEnabled ? (
         <p className="text-xs text-text-muted">
           {labels.walletStripeHint ??
-            "Pay by card via Stripe Checkout — enter card details on the secure payment page."}
+            "Pay by card in-app (Stripe Payment Element). Hosted Checkout is used if the form cannot load."}
         </p>
       ) : (
         <p className="text-xs text-text-warning">
@@ -447,15 +521,25 @@ export function StudentWalletPanel({
 
       <Modal
         open={topUpOpen}
-        onClose={() => setTopUpOpen(false)}
-        title={labels.topUpTitle ?? "Buy credits"}
+        onClose={() => {
+          setTopUpOpen(false);
+          setElementSession(null);
+        }}
+        title={
+          elementSession
+            ? (labels.topUpPayTitle ?? "Enter card details")
+            : (labels.topUpTitle ?? "Buy credits")
+        }
         footer={
           <div className="flex justify-end">
             <Button
               size="sm"
               variant="ghost"
               type="button"
-              onClick={() => setTopUpOpen(false)}
+              onClick={() => {
+                setTopUpOpen(false);
+                setElementSession(null);
+              }}
             >
               {labels.close ?? "Close"}
             </Button>
@@ -463,54 +547,77 @@ export function StudentWalletPanel({
         }
       >
         <div className="space-y-3">
-          <p className="text-sm text-text-secondary">
-            {labels.topUpIntro ??
-              (stripeEnabled
-                ? "Choose a pack. You’ll enter card details on Stripe’s secure checkout page — your card is charged there and credits appear after payment."
-                : "Choose a pack to request a top-up. Card checkout unlocks when Stripe is connected under Admin → Integrations.")}
-          </p>
-          {!stripeEnabled ? (
-            <p className="rounded-radius border border-border bg-bg-warning px-3 py-2 text-xs text-text-warning">
-              {labels.topUpStripeRequired ??
-                "Stripe is not live yet. Requests need admin approval until keys are connected."}
-            </p>
-          ) : null}
-          {!packages.length ? (
-            <EmptyState
-              title={labels.topUpNoPackages ?? "No packages available"}
+          {elementSession ? (
+            <StripePaymentElementPanel
+              clientSecret={elementSession.clientSecret}
+              publishableKey={elementSession.publishableKey}
+              labels={labels}
+              onSuccess={() => void onElementSuccess()}
+              onError={(message) => setTopUpStatus(message)}
+              onFallbackCheckout={() => {
+                const packageId = elementSession.packageId;
+                setElementSession(null);
+                void redirectToCheckout(packageId);
+              }}
             />
           ) : (
-            <ul className="space-y-2">
-              {packages.map((pack) => (
-                <li
-                  key={pack.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-radius border border-border bg-bg px-3 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-text-primary">
-                      {pack.label}
-                    </p>
-                    <p className="font-mono text-xs text-text-muted">
-                      {pack.credits} {labels.walletCreditsUnit ?? "CR"} ·{" "}
-                      {currencySymbol}
-                      {pack.priceEur}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    type="button"
-                    disabled={buyingId === pack.id}
-                    onClick={() => void buyPackage(pack.id)}
-                  >
-                    {buyingId === pack.id
-                      ? (labels.topUpBuying ?? "Starting…")
-                      : stripeEnabled
-                        ? (labels.topUpPayCard ?? "Pay with card")
-                        : (labels.topUpAction ?? "Request")}
-                  </Button>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="text-sm text-text-secondary">
+                {labels.topUpIntro ??
+                  (stripeEnabled
+                    ? "Choose a pack and pay by card here. If the form cannot load, we open Stripe Checkout instead."
+                    : "Choose a pack to request a top-up. Card checkout unlocks when Stripe is connected under Admin → Integrations.")}
+              </p>
+              {!stripeEnabled ? (
+                <p className="rounded-radius border border-border bg-bg-warning px-3 py-2 text-xs text-text-warning">
+                  {labels.topUpStripeRequired ??
+                    "Stripe is not live yet. Requests need admin approval until keys are connected."}
+                </p>
+              ) : null}
+              {!packages.length ? (
+                <EmptyState
+                  title={labels.topUpNoPackages ?? "No packages available"}
+                />
+              ) : (
+                <ul className="space-y-2">
+                  {packages.map((pack) => {
+                    const displayPrice =
+                      typeof pack.priceDisplay === "number"
+                        ? pack.priceDisplay
+                        : pack.priceEur;
+                    return (
+                      <li
+                        key={pack.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-radius border border-border bg-bg px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">
+                            {pack.label}
+                          </p>
+                          <p className="font-mono text-xs text-text-muted">
+                            {pack.credits} {labels.walletCreditsUnit ?? "CR"} ·{" "}
+                            {currencySymbol}
+                            {displayPrice}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          type="button"
+                          disabled={buyingId === pack.id}
+                          onClick={() => void buyPackage(pack.id)}
+                        >
+                          {buyingId === pack.id
+                            ? (labels.topUpBuying ?? "Starting…")
+                            : stripeEnabled
+                              ? (labels.topUpPayCard ?? "Pay with card")
+                              : (labels.topUpAction ?? "Request")}
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
           )}
         </div>
       </Modal>

@@ -5,7 +5,7 @@ import {
   getSiteSettings,
   listFooterCmsPages,
 } from "@/lib/collections/site-settings";
-import { BRAND_ICON_PATH } from "@/lib/brand";
+import { resolveBrandIconUrl } from "@/lib/brand";
 import {
   FOOTER_ATTRIBUTION_NAME,
   FOOTER_ATTRIBUTION_PREFIX,
@@ -28,20 +28,32 @@ export async function SiteFooter() {
   const description =
     settings.siteDescription?.trim() || settings.tagline?.trim() || "";
   const copyright = formatFooterCopyright(siteName);
+  const brandIcon = resolveBrandIconUrl(settings.logoUrl || settings.faviconUrl);
+  const isRemote = /^https?:\/\//i.test(brandIcon);
 
   return (
     <footer className="mt-auto bg-grad-rouse text-on-gradient">
       <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
           <div className="flex items-center gap-2.5">
-            <Image
-              src={BRAND_ICON_PATH}
-              alt=""
-              width={32}
-              height={32}
-              className="h-8 w-8 rounded-radius-sm object-cover"
-              aria-hidden
-            />
+            {isRemote ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={brandIcon}
+                alt=""
+                className="h-8 w-8 rounded-radius-sm object-cover"
+                aria-hidden
+              />
+            ) : (
+              <Image
+                src={brandIcon}
+                alt=""
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-radius-sm object-cover"
+                aria-hidden
+              />
+            )}
             <span className="font-serif text-lg font-semibold text-on-gradient">
               {siteName}
             </span>

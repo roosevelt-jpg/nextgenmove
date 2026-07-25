@@ -116,12 +116,12 @@ export function SignInForm({
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex w-full max-w-[22.5rem] flex-col gap-4">
       <header className="space-y-1.5">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
           {labels.signInEyebrow ?? "Welcome back"}
         </p>
-        <h1 className="font-serif text-[clamp(1.5rem,3vw,2rem)] font-semibold leading-tight text-text-primary">
+        <h1 className="font-serif text-[clamp(1.5rem,3vw,1.85rem)] font-semibold leading-tight text-text-primary">
           {labels.signInTitle ?? "Sign in to your account."}
         </h1>
         {labels.signInSubtitle ? (
@@ -129,7 +129,7 @@ export function SignInForm({
         ) : null}
       </header>
 
-      <form className="flex flex-col gap-3.5" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <Input
           id="sign-in-email"
           type="text"

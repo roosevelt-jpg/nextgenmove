@@ -22,12 +22,15 @@ interface ShortlistMatch {
   id: string;
   shortlistRank: number | null;
   notes: MatchNote[];
+  identityUnlocked?: boolean;
   student: {
+    displayName?: string;
     fullName: string;
     email: string;
     sector: string;
     seniority: string;
     currentCity: string;
+    identityUnlocked?: boolean;
   } | null;
 }
 
@@ -76,9 +79,10 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
         search: {
           value: filters.search,
           accessors: [
+            (match) => match.student?.displayName,
             (match) => match.student?.fullName,
-            (match) => match.student?.email,
             (match) => match.student?.sector,
+            (match) => match.student?.seniority,
             (match) => match.student?.currentCity,
           ],
         },
@@ -224,7 +228,9 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
                     #{index + 1}
                   </p>
                   <p className="font-medium text-text-primary">
-                    {match.student?.fullName ?? match.id}
+                    {match.student?.displayName ||
+                      match.student?.fullName ||
+                      match.id}
                   </p>
                   {match.student?.email ? (
                     <p className="mt-0.5 text-sm text-text-muted">

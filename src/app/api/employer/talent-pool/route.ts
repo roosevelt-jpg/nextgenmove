@@ -4,6 +4,12 @@ import {
   getEmployerSession,
   unauthorizedResponse,
 } from "@/lib/employer/session";
+import {
+  anonymizedSearchHaystack,
+  isMatchIdentityUnlocked,
+  projectStudentForEmployer,
+} from "@/lib/employer/student-visibility";
+import { getUnlockRequestStatusMap } from "@/lib/employer/profile-unlock";
 
 const TALENT_POOL_SOURCES = [
   "admin_curated",
@@ -31,13 +37,22 @@ export async function GET(request: Request) {
       .where("source", "in", [...TALENT_POOL_SOURCES])
       .get();
 
+    const studentIds = matchesSnapshot.docs.map((doc) =>
+      String(doc.data().studentId ?? ""),
+    );
+    const unlockStatusMap = await getUnlockRequestStatusMap(
+      session.companyId,
+      studentIds.filter(Boolean),
+    );
+
     const rows = [];
 
     for (const matchDoc of matchesSnapshot.docs) {
       const match = matchDoc.data();
+      const studentId = String(match.studentId ?? "");
       const studentSnapshot = await adminDb
         .collection("students")
-        .doc(match.studentId)
+        .doc(studentId)
         .get();
 
       if (!studentSnapshot.exists) {
@@ -45,6 +60,9 @@ export async function GET(request: Request) {
       }
 
       const student = studentSnapshot.data()!;
+      const identityUnlocked = isMatchIdentityUnlocked(match);
+      const unlockRequestStatus =
+        unlockStatusMap.get(studentId) ?? (identityUnlocked ? "approved" : "none");
 
       if (sector && student.sector !== sector) {
         continue;
@@ -59,21 +77,28 @@ export async function GET(request: Request) {
       }
 
       if (search) {
-        const haystack = [
-          student.fullName,
-          student.email,
-          student.currentCity,
-          student.sector,
-          ...(student.skills ?? []),
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        const haystack = identityUnlocked
+          ? [
+              student.fullName,
+              student.email,
+              student.currentCity,
+              student.sector,
+              ...(student.skills ?? []),
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+          : anonymizedSearchHaystack({ id: studentId, ...student });
 
         if (!haystack.includes(search)) {
           continue;
         }
       }
+
+      const projected = projectStudentForEmployer(
+        { id: studentSnapshot.id, ...student },
+        { identityUnlocked, unlockRequestStatus },
+      );
 
       rows.push({
         matchId: matchDoc.id,
@@ -81,15 +106,18 @@ export async function GET(request: Request) {
         stageId: match.stageId ?? "",
         matchScore:
           typeof match.matchScore === "number" ? match.matchScore : null,
-        studentId: studentSnapshot.id,
-        fullName: student.fullName ?? "",
-        email: student.email ?? "",
-        sector: student.sector ?? "",
-        seniority: student.seniority ?? "",
-        currentCity: student.currentCity ?? "",
-        skills: student.skills ?? [],
-        availability: student.availability ?? "",
-        bio: student.bio ?? "",
+        studentId: projected.id,
+        identityUnlocked: projected.identityUnlocked,
+        unlockRequestStatus: projected.unlockRequestStatus,
+        displayName: projected.displayName,
+        fullName: projected.displayName,
+        email: projected.email,
+        sector: projected.sector,
+        seniority: projected.seniority,
+        currentCity: projected.currentCity,
+        skills: projected.skills,
+        availability: projected.availability,
+        bio: projected.bio,
       });
     }
 

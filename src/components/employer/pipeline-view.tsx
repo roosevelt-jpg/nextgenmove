@@ -29,12 +29,15 @@ interface EmployerMatch {
   id: string;
   stageId: string;
   shortlisted?: boolean;
+  identityUnlocked?: boolean;
   student: {
+    displayName?: string;
     fullName: string;
     email: string;
     sector: string;
     seniority: string;
     currentCity: string;
+    identityUnlocked?: boolean;
   } | null;
 }
 
@@ -216,8 +219,8 @@ export function PipelineView({ labels }: PipelineViewProps) {
         search: {
           value: filters.search,
           accessors: [
+            (match) => match.student?.displayName,
             (match) => match.student?.fullName,
-            (match) => match.student?.email,
             (match) => match.student?.sector,
             (match) => match.student?.seniority,
             (match) => match.student?.currentCity,
@@ -263,7 +266,9 @@ export function PipelineView({ labels }: PipelineViewProps) {
         content: (
           <div>
             <p className="font-medium text-text-primary">
-              {match.student?.fullName ?? match.id}
+              {match.student?.displayName ||
+                match.student?.fullName ||
+                match.id}
             </p>
             {match.student?.currentCity ? (
               <p className="mt-1 text-xs text-text-muted">

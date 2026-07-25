@@ -136,9 +136,9 @@ export function AuthSplitShell({
         </dl>
       </aside>
 
-      <div className="flex w-full flex-col justify-center bg-[#F8FAFC] px-6 py-10 text-text-primary sm:px-10 lg:w-1/2 lg:px-16 dark:bg-surface-1">
-        <div className="mx-auto w-full max-w-[420px]">
-          <Link href="/" className="mb-8 flex items-center gap-2.5 lg:mb-10">
+      <div className="flex w-full flex-col justify-center bg-[#F8FAFC] px-5 py-8 text-text-primary sm:px-8 lg:w-1/2 lg:px-12 xl:px-16 dark:bg-surface-1">
+        <div className="w-full max-w-[22.5rem]">
+          <Link href="/" className="mb-6 flex items-center gap-2.5 lg:mb-8">
             <BrandMark
               siteName={name}
               brandMark={brandMark}

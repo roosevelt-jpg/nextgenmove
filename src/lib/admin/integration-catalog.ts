@@ -90,6 +90,50 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     connectedAt: null,
     config: { category: "Maps & location" },
   },
+  {
+    id: "firebase_admin",
+    name: "Firebase Admin SDK",
+    category: "Platform",
+    description:
+      "Server-side Auth, Firestore, and Storage. Configured via environment credentials (service account) — status reflects whether Admin SDK is wired.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "Platform", envOnly: "true" },
+  },
+  {
+    id: "firebase_client",
+    name: "Firebase Client SDK",
+    category: "Platform",
+    description:
+      "Browser Auth, Firestore listeners, and Storage uploads. Uses NEXT_PUBLIC Firebase web config from environment.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "Platform", envOnly: "true" },
+  },
+  {
+    id: "google_calendar",
+    name: "Google Calendar",
+    category: "Scheduling",
+    description:
+      "Calendar API for interview scheduling and availability sync. Paste OAuth client credentials to connect.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "Scheduling" },
+  },
+  {
+    id: "gemini",
+    name: "Gemini API",
+    category: "AI",
+    description:
+      "Google Gemini — powers NGM Assistant and the public chatbot. Paste an API key from Google AI Studio.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "AI" },
+  },
 ];
 
 export function mergeIntegrationCatalog(

@@ -416,3 +416,87 @@ html.dark .dashboard-shell main {
   background-color: var(--bg);
   background-image: none;
 }
+
+/* Homepage Stories — continuous 3-card-visible marquee */
+@keyframes home-stories-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.home-stories-marquee {
+  animation: home-stories-marquee 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-stories-marquee {
+    animation: none;
+  }
+}
+
+/* Public site — casual copy deterrents */
+.public-site,
+.public-site-protect {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.public-site input,
+.public-site textarea,
+.public-site [contenteditable="true"],
+.public-site-protect input,
+.public-site-protect textarea,
+.public-site-protect [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.public-site img,
+.public-site-protect img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Talent connection atmosphere */
+@keyframes talent-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes talent-arc-draw {
+  0% {
+    stroke-dashoffset: 800;
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 0.55;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.35;
+  }
+}
+
+.talent-dot {
+  animation: talent-dot-pulse 6s ease-in-out infinite;
+}
+
+.talent-arc-draw {
+  stroke-dasharray: 800;
+  animation: talent-arc-draw 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talent-dot,
+  .talent-arc-draw {
+    animation: none;
+  }
+}

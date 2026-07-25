@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
 import { getProgramLevers } from "@/lib/collections/pages";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
@@ -11,34 +12,79 @@ import {
 } from "@/lib/student/session";
 import {
   createCreditTopUpCheckout,
+  createCreditTopUpPaymentIntent,
 } from "@/lib/billing/checkout";
-import { isStripeLive, StripeNotConfiguredError } from "@/lib/billing/stripe";
+import {
+  getStripePublishableKey,
+  isStripeLive,
+  StripeNotConfiguredError,
+} from "@/lib/billing/stripe";
 import {
   readIdempotencyKey,
   getIdempotentResult,
   saveIdempotentResult,
 } from "@/lib/security/idempotency";
+import {
+  currencySymbol,
+  normalizeCurrencyCode,
+} from "@/lib/public/currency";
+import { convertAmount } from "@/lib/public/fx";
 
 export async function GET() {
   const session = await getStudentSession();
   if (!session) return unauthorizedResponse();
 
-  const levers = await getProgramLevers();
-  const stripeEnabled = await isStripeLive();
+  const [levers, stripeEnabled, settings, publishableKey] = await Promise.all([
+    getProgramLevers(),
+    isStripeLive(),
+    getSiteSettings(),
+    getStripePublishableKey(),
+  ]);
+
+  const currency = normalizeCurrencyCode(settings.defaultCurrency);
+  const packs = levers?.creditTopUpPackages ?? [];
+
+  let fxRate: number | null = null;
+  let packages = packs.map((pack) => ({
+    ...pack,
+    priceDisplay: pack.priceEur,
+  }));
+
+  if (currency !== "EUR") {
+    try {
+      const { amount: _sample, quote } = await convertAmount(1, "EUR", currency);
+      fxRate = quote.rate;
+      packages = packs.map((pack) => ({
+        ...pack,
+        priceDisplay:
+          Math.round(pack.priceEur * quote.rate * 100) / 100,
+      }));
+      void _sample;
+    } catch {
+      // Keep EUR display amounts when FX is unavailable.
+    }
+  }
+
   return NextResponse.json({
-    packages: levers?.creditTopUpPackages ?? [],
+    packages,
     creditsPerEuro: levers?.creditsPerEuro ?? 4,
     placementFeeEur: levers?.placementFeeEur ?? 350,
     stripeEnabled,
+    publishableKey: stripeEnabled ? publishableKey : null,
+    currency,
+    currencySymbol: currencySymbol(currency),
+    fxRate,
   });
 }
 
 const requestSchema = z.object({
   packageId: z.string().min(1),
+  /** Prefer Payment Element; fall back to Checkout URL when omitted/unavailable. */
+  flow: z.enum(["element", "checkout"]).optional(),
 });
 
 /**
- * When Stripe is connected: create Checkout (card charge).
+ * When Stripe is connected: create PaymentIntent (element) or Checkout Session.
  * Otherwise: create admin-approval request (manual path).
  */
 export async function POST(request: Request) {
@@ -49,7 +95,9 @@ export async function POST(request: Request) {
   if (previewBlock) return previewBlock;
 
   try {
-    const { packageId } = requestSchema.parse(await request.json());
+    const body = requestSchema.parse(await request.json());
+    const { packageId } = body;
+    const flow = body.flow ?? "element";
     const levers = await getProgramLevers();
     const pack = (levers?.creditTopUpPackages ?? []).find(
       (item) => item.id === packageId,
@@ -61,14 +109,70 @@ export async function POST(request: Request) {
 
     if (await isStripeLive()) {
       const idempotencyKey = readIdempotencyKey(request);
+      const scope =
+        flow === "checkout"
+          ? "student_topup_checkout"
+          : "student_topup_payment_intent";
+
       if (idempotencyKey) {
-        const cached = await getIdempotentResult<{ body: unknown; status: number }>({
-          scope: "student_topup_checkout",
+        const cached = await getIdempotentResult<{
+          body: unknown;
+          status: number;
+        }>({
+          scope,
           actorId: session.studentId,
           key: idempotencyKey,
         });
         if (cached) {
           return NextResponse.json(cached.body, { status: cached.status });
+        }
+      }
+
+      if (flow === "element") {
+        try {
+          const publishableKey = await getStripePublishableKey();
+          if (!publishableKey) {
+            throw new Error("publishable_key_missing");
+          }
+
+          const intent = await createCreditTopUpPaymentIntent({
+            studentId: session.studentId,
+            studentEmail: session.student.email,
+            packageId: pack.id,
+            credits: pack.credits,
+            priceEur: pack.priceEur,
+            label: pack.label,
+          });
+
+          const responseBody = {
+            mode: "payment_element" as const,
+            clientSecret: intent.clientSecret,
+            paymentIntentId: intent.paymentIntentId,
+            publishableKey,
+            amountMinor: intent.amountMinor,
+            currency: intent.currency,
+            fxRate: intent.fxRate,
+            fxDate: intent.fxDate,
+          };
+
+          if (idempotencyKey) {
+            await saveIdempotentResult({
+              scope,
+              actorId: session.studentId,
+              key: idempotencyKey,
+              response: { body: responseBody, status: 200 },
+              status: 200,
+            });
+          }
+          return NextResponse.json(responseBody);
+        } catch (elementError) {
+          console.warn(
+            "credit_topup_element_fallback",
+            elementError instanceof Error
+              ? elementError.message
+              : String(elementError),
+          );
+          // Fall through to Checkout Session.
         }
       }
 
@@ -83,17 +187,21 @@ export async function POST(request: Request) {
         request,
       });
 
-      const body = { mode: "stripe", url: checkout.url, sessionId: checkout.sessionId };
+      const checkoutBody = {
+        mode: "stripe" as const,
+        url: checkout.url,
+        sessionId: checkout.sessionId,
+      };
       if (idempotencyKey) {
         await saveIdempotentResult({
           scope: "student_topup_checkout",
           actorId: session.studentId,
           key: idempotencyKey,
-          response: { body, status: 200 },
+          response: { body: checkoutBody, status: 200 },
           status: 200,
         });
       }
-      return NextResponse.json(body);
+      return NextResponse.json(checkoutBody);
     }
 
     const requestRef = adminDb.collection("requests").doc();
@@ -131,7 +239,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
     if (error instanceof StripeNotConfiguredError) {
-      return NextResponse.json({ error: "stripe_not_configured" }, { status: 503 });
+      return NextResponse.json(
+        { error: "stripe_not_configured" },
+        { status: 503 },
+      );
     }
     console.error("credit_topup_request_failed", error);
     return NextResponse.json({ error: "request_failed" }, { status: 500 });

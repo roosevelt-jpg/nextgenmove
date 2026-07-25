@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
+import { normalizeToE164 } from "@/lib/phone/e164";
 import { stripUndefined } from "@/lib/stripUndefined";
 import type { CrmImportTarget } from "@/lib/admin/crm-import-parse";
 
@@ -60,7 +61,7 @@ function buildStudentPayload(row: Record<string, string>) {
   return stripUndefined({
     fullName: row.fullName?.trim() ?? "",
     email: normalizeEmail(row.email ?? ""),
-    phone: row.phone?.trim() || null,
+    phone: normalizeToE164(row.phone) ?? null,
     nationality: row.nationality?.trim() || null,
     sector: row.sector?.trim() || "",
     seniority: row.seniority?.trim() || "",
@@ -99,7 +100,7 @@ function buildCompanyPayload(row: Record<string, string>) {
     name: row.name?.trim() ?? "",
     contactName: row.contactName?.trim() || null,
     contactEmail: normalizeEmail(row.contactEmail ?? row.email ?? ""),
-    contactPhone: row.contactPhone?.trim() || null,
+    contactPhone: normalizeToE164(row.contactPhone ?? row.phone) ?? null,
     nationality: row.nationality?.trim() || null,
     industry: row.industry?.trim() || "",
     website: row.website?.trim() || null,

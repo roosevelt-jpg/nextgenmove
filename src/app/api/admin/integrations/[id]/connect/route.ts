@@ -88,6 +88,14 @@ export async function POST(
       targetId: id,
     }).catch(() => undefined);
 
+    if (id === "youtube") {
+      void import("@/lib/media/youtube-sync")
+        .then(({ syncYoutubePlaylistVideos }) => syncYoutubePlaylistVideos())
+        .catch((error) =>
+          console.error("youtube_sync_on_connect_failed", error),
+        );
+    }
+
     let data: Record<string, unknown> = {
       name: existing.name || id,
       description: existing.description || "",

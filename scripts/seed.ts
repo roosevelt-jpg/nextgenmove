@@ -94,6 +94,8 @@ const ADMIN_NAV_KEYS = [
   "levers",
   "crm",
   "contact",
+  "chatInbox",
+  "unlockRequests",
   "library",
   "content",
   "settings",
@@ -142,6 +144,12 @@ const TAXONOMIES = {
     opt("track_a", "Track A"),
     opt("track_b", "Track B"),
     opt("not_sure", "Not sure yet"),
+  ],
+  gender: [
+    opt("male", "Male"),
+    opt("female", "Female"),
+    opt("other", "Other"),
+    opt("prefer_not", "Prefer not to say"),
   ],
   articleTag: [] as { value: string; label: string }[],
 };
@@ -1077,7 +1085,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       filterSeniority: "Seniority",
       filterLocation: "Location",
       searchLabel: "Search",
-      searchPlaceholder: "Search by name, skill, or location",
+      searchPlaceholder: "Search by skill, sector, or location",
       all: "All",
       clearFilters: "Clear filters",
       viewProfile: "View profile",
@@ -1110,6 +1118,19 @@ const OPERATIONAL_SITE_SETTINGS = {
       actionError: "Could not update applicant.",
       workExperienceLabel: "Work experience",
       githubLabel: "GitHub",
+      requestUnlock: "Request unlock",
+      unlockPending: "Unlock pending",
+      unlockApproved: "Identity unlocked",
+      unlockDeclined: "Unlock was declined. You may submit a new request.",
+      unlockRequestSubmitted: "Unlock request submitted to Nextgenmove.",
+      unlockRequestError: "Could not submit unlock request.",
+      unlockAlreadyApproved: "Identity is already unlocked.",
+      anonymizedNotice:
+        "Identity is hidden until Nextgenmove approves an unlock request.",
+      anonymizedCandidate: "Candidate",
+      educationLabel: "Education",
+      educationEntryFallback: "Education",
+      phoneLabel: "Phone",
     },
     jobs: {
       title: "Opportunities",
@@ -1222,7 +1243,9 @@ const OPERATIONAL_SITE_SETTINGS = {
       currentPassword: "Current password",
       newPassword: "New password",
       notificationsTitle: "Notifications",
+      notificationsMaster: "Enable notifications",
       notification_match_updates: "Match updates",
+      notification_profile_unlocks: "Profile unlock approvals",
       notification_plan_approvals: "Plan approvals",
       saveChanges: "Save changes",
       saveSuccess: "Saved.",
@@ -1236,6 +1259,7 @@ const OPERATIONAL_SITE_SETTINGS = {
   },
   employerNotificationKeys: [
     "match_updates",
+    "profile_unlocks",
     "plan_approvals",
     "login_alerts",
     "product_updates",
@@ -1431,6 +1455,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       currentPassword: "Current password",
       newPassword: "New password",
       notificationsTitle: "Notifications",
+      notificationsMaster: "Enable notifications",
       notification_match_updates: "Match & pipeline updates",
       notification_credit_receipts: "Credit receipts",
       notification_low_balance: "Low credit balance alerts",
@@ -1478,6 +1503,8 @@ const OPERATIONAL_SITE_SETTINGS = {
     levers: "Program Levers",
     crm: "CRM",
     contact: "Contact",
+    chatInbox: "Chat inbox",
+    unlockRequests: "Unlock Requests",
     library: "Content Library",
     content: "Homepage Content",
     settings: "Settings",
@@ -1562,6 +1589,53 @@ const OPERATIONAL_SITE_SETTINGS = {
       update_failed: "Could not save.",
       missing_email: "This submission has no email address.",
       not_configured: "Email delivery is not configured.",
+      genericError: "Something went wrong.",
+    },
+    chatInbox: {
+      eyebrow: "Inbox",
+      title: "Chat inbox",
+      subtitle: "Public chatbot threads from the site widget.",
+      threadsTitle: "Threads",
+      empty: "No chat threads yet.",
+      loading: "Loading…",
+      refresh: "Refresh",
+      selectThread: "Select a thread",
+      anonymousVisitor: "Public visitor",
+      noMessages: "No messages in this thread.",
+      load_failed: "Could not load threads.",
+    },
+    publicChat: {
+      assistantButton: "Ask NGM",
+      assistantTitle: "NextGen Move helper",
+      assistantEyebrow: "Chat",
+      assistantPlaceholder: "Ask how NextGen Move works…",
+      assistantEmpty:
+        "Ask about signing up, students, employers, or how to get in touch.",
+      assistantSend: "Send",
+      assistantClose: "Close",
+      assistantThinking: "Thinking…",
+      gemini_not_configured: "Chat is not configured yet.",
+      assistantError: "Could not send message. Try again.",
+    },
+    unlockRequests: {
+      eyebrow: "Access control",
+      title: "Unlock Requests",
+      subtitle:
+        "Approve or decline company requests to reveal student identity.",
+      empty: "No unlock requests yet.",
+      loading: "Loading…",
+      colCompany: "Company",
+      colCandidate: "Candidate",
+      colRequested: "Requested",
+      colStatus: "Status",
+      colActions: "Actions",
+      statusPending: "Pending",
+      statusApproved: "Approved",
+      statusDeclined: "Declined",
+      approve: "Approve",
+      decline: "Decline",
+      load_failed: "Could not load unlock requests.",
+      update_failed: "Could not update request.",
       genericError: "Something went wrong.",
     },
     shell: {
@@ -1695,6 +1769,7 @@ const OPERATIONAL_SITE_SETTINGS = {
       currentPassword: "Current password",
       newPassword: "New password",
       notificationsTitle: "Notifications",
+      notificationsMaster: "Enable notifications",
       notification_pending_requests: "New pending requests",
       notification_weekly_digest: "Weekly digest",
       notification_sms_alerts: "SMS alerts",
@@ -2286,12 +2361,24 @@ async function seedProgramLevers(db: Firestore) {
   const snap = await ref.get();
   const existing = snap.data() ?? {};
   const existingWays = Array.isArray(existing.waysToEarn)
-    ? existing.waysToEarn
+    ? (existing.waysToEarn as Array<{ id?: string; credits?: number }>)
     : [];
 
   const existingPackages = Array.isArray(existing.creditTopUpPackages)
     ? existing.creditTopUpPackages
     : [];
+
+  const wayById = new Map(
+    existingWays
+      .filter((way) => typeof way?.id === "string" && way.id)
+      .map((way) => [way.id as string, way]),
+  );
+  for (const way of DEFAULT_WAYS_TO_EARN) {
+    if (!wayById.has(way.id)) {
+      wayById.set(way.id, way);
+    }
+  }
+  const waysToEarn = Array.from(wayById.values());
 
   const base = {
     id: "default",
@@ -2308,14 +2395,14 @@ async function seedProgramLevers(db: Firestore) {
           { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },
           { id: "pack_1600", label: "Premium pack", credits: 1600, priceEur: 400 },
         ],
-    waysToEarn: existingWays.length ? existingWays : DEFAULT_WAYS_TO_EARN,
+    waysToEarn,
     updatedAt: FieldValue.serverTimestamp(),
   };
 
   await ref.set(stripUndefined(base), { merge: true });
   console.log(
     existingWays.length
-      ? "  updated program_levers/default pricing (waysToEarn preserved)"
+      ? "  updated program_levers/default pricing (merged missing waysToEarn)"
       : "  upserted program_levers/default with waysToEarn defaults",
   );
 }

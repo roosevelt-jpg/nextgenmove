@@ -434,3 +434,32 @@ export async function notifyAdminPending(options: {
     request: options.request,
   });
 }
+
+export async function notifyProfileUnlocked(options: {
+  companyUserId: string;
+  companyEmail: string;
+  companyName: string;
+  candidateLabel: string;
+  profileUrl: string;
+  request?: Request;
+}) {
+  const email = options.companyEmail.trim();
+  if (!email.includes("@")) return;
+  const root = base(options.request);
+  const profileUrl = options.profileUrl.startsWith("http")
+    ? options.profileUrl
+    : `${root}${options.profileUrl.startsWith("/") ? "" : "/"}${options.profileUrl}`;
+
+  queueTransactional({
+    templateId: "profile_unlocked",
+    to: email,
+    userId: options.companyUserId,
+    role: "company",
+    vars: {
+      displayName: options.companyName || email,
+      candidateLabel: options.candidateLabel,
+      profileUrl,
+    },
+    request: options.request,
+  });
+}

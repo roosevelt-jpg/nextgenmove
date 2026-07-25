@@ -19,8 +19,11 @@ interface TalentPoolRow extends Record<string, unknown> {
   stageId: string;
   matchScore: number | null;
   studentId: string;
+  displayName?: string;
   fullName: string;
   email: string;
+  identityUnlocked?: boolean;
+  unlockRequestStatus?: string;
   sector: string;
   seniority: string;
   currentCity: string;
@@ -38,6 +41,7 @@ const INTERVIEW_STAGE_HINT = "interview";
 
 interface BrowseRow {
   studentId: string;
+  displayName?: string;
   fullName: string;
   sector: string;
   seniority: string;
@@ -267,6 +271,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
             const sectorLabel =
               taxonomies.sector?.find((option) => option.value === row.sector)
                 ?.label ?? row.sector;
+            const name = row.displayName || row.fullName;
 
             return (
               <li
@@ -275,12 +280,12 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarToneClasses(row.fullName)}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${avatarToneClasses(name)}`}
                   >
-                    {initialsFromName(row.fullName)}
+                    {initialsFromName(name)}
                   </span>
                   <div className="min-w-0">
-                    <p className="font-semibold text-text-primary">{row.fullName}</p>
+                    <p className="font-semibold text-text-primary">{name}</p>
                     <p className="text-[12.5px] text-text-secondary">
                       {[sectorLabel, row.currentCity].filter(Boolean).join(" · ")}
                     </p>
@@ -366,7 +371,7 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="font-serif text-lg text-text-primary">
-                        {row.fullName}
+                        {row.displayName || row.fullName}
                       </p>
                       <p className="text-sm text-text-secondary">
                         {[row.seniority, row.sector, row.currentCity]

@@ -269,6 +269,19 @@ export const EMAIL_TEMPLATES = [
       "Hi {{displayName}},\n\nWe received your {{formTitle}} submission. We will follow up soon.\n",
   }),
   tpl({
+    id: "profile_unlocked",
+    name: "Profile unlocked",
+    description: "Company notified when admin approves a profile unlock request.",
+    subject: "Candidate identity unlocked: {{candidateLabel}}",
+    preferenceKey: "profile_unlocks",
+    category: "product",
+    htmlBody: `<p style="margin:0 0 16px;">Hi {{displayName}},</p>
+<p style="margin:0 0 16px;">Your unlock request for <strong>{{candidateLabel}}</strong> was approved. Full name, photo, and contact details are now available.</p>
+<p style="margin:0;"><a href="{{profileUrl}}" style="display:inline-block;background:#5b3d8f;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:600;">View profile</a></p>`,
+    textBody:
+      "Hi {{displayName}},\n\nUnlock approved for {{candidateLabel}}. View profile: {{profileUrl}}\n",
+  }),
+  tpl({
     id: "admin_pending_alert",
     name: "Admin pending alert",
     description: "Notify ops of pending requests.",

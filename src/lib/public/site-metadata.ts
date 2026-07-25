@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import type { CmsPageDocument, SiteSettingsDocument } from "@/types/cms";
-import { BRAND_FAVICON_PATH } from "@/lib/brand";
-
-/**
- * Prefer the brand PNG. Cache-bust so browsers drop the old Next/Vercel
- * `/favicon.ico` that was generated from the default app icon.
- */
-const FAVICON = `${BRAND_FAVICON_PATH}?v=20260712b`;
+import { resolveBrandFaviconUrl } from "@/lib/brand";
 
 export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
   const siteName = settings.siteName?.trim() || undefined;
@@ -21,6 +15,9 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
     settings.tagline?.trim() ||
     undefined;
 
+  const favicon = resolveBrandFaviconUrl(settings.faviconUrl);
+  const faviconVersion = encodeURIComponent(favicon).slice(0, 48);
+
   return {
     title: title
       ? {
@@ -31,12 +28,12 @@ export function buildRootMetadata(settings: SiteSettingsDocument): Metadata {
     description,
     icons: {
       icon: [
-        { url: FAVICON, type: "image/png", sizes: "32x32" },
-        { url: FAVICON, type: "image/png", sizes: "192x192" },
+        { url: `${favicon}?v=${faviconVersion}`, type: "image/png", sizes: "32x32" },
+        { url: `${favicon}?v=${faviconVersion}`, type: "image/png", sizes: "192x192" },
         { url: "/favicon.ico", type: "image/x-icon", sizes: "any" },
       ],
-      shortcut: [{ url: FAVICON, type: "image/png" }],
-      apple: [{ url: FAVICON, type: "image/png" }],
+      shortcut: [{ url: `${favicon}?v=${faviconVersion}`, type: "image/png" }],
+      apple: [{ url: `${favicon}?v=${faviconVersion}`, type: "image/png" }],
     },
     openGraph: {
       title: title || undefined,

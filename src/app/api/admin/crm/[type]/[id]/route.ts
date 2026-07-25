@@ -9,7 +9,6 @@ import {
   unauthorizedResponse,
 } from "@/lib/admin/session";
 import { computeMatchScore } from "@/lib/matching/score";
-import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { revokeUserSessions } from "@/lib/security/session-revoke";
 import {
@@ -323,12 +322,13 @@ export async function POST(
           shortlisted: false,
           matchScore,
           source: "admin_curated",
+          identityUnlocked: false,
           notes: [],
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         }),
       );
-      await upsertMatchAccess(companyId, studentId);
+      // Identity unlock (and match_access) requires a separate profile_unlock approval.
 
       await logActivity({
         actorId: session.uid,

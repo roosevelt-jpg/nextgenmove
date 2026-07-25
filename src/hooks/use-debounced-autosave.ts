@@ -8,6 +8,7 @@ export type AutosaveStatus = "idle" | "saving" | "saved" | "error";
  * Debounced persist after local state changes.
  * Skips the first run (hydrate) and any run where `enabled` is false.
  * Call `suppressNext()` before applying server responses so they do not re-save.
+ * Only sets `saved` when persist resolves to true; failures become `error`.
  */
 export function useDebouncedAutosave<T>(
   value: T | null | undefined,
@@ -45,9 +46,14 @@ export function useDebouncedAutosave<T>(
     const timer = window.setTimeout(() => {
       void (async () => {
         setStatus("saving");
-        const ok = await persistRef.current(value);
-        if (cancelled) return;
-        setStatus(ok ? "saved" : "error");
+        try {
+          const ok = await persistRef.current(value);
+          if (cancelled) return;
+          setStatus(ok ? "saved" : "error");
+        } catch {
+          if (cancelled) return;
+          setStatus("error");
+        }
       })();
     }, delayMs);
 

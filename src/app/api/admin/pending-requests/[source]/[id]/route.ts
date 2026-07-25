@@ -10,7 +10,6 @@ import {
 import { applyCreditDelta } from "@/lib/credits/ledger";
 import { canTransitionPlanRequest } from "@/lib/credits/pure";
 import { computeMatchScore } from "@/lib/matching/score";
-import { upsertMatchAccess } from "@/lib/match-access";
 import { stripUndefined } from "@/lib/stripUndefined";
 
 const actionSchema = z.object({
@@ -291,13 +290,14 @@ export async function POST(
             shortlisted: false,
             matchScore,
             source: "admin_curated",
+            identityUnlocked: false,
             notes: [],
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
           }),
         );
 
-        await upsertMatchAccess(companyId, studentId);
+        // Identity unlock deferred to profile_unlock approval flow.
 
         await ref.update(stripUndefined({ status: "promoted", matchId: matchRef.id }));
       } else if (body.action === "reject" || body.action === "dismiss") {
