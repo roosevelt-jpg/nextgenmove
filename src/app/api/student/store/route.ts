@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getStudentSession, unauthorizedResponse } from "@/lib/student/session";
+import { resolveStorageFileRef } from "@/lib/storage/file-ref";
 
 export async function GET() {
   const session = await getStudentSession();
@@ -28,6 +29,12 @@ export async function GET() {
     const items = contentSnapshot.docs.map((doc) => {
       const data = doc.data();
       const purchased = purchasedMap.has(doc.id);
+      const fileRef = resolveStorageFileRef(data.fileUrl ?? data.file);
+      const hasFile = Boolean(fileRef?.url || fileRef?.path);
+      const linkUrl =
+        typeof data.linkUrl === "string" && data.linkUrl.trim()
+          ? data.linkUrl.trim()
+          : null;
 
       return {
         id: doc.id,
@@ -35,11 +42,15 @@ export async function GET() {
         description: data.description ?? "",
         type: data.type ?? "download",
         thumbnailUrl: data.thumbnailUrl ?? "",
-        downloadHref: purchased ? `/api/student/store/download/${doc.id}` : null,
+        hasFile,
+        downloadHref:
+          purchased && hasFile
+            ? `/api/student/store/download/${doc.id}`
+            : null,
         costCredits: data.costCredits ?? 0,
         priceEur: typeof data.priceEur === "number" ? data.priceEur : null,
         emojiIcon: data.emojiIcon ?? "",
-        linkUrl: data.linkUrl ?? null,
+        linkUrl,
         category: data.category ?? "",
         purchased,
         purchaseId: purchasedMap.get(doc.id) ?? null,

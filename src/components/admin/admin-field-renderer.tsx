@@ -358,6 +358,12 @@ export function AdminFieldRenderer({
   }
 
   if (field.type === "image" || field.type === "file") {
+    const displayValue =
+      typeof value === "string"
+        ? value
+        : value && typeof value === "object" && "url" in (value as object)
+          ? String((value as { url?: string }).url ?? "")
+          : "";
     return (
       <div className="space-y-2">
         <FileUpload
@@ -367,11 +373,20 @@ export function AdminFieldRenderer({
           dropzoneContent={labels.uploadDropzone}
           progressLabel={labels.uploadProgress}
           onUploadComplete={(result: FileUploadMetadata) =>
-            onChange(setNestedValue(values, field.key, result.url))
+            onChange(
+              setNestedValue(values, field.key, {
+                url: result.url,
+                path: result.path,
+                filename: result.filename,
+                size: result.size,
+                mimeType: result.mimeType,
+                uploadedAt: new Date().toISOString(),
+              }),
+            )
           }
         />
-        {value ? (
-          <p className="truncate text-xs text-text-muted">{String(value)}</p>
+        {displayValue ? (
+          <p className="truncate text-xs text-text-muted">{displayValue}</p>
         ) : null}
       </div>
     );

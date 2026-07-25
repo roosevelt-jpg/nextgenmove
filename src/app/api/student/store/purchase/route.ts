@@ -18,6 +18,20 @@ import {
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
 import { assertSufficientCredits } from "@/lib/credits/pure";
+import { resolveStorageFileRef } from "@/lib/storage/file-ref";
+
+function downloadHrefForContent(
+  contentItemId: string,
+  contentData: Record<string, unknown>,
+): string | null {
+  const fileRef = resolveStorageFileRef(
+    contentData.fileUrl ?? contentData.file,
+  );
+  if (fileRef?.url || fileRef?.path) {
+    return `/api/student/store/download/${contentItemId}`;
+  }
+  return null;
+}
 
 const purchaseSchema = z.object({
   contentItemId: z.string().min(1),
@@ -110,7 +124,11 @@ export async function POST(request: Request) {
           if (!existingPurchase.empty) {
             return {
               alreadyPurchased: true,
-              downloadHref: `/api/student/store/download/${contentItemId}`,
+              downloadHref: downloadHrefForContent(contentItemId, contentData),
+              linkUrl:
+                typeof contentData.linkUrl === "string"
+                  ? contentData.linkUrl
+                  : null,
               credits: studentData.credits ?? 0,
             };
           }
@@ -159,7 +177,11 @@ export async function POST(request: Request) {
           return {
             alreadyPurchased: false,
             purchaseId: purchaseRef.id,
-            downloadHref: `/api/student/store/download/${contentItemId}`,
+            downloadHref: downloadHrefForContent(contentItemId, contentData),
+            linkUrl:
+              typeof contentData.linkUrl === "string"
+                ? contentData.linkUrl
+                : null,
             credits: currentCredits - cost,
           };
         });

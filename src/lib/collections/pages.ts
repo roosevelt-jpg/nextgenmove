@@ -20,6 +20,7 @@ import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
 import { mergePageHome } from "@/lib/public/merge-page-home";
 import { listLiveVideoCards } from "@/lib/media/video-cards";
 import { getSiteSettings } from "@/lib/collections/site-settings";
+import { resolveStorageFileRef } from "@/lib/storage/file-ref";
 
 async function loadPageHome(): Promise<PageHomeDocument> {
   const snapshot = await adminDb.collection("page_home").doc("default").get();
@@ -447,13 +448,17 @@ export async function getLiveContentItems(): Promise<ContentItemDocument[]> {
 
     return snapshot.docs.map((doc) => {
       const data = doc.data();
+      const fileRef = resolveStorageFileRef(data.fileUrl ?? data.file);
       return {
         id: doc.id,
         title: data.title ?? "",
         type: data.type ?? "download",
         description: data.description ?? "",
-        thumbnailUrl: data.thumbnailUrl ?? "",
-        fileUrl: data.fileUrl ?? "",
+        thumbnailUrl:
+          typeof data.thumbnailUrl === "string"
+            ? data.thumbnailUrl
+            : resolveStorageFileRef(data.thumbnailUrl)?.url ?? "",
+        fileUrl: fileRef?.url ?? "",
         costCredits: data.costCredits ?? 0,
         category: data.category ?? "",
         status: data.status ?? "live",

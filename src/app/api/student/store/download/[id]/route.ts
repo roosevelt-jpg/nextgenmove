@@ -1,27 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminDb, adminStorage } from "@/lib/firebase-admin";
 import { getStudentSession, unauthorizedResponse } from "@/lib/student/session";
-
-function storagePathFromDownloadUrl(url: string): string | null {
-  try {
-    if (url.startsWith("gs://")) {
-      const withoutScheme = url.slice("gs://".length);
-      const slashIndex = withoutScheme.indexOf("/");
-      return slashIndex >= 0 ? withoutScheme.slice(slashIndex + 1) : null;
-    }
-
-    const parsed = new URL(url);
-    const objectMatch = parsed.pathname.match(/\/o\/(.+)$/);
-
-    if (!objectMatch?.[1]) {
-      return null;
-    }
-
-    return decodeURIComponent(objectMatch[1]);
-  } catch {
-    return null;
-  }
-}
+import {
+  resolveStorageFileRef,
+  resolveStorageObjectPath,
+} from "@/lib/storage/file-ref";
 
 export async function GET(
   _request: Request,
@@ -47,23 +30,31 @@ export async function GET(
       return NextResponse.json({ error: "not_purchased" }, { status: 403 });
     }
 
-    const contentSnapshot = await adminDb.collection("content_items").doc(contentItemId).get();
+    const contentSnapshot = await adminDb
+      .collection("content_items")
+      .doc(contentItemId)
+      .get();
 
     if (!contentSnapshot.exists) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
 
     const contentData = contentSnapshot.data()!;
-    const fileUrl = contentData.fileUrl as string | undefined;
-
-    if (!fileUrl) {
-      return NextResponse.json({ error: "no_file" }, { status: 404 });
-    }
-
-    const storagePath = storagePathFromDownloadUrl(fileUrl);
+    const fileRef = resolveStorageFileRef(
+      contentData.fileUrl ?? contentData.file,
+    );
+    const storagePath = fileRef ? resolveStorageObjectPath(fileRef) : null;
 
     if (!storagePath) {
-      return NextResponse.json({ error: "invalid_file_reference" }, { status: 500 });
+      // Link-only purchases (video / external URL) — send the buyer to the link.
+      const linkUrl =
+        typeof contentData.linkUrl === "string"
+          ? contentData.linkUrl.trim()
+          : "";
+      if (linkUrl) {
+        return NextResponse.redirect(linkUrl);
+      }
+      return NextResponse.json({ error: "no_file" }, { status: 404 });
     }
 
     const bucket = adminStorage.bucket();
@@ -72,19 +63,21 @@ export async function GET(
     const [buffer] = await file.download();
 
     const filename =
-      typeof metadata.metadata?.filename === "string"
+      fileRef?.filename ||
+      (typeof metadata.metadata?.filename === "string"
         ? metadata.metadata.filename
-        : storagePath.split("/").pop() ?? "download";
+        : storagePath.split("/").pop() ?? "download");
 
     const contentType =
-      typeof metadata.contentType === "string"
+      fileRef?.mimeType ||
+      (typeof metadata.contentType === "string"
         ? metadata.contentType
-        : "application/octet-stream";
+        : "application/octet-stream");
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${filename.replace(/"/g, "")}"`,
         "Cache-Control": "private, no-store",
       },
     });
