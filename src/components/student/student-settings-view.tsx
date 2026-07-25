@@ -9,6 +9,7 @@ import {
 import { Button, Input } from "@/components/ui";
 import { auth } from "@/lib/firebase-client";
 import { clearSession } from "@/lib/auth-client";
+import { StripePaymentElementPanel } from "@/components/student/stripe-payment-element-panel";
 
 export interface StudentSettingsViewProps {
   labels: Record<string, string>;
@@ -37,6 +38,12 @@ export function StudentSettingsView({
     { id: string; label: string; credits: number; priceEur: number }[]
   >([]);
   const [topUpStatus, setTopUpStatus] = useState<string | null>(null);
+  const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [elementSession, setElementSession] = useState<{
+    packageId: string;
+    clientSecret: string;
+    publishableKey: string;
+  } | null>(null);
 
   const loadAccount = useCallback(async () => {
     const [accountRes, referralRes, topUpRes] = await Promise.all([
@@ -248,16 +255,23 @@ export function StudentSettingsView({
                 <Button
                   size="sm"
                   type="button"
+                  disabled={buyingId === pack.id}
                   onClick={async () => {
                     setTopUpStatus(null);
+                    setElementSession(null);
+                    setBuyingId(pack.id);
                     const response = await fetch("/api/student/credits/top-up", {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
                         "Idempotency-Key": crypto.randomUUID(),
                       },
-                      body: JSON.stringify({ packageId: pack.id }),
+                      body: JSON.stringify({
+                        packageId: pack.id,
+                        flow: "element",
+                      }),
                     });
+                    setBuyingId(null);
                     if (!response.ok) {
                       setTopUpStatus(labels.topUpFailed ?? "");
                       return;
@@ -265,7 +279,21 @@ export function StudentSettingsView({
                     const payload = (await response.json()) as {
                       mode?: string;
                       url?: string;
+                      clientSecret?: string;
+                      publishableKey?: string;
                     };
+                    if (
+                      payload.mode === "payment_element" &&
+                      payload.clientSecret &&
+                      payload.publishableKey
+                    ) {
+                      setElementSession({
+                        packageId: pack.id,
+                        clientSecret: payload.clientSecret,
+                        publishableKey: payload.publishableKey,
+                      });
+                      return;
+                    }
                     if (payload.mode === "stripe" && payload.url) {
                       window.location.href = payload.url;
                       return;
@@ -278,6 +306,48 @@ export function StudentSettingsView({
               </li>
             ))}
           </ul>
+          {elementSession ? (
+            <div className="rounded-radius border border-border bg-bg p-3">
+              <StripePaymentElementPanel
+                clientSecret={elementSession.clientSecret}
+                publishableKey={elementSession.publishableKey}
+                labels={labels}
+                onSuccess={() => {
+                  setElementSession(null);
+                  setTopUpStatus(
+                    labels.topUpSuccess ??
+                      "Top-up successful. Balance updating…",
+                  );
+                }}
+                onError={(message) => setTopUpStatus(message)}
+                onFallbackCheckout={async () => {
+                  const packageId = elementSession.packageId;
+                  setElementSession(null);
+                  const response = await fetch("/api/student/credits/top-up", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Idempotency-Key": crypto.randomUUID(),
+                    },
+                    body: JSON.stringify({ packageId, flow: "checkout" }),
+                  });
+                  if (!response.ok) {
+                    setTopUpStatus(labels.topUpFailed ?? "");
+                    return;
+                  }
+                  const payload = (await response.json()) as {
+                    mode?: string;
+                    url?: string;
+                  };
+                  if (payload.mode === "stripe" && payload.url) {
+                    window.location.href = payload.url;
+                    return;
+                  }
+                  setTopUpStatus(labels.topUpFailed ?? "");
+                }}
+              />
+            </div>
+          ) : null}
           {topUpStatus ? (
             <p className="text-sm text-text-secondary" role="status">
               {topUpStatus}

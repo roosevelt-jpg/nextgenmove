@@ -8,6 +8,7 @@ import {
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { looksLikeHtml, stripHtmlPreservingSpaces } from "@/lib/content/plain-text";
 
 function asPlainText(value: unknown): string {
@@ -300,7 +301,18 @@ export function AdminFieldRenderer({
     );
   }
 
-  if (field.type === "textarea" || field.type === "richtext") {
+  if (field.type === "richtext") {
+    return (
+      <RichTextEditor
+        id={field.key}
+        label={label}
+        value={String(value ?? "")}
+        onChange={(html) => onChange(setNestedValue(values, field.key, html))}
+      />
+    );
+  }
+
+  if (field.type === "textarea") {
     return (
       <Textarea
         id={field.key}

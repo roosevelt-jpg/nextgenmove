@@ -23,6 +23,7 @@ export interface RegisterStudentProfile {
   fullName: string;
   phone: string;
   nationality: string;
+  gender?: string;
   workExperience: string;
   education: EducationEntry[];
   sector: string;

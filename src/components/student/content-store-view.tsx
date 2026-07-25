@@ -14,6 +14,7 @@ import {
 import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 import { parseYoutubeVideoId } from "@/lib/media/youtube";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
+import { RichText } from "@/components/public/rich-text";
 
 interface StoreItem {
   id: string;
@@ -212,7 +213,10 @@ export function ContentStoreView({ labels }: ContentStoreViewProps) {
                       <div className="min-w-0 space-y-1">
                         <p className="font-medium text-text-primary">{item.title}</p>
                         {item.description ? (
-                          <p className="text-sm text-text-secondary">{item.description}</p>
+                          <RichText
+                            className="text-sm text-text-secondary"
+                            html={item.description}
+                          />
                         ) : null}
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           {item.category ? (

@@ -75,6 +75,39 @@ function envMarksConnected(id: string): boolean {
     const pass = process.env.SMTP_PASS?.trim() ?? "";
     return user.includes("@") && Boolean(pass);
   }
+  if (id === "firebase_client") {
+    return Boolean(
+      process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim() &&
+        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?.trim() &&
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID?.trim() &&
+        process.env.NEXT_PUBLIC_FIREBASE_APP_ID?.trim(),
+    );
+  }
+  if (id === "firebase_admin") {
+    const projectId =
+      process.env.FIREBASE_ADMIN_PROJECT_ID?.trim() ||
+      process.env.FIREBASE_PROJECT_ID?.trim();
+    const clientEmail =
+      process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim() ||
+      process.env.FIREBASE_CLIENT_EMAIL?.trim();
+    const privateKey =
+      process.env.FIREBASE_ADMIN_PRIVATE_KEY?.trim() ||
+      process.env.FIREBASE_PRIVATE_KEY?.trim();
+    return Boolean(projectId && clientEmail && privateKey);
+  }
+  if (id === "gemini") {
+    return Boolean(process.env.GEMINI_API_KEY?.trim());
+  }
+  if (id === "google_calendar") {
+    return Boolean(
+      (process.env.GOOGLE_CALENDAR_CLIENT_ID?.trim() ||
+        process.env.GOOGLE_CLIENT_ID?.trim()) &&
+        (process.env.GOOGLE_CALENDAR_CLIENT_SECRET?.trim() ||
+          process.env.GOOGLE_CLIENT_SECRET?.trim()) &&
+        (process.env.GOOGLE_CALENDAR_REFRESH_TOKEN?.trim() ||
+          process.env.GOOGLE_REFRESH_TOKEN?.trim()),
+    );
+  }
   return false;
 }
 

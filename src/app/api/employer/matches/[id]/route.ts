@@ -171,6 +171,39 @@ export async function PATCH(
       stageName = String(interview?.data()?.name ?? "Interviewing");
     }
 
+    let calendarEventId: string | null = null;
+    let calendarEventLink: string | null = null;
+    if (body.action === "schedule_interview" && body.interviewAt) {
+      try {
+        const [{ createInterviewCalendarEvent }, studentSnap, companySnap] =
+          await Promise.all([
+            import("@/lib/calendar/google-calendar"),
+            adminDb.collection("students").doc(String(match.studentId)).get(),
+            adminDb.collection("companies").doc(String(match.companyId)).get(),
+          ]);
+        const studentEmail = String(studentSnap.data()?.email ?? "").trim();
+        const companyEmail = String(
+          companySnap.data()?.contactEmail ?? "",
+        ).trim();
+        const studentName = String(
+          studentSnap.data()?.fullName ?? "Candidate",
+        );
+        const companyName = String(companySnap.data()?.name ?? "Company");
+        const created = await createInterviewCalendarEvent({
+          summary: `Interview · ${studentName} × ${companyName}`,
+          description: `NextGenMove interview between ${studentName} and ${companyName}.`,
+          startIso: body.interviewAt,
+          attendeeEmails: [studentEmail, companyEmail].filter(Boolean),
+        });
+        if (created) {
+          calendarEventId = created.eventId;
+          calendarEventLink = created.htmlLink;
+        }
+      } catch (calendarError) {
+        console.error("schedule_interview_calendar_failed", calendarError);
+      }
+    }
+
     if (nextStageId && !stageName) {
       const stageSnapshot = await adminDb
         .collection("pipeline_stages")
@@ -195,6 +228,10 @@ export async function PATCH(
           ...(applicationStatus ? { applicationStatus } : {}),
           ...(body.action === "schedule_interview" && body.interviewAt
             ? { interviewAt: new Date(body.interviewAt) }
+            : {}),
+          ...(calendarEventId ? { googleCalendarEventId: calendarEventId } : {}),
+          ...(calendarEventLink
+            ? { googleCalendarEventLink: calendarEventLink }
             : {}),
           ...(body.shortlisted === true && match.shortlistRank == null
             ? { shortlistRank: Date.now() }

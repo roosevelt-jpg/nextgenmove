@@ -95,7 +95,7 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     name: "Firebase Admin SDK",
     category: "Platform",
     description:
-      "Server-side Auth, Firestore, and Storage. Configured via environment credentials (service account) — status reflects whether Admin SDK is wired.",
+      "Server-side Auth, Firestore, and Storage. Set FIREBASE_ADMIN_* (service account) in Vercel env — not pasteable here.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,
@@ -106,7 +106,7 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     name: "Firebase Client SDK",
     category: "Platform",
     description:
-      "Browser Auth, Firestore listeners, and Storage uploads. Uses NEXT_PUBLIC Firebase web config from environment.",
+      "Browser Auth, Firestore listeners, and Storage uploads. Set NEXT_PUBLIC_FIREBASE_* web config in Vercel env — not pasteable here.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,
@@ -117,7 +117,7 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     name: "Google Calendar",
     category: "Scheduling",
     description:
-      "Calendar API for interview scheduling and availability sync. Paste OAuth client credentials to connect.",
+      "Calendar API for interview scheduling. Paste OAuth client ID, secret, and refresh token to create events when interviews are scheduled.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,
@@ -141,9 +141,21 @@ export function mergeIntegrationCatalog(
 ): IntegrationShell[] {
   const byId = new Map(live.map((item) => [item.id, item]));
   for (const shell of INTEGRATION_CATALOG) {
-    if (!byId.has(shell.id)) {
+    const existing = byId.get(shell.id);
+    if (!existing) {
       byId.set(shell.id, shell);
+      continue;
     }
+    // Overlay catalog defaults (e.g. envOnly) so live docs never drop UI flags.
+    byId.set(shell.id, {
+      ...shell,
+      ...existing,
+      name: existing.name || shell.name,
+      description: existing.description || shell.description,
+      category: existing.category || shell.category,
+      iconUrl: existing.iconUrl || shell.iconUrl,
+      config: { ...shell.config, ...existing.config },
+    });
   }
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -97,6 +97,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "email", type: "text", labelKey: "email", required: true },
       { key: "phone", type: "text", labelKey: "phone" },
       {
+        key: "gender",
+        type: "select",
+        labelKey: "gender",
+        taxonomyKey: "gender",
+      },
+      {
         key: "nationality",
         type: "select",
         labelKey: "nationality",
@@ -194,7 +200,7 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
     fields: [
       { key: "title", type: "text", labelKey: "title", required: true },
       { key: "type", type: "select", labelKey: "type" },
-      { key: "description", type: "textarea", labelKey: "description" },
+      { key: "description", type: "richtext", labelKey: "description" },
       { key: "emojiIcon", type: "text", labelKey: "emojiIcon" },
       { key: "thumbnailUrl", type: "image", labelKey: "thumbnailUrl" },
       { key: "fileUrl", type: "file", labelKey: "fileUrl" },

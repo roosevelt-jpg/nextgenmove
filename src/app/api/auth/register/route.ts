@@ -12,6 +12,7 @@ import {
   enforceRateLimit,
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
+import { normalizeToE164 } from "@/lib/phone/e164";
 
 const optionalUrl = z
   .union([z.string().trim().url(), z.literal(""), z.null()])
@@ -40,6 +41,7 @@ const studentProfileSchema = z.object({
   bio: z.string().trim().max(2000).optional(),
   skills: z.array(z.string().trim().min(1)).max(40).optional(),
   availability: z.string().trim().max(80).optional(),
+  gender: z.string().trim().max(40).optional(),
   linkedinUrl: optionalUrl,
   portfolioUrl: optionalUrl,
   referralCode: z.string().trim().max(32).optional(),
@@ -110,10 +112,11 @@ export async function POST(request: Request) {
         body.role === "student"
           ? body.student!.fullName
           : body.company!.contactName;
-      const phone =
+      const phoneRaw =
         body.role === "student"
           ? body.student!.phone?.trim() || null
           : body.company!.phone?.trim() || null;
+      const phone = phoneRaw ? normalizeToE164(phoneRaw) ?? phoneRaw : null;
 
       const userRecord = await adminAuth.createUser({
         email,
@@ -153,7 +156,7 @@ export async function POST(request: Request) {
             name: company.companyName,
             contactName: company.contactName,
             contactEmail: email,
-            contactPhone: company.phone.trim(),
+            contactPhone: phone || company.phone.trim(),
             nationality: company.nationality,
             logoUrl: null,
             industry: company.industry,
@@ -182,7 +185,7 @@ export async function POST(request: Request) {
             userId: uid,
             fullName: student.fullName,
             email,
-            phone: student.phone.trim(),
+            phone: phone || student.phone.trim(),
             nationality: student.nationality,
             workExperience: student.workExperience.trim(),
             education: student.education,
@@ -194,6 +197,7 @@ export async function POST(request: Request) {
             country: student.country?.trim() || "",
             town: student.town?.trim() || "",
             placeId: student.placeId?.trim() || "",
+            gender: student.gender?.trim() || "",
             cvUrl: null,
             linkedinUrl: student.linkedinUrl ?? null,
             portfolioUrl: student.portfolioUrl ?? null,

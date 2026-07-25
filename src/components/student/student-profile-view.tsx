@@ -28,6 +28,7 @@ interface StudentProfile {
   portfolioUrl: string | null;
   githubUrl: string | null;
   availability: string;
+  gender: string;
   photoUrl: string | null;
   workExperienceEntries: WorkEntry[];
 }
@@ -80,6 +81,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     suppressRef.current?.();
     setProfile({
       ...data.student,
+      gender: data.student.gender ?? "",
       githubUrl: data.student.githubUrl ?? null,
       workExperienceEntries: (data.student.workExperienceEntries ?? []).map((e) => ({
         company: e.company ?? "",
@@ -109,6 +111,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         portfolioUrl: next.portfolioUrl || null,
         githubUrl: next.githubUrl || null,
         availability: next.availability,
+        gender: next.gender || undefined,
         photoUrl: next.photoUrl || null,
         workExperienceEntries: next.workExperienceEntries
           .filter((e) => e.company.trim() && e.title.trim() && e.from.trim())
@@ -208,6 +211,20 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
           label={labels.fullName || "Full name"}
           value={profile.fullName}
           onChange={(event) => setProfile({ ...profile, fullName: event.target.value })}
+        />
+        <Select
+          id="student-gender"
+          disabled={isLoading}
+          aria-label={labels.gender || "Gender"}
+          label={labels.gender || "Gender"}
+          value={profile.gender}
+          options={[
+            { value: "", label: labels.genderPlaceholder || "Optional" },
+            ...(taxonomies.gender ?? []),
+          ]}
+          onChange={(event) =>
+            setProfile({ ...profile, gender: event.target.value })
+          }
         />
         <Select
           id="student-sector"

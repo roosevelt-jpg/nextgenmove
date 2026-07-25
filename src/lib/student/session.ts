@@ -38,6 +38,7 @@ export interface StudentDocument {
   bio: string;
   skills: string[];
   availability: string;
+  gender?: string | null;
   credits: number;
   plan: "track_a" | "track_b" | null;
   subscriptionStatus: "active" | "inactive" | "pending";
@@ -81,6 +82,7 @@ function mapStudentDoc(id: string, data: Record<string, unknown>): StudentDocume
     bio: (data.bio as string | undefined) ?? "",
     skills: (data.skills as string[] | undefined) ?? [],
     availability: (data.availability as string | undefined) ?? "",
+    gender: (data.gender as string | null | undefined) ?? null,
     credits: (data.credits as number | undefined) ?? 0,
     plan: (data.plan as StudentDocument["plan"] | undefined) ?? null,
     subscriptionStatus:
@@ -123,6 +125,7 @@ function emptyPreviewStudent(user: {
     bio: "",
     skills: [],
     availability: "",
+    gender: null,
     credits: 0,
     plan: null,
     subscriptionStatus: "pending",

@@ -39,6 +39,22 @@ const ENV_SECRET_FALLBACKS: Record<string, Record<string, () => string>> = {
   gemini: {
     apiKey: () => process.env.GEMINI_API_KEY?.trim() ?? "",
   },
+  google_calendar: {
+    clientId: () =>
+      process.env.GOOGLE_CALENDAR_CLIENT_ID?.trim() ||
+      process.env.GOOGLE_CLIENT_ID?.trim() ||
+      "",
+    clientSecret: () =>
+      process.env.GOOGLE_CALENDAR_CLIENT_SECRET?.trim() ||
+      process.env.GOOGLE_CLIENT_SECRET?.trim() ||
+      "",
+    refreshToken: () =>
+      process.env.GOOGLE_CALENDAR_REFRESH_TOKEN?.trim() ||
+      process.env.GOOGLE_REFRESH_TOKEN?.trim() ||
+      "",
+    calendarId: () =>
+      process.env.GOOGLE_CALENDAR_ID?.trim() || "primary",
+  },
   gmail_smtp: {
     host: () => process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
     port: () => process.env.SMTP_PORT?.trim() || "465",
@@ -194,6 +210,11 @@ export async function isIntegrationConnected(integrationId: string): Promise<boo
   }
   if (integrationId === "gemini") {
     return Boolean(secrets.apiKey);
+  }
+  if (integrationId === "google_calendar") {
+    return Boolean(
+      secrets.clientId && secrets.clientSecret && secrets.refreshToken,
+    );
   }
   if (integrationId === "gmail_smtp") {
     return Boolean(

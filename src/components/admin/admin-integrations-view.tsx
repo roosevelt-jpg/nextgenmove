@@ -66,6 +66,10 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpPort, setSmtpPort] = useState("465");
+  const [oauthClientId, setOauthClientId] = useState("");
+  const [oauthClientSecret, setOauthClientSecret] = useState("");
+  const [oauthRefreshToken, setOauthRefreshToken] = useState("");
+  const [calendarId, setCalendarId] = useState("primary");
   const [isSaving, setIsSaving] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -125,9 +129,24 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const isTwilio = connectItem?.id === "twilio";
   const isYoutube = connectItem?.id === "youtube";
   const isGooglePlaces = connectItem?.id === "google_places";
+  const isGemini = connectItem?.id === "gemini";
+  const isGoogleCalendar = connectItem?.id === "google_calendar";
+  const isFirebaseClient = connectItem?.id === "firebase_client";
+  const isFirebaseAdmin = connectItem?.id === "firebase_admin";
+  const isEnvOnly =
+    connectItem?.config?.envOnly === "true" ||
+    isFirebaseClient ||
+    isFirebaseAdmin;
 
   const connect = async () => {
     if (!connectItem) {
+      return;
+    }
+
+    if (isEnvOnly) {
+      setConnectItem(null);
+      setModalError(null);
+      await load();
       return;
     }
 
@@ -135,91 +154,111 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     setActionMessage(null);
     setModalError(null);
 
-    const body = isStripe
-      ? {
-          config: {
-            publishableKey,
-            webhookUrl: labels.stripeWebhookPath ?? "/api/webhooks/stripe",
-          },
-          secrets: {
-            ...(secretKey ? { secretKey } : {}),
-            ...(webhookSecret ? { webhookSecret } : {}),
-            ...(publishableKey ? { publishableKey } : {}),
-          },
-        }
-      : isGmailSmtp
-        ? {
-            config: {
-              host: configHost || "smtp.gmail.com",
-              port: smtpPort || "465",
-              fromEmail: fromEmail || smtpUser,
-              fromName: fromName || labels.smtpDefaultFromName || "Nextgenmove",
-              secure: "true",
-              category: "Transactional email",
-            },
-            secrets: {
-              host: configHost || "smtp.gmail.com",
-              port: smtpPort || "465",
-              ...(smtpUser ? { user: smtpUser } : {}),
-              ...(smtpPass ? { pass: smtpPass } : {}),
-              ...(fromEmail || smtpUser
-                ? { fromEmail: fromEmail || smtpUser }
-                : {}),
-              ...(fromName ? { fromName } : {}),
-              secure: "true",
-            },
-          }
-      : isResend || isSendGrid
-        ? {
-            config: {
-              fromEmail,
-              fromName:
-                fromName ||
-                (isResend
-                  ? labels.resendDefaultFromName || "Nextgenmove"
-                  : labels.sendgridDefaultFromName || "Nextgenmove"),
-            },
-            secrets: {
-              ...(apiKey ? { apiKey } : {}),
-              ...(fromEmail ? { fromEmail } : {}),
-            },
-          }
-        : isTwilio
-          ? {
-              config: {
-                fromSms,
-                fromWhatsApp,
-                category: "SMS",
-              },
-              secrets: {
-                ...(accountSid ? { accountSid } : {}),
-                ...(authToken ? { authToken } : {}),
-                ...(fromSms ? { fromSms } : {}),
-                ...(fromWhatsApp ? { fromWhatsApp } : {}),
-              },
-            }
-          : isYoutube
-            ? {
-                config: {
-                  category: "Media",
-                },
-                secrets: {
-                  ...(apiKey ? { apiKey } : {}),
-                },
-              }
-            : isGooglePlaces
-              ? {
-                  config: {
-                    category: "Maps & location",
-                  },
-                  secrets: {
-                    ...(apiKey ? { apiKey } : {}),
-                  },
-                }
-            : {
-                config: { host: configHost },
-                secrets: apiKey ? { apiKey } : undefined,
-              };
+    let body: {
+      config?: Record<string, string>;
+      secrets?: Record<string, string>;
+    };
+
+    if (isStripe) {
+      body = {
+        config: {
+          publishableKey,
+          webhookUrl: labels.stripeWebhookPath ?? "/api/webhooks/stripe",
+        },
+        secrets: {
+          ...(secretKey ? { secretKey } : {}),
+          ...(webhookSecret ? { webhookSecret } : {}),
+          ...(publishableKey ? { publishableKey } : {}),
+        },
+      };
+    } else if (isGmailSmtp) {
+      body = {
+        config: {
+          host: configHost || "smtp.gmail.com",
+          port: smtpPort || "465",
+          fromEmail: fromEmail || smtpUser,
+          fromName: fromName || labels.smtpDefaultFromName || "Nextgenmove",
+          secure: "true",
+          category: "Transactional email",
+        },
+        secrets: {
+          host: configHost || "smtp.gmail.com",
+          port: smtpPort || "465",
+          ...(smtpUser ? { user: smtpUser } : {}),
+          ...(smtpPass ? { pass: smtpPass } : {}),
+          ...(fromEmail || smtpUser
+            ? { fromEmail: fromEmail || smtpUser }
+            : {}),
+          ...(fromName ? { fromName } : {}),
+          secure: "true",
+        },
+      };
+    } else if (isResend || isSendGrid) {
+      body = {
+        config: {
+          fromEmail,
+          fromName:
+            fromName ||
+            (isResend
+              ? labels.resendDefaultFromName || "Nextgenmove"
+              : labels.sendgridDefaultFromName || "Nextgenmove"),
+        },
+        secrets: {
+          ...(apiKey ? { apiKey } : {}),
+          ...(fromEmail ? { fromEmail } : {}),
+        },
+      };
+    } else if (isTwilio) {
+      body = {
+        config: {
+          fromSms,
+          fromWhatsApp,
+          category: "SMS",
+        },
+        secrets: {
+          ...(accountSid ? { accountSid } : {}),
+          ...(authToken ? { authToken } : {}),
+          ...(fromSms ? { fromSms } : {}),
+          ...(fromWhatsApp ? { fromWhatsApp } : {}),
+        },
+      };
+    } else if (isYoutube) {
+      body = {
+        config: { category: "Media" },
+        secrets: { ...(apiKey ? { apiKey } : {}) },
+      };
+    } else if (isGooglePlaces) {
+      body = {
+        config: { category: "Maps & location" },
+        secrets: { ...(apiKey ? { apiKey } : {}) },
+      };
+    } else if (isGemini) {
+      body = {
+        config: { category: "AI" },
+        secrets: { ...(apiKey ? { apiKey } : {}) },
+      };
+    } else if (isGoogleCalendar) {
+      body = {
+        config: {
+          category: "Scheduling",
+          ...(oauthClientId ? { clientId: oauthClientId } : {}),
+          ...(calendarId ? { calendarId } : {}),
+        },
+        secrets: {
+          ...(oauthClientId ? { clientId: oauthClientId } : {}),
+          ...(oauthClientSecret ? { clientSecret: oauthClientSecret } : {}),
+          ...(oauthRefreshToken ? { refreshToken: oauthRefreshToken } : {}),
+          ...(calendarId ? { calendarId } : {}),
+        },
+      };
+    } else {
+      setIsSaving(false);
+      setModalError(
+        labels.unsupportedConnect ??
+          "This integration has no connect form yet.",
+      );
+      return;
+    }
 
     const response = await fetch(`/api/admin/integrations/${connectItem.id}/connect`, {
       method: "POST",
@@ -248,6 +287,10 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       setSmtpUser("");
       setSmtpPass("");
       setSmtpPort("465");
+      setOauthClientId("");
+      setOauthClientSecret("");
+      setOauthRefreshToken("");
+      setCalendarId("primary");
       setActionMessage(labels.connectSuccess ?? "Connected.");
       if (payload?.item) {
         setItems((prev) => {
@@ -306,11 +349,40 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   };
 
   const toggle = async (item: IntegrationItem) => {
+    const envOnly =
+      item.config?.envOnly === "true" ||
+      item.id === "firebase_client" ||
+      item.id === "firebase_admin";
+
+    if (envOnly) {
+      setModalError(null);
+      setConnectItem(item);
+      return;
+    }
+
     if (item.status === "connected") {
       await disconnect(item.id);
       return;
     }
     setModalError(null);
+    setApiKey("");
+    setConfigHost("");
+    setSecretKey("");
+    setPublishableKey("");
+    setWebhookSecret("");
+    setFromEmail("");
+    setFromName("");
+    setAccountSid("");
+    setAuthToken("");
+    setFromSms("");
+    setFromWhatsApp("");
+    setSmtpUser("");
+    setSmtpPass("");
+    setSmtpPort("465");
+    setOauthClientId("");
+    setOauthClientSecret("");
+    setOauthRefreshToken("");
+    setCalendarId("primary");
     setConnectItem(item);
   };
 
@@ -413,20 +485,50 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
         title={labels.connectTitle || "Connect integration"}
         footer={
           <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setConnectItem(null);
-                setModalError(null);
-              }}
-            >
-              {labels.cancel || "Cancel"}
-            </Button>
-            <Button disabled={isSaving} onClick={() => void connect()}>
-              {isSaving
-                ? labels.connecting || "Connecting…"
-                : labels.connect || "Connect"}
-            </Button>
+            {isEnvOnly ? (
+              <Button
+                onClick={() => {
+                  setConnectItem(null);
+                  setModalError(null);
+                  void load();
+                }}
+              >
+                {labels.close || "Close"}
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setConnectItem(null);
+                    setModalError(null);
+                  }}
+                >
+                  {labels.cancel || "Cancel"}
+                </Button>
+                <Button
+                  disabled={
+                    isSaving ||
+                    !(
+                      isStripe ||
+                      isResend ||
+                      isSendGrid ||
+                      isGmailSmtp ||
+                      isTwilio ||
+                      isYoutube ||
+                      isGooglePlaces ||
+                      isGemini ||
+                      isGoogleCalendar
+                    )
+                  }
+                  onClick={() => void connect()}
+                >
+                  {isSaving
+                    ? labels.connecting || "Connecting…"
+                    : labels.connect || "Connect"}
+                </Button>
+              </>
+            )}
           </div>
         }
       >
@@ -436,7 +538,44 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               {modalError}
             </p>
           ) : null}
-          {isStripe ? (
+          {isEnvOnly ? (
+            isFirebaseClient ? (
+              <>
+                <p className="text-sm text-text-secondary">
+                  {labels.firebaseClientEnvHint ??
+                    "Firebase Client SDK is wired from Vercel environment variables (NEXT_PUBLIC_FIREBASE_*), not from this form. Host / API key fields do not apply."}
+                </p>
+                <ul className="list-inside list-disc space-y-1 font-mono text-xs text-text-muted">
+                  <li>NEXT_PUBLIC_FIREBASE_API_KEY</li>
+                  <li>NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN</li>
+                  <li>NEXT_PUBLIC_FIREBASE_PROJECT_ID</li>
+                  <li>NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET</li>
+                  <li>NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID</li>
+                  <li>NEXT_PUBLIC_FIREBASE_APP_ID</li>
+                </ul>
+                <p className="text-xs text-text-muted">
+                  {labels.firebaseClientEnvHelp ??
+                    "Copy values from Firebase Console → Project settings → Your apps → Web app. After saving in Vercel, redeploy — this card then shows Connected."}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-text-secondary">
+                  {labels.firebaseAdminEnvHint ??
+                    "Firebase Admin SDK uses the service account on the server (FIREBASE_ADMIN_*), not a Host / API key paste here."}
+                </p>
+                <ul className="list-inside list-disc space-y-1 font-mono text-xs text-text-muted">
+                  <li>FIREBASE_ADMIN_PROJECT_ID</li>
+                  <li>FIREBASE_ADMIN_CLIENT_EMAIL</li>
+                  <li>FIREBASE_ADMIN_PRIVATE_KEY</li>
+                </ul>
+                <p className="text-xs text-text-muted">
+                  {labels.firebaseAdminEnvHelp ??
+                    "From Firebase Console → Project settings → Service accounts → Generate new key. Set these in Vercel (Production), then redeploy."}
+                </p>
+              </>
+            )
+          ) : isStripe ? (
             <>
               <Input
                 id="stripe-secret"
@@ -627,22 +766,83 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 </p>
               )}
             </>
-          ) : (
+          ) : isGemini ? (
             <>
+              <p className="text-sm text-text-secondary">
+                {labels.geminiHint ??
+                  "Paste a Gemini API key from Google AI Studio to power NGM Assistant and the public chatbot."}
+              </p>
               <Input
-                id="integration-host"
-                label={labels.host}
-                value={configHost}
-                onChange={(event) => setConfigHost(event.target.value)}
-              />
-              <Input
-                id="integration-api-key"
+                id="gemini-api-key"
                 type="password"
-                label={labels.apiKey}
+                label={labels.geminiApiKey ?? "Gemini API key"}
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
               />
+              {labels.geminiHelp ? (
+                <p className="text-xs text-text-muted">{labels.geminiHelp}</p>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  Google AI Studio → Get API key. You can also set GEMINI_API_KEY
+                  in Vercel as a fallback.
+                </p>
+              )}
             </>
+          ) : isGoogleCalendar ? (
+            <>
+              <p className="text-sm text-text-secondary">
+                {labels.googleCalendarHint ??
+                  "Paste OAuth 2.0 client credentials and a refresh token from Google Cloud Console so interview scheduling can create Calendar events."}
+              </p>
+              <Input
+                id="google-calendar-client-id"
+                label={labels.googleCalendarClientId ?? "OAuth client ID"}
+                value={oauthClientId}
+                onChange={(event) => setOauthClientId(event.target.value)}
+                placeholder="….apps.googleusercontent.com"
+              />
+              <Input
+                id="google-calendar-client-secret"
+                type="password"
+                label={
+                  labels.googleCalendarClientSecret ?? "OAuth client secret"
+                }
+                value={oauthClientSecret}
+                onChange={(event) => setOauthClientSecret(event.target.value)}
+              />
+              <Input
+                id="google-calendar-refresh-token"
+                type="password"
+                label={
+                  labels.googleCalendarRefreshToken ?? "OAuth refresh token"
+                }
+                value={oauthRefreshToken}
+                onChange={(event) => setOauthRefreshToken(event.target.value)}
+              />
+              <Input
+                id="google-calendar-id"
+                label={labels.googleCalendarId ?? "Calendar ID"}
+                value={calendarId}
+                onChange={(event) => setCalendarId(event.target.value)}
+                placeholder="primary"
+              />
+              {labels.googleCalendarHelp ? (
+                <p className="text-xs text-text-muted">
+                  {labels.googleCalendarHelp}
+                </p>
+              ) : (
+                <p className="text-xs text-text-muted">
+                  Enable Google Calendar API. Create a Web OAuth client, complete
+                  one offline consent flow to obtain a refresh token, then paste
+                  it here. Events are created when employers schedule interviews.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-text-secondary">
+              {labels.unsupportedConnect ??
+                "This integration has no connect form yet."}
+            </p>
           )}
         </div>
       </Modal>

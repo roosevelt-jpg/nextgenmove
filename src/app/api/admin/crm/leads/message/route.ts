@@ -15,6 +15,7 @@ import {
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { normalizeToE164 } from "@/lib/phone/e164";
 
 const LEAD_COLLECTIONS = [
   "job_applications",
@@ -116,16 +117,28 @@ export async function POST(request: Request) {
       }
       providerId = contact.email;
     } else if (body.channel === "sms") {
-      if (!contact.phone) {
-        return NextResponse.json({ error: "missing_phone" }, { status: 400 });
+      const phone = normalizeToE164(contact.phone) ?? "";
+      if (!phone) {
+        return NextResponse.json(
+          {
+            error: contact.phone.trim() ? "invalid_phone" : "missing_phone",
+          },
+          { status: 400 },
+        );
       }
-      const result = await sendSms({ to: contact.phone, body: body.body });
+      const result = await sendSms({ to: phone, body: body.body });
       providerId = result.sid;
     } else {
-      if (!contact.phone) {
-        return NextResponse.json({ error: "missing_phone" }, { status: 400 });
+      const phone = normalizeToE164(contact.phone) ?? "";
+      if (!phone) {
+        return NextResponse.json(
+          {
+            error: contact.phone.trim() ? "invalid_phone" : "missing_phone",
+          },
+          { status: 400 },
+        );
       }
-      const result = await sendWhatsApp({ to: contact.phone, body: body.body });
+      const result = await sendWhatsApp({ to: phone, body: body.body });
       providerId = result.sid;
     }
 

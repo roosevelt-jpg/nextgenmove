@@ -5,7 +5,9 @@ export function sanitizePlainTextFields(
   input: Record<string, unknown>,
   options?: { allowHtmlKeys?: string[] },
 ): Record<string, unknown> {
-  const allow = new Set(options?.allowHtmlKeys ?? ["htmlBody"]);
+  const allow = new Set(
+    options?.allowHtmlKeys ?? ["htmlBody", "description", "body", "content"],
+  );
 
   const walk = (value: unknown, key?: string): unknown => {
     if (typeof value === "string") {

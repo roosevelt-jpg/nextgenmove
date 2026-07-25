@@ -11,6 +11,27 @@ import { isAdminCollection } from "@/lib/admin/entity-schemas";
 import { revalidateAdminCollection } from "@/lib/admin/revalidate";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { sanitizePlainTextFields } from "@/lib/admin/sanitize-plain-text";
+import { normalizeToE164 } from "@/lib/phone/e164";
+
+function normalizePhoneFields(
+  collection: string,
+  data: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...data };
+  const phoneKeys =
+    collection === "companies"
+      ? ["contactPhone", "phone"]
+      : collection === "students" || collection === "leads"
+        ? ["phone"]
+        : ["phone", "contactPhone"];
+
+  for (const key of phoneKeys) {
+    if (typeof next[key] !== "string") continue;
+    const normalized = normalizeToE164(next[key] as string);
+    if (normalized) next[key] = normalized;
+  }
+  return next;
+}
 
 function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   const output: Record<string, unknown> = { id };
@@ -68,8 +89,11 @@ export async function PATCH(
   }
 
   try {
-    const body = sanitizePlainTextFields(
-      (await request.json()) as Record<string, unknown>,
+    const body = normalizePhoneFields(
+      collection,
+      sanitizePlainTextFields(
+        (await request.json()) as Record<string, unknown>,
+      ),
     );
     const ref = adminDb.collection(collection).doc(id);
     const snapshot = await ref.get();

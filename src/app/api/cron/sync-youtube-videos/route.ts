@@ -3,7 +3,7 @@ import { syncYoutubePlaylistVideos } from "@/lib/media/youtube-sync";
 import { withRequestLog } from "@/lib/observability/api-handler";
 
 /**
- * Daily YouTube playlist → video_cards sync.
+ * Hourly YouTube playlist → video_cards sync.
  * Protect with CRON_SECRET: Authorization: Bearer <CRON_SECRET>
  */
 export async function GET(request: Request) {

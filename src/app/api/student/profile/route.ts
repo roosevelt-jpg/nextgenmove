@@ -48,6 +48,7 @@ const profileSchema = z.object({
   portfolioUrl: optionalNullableUrl,
   githubUrl: optionalNullableUrl,
   availability: z.string().trim().optional(),
+  gender: z.string().trim().max(40).optional(),
   photoUrl: optionalNullableUrl,
   workExperienceEntries: z.array(workEntrySchema).max(20).optional(),
 });
@@ -77,6 +78,7 @@ function mapStudent(id: string, student: Record<string, unknown>): StudentDocume
     bio: (student.bio as string | undefined) ?? "",
     skills: (student.skills as string[] | undefined) ?? [],
     availability: (student.availability as string | undefined) ?? "",
+    gender: (student.gender as string | null | undefined) ?? null,
     credits: (student.credits as number | undefined) ?? 0,
     plan: (student.plan as StudentDocument["plan"] | undefined) ?? null,
     subscriptionStatus:

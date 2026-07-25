@@ -70,6 +70,7 @@ export function SignUpForm({
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [nationality, setNationality] = useState("");
+  const [gender, setGender] = useState("");
   const [workExperience, setWorkExperience] = useState("");
   const [education, setEducation] = useState<
     Array<{ institution: string; degree: string; year: string }>
@@ -104,6 +105,7 @@ export function SignUpForm({
   const [seniorities, setSeniorities] = useState<TaxonomyOption[]>([]);
   const [industries, setIndustries] = useState<TaxonomyOption[]>([]);
   const [nationalities, setNationalities] = useState<TaxonomyOption[]>([]);
+  const [genders, setGenders] = useState<TaxonomyOption[]>([]);
 
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -178,6 +180,14 @@ export function SignUpForm({
               )
             : [],
         );
+        setGenders(
+          Array.isArray(payload.gender)
+            ? payload.gender.map((item: { value: string; label: string }) => ({
+                value: item.value,
+                label: item.label,
+              }))
+            : [],
+        );
       })
       .catch(() => undefined);
   }, []);
@@ -198,6 +208,10 @@ export function SignUpForm({
     () =>
       nationalities.map((item) => ({ value: item.value, label: item.label })),
     [nationalities],
+  );
+  const genderOptions = useMemo(
+    () => genders.map((item) => ({ value: item.value, label: item.label })),
+    [genders],
   );
 
   const stepLabel =
@@ -251,6 +265,7 @@ export function SignUpForm({
                 fullName: fullName.trim(),
                 phone: phone.trim(),
                 nationality,
+                gender: gender.trim() || undefined,
                 workExperience: workExperience.trim(),
                 education: education
                   .filter((row) => row.institution.trim())
@@ -716,6 +731,26 @@ export function SignUpForm({
               label={labels.nationalityLabel || "Nationality"}
               value={nationality}
               onChange={(event) => setNationality(event.target.value)}
+            />
+          )}
+          {genderOptions.length > 0 ? (
+            <Select
+              id="student-gender"
+              label={labels.genderLabel || "Gender"}
+              value={gender}
+              placeholder={labels.genderPlaceholder || "Gender (optional)"}
+              options={[
+                { value: "", label: labels.genderPlaceholder || "Optional" },
+                ...genderOptions,
+              ]}
+              onChange={(event) => setGender(event.target.value)}
+            />
+          ) : (
+            <Input
+              id="student-gender"
+              label={labels.genderLabel || "Gender"}
+              value={gender}
+              onChange={(event) => setGender(event.target.value)}
             />
           )}
           <Textarea

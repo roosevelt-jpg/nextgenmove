@@ -15,6 +15,7 @@ import {
   rateLimitResponse,
 } from "@/lib/security/rate-limit";
 import { stripUndefined } from "@/lib/stripUndefined";
+import { normalizeToE164 } from "@/lib/phone/e164";
 
 const messageSchema = z.object({
   channel: z.enum(["email", "sms", "whatsapp"]),
@@ -68,10 +69,11 @@ export async function POST(
       type === "companies"
         ? String(data.contactEmail ?? "")
         : String(data.email ?? "");
-    const phone =
+    const rawPhone =
       type === "companies"
         ? String(data.contactPhone ?? userPhone ?? "")
         : String(data.phone ?? userPhone ?? "");
+    const phone = normalizeToE164(rawPhone) ?? "";
 
     let providerId = "";
 
@@ -94,13 +96,19 @@ export async function POST(
       providerId = email;
     } else if (body.channel === "sms") {
       if (!phone) {
-        return NextResponse.json({ error: "missing_phone" }, { status: 400 });
+        return NextResponse.json(
+          { error: rawPhone.trim() ? "invalid_phone" : "missing_phone" },
+          { status: 400 },
+        );
       }
       const result = await sendSms({ to: phone, body: body.body });
       providerId = result.sid;
     } else {
       if (!phone) {
-        return NextResponse.json({ error: "missing_phone" }, { status: 400 });
+        return NextResponse.json(
+          { error: rawPhone.trim() ? "invalid_phone" : "missing_phone" },
+          { status: 400 },
+        );
       }
       const result = await sendWhatsApp({ to: phone, body: body.body });
       providerId = result.sid;
