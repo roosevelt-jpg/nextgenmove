@@ -207,6 +207,7 @@ export function AdminSettingsFieldsForm({
                 {!field.readOnly ? (
                   <FileUpload
                     storagePath={`site-branding/${field.key}`}
+                    uploadEndpoint="/api/admin/upload"
                     accept="image/*"
                     uploadKind={field.key}
                     label={labels.uploadImage || "Upload image"}

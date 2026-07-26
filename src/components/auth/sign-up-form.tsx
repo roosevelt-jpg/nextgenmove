@@ -1214,6 +1214,8 @@ export function SignUpForm({
             <>
               <FileUpload
                 storagePath={`students/${uid}/photo`}
+                uploadEndpoint="/api/student/upload"
+                uploadKind="photo"
                 accept="image/*"
                 label={labels.photoUploadLabel || "Profile photo (required)"}
                 dropzoneContent={labels.photoDropzone}
@@ -1231,6 +1233,8 @@ export function SignUpForm({
               ) : null}
               <FileUpload
                 storagePath={`students/${uid}/cv`}
+                uploadEndpoint="/api/student/upload"
+                uploadKind="cv"
                 accept=".pdf,application/pdf"
                 label={labels.cvUploadLabel || "CV (optional)"}
                 dropzoneContent={labels.cvDropzone}
@@ -1243,6 +1247,8 @@ export function SignUpForm({
             <>
               <FileUpload
                 storagePath={`companies/${uid}/logo`}
+                uploadEndpoint="/api/employer/upload"
+                uploadKind="logo"
                 accept="image/*"
                 label={labels.logoUploadLabel || "Company logo (required)"}
                 dropzoneContent={labels.logoDropzone}

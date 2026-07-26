@@ -368,6 +368,7 @@ export function AdminFieldRenderer({
       <div className="space-y-2">
         <FileUpload
           storagePath={storagePath}
+          uploadEndpoint="/api/admin/upload"
           accept={field.type === "image" ? "image/*" : undefined}
           label={label}
           dropzoneContent={labels.uploadDropzone}

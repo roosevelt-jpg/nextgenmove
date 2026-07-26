@@ -69,6 +69,9 @@ export function FileUpload({
       if (uploadKind) {
         body.append("kind", uploadKind);
       }
+      if (storagePath) {
+        body.append("path", storagePath);
+      }
 
       const xhr = new XMLHttpRequest();
       xhr.open("POST", endpoint);
@@ -110,7 +113,7 @@ export function FileUpload({
       xhr.timeout = 120_000;
       xhr.send(body);
     },
-    [fail, onUploadComplete, uploadKind],
+    [fail, onUploadComplete, uploadKind, storagePath],
   );
 
   const uploadViaStorage = useCallback(
