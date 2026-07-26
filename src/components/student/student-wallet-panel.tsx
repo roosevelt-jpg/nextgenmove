@@ -10,6 +10,10 @@ export interface StudentWalletPanelProps {
   /** Compact mode for embedding in dashboard (shows recent N). */
   compact?: boolean;
   historyLimit?: number;
+  /** Bump to force a wallet reload (e.g. after redeem/top-up elsewhere). */
+  refreshKey?: number;
+  /** Called after a successful top-up so parents can refresh sibling stats. */
+  onCreditsChanged?: () => void;
 }
 
 interface TopUpPackage {
@@ -83,6 +87,8 @@ export function StudentWalletPanel({
   labels,
   compact = false,
   historyLimit = 50,
+  refreshKey = 0,
+  onCreditsChanged,
 }: StudentWalletPanelProps) {
   const [credits, setCredits] = useState(0);
   const [packages, setPackages] = useState<TopUpPackage[]>([]);
@@ -147,6 +153,12 @@ export function StudentWalletPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (refreshKey > 0) {
+      void load();
+    }
+  }, [refreshKey, load]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -259,6 +271,7 @@ export function StudentWalletPanel({
     );
     setTopUpOpen(false);
     await load();
+    onCreditsChanged?.();
   };
 
   const onElementSuccess = async () => {
@@ -272,6 +285,7 @@ export function StudentWalletPanel({
     const poll = async () => {
       attempts += 1;
       await load();
+      onCreditsChanged?.();
       if (attempts < 8) {
         window.setTimeout(() => void poll(), 1500);
       }

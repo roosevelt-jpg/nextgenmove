@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import { StudentWalletPanel } from "@/components/student/student-wallet-panel";
@@ -21,6 +22,8 @@ interface DashboardMatch {
   stageColor?: string;
   shortlisted: boolean;
   order?: number;
+  updatedAt?: string | null;
+  jobTitle?: string;
 }
 
 interface RecommendedItem {
@@ -120,12 +123,19 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
   const [recommendedContent, setRecommendedContent] = useState<RecommendedItem[]>([]);
   const [creditActivity, setCreditActivity] = useState<CreditWeek[]>([]);
   const [earnSpendDeltaPct, setEarnSpendDeltaPct] = useState(0);
+  const [degraded, setDegraded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [redeeming, setRedeeming] = useState(false);
   const [redeemMessage, setRedeemMessage] = useState<string | null>(null);
+  const [walletRefreshKey, setWalletRefreshKey] = useState(0);
 
   const loadDashboard = useCallback(async () => {
+    setLoadError(null);
     const response = await fetch("/api/student/dashboard");
-    if (!response.ok) return;
+    if (!response.ok) {
+      setLoadError(labels.loadError || "Could not load dashboard.");
+      return;
+    }
     const data = (await response.json()) as {
       credits: number;
       profileCompleteness: number;
@@ -134,6 +144,7 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
       recommendedContent: RecommendedItem[];
       creditActivity: CreditWeek[];
       earnSpendDeltaPct: number;
+      degraded?: boolean;
     };
     setCredits(data.credits);
     setProfileCompleteness(data.profileCompleteness);
@@ -142,7 +153,8 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
     setRecommendedContent(data.recommendedContent);
     setCreditActivity(data.creditActivity ?? []);
     setEarnSpendDeltaPct(data.earnSpendDeltaPct ?? 0);
-  }, []);
+    setDegraded(Boolean(data.degraded));
+  }, [labels.loadError]);
 
   useEffect(() => {
     void loadDashboard();
@@ -187,14 +199,20 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
 
   const currentMatch = useMemo(() => {
     if (!matches.length) return null;
-    return [...matches].sort((a, b) => (b.order ?? 0) - (a.order ?? 0))[0] ?? null;
+    return (
+      [...matches].sort((a, b) =>
+        String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")),
+      )[0] ?? null
+    );
   }, [matches]);
 
-  const currentStageName =
-    currentMatch?.stageName || labels.stageEmpty || journeyStages[0]?.name || "Applied";
+  const hasActiveJourney = Boolean(currentMatch);
+  const currentStageName = hasActiveJourney
+    ? currentMatch!.stageName || labels.stageEmpty || "In progress"
+    : labels.stageEmpty || "Not started";
 
   const journeyIndex = useMemo(() => {
-    if (!currentMatch) return 0;
+    if (!currentMatch) return -1;
     const byId = journeyStages.findIndex((s) => s.id === currentMatch.stageId);
     if (byId >= 0) return byId;
     const byName = journeyStages.findIndex(
@@ -213,7 +231,10 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
     );
   }, [currentMatch, journeyStages]);
 
-  const featured = recommendedContent[0] ?? null;
+  const featured =
+    recommendedContent.find((item) => !item.purchased) ??
+    recommendedContent[0] ??
+    null;
 
   const redeem = async () => {
     if (!featured || featured.purchased) return;
@@ -229,8 +250,17 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
     });
     setRedeeming(false);
     if (response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        downloadHref?: string | null;
+        linkUrl?: string | null;
+      } | null;
       setRedeemMessage(labels.redeemSuccess ?? "Unlocked.");
       await loadDashboard();
+      setWalletRefreshKey((key) => key + 1);
+      const openUrl = payload?.downloadHref || payload?.linkUrl;
+      if (openUrl) {
+        window.open(openUrl, "_blank", "noopener,noreferrer");
+      }
       return;
     }
     const payload = (await response.json().catch(() => null)) as {
@@ -249,6 +279,8 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
     ...creditActivity.flatMap((w) => [w.earned, w.spent]),
   );
 
+  const earnSpendPositive = earnSpendDeltaPct >= 0;
+
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-6">
       <header className="space-y-1">
@@ -261,36 +293,94 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
         {labels.subtitle ? (
           <p className="max-w-xl text-sm text-text-secondary">{labels.subtitle}</p>
         ) : null}
+        {loadError ? (
+          <p className="text-sm text-text-warning" role="alert">
+            {loadError}{" "}
+            <button
+              type="button"
+              className="font-semibold text-fill-accent underline"
+              onClick={() => void loadDashboard()}
+            >
+              {labels.retry || "Retry"}
+            </button>
+          </p>
+        ) : null}
+        {degraded ? (
+          <p className="text-xs text-text-muted">
+            {labels.degradedWarning ||
+              "Some live stats are temporarily unavailable."}
+          </p>
+        ) : null}
       </header>
 
       <section className="grid gap-3 sm:grid-cols-3">
-        <div className="dashboard-stat-card dashboard-stat-card--student rounded-radius border px-4 py-3.5">
+        <Link
+          href="/student/wallet"
+          className="dashboard-stat-card dashboard-stat-card--student rounded-radius border px-4 py-3.5 transition-opacity hover:opacity-90"
+        >
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
             {labels.creditsLabel ?? "Credit balance"}
           </p>
           <p className="mt-1 font-serif text-[1.65rem] font-semibold text-fill-accent">
             {credits.toLocaleString()}
           </p>
-        </div>
-        <div className="dashboard-stat-card dashboard-stat-card--student rounded-radius border px-4 py-3.5">
+        </Link>
+        <Link
+          href="/student/profile"
+          className="dashboard-stat-card dashboard-stat-card--student rounded-radius border px-4 py-3.5 transition-opacity hover:opacity-90"
+        >
           <ProfileCompletenessRing
             value={profileCompleteness}
             label={labels.profileCompletenessLabel ?? "Profile complete"}
           />
-        </div>
-        <div className="dashboard-stat-card dashboard-stat-card--student rounded-radius border px-4 py-3.5">
+        </Link>
+        <Link
+          href="/student/applications"
+          className="dashboard-stat-card dashboard-stat-card--student rounded-radius border px-4 py-3.5 transition-opacity hover:opacity-90"
+        >
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
             {labels.stageLabel ?? "Stage"}
           </p>
           <p className="mt-1 font-serif text-[1.65rem] font-semibold text-text-primary">
             {currentStageName}
           </p>
-        </div>
+        </Link>
       </section>
 
-      <StudentWalletPanel labels={labels} compact historyLimit={50} />
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/student/jobs"
+          className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm font-medium text-text-primary hover:underline"
+        >
+          {labels.browseJobsCta || "Browse jobs →"}
+        </Link>
+        <Link
+          href="/student/applications"
+          className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm font-medium text-text-primary hover:underline"
+        >
+          {labels.viewApplicationsCta || "My applications →"}
+        </Link>
+        <Link
+          href="/student/store"
+          className="rounded-radius border border-border bg-grad-card px-3 py-2 text-sm font-medium text-text-primary hover:underline"
+        >
+          {labels.browseStoreCta || "Content store →"}
+        </Link>
+      </div>
 
-      <PortalVideosSection apiPath="/api/student/videos" labels={labels} />
+      <StudentWalletPanel
+        labels={labels}
+        compact
+        historyLimit={50}
+        refreshKey={walletRefreshKey}
+        onCreditsChanged={() => void loadDashboard()}
+      />
+
+      <PortalVideosSection
+        apiPath="/api/student/videos"
+        labels={labels}
+        upgradeHref="/student/profile"
+      />
 
       <section className="dashboard-panel--student rounded-radius border p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -339,71 +429,97 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
             </div>
           ))}
         </div>
-        <p className="mt-2 text-[12px] text-text-success">
-          ▲{" "}
-          {(labels.earnSpendDelta ?? "{pct}% more earned than spent this month").replace(
-            "{pct}",
-            String(Math.abs(earnSpendDeltaPct)),
-          )}
-        </p>
+        {earnSpendDeltaPct !== 0 ? (
+          <p
+            className={
+              earnSpendPositive
+                ? "mt-2 text-[12px] text-text-success"
+                : "mt-2 text-[12px] text-fill-accent"
+            }
+          >
+            {earnSpendPositive ? "▲" : "▼"}{" "}
+            {(earnSpendPositive
+              ? labels.earnSpendDelta ??
+                "{pct}% more earned than spent this month"
+              : labels.earnSpendDeltaNegative ??
+                "{pct}% more spent than earned this month"
+            ).replace("{pct}", String(Math.abs(earnSpendDeltaPct)))}
+          </p>
+        ) : null}
       </section>
 
       <section className="dashboard-panel--student rounded-radius border p-4">
         <h2 className="mb-5 text-[14px] font-semibold text-text-primary">
           {labels.pipelineTitle ?? "Your placement journey"}
         </h2>
-        <ol className="flex items-start justify-between gap-2">
-          {journeyStages.map((step, index) => {
-            const done = index < journeyIndex;
-            const current = index === journeyIndex;
-            const isIssue = /fail|reject|block|issue|hold/i.test(step.name);
-            const color = isIssue ? "var(--text-warning)" : step.color;
-            return (
-              <li key={step.id} className="relative flex flex-1 flex-col items-center">
-                {index < journeyStages.length - 1 ? (
+        {!hasActiveJourney ? (
+          <p className="text-sm text-text-secondary">
+            {labels.journeyEmpty ||
+              "No active applications yet. Browse open roles to get started."}{" "}
+            <Link
+              href="/student/jobs"
+              className="font-medium text-text-accent hover:underline"
+            >
+              {labels.browseJobsCta || "Browse jobs →"}
+            </Link>
+          </p>
+        ) : (
+          <ol className="flex items-start justify-between gap-2">
+            {journeyStages.map((step, index) => {
+              const done = index < journeyIndex;
+              const current = index === journeyIndex;
+              const isIssue = /fail|reject|block|issue|hold/i.test(step.name);
+              const color = isIssue ? "var(--text-warning)" : step.color;
+              return (
+                <li
+                  key={step.id}
+                  className="relative flex flex-1 flex-col items-center"
+                >
+                  {index < journeyStages.length - 1 ? (
+                    <span
+                      className="absolute left-1/2 top-4 h-0.5 w-full"
+                      style={{
+                        backgroundColor:
+                          index < journeyIndex
+                            ? journeyStages[index]?.color ?? color
+                            : "var(--border)",
+                        opacity: index < journeyIndex ? 0.85 : 1,
+                      }}
+                      aria-hidden
+                    />
+                  ) : null}
                   <span
-                    className="absolute left-1/2 top-4 h-0.5 w-full"
+                    className={cn(
+                      "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold text-on-accent",
+                      !done && !current && "text-text-muted",
+                    )}
                     style={{
-                      backgroundColor:
-                        index < journeyIndex
-                          ? journeyStages[index]?.color ?? color
-                          : "var(--border)",
-                      opacity: index < journeyIndex ? 0.85 : 1,
-                    }}
-                    aria-hidden
-                  />
-                ) : null}
-                <span
-                  className={cn(
-                    "relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-[12px] font-bold text-on-accent",
-                    !done && !current && "text-text-muted",
-                  )}
-                  style={{
-                    backgroundColor: done
-                      ? color
-                      : current
+                      backgroundColor: done
                         ? color
-                        : hexToRgba(step.color, 0.18),
-                    color: done || current ? "#fff" : undefined,
-                    boxShadow: current
-                      ? `0 0 0 3px ${hexToRgba(step.color, 0.35)}`
-                      : undefined,
-                  }}
-                >
-                  {done ? "✓" : index + 1}
-                </span>
-                <p
-                  className="mt-2 text-center text-[12px] font-medium"
-                  style={{
-                    color: current || done ? color : "var(--text-secondary)",
-                  }}
-                >
-                  {step.name}
-                </p>
-              </li>
-            );
-          })}
-        </ol>
+                        : current
+                          ? color
+                          : hexToRgba(step.color, 0.18),
+                      color: done || current ? "#fff" : undefined,
+                      boxShadow: current
+                        ? `0 0 0 3px ${hexToRgba(step.color, 0.35)}`
+                        : undefined,
+                    }}
+                  >
+                    {done ? "✓" : index + 1}
+                  </span>
+                  <p
+                    className="mt-2 text-center text-[12px] font-medium"
+                    style={{
+                      color: current || done ? color : "var(--text-secondary)",
+                    }}
+                  >
+                    {step.name}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </section>
 
       {featured ? (
@@ -422,16 +538,25 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
                 {featured.priceEur != null ? ` (€${featured.priceEur})` : ""}
               </p>
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={featured.purchased || redeeming}
-              onClick={() => void redeem()}
-            >
-              {featured.purchased
-                ? labels.unlockedLabel ?? "Unlocked"
-                : labels.redeem ?? "Redeem"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {featured.purchased ? (
+                <Link
+                  href="/student/store"
+                  className="inline-flex items-center rounded-radius bg-fill-primary px-3 py-1.5 text-sm font-semibold text-on-primary"
+                >
+                  {labels.openStoreLabel || "Open in store"}
+                </Link>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={redeeming}
+                  onClick={() => void redeem()}
+                >
+                  {labels.redeem ?? "Redeem"}
+                </Button>
+              )}
+            </div>
           </div>
           {redeemMessage ? (
             <p className="mt-2 text-sm text-text-secondary" role="status">
@@ -439,7 +564,22 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
             </p>
           ) : null}
         </section>
-      ) : null}
+      ) : (
+        <section className="dashboard-panel--student rounded-radius border p-4">
+          <h2 className="mb-2 text-[14px] font-semibold text-text-primary">
+            {labels.recommendedTitle ?? "Recommended next step"}
+          </h2>
+          <p className="text-sm text-text-secondary">
+            {labels.recommendedEmpty || "No recommendations yet."}{" "}
+            <Link
+              href="/student/store"
+              className="font-medium text-text-accent hover:underline"
+            >
+              {labels.browseStoreCta || "Browse the content store →"}
+            </Link>
+          </p>
+        </section>
+      )}
     </div>
   );
 }

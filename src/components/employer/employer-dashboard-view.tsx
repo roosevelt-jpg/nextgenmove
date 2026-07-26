@@ -125,16 +125,19 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           tone="employer"
+          href="/employer/talent-pool"
           label={labels.statTalentPool || "Talent pool"}
           value={String(data.stats.talentPool)}
         />
         <StatCard
           tone="employer"
+          href="/employer/shortlist"
           label={labels.statShortlisted || "Shortlisted"}
           value={String(data.stats.shortlisted)}
         />
         <StatCard
           tone="employer"
+          href="/employer/pipeline"
           label={labels.statPipeline || "In pipeline"}
           value={String(data.stats.inPipeline)}
         />
@@ -142,9 +145,17 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
 
       {data.stageBreakdown && data.stageBreakdown.length > 0 ? (
         <section className="dashboard-panel--employer rounded-radius border p-4">
-          <h2 className="mb-3 text-[14px] font-semibold text-text-primary">
-            {labels.funnelTitle ?? "Pipeline by stage"}
-          </h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-[14px] font-semibold text-text-primary">
+              {labels.funnelTitle ?? "Pipeline by stage"}
+            </h2>
+            <Link
+              href="/employer/pipeline"
+              className="text-xs font-semibold text-fill-accent hover:underline"
+            >
+              {labels.openPipeline || "Open pipeline →"}
+            </Link>
+          </div>
           <ul className="space-y-2.5">
             {data.stageBreakdown.map((stage, index) => {
               const max = Math.max(
@@ -157,26 +168,31 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
                   ? Math.max(12, (stage.count / max) * 100)
                   : 8;
               return (
-                <li key={stage.id} className="flex items-center gap-3">
-                  <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
-                    {stage.name}
-                  </span>
-                  <div
-                    className="h-2.5 flex-1 overflow-hidden rounded-full"
-                    style={{ backgroundColor: stageTrackBackground(color) }}
+                <li key={stage.id}>
+                  <Link
+                    href="/employer/pipeline"
+                    className="flex items-center gap-3 rounded-radius-sm py-0.5 hover:bg-surface-2/60"
                   >
+                    <span className="w-28 shrink-0 truncate text-[12.5px] text-text-secondary">
+                      {stage.name}
+                    </span>
                     <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${fillPct}%`,
-                        backgroundColor: color,
-                        opacity: stage.count > 0 ? 1 : 0.55,
-                      }}
-                    />
-                  </div>
-                  <span className="w-6 text-right font-mono text-[12px]">
-                    {stage.count}
-                  </span>
+                      className="h-2.5 flex-1 overflow-hidden rounded-full"
+                      style={{ backgroundColor: stageTrackBackground(color) }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${fillPct}%`,
+                          backgroundColor: color,
+                          opacity: stage.count > 0 ? 1 : 0.55,
+                        }}
+                      />
+                    </div>
+                    <span className="w-6 text-right font-mono text-[12px]">
+                      {stage.count}
+                    </span>
+                  </Link>
                 </li>
               );
             })}
@@ -184,7 +200,7 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
         </section>
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="dashboard-stat-card dashboard-stat-card--employer">
           <CardBody>
             <Link
@@ -208,26 +224,40 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
         <Card className="dashboard-stat-card dashboard-stat-card--employer">
           <CardBody>
             <Link
-              href="/employer/profile"
+              href="/employer/shortlist"
               className="font-medium text-text-primary hover:underline"
             >
-              {labels.openProfile || "Manage plan & profile →"}
+              {labels.openShortlist || "Open shortlist →"}
+            </Link>
+          </CardBody>
+        </Card>
+        <Card className="dashboard-stat-card dashboard-stat-card--employer">
+          <CardBody>
+            <Link
+              href="/employer/jobs"
+              className="font-medium text-text-primary hover:underline"
+            >
+              {labels.openJobs || "Manage jobs →"}
             </Link>
           </CardBody>
         </Card>
       </div>
 
+      <Card className="dashboard-stat-card dashboard-stat-card--employer">
+        <CardBody>
+          <Link
+            href="/employer/profile"
+            className="font-medium text-text-primary hover:underline"
+          >
+            {labels.openProfile || "Manage plan & profile →"}
+          </Link>
+        </CardBody>
+      </Card>
+
       <PortalVideosSection
         apiPath="/api/employer/videos"
-        labels={{
-          videosTitle: labels.videosTitle || "Private video materials",
-          videosSubtitle:
-            labels.videosSubtitle ||
-            "Exclusive route briefings for active Track A and Track B subscribers.",
-          videosLocked:
-            labels.videosLocked ||
-            "Unlock with an active Track A or Track B subscription.",
-        }}
+        labels={labels}
+        upgradeHref="/employer/profile"
       />
     </div>
   );

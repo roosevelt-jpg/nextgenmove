@@ -7,18 +7,26 @@ import {
 } from "@/lib/employer/session";
 import { resolveStageColor } from "@/lib/pipeline-colors";
 
-const TALENT_POOL_SOURCES = [
+const TALENT_POOL_SOURCES = new Set([
   "admin_curated",
   "company_browsed",
   "role_interest_promoted",
-] as const;
+]);
 
 export async function GET() {
   const session = await getEmployerSession();
   if (!session) return unauthorizedResponse();
 
+  const companyPayload = {
+    name: session.company.name,
+    plan: session.company.plan,
+    subscriptionStatus: session.company.subscriptionStatus,
+  };
+
   try {
-    const [matchesSnapshot, talentSnapshot, stagesSnapshot] = await Promise.all([
+    // Single matches query — compute all stats in memory (avoids composite
+    // companyId+source index failures wiping the whole dashboard).
+    const [matchesResult, stagesResult] = await Promise.allSettled([
       withTimeout(
         adminDb
           .collection("matches")
@@ -28,36 +36,52 @@ export async function GET() {
         "employer_dashboard_matches",
       ),
       withTimeout(
-        adminDb
-          .collection("matches")
-          .where("companyId", "==", session.companyId)
-          .where("source", "in", [...TALENT_POOL_SOURCES])
-          .get(),
-        4000,
-        "employer_dashboard_talent",
-      ),
-      withTimeout(
         adminDb.collection("pipeline_stages").get(),
         4000,
         "employer_dashboard_stages",
       ),
     ]);
 
+    const matchesSnapshot =
+      matchesResult.status === "fulfilled" ? matchesResult.value : null;
+    const stagesSnapshot =
+      stagesResult.status === "fulfilled" ? stagesResult.value : null;
+
+    if (!matchesSnapshot) {
+      console.error(
+        "employer_dashboard_matches_failed",
+        matchesResult.status === "rejected" ? matchesResult.reason : null,
+      );
+    }
+    if (!stagesSnapshot) {
+      console.error(
+        "employer_dashboard_stages_failed",
+        stagesResult.status === "rejected" ? stagesResult.reason : null,
+      );
+    }
+
     let shortlisted = 0;
     let inPipeline = 0;
+    let talentPool = 0;
     const byStage: Record<string, number> = {};
 
-    for (const doc of matchesSnapshot.docs) {
-      const data = doc.data();
-      if (data.shortlisted) shortlisted += 1;
-      if (data.stageId) {
-        inPipeline += 1;
-        const stageId = String(data.stageId);
-        byStage[stageId] = (byStage[stageId] ?? 0) + 1;
+    if (matchesSnapshot) {
+      for (const doc of matchesSnapshot.docs) {
+        const data = doc.data();
+        const source = String(data.source ?? "");
+        if (TALENT_POOL_SOURCES.has(source)) {
+          talentPool += 1;
+        }
+        if (data.shortlisted) shortlisted += 1;
+        if (data.stageId) {
+          inPipeline += 1;
+          const stageId = String(data.stageId);
+          byStage[stageId] = (byStage[stageId] ?? 0) + 1;
+        }
       }
     }
 
-    const stageBreakdown = stagesSnapshot.docs
+    const stageBreakdown = (stagesSnapshot?.docs ?? [])
       .map((doc) => {
         const data = doc.data();
         return {
@@ -74,26 +98,22 @@ export async function GET() {
         color: resolveStageColor(stage.color, index),
       }));
 
+    const degraded = !matchesSnapshot || !stagesSnapshot;
+
     return NextResponse.json({
-      company: {
-        name: session.company.name,
-        plan: session.company.plan,
-        subscriptionStatus: session.company.subscriptionStatus,
-      },
+      company: companyPayload,
       stats: {
-        talentPool: talentSnapshot.size,
+        talentPool,
         shortlisted,
         inPipeline,
       },
       stageBreakdown,
+      ...(degraded ? { degraded: true } : {}),
     });
-  } catch {
+  } catch (error) {
+    console.error("employer_dashboard_failed", error);
     return NextResponse.json({
-      company: {
-        name: session.company.name,
-        plan: session.company.plan,
-        subscriptionStatus: session.company.subscriptionStatus,
-      },
+      company: companyPayload,
       stats: {
         talentPool: 0,
         shortlisted: 0,

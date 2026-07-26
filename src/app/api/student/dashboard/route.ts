@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { serializeTimestamp } from "@/lib/firestore-utils";
+import { isStudentInitiatedMatch } from "@/lib/employer/student-visibility";
 import {
   calculateProfileCompleteness,
   getStudentSession,
@@ -62,19 +64,24 @@ export async function GET() {
       (a, b) => a.order - b.order,
     );
 
-    // Never expose companyId to students — browsed interest must stay invisible.
-    const matches = matchesSnapshot.docs.map((doc) => {
-      const data = doc.data();
-      const stage = stageMap.get(data.stageId ?? "");
-      return {
-        id: doc.id,
-        stageId: data.stageId ?? "",
-        stageName: stage?.name ?? data.stageId ?? "",
-        stageColor: stage?.color ?? "#4b3f9c",
-        order: stage?.order ?? 0,
-        shortlisted: Boolean(data.shortlisted),
-      };
-    });
+    // Placement journey = student-initiated applications only (never company_browsed).
+    // Never expose companyId — browsing interest must stay invisible.
+    const matches = matchesSnapshot.docs
+      .filter((doc) => isStudentInitiatedMatch(doc.data()))
+      .map((doc) => {
+        const data = doc.data();
+        const stage = stageMap.get(data.stageId ?? "");
+        return {
+          id: doc.id,
+          stageId: data.stageId ?? "",
+          stageName: stage?.name ?? data.stageId ?? "",
+          stageColor: stage?.color ?? "#4b3f9c",
+          order: stage?.order ?? 0,
+          shortlisted: Boolean(data.shortlisted),
+          updatedAt: serializeTimestamp(data.updatedAt ?? data.createdAt),
+          jobTitle: String(data.jobTitle ?? ""),
+        };
+      });
 
     const purchasedIds = new Set(
       purchasesSnapshot.docs.map((doc) => doc.data().contentItemId as string),

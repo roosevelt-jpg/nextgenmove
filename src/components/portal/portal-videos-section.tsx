@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Modal } from "@/components/ui";
 import { YoutubeEmbed } from "@/components/media/youtube-embed";
@@ -17,31 +18,45 @@ export interface PortalVideoItem {
 interface PortalVideosSectionProps {
   apiPath: "/api/student/videos" | "/api/employer/videos";
   labels: Record<string, string>;
+  /** Where the locked-state upgrade CTA should navigate. */
+  upgradeHref?: string;
 }
 
 export function PortalVideosSection({
   apiPath,
   labels,
+  upgradeHref,
 }: PortalVideosSectionProps) {
-  const [access, setAccess] = useState<"loading" | "locked" | "granted">(
-    "loading",
-  );
+  const [access, setAccess] = useState<
+    "loading" | "locked" | "granted" | "error"
+  >("loading");
   const [videos, setVideos] = useState<PortalVideoItem[]>([]);
   const [active, setActive] = useState<PortalVideoItem | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(apiPath);
-    if (!res.ok) {
-      setAccess("locked");
+    setAccess("loading");
+    try {
+      const res = await fetch(apiPath);
+      if (res.status === 401 || res.status === 403) {
+        setAccess("locked");
+        setVideos([]);
+        return;
+      }
+      if (!res.ok) {
+        setAccess("error");
+        setVideos([]);
+        return;
+      }
+      const payload = (await res.json()) as {
+        access: "locked" | "granted";
+        videos: PortalVideoItem[];
+      };
+      setAccess(payload.access === "granted" ? "granted" : "locked");
+      setVideos(payload.videos ?? []);
+    } catch {
+      setAccess("error");
       setVideos([]);
-      return;
     }
-    const payload = (await res.json()) as {
-      access: "locked" | "granted";
-      videos: PortalVideoItem[];
-    };
-    setAccess(payload.access);
-    setVideos(payload.videos ?? []);
   }, [apiPath]);
 
   useEffect(() => {
@@ -51,6 +66,10 @@ export function PortalVideosSection({
   if (access === "loading") {
     return null;
   }
+
+  const upgradeLabel =
+    labels.videosUpgradeCta ||
+    (upgradeHref ? "Upgrade plan →" : "");
 
   return (
     <section className="space-y-3">
@@ -65,15 +84,35 @@ export function PortalVideosSection({
         ) : null}
       </div>
 
-      {access === "locked" ? (
+      {access === "error" ? (
+        <div className="rounded-radius border border-border bg-grad-card px-4 py-5">
+          <p className="text-sm text-text-warning" role="alert">
+            {labels.videosLoadError || "Could not load videos."}
+          </p>
+          <button
+            type="button"
+            className="mt-2 text-sm font-semibold text-fill-accent"
+            onClick={() => void load()}
+          >
+            {labels.retry || "Retry"}
+          </button>
+        </div>
+      ) : access === "locked" ? (
         <div className="rounded-radius border border-border bg-grad-card px-4 py-5">
           <p className="text-sm text-text-secondary">
             {labels.videosLocked ??
               "Private video materials unlock with an active Track A or Track B subscription."}
           </p>
-          {labels.videosUpgradeCta ? (
+          {upgradeHref && upgradeLabel ? (
+            <Link
+              href={upgradeHref}
+              className="mt-2 inline-block text-sm font-medium text-text-accent hover:underline"
+            >
+              {upgradeLabel}
+            </Link>
+          ) : upgradeLabel ? (
             <p className="mt-2 text-sm font-medium text-text-accent">
-              {labels.videosUpgradeCta}
+              {upgradeLabel}
             </p>
           ) : null}
         </div>
