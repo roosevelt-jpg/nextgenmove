@@ -3,7 +3,7 @@ import { getSiteSettings } from "@/lib/collections/site-settings";
 import { appBaseUrl } from "@/lib/billing/stripe";
 import {
   absoluteBrandAssetUrl,
-  resolveBrandLogoUrl,
+  BRAND_LOGO_PATH,
 } from "@/lib/brand";
 
 export interface EmailTemplateDocument {
@@ -57,11 +57,15 @@ export async function loadEmailTemplate(
 export async function buildBrandVars(request?: Request): Promise<EmailVars> {
   const settings = await getSiteSettings();
   const base = appBaseUrl(request);
+  // Always the hardcoded public brand asset — never CMS / Storage URLs.
+  const logoUrl =
+    absoluteBrandAssetUrl(BRAND_LOGO_PATH) ||
+    `${base}${BRAND_LOGO_PATH}`;
 
   return {
     siteName: settings.siteName || "Nextgenmove",
     tagline: settings.tagline || "",
-    logoUrl: absoluteBrandAssetUrl(resolveBrandLogoUrl(settings.logoUrl)),
+    logoUrl,
     brandMark: settings.brandMark || "N",
     contactEmail: settings.contactEmail || "",
     appUrl: base,
@@ -76,20 +80,20 @@ export async function buildBrandVars(request?: Request): Promise<EmailVars> {
 /** Branded HTML shell around template inner body. */
 export function wrapBrandedHtml(innerHtml: string, vars: EmailVars): string {
   const siteName = String(vars.siteName ?? "Nextgenmove");
-  const logoUrl = String(vars.logoUrl ?? "");
-  const tagline = String(vars.tagline ?? "");
-  const brandMark = String(vars.brandMark ?? "NG");
-  const contactEmail = String(vars.contactEmail ?? "");
   const appUrl = String(vars.appUrl ?? "");
+  const logoUrl =
+    String(vars.logoUrl ?? "").trim() ||
+    absoluteBrandAssetUrl(BRAND_LOGO_PATH) ||
+    (appUrl ? `${appUrl}${BRAND_LOGO_PATH}` : BRAND_LOGO_PATH);
+  const tagline = String(vars.tagline ?? "");
+  const contactEmail = String(vars.contactEmail ?? "");
   const year = String(vars.year ?? new Date().getFullYear());
 
   // Brand tokens: purple #3C3489, amber #C97A2E
   const brandPurple = "#3C3489";
   const brandAmber = "#C97A2E";
 
-  const logoBlock = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(siteName)}" width="140" style="display:block;max-width:140px;height:auto;border:0;" />`
-    : `<div style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:${brandPurple};letter-spacing:-0.02em;">${escapeHtml(brandMark)}</div>`;
+  const logoImg = `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(siteName)}" width="160" height="36" style="display:block;max-width:160px;height:auto;border:0;" />`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -104,9 +108,9 @@ export function wrapBrandedHtml(innerHtml: string, vars: EmailVars): string {
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border:1px solid #ddd6eb;border-radius:12px;overflow:hidden;">
           <tr>
-            <td style="padding:28px 28px 16px;border-bottom:3px solid ${brandAmber};background:${brandPurple};">
+            <td style="padding:24px 28px 16px;border-bottom:3px solid ${brandAmber};background:#0a0a0a;">
               <a href="${escapeHtml(appUrl)}" style="text-decoration:none;color:#ffffff;">
-                ${logoUrl ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(siteName)}" width="140" style="display:block;max-width:140px;height:auto;border:0;" />` : `<div style="font-family:Georgia,serif;font-size:24px;color:#ffffff;">${escapeHtml(siteName)}</div>`}
+                ${logoImg}
               </a>
               ${tagline ? `<p style="margin:8px 0 0;font-size:12px;color:#d6d0e8;letter-spacing:0.04em;">${escapeHtml(tagline)}</p>` : ""}
             </td>
@@ -121,7 +125,6 @@ export function wrapBrandedHtml(innerHtml: string, vars: EmailVars): string {
               <p style="margin:0 0 8px;">${escapeHtml(siteName)}${tagline ? ` · ${escapeHtml(tagline)}` : ""}</p>
               ${contactEmail ? `<p style="margin:0 0 8px;">Support: <a href="mailto:${escapeHtml(contactEmail)}" style="color:${brandPurple};">${escapeHtml(contactEmail)}</a></p>` : ""}
               <p style="margin:0;">© ${escapeHtml(year)} ${escapeHtml(siteName)}. All rights reserved.</p>
-              <p style="margin:12px 0 0;">${logoBlock}</p>
             </td>
           </tr>
         </table>

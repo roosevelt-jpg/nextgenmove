@@ -137,9 +137,18 @@ export function WorkspacePortalShell({
 
   const sidebar = (
     <aside className="dashboard-chrome flex h-full w-[240px] flex-col border-r">
-      <div className="flex items-center border-b border-white/20 px-4 py-4">
+      <Link
+        href={
+          workspace === "admin"
+            ? "/admin/dashboard"
+            : workspace === "employer"
+              ? "/employer/dashboard"
+              : "/student/dashboard"
+        }
+        className="flex items-center border-b border-white/20 px-4 py-4"
+      >
         <BrandLogo size="sidebar" />
-      </div>
+      </Link>
 
       <div className="px-3 pt-4">
         <p className="dashboard-chrome-muted mb-2 px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em]">
