@@ -150,11 +150,16 @@ export function AdminHomepageMediaView({
           youtubeSyncEnabled: draft.youtubeSyncEnabled,
           youtubeHomepageLimit: draft.youtubeHomepageLimit,
           youtubeLibraryLimit: draft.youtubeLibraryLimit,
+          // Clear stale sync errors once settings are intentionally updated.
+          ...(playlist ? { youtubeLastSyncError: "" } : {}),
         }),
       });
       if (!res.ok) {
         setSyncMessage(labels.youtubeSaveFailed ?? "Could not save settings.");
         return false;
+      }
+      if (playlist) {
+        setYoutube((prev) => ({ ...prev, youtubeLastSyncError: "" }));
       }
       setSyncMessage(labels.youtubeSaveOk ?? "Playlist settings saved.");
       return true;
@@ -274,7 +279,10 @@ export function AdminHomepageMediaView({
     setModalOpen(true);
   };
 
-  const saveYoutubeSettings = async (): Promise<boolean> => {
+  const saveYoutubeSettings = async (
+    options: { requirePlaylist?: boolean } = {},
+  ): Promise<boolean> => {
+    const requirePlaylist = options.requirePlaylist === true;
     setSaveBusy(true);
     setSyncMessage(null);
     try {
@@ -293,7 +301,7 @@ export function AdminHomepageMediaView({
         );
         return false;
       }
-      if (!playlist) {
+      if (requirePlaylist && !playlist) {
         setSyncMessage(
           labels.missing_or_invalid_playlist ||
             "Add a playlist URL, channel URL, or @handle, then Sync now. Connecting the API key under Integrations is step 1 of 2.",
@@ -308,13 +316,20 @@ export function AdminHomepageMediaView({
           youtubeSyncEnabled: youtube.youtubeSyncEnabled,
           youtubeHomepageLimit: youtube.youtubeHomepageLimit,
           youtubeLibraryLimit: youtube.youtubeLibraryLimit,
+          youtubeLastSyncError: "",
         }),
       });
       if (!res.ok) {
         setSyncMessage(labels.youtubeSaveFailed ?? "Could not save settings.");
         return false;
       }
-      setSyncMessage(labels.youtubeSaveOk ?? "Playlist settings saved.");
+      setYoutube((prev) => ({ ...prev, youtubeLastSyncError: "" }));
+      setSyncMessage(
+        playlist
+          ? (labels.youtubeSaveOk ?? "Playlist settings saved.")
+          : (labels.youtubeSaveCleared ??
+              "Settings saved. Add a playlist URL when you’re ready to sync."),
+      );
       await load();
       return true;
     } finally {
@@ -326,7 +341,7 @@ export function AdminHomepageMediaView({
     setSyncBusy(true);
     setSyncMessage(null);
     try {
-      const saved = await saveYoutubeSettings();
+      const saved = await saveYoutubeSettings({ requirePlaylist: true });
       if (!saved) return;
       const res = await fetch("/api/admin/youtube/sync", { method: "POST" });
       const payload = (await res.json().catch(() => ({}))) as {
@@ -411,6 +426,8 @@ export function AdminHomepageMediaView({
               setYoutube((prev) => ({
                 ...prev,
                 youtubePlaylistUrl: e.target.value,
+                // Hide stale sync error while the operator edits the source.
+                youtubeLastSyncError: "",
               }))
             }
             className="w-full rounded-radius-sm border border-border bg-surface-1 px-3 py-2 text-sm text-text-primary"
@@ -437,7 +454,7 @@ export function AdminHomepageMediaView({
             <input
               type="number"
               min={1}
-              max={12}
+              max={24}
               value={youtube.youtubeHomepageLimit}
               onChange={(e) =>
                 setYoutube((prev) => ({
@@ -467,9 +484,20 @@ export function AdminHomepageMediaView({
             />
           </label>
         </div>
-        {(formatSyncTimestamp(youtube.youtubeLastSyncedAt) ||
-          youtube.youtubeLastSyncError) && (
+        {!youtube.youtubePlaylistUrl.trim() ? (
           <p className="text-[11.5px] text-text-muted">
+            {labels.youtubeWaitingForPlaylist ??
+              "Waiting for a playlist / channel URL. The YouTube API key is connected — paste a source above, then Sync now."}
+          </p>
+        ) : formatSyncTimestamp(youtube.youtubeLastSyncedAt) ||
+          youtube.youtubeLastSyncError ? (
+          <p
+            className={
+              youtube.youtubeLastSyncError
+                ? "text-[11.5px] text-text-warning"
+                : "text-[11.5px] text-text-muted"
+            }
+          >
             {formatSyncTimestamp(youtube.youtubeLastSyncedAt)
               ? `${labels.youtubeLastSynced ?? "Last synced"}: ${formatSyncTimestamp(youtube.youtubeLastSyncedAt)}`
               : null}
@@ -477,9 +505,19 @@ export function AdminHomepageMediaView({
               ? ` · ${labels.youtubeLastError ?? "Error"}: ${mapYoutubeSyncError(youtube.youtubeLastSyncError, labels)}`
               : null}
           </p>
+        ) : (
+          <p className="text-[11.5px] text-text-muted">
+            {labels.youtubeReadyToSync ??
+              "Playlist saved. Click Sync now to pull videos into Video cards."}
+          </p>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" disabled={saveBusy} onClick={() => void saveYoutubeSettings()}>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={saveBusy}
+            onClick={() => void saveYoutubeSettings({ requirePlaylist: false })}
+          >
             {saveBusy
               ? labels.youtubeSaving ?? "Saving…"
               : labels.youtubeSave ?? "Save playlist settings"}
