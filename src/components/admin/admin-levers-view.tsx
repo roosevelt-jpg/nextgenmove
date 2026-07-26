@@ -45,7 +45,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
     return true;
   }, []);
 
-  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+  const { status: autosaveStatus, suppressNext, flush } = useDebouncedAutosave(
     levers,
     persistLevers,
     { enabled: canPersist, delayMs: 700 },
@@ -165,7 +165,7 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
     if (!levers || !canPersist) return;
     setIsSaving(true);
     setErrorCode(null);
-    const ok = await persistLevers(levers);
+    const ok = await flush();
     setIsSaving(false);
     if (!ok) setErrorCode("save_failed");
   };

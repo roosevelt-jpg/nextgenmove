@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
+import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 
 export interface AccountProfileViewProps {
@@ -484,24 +485,19 @@ export function AccountProfileView({
         </section>
       ) : null}
 
-      {statusMessage || autosaveStatus !== "idle" ? (
-        <p className="text-sm text-text-secondary" role="status">
-          {autosaveStatus === "saving"
-            ? labels.saving || "Saving…"
-            : autosaveStatus === "error"
-              ? labels.saveError || "Could not save."
-              : statusMessage ||
-                (autosaveStatus === "saved"
-                  ? labels.saveSuccess || "Saved."
-                  : null)}
-        </p>
-      ) : null}
-
-      <Button type="submit" disabled={isSaving || autosaveStatus === "saving"}>
-        {isSaving || autosaveStatus === "saving"
-          ? labels.saving || "Saving…"
-          : labels.saveChanges || labels.save || "Save changes"}
-      </Button>
+      <FormPersistBar
+        status={autosaveStatus}
+        isSaving={isSaving}
+        message={statusMessage}
+        saveType="submit"
+        labels={{
+          save: labels.saveChanges || labels.save,
+          saving: labels.saving,
+          saved: labels.saveSuccess || labels.saved,
+          saveError: labels.saveError,
+          autosaveHint: labels.autosaveHint,
+        }}
+      />
     </form>
   );
 }

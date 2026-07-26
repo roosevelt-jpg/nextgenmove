@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AdminSecurityControls } from "@/components/admin/admin-security-controls";
 import {
   AdminSettingsFieldsForm,
@@ -62,6 +62,8 @@ interface AdminSettingsViewProps {
     socialLinks?: SocialLink[];
   };
 }
+
+type WorkspaceSettings = AdminSettingsViewProps["settings"];
 
 const BRAND_FIELDS: SettingsFieldDef[] = [
   { key: "siteName", kind: "text", labelKey: "siteName" },
@@ -133,6 +135,14 @@ const BILLING_FIELDS: SettingsFieldDef[] = [
 
 export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) {
   const [section, setSection] = useState<SettingsSection>("brand");
+  const [workspace, setWorkspace] = useState<WorkspaceSettings>(settings);
+
+  const mergeWorkspace = useCallback(
+    (patch: Record<string, string | number | boolean | null | SocialLink[]>) => {
+      setWorkspace((prev) => ({ ...prev, ...patch }));
+    },
+    [],
+  );
 
   const nav = useMemo(
     () =>
@@ -246,52 +256,57 @@ export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) 
           ) : null}
 
           <section className="rounded-radius border border-border bg-grad-card p-4 sm:p-5">
-            {section === "brand" ? (
+            {/* Keep panels mounted so tab switches do not wipe drafts or stale RSC props. */}
+            <div className={section === "brand" ? "block" : "hidden"}>
               <AdminSettingsFieldsForm
                 labels={labels}
                 fields={BRAND_FIELDS}
+                onSaved={mergeWorkspace}
                 initialValues={{
-                  siteName: settings.siteName,
-                  brandMark: settings.brandMark,
-                  tagline: settings.tagline,
-                  timezone: settings.timezone,
-                  defaultCurrency: settings.defaultCurrency,
-                  siteDescription: settings.siteDescription,
-                  logoUrl: settings.logoUrl,
-                  faviconUrl: settings.faviconUrl,
-                  defaultMetaTitle: settings.defaultMetaTitle,
-                  defaultMetaDescription: settings.defaultMetaDescription,
+                  siteName: workspace.siteName,
+                  brandMark: workspace.brandMark,
+                  tagline: workspace.tagline,
+                  timezone: workspace.timezone,
+                  defaultCurrency: workspace.defaultCurrency,
+                  siteDescription: workspace.siteDescription,
+                  logoUrl: workspace.logoUrl,
+                  faviconUrl: workspace.faviconUrl,
+                  defaultMetaTitle: workspace.defaultMetaTitle,
+                  defaultMetaDescription: workspace.defaultMetaDescription,
                 }}
               />
-            ) : null}
+            </div>
 
-            {section === "contact" ? (
+            <div className={section === "contact" ? "block" : "hidden"}>
               <AdminSettingsFieldsForm
                 labels={labels}
                 fields={CONTACT_FIELDS}
+                onSaved={mergeWorkspace}
                 initialValues={{
-                  contactEmail: settings.contactEmail,
-                  contactPhone: settings.contactPhone,
-                  contactAddress: settings.contactAddress,
+                  contactEmail: workspace.contactEmail,
+                  contactPhone: workspace.contactPhone,
+                  contactAddress: workspace.contactAddress,
                 }}
               />
-            ) : null}
+            </div>
 
-            {section === "social" ? (
+            <div className={section === "social" ? "block" : "hidden"}>
               <AdminSocialLinksEditor
                 labels={labels}
-                initialLinks={settings.socialLinks ?? []}
+                initialLinks={workspace.socialLinks ?? []}
+                onSaved={(socialLinks) => mergeWorkspace({ socialLinks })}
               />
-            ) : null}
+            </div>
 
-            {section === "security" ? (
+            <div className={section === "security" ? "block" : "hidden"}>
               <div className="space-y-6">
                 <AdminSecurityControls
                   labels={labels}
-                  initialRequire2fa={Boolean(settings.require2fa)}
+                  initialRequire2fa={Boolean(workspace.require2fa)}
                   initialSessionExpireDays={Number(
-                    settings.sessionExpireDays ?? 5,
+                    workspace.sessionExpireDays ?? 5,
                   )}
+                  onSaved={mergeWorkspace}
                 />
                 <AdminSettingsFieldsForm
                   labels={labels}
@@ -303,42 +318,44 @@ export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) 
                       helpKey: "googleSignInEnabledHelp",
                     },
                   ]}
+                  onSaved={mergeWorkspace}
                   initialValues={{
-                    googleSignInEnabled: settings.googleSignInEnabled,
+                    googleSignInEnabled: workspace.googleSignInEnabled,
                   }}
                 />
               </div>
-            ) : null}
+            </div>
 
-            {section === "media" ? (
+            <div className={section === "media" ? "block" : "hidden"}>
               <AdminSettingsFieldsForm
                 labels={labels}
                 fields={MEDIA_FIELDS}
+                onSaved={mergeWorkspace}
                 initialValues={{
-                  youtubePlaylistUrl: settings.youtubePlaylistUrl,
-                  youtubeSyncEnabled: settings.youtubeSyncEnabled,
-                  youtubeHomepageLimit: settings.youtubeHomepageLimit,
-                  youtubeLibraryLimit: settings.youtubeLibraryLimit,
-                  youtubeLastSyncedAt: settings.youtubeLastSyncedAt,
-                  youtubeLastSyncError: settings.youtubeLastSyncError,
+                  youtubePlaylistUrl: workspace.youtubePlaylistUrl,
+                  youtubeSyncEnabled: workspace.youtubeSyncEnabled,
+                  youtubeHomepageLimit: workspace.youtubeHomepageLimit,
+                  youtubeLibraryLimit: workspace.youtubeLibraryLimit,
+                  youtubeLastSyncedAt: workspace.youtubeLastSyncedAt,
+                  youtubeLastSyncError: workspace.youtubeLastSyncError,
                 }}
               />
-            ) : null}
+            </div>
 
-            {section === "billing" ? (
+            <div className={section === "billing" ? "block" : "hidden"}>
               <div className="space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-radius-sm border border-border bg-surface-1/50 px-3 py-3">
                   <div>
                     <p className="font-medium text-text-primary">
-                      {settings.operatorPlanLabel ?? labels.operatorPlanLabel}
+                      {workspace.operatorPlanLabel ?? labels.operatorPlanLabel}
                     </p>
                     <p className="text-xs text-text-muted">
-                      {settings.operatorPlanDetail ?? labels.operatorPlanDetail}
+                      {workspace.operatorPlanDetail ?? labels.operatorPlanDetail}
                     </p>
                   </div>
-                  {settings.billingManageUrl ? (
+                  {workspace.billingManageUrl ? (
                     <a
-                      href={settings.billingManageUrl}
+                      href={workspace.billingManageUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="rounded-radius-sm bg-grad-rouse px-2.5 py-1 text-xs font-medium text-on-gradient hover:opacity-90"
@@ -350,16 +367,17 @@ export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) 
                 <AdminSettingsFieldsForm
                   labels={labels}
                   fields={BILLING_FIELDS}
+                  onSaved={mergeWorkspace}
                   initialValues={{
-                    operatorPlanLabel: settings.operatorPlanLabel,
-                    operatorPlanDetail: settings.operatorPlanDetail,
-                    billingManageUrl: settings.billingManageUrl,
+                    operatorPlanLabel: workspace.operatorPlanLabel,
+                    operatorPlanDetail: workspace.operatorPlanDetail,
+                    billingManageUrl: workspace.billingManageUrl,
                   }}
                 />
               </div>
-            ) : null}
+            </div>
 
-            {section === "team" ? (
+            <div className={section === "team" ? "block" : "hidden"}>
               <div className="space-y-3">
                 {labels.teamMembersBody ? (
                   <p className="text-sm text-text-secondary">
@@ -373,7 +391,7 @@ export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) 
                   {labels.manageTeam ?? labels.users}
                 </Link>
               </div>
-            ) : null}
+            </div>
           </section>
         </div>
       </div>

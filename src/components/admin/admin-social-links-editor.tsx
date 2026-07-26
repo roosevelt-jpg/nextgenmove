@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Select } from "@/components/ui";
+import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import type { SocialLink } from "@/types/cms";
 import { SOCIAL_PLATFORM_KEYS } from "@/lib/public/social";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
@@ -9,6 +10,7 @@ import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 interface AdminSocialLinksEditorProps {
   labels: Record<string, string>;
   initialLinks: SocialLink[];
+  onSaved?: (links: SocialLink[]) => void;
 }
 
 type DraftRow = {
@@ -48,18 +50,27 @@ function platformOptionLabel(
 export function AdminSocialLinksEditor({
   labels,
   initialLinks,
+  onSaved,
 }: AdminSocialLinksEditorProps) {
   const [rows, setRows] = useState<DraftRow[]>(() => toDraft(initialLinks));
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const suppressRef = useRef<(() => void) | null>(null);
+  const onSavedRef = useRef(onSaved);
+  onSavedRef.current = onSaved;
+
+  const sourceKey = useMemo(
+    () => JSON.stringify(initialLinks ?? []),
+    [initialLinks],
+  );
 
   useEffect(() => {
     suppressRef.current?.();
     setRows(toDraft(initialLinks));
     setHydrated(true);
-  }, [initialLinks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sourceKey encodes link values
+  }, [sourceKey]);
 
   const options = SOCIAL_PLATFORM_KEYS.map((key) => ({
     value: key,
@@ -82,15 +93,16 @@ export function AdminSocialLinksEditor({
     });
 
     if (!response.ok) {
-      setMessage(labels.saveError ?? "Could not save social links.");
+      setMessage(labels.saveError || "Could not save social links.");
       return false;
     }
 
-    setMessage(labels.saveSuccess ?? "Saved.");
+    setMessage(labels.saveSuccess || "Saved.");
+    onSavedRef.current?.(socialLinks);
     return true;
   };
 
-  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+  const { status: autosaveStatus, suppressNext, flush } = useDebouncedAutosave(
     hydrated ? rows : null,
     persistRows,
     { enabled: hydrated, delayMs: 700 },
@@ -124,16 +136,12 @@ export function AdminSocialLinksEditor({
   const save = async () => {
     setIsSaving(true);
     setMessage(null);
-    await persistRows(rows);
+    await flush();
     setIsSaving(false);
   };
 
   return (
     <div className="space-y-4">
-      {labels.socialLinksHelp ? (
-        <p className="text-sm text-text-secondary">{labels.socialLinksHelp}</p>
-      ) : null}
-
       <div className="space-y-3">
         {rows.length === 0 ? (
           <p className="text-sm text-text-muted">
@@ -186,17 +194,21 @@ export function AdminSocialLinksEditor({
         <Button type="button" variant="secondary" onClick={addRow}>
           {labels.addSocialLink ?? labels.addRow ?? "Add link"}
         </Button>
-        <Button type="button" onClick={() => void save()} disabled={isSaving}>
-          {isSaving || autosaveStatus === "saving"
-            ? (labels.saving ?? "Saving…")
-            : (labels.saveSocialLinks ?? labels.save ?? "Save")}
-        </Button>
-        {message || autosaveStatus === "saved" ? (
-          <p className="text-xs text-text-muted">
-            {message ?? labels.saveSuccess ?? "Saved."}
-          </p>
-        ) : null}
       </div>
+
+      <FormPersistBar
+        status={autosaveStatus}
+        isSaving={isSaving}
+        message={message}
+        onSave={save}
+        labels={{
+          save: labels.saveSocialLinks || labels.save,
+          saving: labels.saving,
+          saved: labels.saveSuccess || labels.saved,
+          saveError: labels.saveError,
+          autosaveHint: labels.autosaveHint,
+        }}
+      />
     </div>
   );
 }

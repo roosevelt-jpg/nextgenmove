@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Input } from "@/components/ui";
+import { Input } from "@/components/ui";
+import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import type { CompanyDocument } from "@/lib/employer/session";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
@@ -101,7 +102,7 @@ export function CompanySettingsView({
     [labels.saveError, labels.saveSuccess],
   );
 
-  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+  const { status: autosaveStatus, suppressNext, flush } = useDebouncedAutosave(
     draft,
     persistDraft,
     { enabled: hydrated, delayMs: 800 },
@@ -169,7 +170,7 @@ export function CompanySettingsView({
     if (!draft) return;
     setIsSaving(true);
     setStatusMessage(null);
-    const ok = await persistDraft(draft);
+    const ok = await flush();
     setIsSaving(false);
     if (ok) {
       await loadCompany();
@@ -280,24 +281,19 @@ export function CompanySettingsView({
         </fieldset>
       ) : null}
 
-      {statusMessage || autosaveStatus !== "idle" ? (
-        <p className="text-sm text-text-secondary" role="status">
-          {autosaveStatus === "saving"
-            ? labels.saving || "Saving…"
-            : autosaveStatus === "error"
-              ? labels.saveError || "Could not save."
-              : statusMessage ||
-                (autosaveStatus === "saved"
-                  ? labels.saveSuccess || "Saved."
-                  : null)}
-        </p>
-      ) : null}
-
-      <Button type="submit" disabled={isSaving || autosaveStatus === "saving"}>
-        {isSaving || autosaveStatus === "saving"
-          ? labels.saving || "Saving…"
-          : labels.save || "Save"}
-      </Button>
+      <FormPersistBar
+        status={autosaveStatus}
+        isSaving={isSaving}
+        message={statusMessage}
+        saveType="submit"
+        labels={{
+          save: labels.save,
+          saving: labels.saving,
+          saved: labels.saveSuccess || labels.saved,
+          saveError: labels.saveError,
+          autosaveHint: labels.autosaveHint,
+        }}
+      />
     </form>
   );
 }

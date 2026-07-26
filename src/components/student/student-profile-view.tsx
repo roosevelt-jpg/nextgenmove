@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Input, Select, Textarea } from "@/components/ui";
+import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
@@ -136,7 +137,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
     return true;
   }, [labels.saveError, labels.saveSuccess]);
 
-  const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
+  const { status: autosaveStatus, suppressNext, flush } = useDebouncedAutosave(
     profile,
     persistProfile,
     { enabled: Boolean(profile), delayMs: 800 },
@@ -157,7 +158,7 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
 
     setIsSaving(true);
     setStatusMessage(null);
-    const ok = await persistProfile(profile);
+    const ok = await flush();
     setIsSaving(false);
     if (ok) {
       await loadProfile();
@@ -440,23 +441,19 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
             setProfile({ ...profile, photoUrl: result.url })
           }
         />
-        {statusMessage || autosaveStatus !== "idle" ? (
-          <p className="text-sm text-text-secondary" role="status">
-            {autosaveStatus === "saving"
-              ? labels.saving || "Saving…"
-              : autosaveStatus === "error"
-                ? labels.saveError || "Could not save."
-                : statusMessage ||
-                  (autosaveStatus === "saved"
-                    ? labels.saveSuccess || "Saved."
-                    : null)}
-          </p>
-        ) : null}
-        <Button type="submit" disabled={isSaving || autosaveStatus === "saving"}>
-          {isSaving || autosaveStatus === "saving"
-            ? labels.saving || "Saving…"
-            : labels.save || "Save"}
-        </Button>
+        <FormPersistBar
+          status={autosaveStatus}
+          isSaving={isSaving}
+          message={statusMessage}
+          saveType="submit"
+          labels={{
+            save: labels.save,
+            saving: labels.saving,
+            saved: labels.saveSuccess || labels.saved,
+            saveError: labels.saveError,
+            autosaveHint: labels.autosaveHint,
+          }}
+        />
       </aside>
     </form>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input, Textarea } from "@/components/ui";
+import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,9 @@ interface AdminSettingsFieldsFormProps {
   fields: SettingsFieldDef[];
   initialValues: Record<string, string | number | boolean | null | undefined>;
   className?: string;
+  onSaved?: (
+    patch: Record<string, string | number | boolean | null>,
+  ) => void;
 }
 
 function Switch({
@@ -67,58 +71,76 @@ function Switch({
   );
 }
 
+function toDraft(
+  fields: SettingsFieldDef[],
+  initialValues: Record<string, string | number | boolean | null | undefined>,
+): Record<string, string | boolean> {
+  const next: Record<string, string | boolean> = {};
+  for (const field of fields) {
+    const raw = initialValues[field.key];
+    if (field.kind === "boolean") {
+      next[field.key] = Boolean(raw);
+    } else {
+      next[field.key] = raw == null ? "" : String(raw);
+    }
+  }
+  return next;
+}
+
+function toPersistBody(
+  fields: SettingsFieldDef[],
+  draft: Record<string, string | boolean>,
+): Record<string, string | number | boolean | null> {
+  const body: Record<string, string | number | boolean | null> = {};
+  for (const field of fields) {
+    if (field.readOnly) continue;
+    const value = draft[field.key];
+    if (field.kind === "boolean") {
+      body[field.key] = Boolean(value);
+    } else if (field.kind === "number") {
+      const n = Number(value);
+      body[field.key] = Number.isFinite(n) ? n : null;
+    } else {
+      const text = String(value ?? "").trim();
+      body[field.key] = text || null;
+    }
+  }
+  return body;
+}
+
 export function AdminSettingsFieldsForm({
   labels,
   fields,
   initialValues,
   className,
+  onSaved,
 }: AdminSettingsFieldsFormProps) {
-  const [values, setValues] = useState<Record<string, string | boolean>>(() => {
-    const next: Record<string, string | boolean> = {};
-    for (const field of fields) {
-      const raw = initialValues[field.key];
-      if (field.kind === "boolean") {
-        next[field.key] = Boolean(raw);
-      } else {
-        next[field.key] = raw == null ? "" : String(raw);
-      }
-    }
-    return next;
-  });
+  const [values, setValues] = useState(() => toDraft(fields, initialValues));
   const [hydrated, setHydrated] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const suppressRef = useRef<(() => void) | null>(null);
+  const onSavedRef = useRef(onSaved);
+  onSavedRef.current = onSaved;
+
+  const sourceKey = useMemo(
+    () =>
+      JSON.stringify(
+        fields.map((field) => [field.key, initialValues[field.key] ?? null]),
+      ),
+    [fields, initialValues],
+  );
 
   useEffect(() => {
     suppressRef.current?.();
-    const next: Record<string, string | boolean> = {};
-    for (const field of fields) {
-      const raw = initialValues[field.key];
-      if (field.kind === "boolean") {
-        next[field.key] = Boolean(raw);
-      } else {
-        next[field.key] = raw == null ? "" : String(raw);
-      }
-    }
-    setValues(next);
+    setValues(toDraft(fields, initialValues));
     setHydrated(true);
-  }, [fields, initialValues]);
+    // Sync only when server/parent values actually change, not on object identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sourceKey encodes fields + values
+  }, [sourceKey]);
 
   const persist = async (draft: Record<string, string | boolean>) => {
-    const body: Record<string, unknown> = {};
-    for (const field of fields) {
-      if (field.readOnly) continue;
-      const value = draft[field.key];
-      if (field.kind === "boolean") {
-        body[field.key] = Boolean(value);
-      } else if (field.kind === "number") {
-        const n = Number(value);
-        body[field.key] = Number.isFinite(n) ? n : null;
-      } else {
-        const text = String(value ?? "").trim();
-        body[field.key] = text || null;
-      }
-    }
+    const body = toPersistBody(fields, draft);
 
     try {
       const response = await fetch("/api/admin/data/site_settings/default", {
@@ -128,19 +150,20 @@ export function AdminSettingsFieldsForm({
       });
 
       if (!response.ok) {
-        setMessage(labels.saveError ?? "Could not save.");
+        setMessage(labels.saveError || "Could not save.");
         return false;
       }
 
-      setMessage(labels.saveSuccess ?? "Saved.");
+      setMessage(labels.saveSuccess || labels.saved || "Saved.");
+      onSavedRef.current?.(body);
       return true;
     } catch {
-      setMessage(labels.saveError ?? "Could not save.");
+      setMessage(labels.saveError || "Could not save.");
       return false;
     }
   };
 
-  const { status, suppressNext } = useDebouncedAutosave(
+  const { status, suppressNext, flush } = useDebouncedAutosave(
     hydrated ? values : null,
     persist,
     { enabled: hydrated, delayMs: 700 },
@@ -149,14 +172,12 @@ export function AdminSettingsFieldsForm({
     suppressRef.current = suppressNext;
   }, [suppressNext]);
 
-  const statusLabel =
-    status === "saving"
-      ? labels.saving
-      : status === "saved"
-        ? labels.saveSuccess
-        : status === "error"
-          ? labels.saveError ?? message ?? "Could not save."
-          : message;
+  const saveNow = async () => {
+    setIsSaving(true);
+    setMessage(null);
+    await flush();
+    setIsSaving(false);
+  };
 
   return (
     <div className={cn("space-y-5", className)}>
@@ -288,17 +309,19 @@ export function AdminSettingsFieldsForm({
         })}
       </div>
 
-      {statusLabel ? (
-        <p
-          className={cn(
-            "text-xs",
-            status === "error" ? "text-text-warning" : "text-text-muted",
-          )}
-          aria-live="polite"
-        >
-          {statusLabel}
-        </p>
-      ) : null}
+      <FormPersistBar
+        status={status}
+        isSaving={isSaving}
+        message={message}
+        onSave={saveNow}
+        labels={{
+          save: labels.save,
+          saving: labels.saving,
+          saved: labels.saveSuccess || labels.saved,
+          saveError: labels.saveError,
+          autosaveHint: labels.autosaveHint,
+        }}
+      />
     </div>
   );
 }

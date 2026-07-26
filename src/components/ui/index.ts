@@ -25,6 +25,10 @@ export {
 } from "./data-table";
 export { EmptyState, type EmptyStateProps } from "./empty-state";
 export {
+  FormPersistBar,
+  type FormPersistBarProps,
+} from "./form-persist-bar";
+export {
   FileUpload,
   type FileUploadMetadata,
   type FileUploadProps,
