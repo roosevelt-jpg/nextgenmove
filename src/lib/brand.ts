@@ -1,7 +1,8 @@
 /** Hardcoded NextGen Move brand assets (public/brand). */
 
-export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo.png";
-export const BRAND_ICON_PATH = "/brand/nextgenmove-logo.png";
+/** Transparent-background mark for chrome (header / footer / sidebars). */
+export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo-mark.png";
+export const BRAND_ICON_PATH = "/brand/nextgenmove-logo-mark.png";
 export const BRAND_FAVICON_PATH = "/brand/nextgenmove-favicon.png";
 
 /** Always use the hardcoded logo for chrome (header / footer / sidebars). */

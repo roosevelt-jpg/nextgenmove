@@ -32,7 +32,10 @@ export async function SiteFooter() {
     <footer className="mt-auto bg-grad-rouse text-on-gradient">
       <div className="page-container mx-auto flex w-full max-w-page flex-col gap-8 py-10 md:flex-row md:justify-between">
         <div className="max-w-xs space-y-3">
-          <Link href="/" className="inline-flex items-center">
+          <Link
+            href="/"
+            className="inline-flex h-9 max-w-[152px] items-center overflow-hidden"
+          >
             <BrandLogo size="footer" />
           </Link>
           {description ? (

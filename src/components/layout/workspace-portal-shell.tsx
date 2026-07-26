@@ -145,7 +145,7 @@ export function WorkspacePortalShell({
               ? "/employer/dashboard"
               : "/student/dashboard"
         }
-        className="flex items-center border-b border-white/20 px-4 py-4"
+        className="flex h-14 max-h-14 items-center overflow-hidden border-b border-white/20 px-4"
       >
         <BrandLogo size="sidebar" />
       </Link>

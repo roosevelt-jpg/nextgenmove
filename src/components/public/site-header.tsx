@@ -29,7 +29,10 @@ export async function SiteHeader() {
   return (
     <header className="bg-grad-rouse text-on-gradient">
       <div className="page-container mx-auto flex w-full max-w-page items-center justify-between gap-4 py-3">
-        <Link href="/" className="flex shrink-0 items-center">
+        <Link
+          href="/"
+          className="flex h-10 max-w-[168px] shrink-0 items-center overflow-hidden"
+        >
           <BrandLogo size="header" priority />
         </Link>
 

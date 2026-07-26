@@ -4,23 +4,28 @@ import { cn } from "@/lib/utils";
 type BrandLogoSize = "header" | "footer" | "sidebar" | "auth";
 
 /**
- * onDark — always white (header / footer / dashboard chrome sit on purple).
+ * onDark — white mark on purple / dark chrome.
  * auto — full color in light theme, white silhouette in dark theme.
  * color — always full-color (e.g. light auth panel).
  */
 type BrandLogoTone = "onDark" | "auto" | "color";
 
-const SIZE_CLASS: Record<BrandLogoSize, string> = {
-  header: "h-11 w-auto max-w-[240px] sm:h-12",
-  footer: "h-10 w-auto max-w-[220px] sm:h-11",
-  sidebar: "h-11 w-auto max-w-[200px]",
-  auth: "h-11 w-auto max-w-[220px]",
+/** Intrinsic mark size after trim (public/brand/nextgenmove-logo-mark.png). */
+const LOGO_INTRINSIC = { width: 1008, height: 558 } as const;
+
+const SIZE_STYLE: Record<
+  BrandLogoSize,
+  { height: number; maxWidth: number }
+> = {
+  header: { height: 40, maxWidth: 168 },
+  footer: { height: 36, maxWidth: 152 },
+  sidebar: { height: 36, maxWidth: 148 },
+  auth: { height: 40, maxWidth: 168 },
 };
 
 const TONE_CLASS: Record<BrandLogoTone, string> = {
-  // Pure white mark on purple / dark chrome
+  // White mark on purple / dark chrome (asset has transparent background)
   onDark: "brightness-0 invert",
-  // Theme-aware: color on light pages, white when html.dark
   auto: "dark:brightness-0 dark:invert",
   color: "",
 };
@@ -47,21 +52,33 @@ export function BrandLogo({
   priority = false,
   alt = "NextGen Move",
 }: BrandLogoProps) {
+  const { height, maxWidth } = SIZE_STYLE[size];
+  const width = Math.round(
+    (height * LOGO_INTRINSIC.width) / LOGO_INTRINSIC.height,
+  );
+
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- hardcoded local brand asset
-    <img
-      src={BRAND_LOGO_PATH}
-      alt={alt}
-      width={240}
-      height={48}
+    <span
       className={cn(
-        "shrink-0 object-contain object-left",
-        SIZE_CLASS[size],
-        TONE_CLASS[tone],
+        "inline-flex shrink-0 items-center overflow-hidden",
         className,
       )}
-      decoding="async"
-      {...(priority ? { fetchPriority: "high" as const } : {})}
-    />
+      style={{ height, maxWidth, maxHeight: height }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- hardcoded local brand asset */}
+      <img
+        src={BRAND_LOGO_PATH}
+        alt={alt}
+        width={width}
+        height={height}
+        className={cn(
+          "block h-full w-auto max-h-full max-w-full object-contain object-left",
+          TONE_CLASS[tone],
+        )}
+        style={{ height, maxWidth, width: "auto" }}
+        decoding="async"
+        {...(priority ? { fetchPriority: "high" as const } : {})}
+      />
+    </span>
   );
 }
