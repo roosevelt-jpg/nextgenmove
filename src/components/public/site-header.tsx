@@ -1,11 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { SiteHeaderActions } from "@/components/public/site-header-actions";
 import {
   getSiteSettings,
   listNavCmsPages,
 } from "@/lib/collections/site-settings";
-import { resolveBrandIconUrl } from "@/lib/brand";
 import { buildHeaderPrimaryLinks } from "@/lib/public/nav";
 
 export async function SiteHeader() {
@@ -24,38 +23,14 @@ export async function SiteHeader() {
       label: page.navLabel || page.title,
     })),
   ];
-  const siteName = settings.siteName ?? navLabels.siteName ?? "Nextgenmove";
   const ctaLabel = navLabels.headerCta;
   const ctaHref = navLabels.headerCtaHref || "/sign-up";
-  const brandIcon = resolveBrandIconUrl(settings.logoUrl || settings.faviconUrl);
-  const isRemote = /^https?:\/\//i.test(brandIcon);
 
   return (
     <header className="bg-grad-rouse text-on-gradient">
       <div className="page-container mx-auto flex w-full max-w-page items-center justify-between gap-4 py-3">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          {isRemote ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={brandIcon}
-              alt=""
-              className="h-9 w-9 rounded-radius-sm object-cover"
-              aria-hidden
-            />
-          ) : (
-            <Image
-              src={brandIcon}
-              alt=""
-              width={36}
-              height={36}
-              className="h-9 w-9 rounded-radius-sm object-cover"
-              priority
-              aria-hidden
-            />
-          )}
-          <span className="font-serif text-lg font-semibold text-on-gradient">
-            {siteName}
-          </span>
+        <Link href="/" className="flex shrink-0 items-center">
+          <BrandLogo size="header" priority />
         </Link>
 
         <nav

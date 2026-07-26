@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BRAND_ICON_PATH } from "@/lib/brand";
+import { BrandLogo } from "@/components/brand/brand-logo";
 
 export type AuthPanel = "signIn" | "signUpTalent" | "signUpCompany";
 
@@ -16,7 +16,6 @@ export interface AuthSplitShellProps {
 
 function BrandMark({
   siteName,
-  variant,
 }: {
   siteName: string;
   brandMark: string;
@@ -26,24 +25,8 @@ function BrandMark({
   const name = siteName || "Nextgenmove";
 
   return (
-    <span className="inline-flex items-center gap-2.5">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={BRAND_ICON_PATH}
-        alt=""
-        className="h-9 w-9 shrink-0 rounded-radius-sm object-cover"
-        aria-hidden
-      />
-      <span
-        className={
-          variant === "light"
-            ? "font-serif text-[1.25rem] font-semibold tracking-tight text-white"
-            : "font-serif text-[1.25rem] font-semibold tracking-tight text-text-primary"
-        }
-      >
-        {name}
-      </span>
-      <span className="sr-only">{name}</span>
+    <span className="inline-flex items-center">
+      <BrandLogo size="auth" alt={name} />
     </span>
   );
 }

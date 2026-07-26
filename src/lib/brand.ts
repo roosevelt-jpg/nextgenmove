@@ -1,28 +1,23 @@
-/** Brand asset helpers — CMS Storage URLs only (no baked-in public/brand fallbacks). */
+/** Hardcoded NextGen Move brand assets (public/brand). */
 
-/** @deprecated Kept for docs/scripts; prefer empty CMS URL over static assets. */
-export const BRAND_LOGO_PATH = "";
-export const BRAND_ICON_PATH = "";
-export const BRAND_FAVICON_PATH = "";
+export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo.png";
+export const BRAND_ICON_PATH = "/brand/nextgenmove-logo.png";
+export const BRAND_FAVICON_PATH = "/brand/nextgenmove-favicon.png";
 
-function pickCmsUrl(cmsUrl?: string | null): string | null {
-  const trimmed = typeof cmsUrl === "string" ? cmsUrl.trim() : "";
-  return trimmed || null;
+/** Always use the hardcoded logo for chrome (header / footer / sidebars). */
+export function resolveBrandLogoUrl(_cmsUrl?: string | null): string {
+  return BRAND_LOGO_PATH;
 }
 
-/** Prefer CMS-uploaded logo; empty string when unset (no baked-in brand asset). */
-export function resolveBrandLogoUrl(cmsUrl?: string | null): string {
-  return pickCmsUrl(cmsUrl) ?? "";
+/** Always use the hardcoded logo for chrome (header / footer / sidebars). */
+export function resolveBrandIconUrl(_cmsUrl?: string | null): string {
+  return BRAND_LOGO_PATH;
 }
 
-/** Prefer CMS-uploaded icon; empty string when unset. */
-export function resolveBrandIconUrl(cmsUrl?: string | null): string {
-  return pickCmsUrl(cmsUrl) ?? "";
-}
-
-/** Prefer CMS-uploaded favicon; empty string when unset. */
+/** Favicon may still come from CMS when set; otherwise use the static asset. */
 export function resolveBrandFaviconUrl(cmsUrl?: string | null): string {
-  return pickCmsUrl(cmsUrl) ?? "";
+  const trimmed = typeof cmsUrl === "string" ? cmsUrl.trim() : "";
+  return trimmed || BRAND_FAVICON_PATH;
 }
 
 /** Absolute URL for emails / Open Graph when a public origin is configured. */

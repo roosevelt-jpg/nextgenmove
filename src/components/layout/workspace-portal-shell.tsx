@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { clearSession } from "@/lib/auth-client";
-import { resolveBrandIconUrl } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { LiveDateTime } from "@/components/layout/live-date-time";
@@ -67,9 +67,9 @@ export function WorkspacePortalShell({
   sectionLabel,
   navItems,
   labels,
-  siteName,
-  brandMark,
-  brandIconUrl,
+  siteName: _siteName,
+  brandMark: _brandMark,
+  brandIconUrl: _brandIconUrl,
   children,
   previewMode = false,
   impersonation = null,
@@ -137,17 +137,8 @@ export function WorkspacePortalShell({
 
   const sidebar = (
     <aside className="dashboard-chrome flex h-full w-[240px] flex-col border-r">
-      <div className="flex items-center gap-2.5 border-b border-white/20 px-4 py-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolveBrandIconUrl(brandIconUrl)}
-          alt=""
-          className="h-8 w-8 rounded-radius-sm object-cover shadow-sm"
-          aria-hidden
-        />
-        <span className="dashboard-chrome-text font-serif text-[15px] font-semibold">
-          {siteName || "Nextgenmove"}
-        </span>
+      <div className="flex items-center border-b border-white/20 px-4 py-4">
+        <BrandLogo size="sidebar" />
       </div>
 
       <div className="px-3 pt-4">
