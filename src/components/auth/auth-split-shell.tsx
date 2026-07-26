@@ -16,6 +16,7 @@ export interface AuthSplitShellProps {
 
 function BrandMark({
   siteName,
+  variant,
 }: {
   siteName: string;
   brandMark: string;
@@ -26,7 +27,11 @@ function BrandMark({
 
   return (
     <span className="inline-flex items-center">
-      <BrandLogo size="auth" alt={name} />
+      <BrandLogo
+        size="auth"
+        tone={variant === "dark" ? "onDark" : "color"}
+        alt={name}
+      />
     </span>
   );
 }
