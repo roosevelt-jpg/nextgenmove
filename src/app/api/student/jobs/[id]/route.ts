@@ -106,6 +106,8 @@ export async function POST(
         stageId: firstStage?.id ?? "pipeline_new",
         shortlisted: false,
         applicationStatus: "pending",
+        source: "student_applied",
+        identityUnlocked: false,
         matchScore: null,
         notes: [],
         createdAt: FieldValue.serverTimestamp(),
@@ -125,11 +127,14 @@ export async function POST(
     const companySnap = await adminDb.collection("companies").doc(companyId).get();
     const ownerId = String(companySnap.data()?.ownerId ?? companySnap.data()?.userId ?? "");
     if (ownerId) {
+      const { anonymizedDisplayName } = await import(
+        "@/lib/employer/student-visibility"
+      );
       await createNotification({
         userId: ownerId,
         type: "application",
         title: "New application",
-        body: `${session.student.fullName || "A candidate"} applied to ${String(job.title ?? "your role")}.`,
+        body: `${anonymizedDisplayName(session.studentId)} applied to ${String(job.title ?? "your role")}.`,
         link: `/employer/candidates/${ref.id}`,
       });
     }

@@ -62,6 +62,7 @@ export async function GET() {
       (a, b) => a.order - b.order,
     );
 
+    // Never expose companyId to students — browsed interest must stay invisible.
     const matches = matchesSnapshot.docs.map((doc) => {
       const data = doc.data();
       const stage = stageMap.get(data.stageId ?? "");
@@ -72,7 +73,6 @@ export async function GET() {
         stageColor: stage?.color ?? "#4b3f9c",
         order: stage?.order ?? 0,
         shortlisted: Boolean(data.shortlisted),
-        companyId: data.companyId ?? "",
       };
     });
 

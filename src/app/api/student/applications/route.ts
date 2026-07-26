@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { serializeTimestamp } from "@/lib/firestore-utils";
+import { isStudentInitiatedMatch } from "@/lib/employer/student-visibility";
 import {
   getStudentSession,
   unauthorizedResponse,
@@ -15,9 +16,14 @@ export async function GET() {
     .where("studentId", "==", session.studentId)
     .get();
 
+  // Only applications the student initiated — never company-browsed interest.
+  const studentMatches = snap.docs.filter((doc) =>
+    isStudentInitiatedMatch(doc.data()),
+  );
+
   const companyIds = [
     ...new Set(
-      snap.docs
+      studentMatches
         .map((d) => String(d.data().companyId ?? ""))
         .filter(Boolean),
     ),
@@ -32,7 +38,7 @@ export async function GET() {
     }),
   );
 
-  const items = snap.docs
+  const items = studentMatches
     .map((doc) => {
       const data = doc.data();
       const companyId = String(data.companyId ?? "");
@@ -40,7 +46,7 @@ export async function GET() {
         id: doc.id,
         jobPostingId: data.jobPostingId ? String(data.jobPostingId) : null,
         jobTitle: String(data.jobTitle ?? ""),
-        companyId,
+        // Company name is OK only for roles the student knowingly applied to.
         companyName: companyNames.get(companyId) ?? "",
         applicationStatus: String(data.applicationStatus ?? "pending"),
         stageId: String(data.stageId ?? ""),

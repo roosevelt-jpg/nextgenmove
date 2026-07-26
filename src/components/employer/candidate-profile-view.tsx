@@ -47,7 +47,17 @@ interface CandidateDetail {
       degree?: string;
       year?: string;
     }>;
-    assessment?: unknown;
+    assessment?: {
+      overallScore?: number | null;
+      overallLabel?: string | null;
+      summary?: string | null;
+      sections?: Array<{
+        name: string;
+        score?: number | null;
+        maxScore?: number | null;
+        level?: string | null;
+      }>;
+    } | null;
     githubUrl?: string | null;
   };
 }
@@ -95,7 +105,17 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
     });
     setBusy(false);
     if (!response.ok) {
-      setActionMessage(labels.actionError || "Could not update applicant.");
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (payload?.error === "identity_locked") {
+        setActionMessage(
+          labels.identityLockedError ||
+            "Unlock this profile before scheduling an interview or hiring.",
+        );
+      } else {
+        setActionMessage(labels.actionError || "Could not update applicant.");
+      }
       return false;
     }
     await load();
@@ -122,7 +142,10 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
       }
       return;
     }
-    setActionMessage(labels.unlockRequestSubmitted || "Unlock request submitted.");
+    setActionMessage(
+      labels.unlockRequestSubmitted ||
+        "Unlock request submitted. Nextgenmove will review it shortly.",
+    );
     await load();
   };
 
@@ -343,6 +366,62 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {student.assessment &&
+      (student.assessment.overallScore != null ||
+        student.assessment.overallLabel ||
+        student.assessment.summary ||
+        (Array.isArray(student.assessment.sections) &&
+          student.assessment.sections.length > 0)) ? (
+        <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+            {labels.assessmentLabel || "Professional readiness"}
+          </h2>
+          {student.assessment.overallScore != null ||
+          student.assessment.overallLabel ? (
+            <p className="text-sm font-medium text-text-primary">
+              {student.assessment.overallLabel
+                ? student.assessment.overallLabel
+                : null}
+              {student.assessment.overallScore != null
+                ? `${student.assessment.overallLabel ? " · " : ""}${student.assessment.overallScore}${
+                    labels.assessmentScoreSuffix ?? ""
+                  }`
+                : null}
+            </p>
+          ) : null}
+          {student.assessment.summary ? (
+            <p className="text-sm text-text-secondary">
+              {student.assessment.summary}
+            </p>
+          ) : null}
+          {Array.isArray(student.assessment.sections) &&
+          student.assessment.sections.length > 0 ? (
+            <ul className="space-y-2">
+              {student.assessment.sections.map((section, index) => (
+                <li
+                  key={`${section.name}-${index}`}
+                  className="flex flex-wrap items-baseline justify-between gap-2 text-sm"
+                >
+                  <span className="text-text-primary">{section.name}</span>
+                  <span className="font-mono text-text-secondary">
+                    {[
+                      section.level,
+                      section.score != null
+                        ? section.maxScore != null
+                          ? `${section.score}/${section.maxScore}`
+                          : String(section.score)
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       ) : null}
 

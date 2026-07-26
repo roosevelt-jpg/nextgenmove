@@ -97,9 +97,10 @@ service cloud.firestore {
     // ── matches ───────────────────────────────────────────────────────────
 
     match /matches/{matchId} {
+      // Students must not read matches client-side (companyId would leak viewers).
+      // Student portal uses Admin SDK APIs that omit browsing-company identity.
       allow read: if isAdmin()
-        || (isSignedIn() && resource.data.companyId == uid())
-        || (isSignedIn() && resource.data.studentId == uid());
+        || (isSignedIn() && resource.data.companyId == uid());
       allow create: if isAdmin();
       allow update: if isAdmin()
         || (isCompany() && isActiveUser()

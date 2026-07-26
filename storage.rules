@@ -85,13 +85,14 @@ service firebase.storage {
     match /student-photos/{studentId}/{allPaths=**} {
       allow write: if isValidUpload() && isPdfOrImageUpload()
         && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
-      allow read: if true;
+      // Photos only after NGM unlock (match_access) — same gate as CVs.
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
     }
 
     match /students/{studentId}/photo/{allPaths=**} {
       allow write: if isValidUpload() && isPdfOrImageUpload()
         && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
-      allow read: if true;
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
     }
 
     // ── Company logos ─────────────────────────────────────────────────────

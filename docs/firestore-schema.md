@@ -120,7 +120,7 @@ Generic inbound requests table — sourcing requests, plan change requests, prof
 
 **`sourcing_request` payload** (from Request talent form): `companyName`, `contactName`, `workEmail`, `phone`, `roleTitleNeeded`, `sector`, `location`, `numberOfHires`, `preferredTrack`, `timeline`, `additionalRequirements`, `jobDescriptionFileUrl` (optional).
 
-**`profile_unlock` payload:** `companyName`, `studentId`, `matchId`, `candidateLabel` (anonymized display label). One pending unlock per company+student pair. Approving sets `matches.identityUnlocked` and writes `match_access`. Students never see unlock requests.
+**`profile_unlock` payload:** `companyName`, `studentId`, `matchId`, `candidateLabel` (anonymized display label). One pending unlock per company+student pair. Requests stay `pending` until an admin approves or declines (no auto-approve). Approving sets `matches.identityUnlocked` and writes `match_access`, then notifies the company. Students never see unlock requests or browsing company identity.
 
 ---
 

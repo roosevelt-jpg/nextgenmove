@@ -19,7 +19,7 @@ Document IDs for `companies` and `students` match the owner's Firebase Auth UID.
 | `users` | — | R/W own (no `role`/`status` self-edit) | R/W own (no `role`/`status` self-edit) | R/W all | R/W all |
 | `companies` | — | — | R own; W own profile fields (not `plan`, `subscriptionStatus`) | R/W all | R/W all |
 | `students` | — | R/W own profile (not `credits`, `status`) | R matched students only† | R/W all | R/W all |
-| `matches` | — | R own | R own; W `stageId`/`shortlisted`/`notes`/`updatedAt` only | R/W all | R/W all |
+| `matches` | — | — (portal APIs only) | R own; W `stageId`/`shortlisted`/`notes`/`updatedAt` only | R/W all | R/W all |
 | `match_access` | — | — | — | — | R/W all (client denied) |
 | `articles` | R if `status=published` | R if published | R if published | R/W all | R/W all |
 | `public_roles` | R if `status=open` | R if open | R if open | R/W all | R/W all |
@@ -41,7 +41,7 @@ Document IDs for `companies` and `students` match the owner's Firebase Auth UID.
 
 **Legend:** R = read, W = write, — = denied.
 
-† Companies can read a student profile in Firestore when a denormalized `match_access/{companyId}_{studentId}` document exists. `match_access` is written by Admin SDK **only after** an admin approves a `profile_unlock` request (not when a match is merely created). Until then, employer UIs receive an anonymized projection via employer APIs (no name, photo, email, CV, or contact links).
+† Companies can read a student profile in Firestore when a denormalized `match_access/{companyId}_{studentId}` document exists. `match_access` is written by Admin SDK **only after** an admin approves a `profile_unlock` request (not when a match is merely created, and never via auto-approve). Until then, employer UIs receive an anonymized projection via employer APIs (no name, photo, email, CV, or contact links). Students never receive company identity for company-browsed matches; client Firestore reads of `matches` are company/admin only.
 
 ---
 
@@ -51,8 +51,8 @@ Document IDs for `companies` and `students` match the owner's Firebase Auth UID.
 |---|---|---|---|---|---|
 | `cvs/{studentId}/**` | — | — | W own | R† | R/W |
 | `students/{studentId}/cv/**` (app path) | — | — | W own | R† | R/W |
-| `student-photos/{studentId}/**` | R | — | W own | R | R/W |
-| `students/{studentId}/photo/**` (app path) | R | — | W own | R | R/W |
+| `student-photos/{studentId}/**` | — | — | R/W own | R after unlock† | R/W |
+| `students/{studentId}/photo/**` (app path) | — | — | R/W own | R after unlock† | R/W |
 | `company-logos/{companyId}/**` | R | — | — | W own | R/W |
 | `companies/{companyId}/logo/**` (app path) | R | — | — | W own | R/W |
 | `companies/{companyId}/requirements/**` | — | — | — | R/W own | R/W |

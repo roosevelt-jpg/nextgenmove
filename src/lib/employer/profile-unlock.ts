@@ -146,25 +146,15 @@ export async function createProfileUnlockRequest(options: {
     }),
   );
 
-  // Autonomy: unlock immediately without staff queue (payments/disputes remain human).
-  try {
-    await approveProfileUnlock({
-      requestId: ref.id,
-      adminUid: "system_auto",
-      note: "Auto-approved (platform autonomy)",
-      httpRequest: options.request,
-    });
-  } catch (error) {
-    console.error("profile_unlock_auto_approve_failed", error);
-    void notifyAdminsOfPending(
-      `${options.companyName} requested unlock for ${candidateLabel}`,
-      options.request,
-      {
-        link: "/admin/unlock-requests",
-        title: "Profile unlock request",
-      },
-    );
-  }
+  // Human NGM approval required — never auto-unlock identity.
+  void notifyAdminsOfPending(
+    `${options.companyName} requested unlock for ${candidateLabel}`,
+    options.request,
+    {
+      link: "/admin/unlock-requests",
+      title: "Profile unlock request",
+    },
+  );
 
   return { id: ref.id, alreadyPending: false };
 }
@@ -336,6 +326,9 @@ export async function declineProfileUnlock(options: {
   if (data.type !== PROFILE_UNLOCK_TYPE) throw new Error("invalid_type");
   if (data.status !== "pending") throw new Error("not_pending");
 
+  const companyId = String(data.companyId ?? "");
+  const studentId = String(data.studentId ?? "");
+
   await reqSnap.ref.update(
     stripUndefined({
       status: "declined",
@@ -344,4 +337,17 @@ export async function declineProfileUnlock(options: {
       note: options.note || null,
     }),
   );
+
+  if (companyId) {
+    const companySnap = await adminDb.collection("companies").doc(companyId).get();
+    const ownerUid = String(companySnap.data()?.userId ?? companyId);
+    const candidateLabel = anonymizedDisplayName(studentId || "----");
+    void createNotification({
+      userId: ownerUid,
+      type: "match_update",
+      title: "Unlock declined",
+      body: `Identity unlock for ${candidateLabel} was declined.`,
+      link: "/employer/talent-pool",
+    });
+  }
 }

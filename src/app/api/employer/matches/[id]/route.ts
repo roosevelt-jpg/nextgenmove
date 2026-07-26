@@ -138,6 +138,18 @@ export async function PATCH(
       return forbiddenResponse();
     }
 
+    const identityUnlocked = isMatchIdentityUnlocked(match);
+    // Interview / hire require NGM-approved identity unlock (server-enforced).
+    if (
+      (body.action === "hire" || body.action === "schedule_interview") &&
+      !identityUnlocked
+    ) {
+      return NextResponse.json(
+        { error: "identity_locked" },
+        { status: 403 },
+      );
+    }
+
     let stageIsTerminal = false;
     let stageName = "";
     let nextStageId = body.stageId;
