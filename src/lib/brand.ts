@@ -1,8 +1,18 @@
 /** Hardcoded NextGen Move brand assets (public/brand). */
 
-/** Transparent-background mark for chrome (header / footer / sidebars). */
-export const BRAND_LOGO_PATH = "/brand/nextgenmove-logo-mark.png";
-export const BRAND_ICON_PATH = "/brand/nextgenmove-logo-mark.png";
+/**
+ * Cache-busted so browsers/CDN pick up logo replacements immediately.
+ * Bump LOGO_ASSET_VERSION whenever the PNG files change.
+ */
+export const LOGO_ASSET_VERSION = "20260726b";
+
+/** Full-color transparent mark (light surfaces / emails). */
+export const BRAND_LOGO_PATH = `/brand/nextgenmove-logo-mark.png?v=${LOGO_ASSET_VERSION}`;
+
+/** White transparent mark for purple / dark chrome. */
+export const BRAND_LOGO_ON_DARK_PATH = `/brand/nextgenmove-logo-mark-white.png?v=${LOGO_ASSET_VERSION}`;
+
+export const BRAND_ICON_PATH = BRAND_LOGO_PATH;
 export const BRAND_FAVICON_PATH = "/brand/nextgenmove-favicon.png";
 
 /** Always use the hardcoded logo for chrome (header / footer / sidebars). */

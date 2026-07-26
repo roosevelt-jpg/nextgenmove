@@ -31,7 +31,7 @@ export async function SiteHeader() {
       <div className="page-container mx-auto flex w-full max-w-page items-center justify-between gap-4 py-3">
         <Link
           href="/"
-          className="flex h-10 max-w-[168px] shrink-0 items-center overflow-hidden"
+          className="flex h-9 max-w-[148px] shrink-0 items-center overflow-hidden"
         >
           <BrandLogo size="header" priority />
         </Link>

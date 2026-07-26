@@ -34,7 +34,7 @@ export async function SiteFooter() {
         <div className="max-w-xs space-y-3">
           <Link
             href="/"
-            className="inline-flex h-9 max-w-[152px] items-center overflow-hidden"
+            className="inline-flex h-8 max-w-[136px] items-center overflow-hidden"
           >
             <BrandLogo size="footer" />
           </Link>
