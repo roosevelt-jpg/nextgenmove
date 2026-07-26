@@ -49,10 +49,10 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
   },
   {
     id: "sendgrid",
-    name: "SendGrid (legacy)",
+    name: "SendGrid",
     category: "Transactional email",
     description:
-      "Legacy email provider — Nextgenmove prefers Gmail SMTP, then Resend. Kept for reference only.",
+      "Tertiary email fallback after Gmail SMTP and Resend. Paste an SG. API key + verified from address.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,

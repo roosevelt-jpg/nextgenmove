@@ -150,6 +150,11 @@ export async function GET() {
 
     for (const doc of appsSnap.docs) {
       const data = doc.data();
+      const status = String(data.status ?? "new").toLowerCase();
+      // Rejected / archived apps leave the active CRM inbox.
+      if (status === "rejected" || status === "dismissed" || status === "archived") {
+        continue;
+      }
       const createdAt = data.createdAt?.toDate?.()?.getTime?.() ?? 0;
       if (createdAt >= weekAgo) newLeads7d += 1;
 
@@ -157,7 +162,7 @@ export async function GET() {
         id: `app_${doc.id}`,
         name: String(data.fullName ?? doc.id),
         type: "lead",
-        stage: String(data.status ?? "new"),
+        stage: status || "new",
         owner: "",
         lastActivity: serializeTimestamp(data.createdAt) ?? null,
         value: "—",
@@ -172,6 +177,15 @@ export async function GET() {
 
     for (const doc of interestSnap.docs) {
       const data = doc.data();
+      const status = String(data.status ?? "new").toLowerCase();
+      if (
+        status === "dismissed" ||
+        status === "rejected" ||
+        status === "promoted" ||
+        status === "archived"
+      ) {
+        continue;
+      }
       const createdAt = data.createdAt?.toDate?.()?.getTime?.() ?? 0;
       if (createdAt >= weekAgo) newLeads7d += 1;
 
@@ -179,7 +193,7 @@ export async function GET() {
         id: `interest_${doc.id}`,
         name: String(data.fullName ?? data.email ?? doc.id),
         type: "lead",
-        stage: String(data.status ?? "new"),
+        stage: status || "new",
         owner: "",
         lastActivity: serializeTimestamp(data.createdAt) ?? null,
         value: "—",

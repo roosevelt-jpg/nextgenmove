@@ -38,9 +38,11 @@ const actionSchema = z.object({
     "add_note",
     "create_match",
     "set_deal_stage",
+    "set_owner",
   ]),
   plan: z.enum(["track_a", "track_b"]).nullable().optional(),
   note: z.string().optional(),
+  owner: z.string().max(120).optional(),
   companyId: z.string().min(1).optional(),
   dealStage: z.enum(["new", "contacted", "qualified", "won"]).optional(),
   studentId: z.string().min(1).optional(),
@@ -88,6 +90,23 @@ export async function GET(
   item.dateJoined = item.createdAt ?? null;
   if (type === "students" && item.credits === undefined) {
     item.credits = 0;
+  }
+  if (type === "companies") {
+    const explicit = String(item.crmDealStage ?? "");
+    if (
+      explicit !== "new" &&
+      explicit !== "contacted" &&
+      explicit !== "qualified" &&
+      explicit !== "won"
+    ) {
+      const sub = String(item.subscriptionStatus ?? "");
+      item.crmDealStage =
+        sub === "active" ? "won" : sub === "pending" ? "new" : "contacted";
+    }
+    item.stage = item.crmDealStage;
+  }
+  if (item.crmOwner == null) {
+    item.crmOwner = "";
   }
 
   const activitySnapshot = await adminDb
@@ -196,6 +215,15 @@ export async function POST(
       );
     }
 
+    if (body.action === "set_owner") {
+      await ref.update(
+        stripUndefined({
+          crmOwner: (body.owner ?? "").trim(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+      );
+    }
+
     if (body.action === "suspend") {
       const data = snapshot.data()!;
       const userId = data.userId as string | undefined;
@@ -237,14 +265,19 @@ export async function POST(
       }
     }
 
-    if (body.action === "add_note" && body.note) {
+    if (body.action === "add_note") {
+      const text = body.note?.trim() ?? "";
+      if (!text) {
+        return NextResponse.json({ error: "empty_note" }, { status: 400 });
+      }
       await ref.update(
         stripUndefined({
           notes: FieldValue.arrayUnion({
             authorId: session.uid,
-            text: body.note,
+            text,
             createdAt: new Date().toISOString(),
           }),
+          updatedAt: FieldValue.serverTimestamp(),
         }),
       );
     }

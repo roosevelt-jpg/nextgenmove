@@ -22,6 +22,9 @@ export interface PlaceLocationParts {
 }
 
 async function placesApiKey(): Promise<string | null> {
+  if (!(await isIntegrationConnected("google_places"))) {
+    return null;
+  }
   const secrets = await getIntegrationSecrets("google_places");
   const key =
     secrets.apiKey?.trim() ||
@@ -33,8 +36,7 @@ async function placesApiKey(): Promise<string | null> {
 }
 
 export async function isGooglePlacesLive(): Promise<boolean> {
-  if (await isIntegrationConnected("google_places")) return true;
-  return Boolean(await placesApiKey());
+  return isIntegrationConnected("google_places");
 }
 
 /** Places Autocomplete — global countries, cities, or towns. */

@@ -45,6 +45,9 @@ interface CrmRow extends Record<string, unknown> {
   value?: string;
   sourceId?: string;
   sourceCollection?: string;
+  crmOwner?: string;
+  crmDealStage?: string;
+  notes?: Array<{ authorId?: string; text?: string; createdAt?: string }>;
 }
 
 interface ActivityItem {
@@ -130,6 +133,9 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [viewAsLoading, setViewAsLoading] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [movingDealId, setMovingDealId] = useState<string | null>(null);
+  const [ownerDraft, setOwnerDraft] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const loadOverview = async () => {
     const response = await fetch("/api/admin/crm/overview");
@@ -384,6 +390,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         creditTransactions?: CreditTxItem[];
       };
       setDetail(payload.item);
+      setOwnerDraft(String(payload.item.crmOwner ?? ""));
       setActivity(payload.activity);
       setCreditTransactions(payload.creditTransactions ?? []);
     }
@@ -405,7 +412,9 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
       ...row,
       sourceId: row.sourceId ?? row.id,
     });
+    setOwnerDraft(String(row.owner ?? ""));
     setActivity([]);
+    setCreditTransactions([]);
   };
 
   const resolveLead = async (action: "approve" | "reject") => {
@@ -531,17 +540,93 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   };
 
   const moveDeal = async (companyId: string, dealStage: DealStage) => {
+    setMovingDealId(companyId);
+    setActionMessage(null);
     const response = await fetch(`/api/admin/crm/companies/${companyId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "set_deal_stage", dealStage }),
     });
+    setMovingDealId(null);
     if (!response.ok) {
       setActionMessage(labels.actionError ?? "Could not move deal.");
       return;
     }
+    setActionMessage(labels.dealMoved ?? "Deal stage updated.");
     await loadOverview();
   };
+
+  const deleteEntity = async () => {
+    if (!selectedId || leadMode) return;
+    const confirmed = window.confirm(
+      labels.deleteConfirm ??
+        "Delete this CRM record? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setActionMessage(null);
+    const response = await fetch(
+      `/api/admin/data/${entityTab}/${selectedId}`,
+      { method: "DELETE" },
+    );
+    setDeleting(false);
+
+    if (!response.ok) {
+      setActionMessage(labels.deleteError ?? "Could not delete.");
+      return;
+    }
+
+    setSelectedId(null);
+    setDetail(null);
+    setEditOpen(false);
+    setActionMessage(labels.deleteSuccess ?? "Deleted.");
+    if (tab === "contacts") {
+      await loadOverview();
+    } else {
+      await loadRows(tab);
+    }
+  };
+
+  const deleteLead = async () => {
+    if (!detail?.sourceCollection || !detail.sourceId) return;
+    const confirmed = window.confirm(
+      labels.deleteLeadConfirm ??
+        "Remove this lead from CRM? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setActionMessage(null);
+    const response = await fetch("/api/admin/crm/leads", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceCollection: detail.sourceCollection,
+        sourceId: detail.sourceId,
+      }),
+    });
+    setDeleting(false);
+
+    if (!response.ok) {
+      setActionMessage(labels.deleteError ?? "Could not delete.");
+      return;
+    }
+
+    setSelectedId(null);
+    setDetail(null);
+    setLeadMode(false);
+    setActionMessage(labels.deleteSuccess ?? "Deleted.");
+    await loadOverview();
+  };
+
+  const profileSuspended =
+    String(detail?.status ?? "").toLowerCase() === "suspended" ||
+    String(detail?.status ?? "").toLowerCase() === "inactive" ||
+    String(detail?.subscriptionStatus ?? "").toLowerCase() === "inactive" ||
+    String(detail?.subscriptionStatus ?? "").toLowerCase() === "suspended";
+
+  const crmNotes = Array.isArray(detail?.notes) ? detail.notes : [];
 
   const sendMessage = async () => {
     if (!selectedId || !messageBody.trim()) return;
@@ -813,6 +898,12 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         </div>
       </header>
 
+      {actionMessage ? (
+        <p className="text-sm text-text-secondary" role="status">
+          {labels[actionMessage] ?? actionMessage}
+        </p>
+      ) : null}
+
       <Tabs
         activeTabId={tab}
         onTabChange={(nextTab) => setTab(nextTab as CrmTab)}
@@ -874,8 +965,11 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                           <button
                             key={next}
                             type="button"
-                            className="min-h-9 rounded-radius-sm bg-grad-rouse px-2.5 py-1.5 text-[11px] uppercase text-on-gradient hover:opacity-90"
-                            onClick={() => void moveDeal(deal.id, next)}
+                            disabled={movingDealId === (deal.sourceId ?? deal.id)}
+                            className="min-h-9 rounded-radius-sm bg-grad-rouse px-2.5 py-1.5 text-[11px] uppercase text-on-gradient hover:opacity-90 disabled:opacity-50"
+                            onClick={() =>
+                              void moveDeal(deal.sourceId ?? deal.id, next)
+                            }
                           >
                             → {labels[`dealStage_${next}`] ?? next}
                           </button>
@@ -1090,22 +1184,32 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                     </label>
                   </div>
                 ) : null}
-                {detail.sourceCollection !== "newsletter_subscribers" ? (
-                  <div className="flex flex-nowrap items-center gap-1">
-                    <Button size="xs" onClick={() => void resolveLead("approve")}>
-                      {detail.sourceCollection === "role_interest_submissions"
-                        ? labels.promote ?? "Promote"
-                        : labels.approve ?? "Approve"}
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => void resolveLead("reject")}
-                    >
-                      {labels.reject ?? "Reject"}
-                    </Button>
-                  </div>
-                ) : null}
+                <div className="flex flex-nowrap flex-wrap items-center gap-1">
+                  {detail.sourceCollection !== "newsletter_subscribers" ? (
+                    <>
+                      <Button size="xs" onClick={() => void resolveLead("approve")}>
+                        {detail.sourceCollection === "role_interest_submissions"
+                          ? labels.promote ?? "Promote"
+                          : labels.approve ?? "Approve"}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => void resolveLead("reject")}
+                      >
+                        {labels.reject ?? "Reject"}
+                      </Button>
+                    </>
+                  ) : null}
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    disabled={deleting}
+                    onClick={() => void deleteLead()}
+                  >
+                    {labels.deleteLead ?? "Remove lead"}
+                  </Button>
+                </div>
 
                 <div className="space-y-2 rounded-radius border border-border p-3">
                   <p className="text-sm font-medium text-text-primary">
@@ -1153,7 +1257,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
               </div>
             ) : (
               <>
-            <div className="flex flex-nowrap items-center gap-1">
+            <div className="flex flex-nowrap flex-wrap items-center gap-1">
               {entityTab === "companies" ? (
                 <>
                   <Button
@@ -1175,7 +1279,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
               <Button
                 size="xs"
                 variant="outline"
-                disabled={viewAsLoading || String(detail.status ?? "active") === "suspended"}
+                disabled={viewAsLoading || profileSuspended}
                 onClick={() => void viewAsUser()}
               >
                 {labels.viewAsUser ?? "View as user"}
@@ -1189,6 +1293,55 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
               <Button size="xs" variant="ghost" onClick={() => setEditOpen(true)}>
                 {labels.edit}
               </Button>
+              <Button
+                size="xs"
+                variant="ghost"
+                disabled={deleting}
+                onClick={() => void deleteEntity()}
+              >
+                {labels.delete ?? "Delete"}
+              </Button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Input
+                  id="crm-owner"
+                  label={labels.ownerColumn ?? "Owner"}
+                  value={ownerDraft}
+                  onChange={(e) => setOwnerDraft(e.target.value)}
+                  placeholder={labels.ownerPlaceholder ?? "Admin name or email"}
+                />
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() =>
+                    void runAction("set_owner", { owner: ownerDraft.trim() })
+                  }
+                >
+                  {labels.saveOwner ?? "Save owner"}
+                </Button>
+              </div>
+              {entityTab === "companies" ? (
+                <label className="text-sm text-text-secondary">
+                  {labels.dealPipelineTitle ?? "Deal stage"}
+                  <select
+                    className="mt-1 w-full rounded-radius-sm border border-border bg-bg px-2.5 py-1.5"
+                    value={String(detail.crmDealStage ?? detail.stage ?? "new")}
+                    onChange={(e) =>
+                      void runAction("set_deal_stage", {
+                        dealStage: e.target.value,
+                      })
+                    }
+                  >
+                    {DEAL_STAGES.map((stage) => (
+                      <option key={stage} value={stage}>
+                        {labels[`dealStage_${stage}`] ?? stage}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
             </div>
 
             <div className="space-y-2 rounded-radius border border-border p-3">
@@ -1278,7 +1431,33 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
               </div>
             ) : null}
 
-            <div>
+            <div className="space-y-2">
+              <h3 className="font-medium text-text-primary">
+                {labels.notesTitle ?? "Notes"}
+              </h3>
+              {crmNotes.length === 0 ? (
+                <p className="text-sm text-text-muted">
+                  {labels.notesEmpty ?? "No notes yet."}
+                </p>
+              ) : (
+                <ul className="divide-y divide-border overflow-hidden rounded-radius border border-border text-sm">
+                  {crmNotes
+                    .slice()
+                    .reverse()
+                    .map((entry, index) => (
+                      <li key={`note-${index}-${entry.createdAt ?? ""}`} className="px-3 py-2">
+                        <p className="whitespace-pre-wrap text-text-primary">
+                          {entry.text}
+                        </p>
+                        {entry.createdAt ? (
+                          <p className="mt-0.5 text-xs text-text-muted">
+                            {new Date(entry.createdAt).toLocaleString()}
+                          </p>
+                        ) : null}
+                      </li>
+                    ))}
+                </ul>
+              )}
               <Textarea
                 id="crm-note"
                 label={labels.addNote}
@@ -1288,8 +1467,11 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
               <Button
                 className="mt-2"
                 variant="outline"
+                disabled={!note.trim()}
                 onClick={() => {
-                  void runAction("add_note", { note });
+                  const text = note.trim();
+                  if (!text) return;
+                  void runAction("add_note", { note: text });
                   setNote("");
                 }}
               >

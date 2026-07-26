@@ -1,4 +1,7 @@
-import { getIntegrationSecrets } from "@/lib/admin/integration-secrets";
+import {
+  getIntegrationSecrets,
+  isIntegrationConnected,
+} from "@/lib/admin/integration-secrets";
 
 interface CalendarEventInput {
   summary: string;
@@ -18,6 +21,9 @@ async function getAccessToken(): Promise<{
   accessToken: string;
   calendarId: string;
 } | null> {
+  if (!(await isIntegrationConnected("google_calendar"))) {
+    return null;
+  }
   const secrets = await getIntegrationSecrets("google_calendar");
   const clientId = secrets.clientId?.trim();
   const clientSecret = secrets.clientSecret?.trim();
@@ -114,10 +120,5 @@ export async function createInterviewCalendarEvent(
 }
 
 export async function isGoogleCalendarReady(): Promise<boolean> {
-  const secrets = await getIntegrationSecrets("google_calendar");
-  return Boolean(
-    secrets.clientId?.trim() &&
-      secrets.clientSecret?.trim() &&
-      secrets.refreshToken?.trim(),
-  );
+  return isIntegrationConnected("google_calendar");
 }

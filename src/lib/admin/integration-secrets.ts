@@ -182,19 +182,30 @@ export async function getIntegrationSecrets(
   return { ...fromEnv, ...fromStore };
 }
 
-export async function isIntegrationConnected(integrationId: string): Promise<boolean> {
-  try {
-    const snap = await adminDb.collection("integrations").doc(integrationId).get();
-    if (snap.exists && snap.data()?.status === "connected") {
-      return true;
-    }
-  } catch {
-    // Fall through to env check.
+/** True when an admin explicitly toggled the integration off in the CMS. */
+export function isIntegrationAdminDisabled(
+  data: Record<string, unknown> | undefined,
+): boolean {
+  const config = data?.config;
+  if (!config || typeof config !== "object" || Array.isArray(config)) {
+    return false;
   }
+  return (config as Record<string, unknown>).adminDisabled === "true";
+}
 
-  const secrets = await getIntegrationSecrets(integrationId);
+export function secretsSatisfyIntegration(
+  integrationId: string,
+  secrets: Record<string, string>,
+): boolean {
   if (integrationId === "resend") {
-    return Boolean(secrets.apiKey?.startsWith("re_") && secrets.fromEmail?.includes("@"));
+    return Boolean(
+      secrets.apiKey?.startsWith("re_") && secrets.fromEmail?.includes("@"),
+    );
+  }
+  if (integrationId === "sendgrid") {
+    return Boolean(
+      secrets.apiKey?.startsWith("SG.") && secrets.fromEmail?.includes("@"),
+    );
   }
   if (integrationId === "stripe") {
     return Boolean(secrets.secretKey?.startsWith("sk_"));
@@ -224,6 +235,27 @@ export async function isIntegrationConnected(integrationId: string): Promise<boo
     );
   }
   return Object.keys(secrets).length > 0;
+}
+
+export async function isIntegrationConnected(integrationId: string): Promise<boolean> {
+  try {
+    const snap = await adminDb.collection("integrations").doc(integrationId).get();
+    if (snap.exists) {
+      const data = snap.data() as Record<string, unknown> | undefined;
+      // Explicit admin disconnect wins over env-backed secrets.
+      if (isIntegrationAdminDisabled(data)) {
+        return false;
+      }
+      if (data?.status === "connected") {
+        return true;
+      }
+    }
+  } catch {
+    // Fall through to env check.
+  }
+
+  const secrets = await getIntegrationSecrets(integrationId);
+  return secretsSatisfyIntegration(integrationId, secrets);
 }
 
 export function integrationHasEnvFallback(integrationId: string): boolean {

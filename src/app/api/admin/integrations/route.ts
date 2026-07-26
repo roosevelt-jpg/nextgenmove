@@ -113,6 +113,10 @@ function envMarksConnected(id: string): boolean {
 
 function applyEnvConnectedStatus(items: IntegrationShell[]): IntegrationShell[] {
   return items.map((item) => {
+    // Admin toggled off — never revive from Vercel env until they Connect again.
+    if (item.config?.adminDisabled === "true") {
+      return { ...item, status: "not_connected" };
+    }
     if (item.status === "connected") return item;
     if (!envMarksConnected(item.id)) return item;
     return {

@@ -81,12 +81,55 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
         "Could not save — Firestore is over quota. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel (Production), then redeploy — or wait for quota to reset and try Connect again."
       );
     }
+    if (code === "missing_secrets") {
+      return (
+        labels.missing_secrets ??
+        "Fill the required keys before connecting (or leave blanks only when updating existing keys)."
+      );
+    }
+    if (code === "env_only") {
+      return (
+        labels.env_only ??
+        "This integration is configured in Vercel env vars, not from this form."
+      );
+    }
     return (
       labels[code ?? ""] ??
       labels.connectError ??
       code ??
       "Could not connect."
     );
+  };
+
+  const isEnvOnlyItem = (item: IntegrationItem | null) =>
+    Boolean(
+      item &&
+        (item.config?.envOnly === "true" ||
+          item.id === "firebase_client" ||
+          item.id === "firebase_admin"),
+    );
+
+  const openConnectForm = (item: IntegrationItem) => {
+    setModalError(null);
+    setApiKey("");
+    setConfigHost("");
+    setSecretKey("");
+    setPublishableKey("");
+    setWebhookSecret("");
+    setFromEmail("");
+    setFromName("");
+    setAccountSid("");
+    setAuthToken("");
+    setFromSms("");
+    setFromWhatsApp("");
+    setSmtpUser("");
+    setSmtpPass("");
+    setSmtpPort("465");
+    setOauthClientId("");
+    setOauthClientSecret("");
+    setOauthRefreshToken("");
+    setCalendarId("primary");
+    setConnectItem(item);
   };
 
   const load = async () => {
@@ -331,32 +374,35 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     await load();
   };
 
-  const formatSync = (iso: string | null) => {
-    if (!iso) return labels.neverSynced ?? "Never synced";
+  const formatConnectedAt = (iso: string | null, connected: boolean) => {
+    if (!connected || !iso) {
+      return labels.neverConnected ?? "Never connected";
+    }
     const diff = Date.now() - new Date(iso).getTime();
     const mins = Math.round(diff / 60000);
-    if (mins < 1) return labels.syncedJustNow ?? "Synced just now";
-    if (mins < 60)
-      return (labels.syncedMinutesAgo ?? "Synced {n} min ago").replace(
+    if (mins < 1) return labels.connectedJustNow ?? "Connected just now";
+    if (mins < 60) {
+      return (labels.connectedMinutesAgo ?? "Connected {n} min ago").replace(
         "{n}",
         String(mins),
       );
+    }
     const hours = Math.round(mins / 60);
-    return (labels.syncedHoursAgo ?? "Synced {n}h ago").replace(
-      "{n}",
-      String(hours),
+    if (hours < 48) {
+      return (labels.connectedHoursAgo ?? "Connected {n}h ago").replace(
+        "{n}",
+        String(hours),
+      );
+    }
+    return (labels.connectedOn ?? "Connected {date}").replace(
+      "{date}",
+      new Date(iso).toLocaleDateString(),
     );
   };
 
   const toggle = async (item: IntegrationItem) => {
-    const envOnly =
-      item.config?.envOnly === "true" ||
-      item.id === "firebase_client" ||
-      item.id === "firebase_admin";
-
-    if (envOnly) {
-      setModalError(null);
-      setConnectItem(item);
+    if (isEnvOnlyItem(item)) {
+      openConnectForm(item);
       return;
     }
 
@@ -364,26 +410,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       await disconnect(item.id);
       return;
     }
-    setModalError(null);
-    setApiKey("");
-    setConfigHost("");
-    setSecretKey("");
-    setPublishableKey("");
-    setWebhookSecret("");
-    setFromEmail("");
-    setFromName("");
-    setAccountSid("");
-    setAuthToken("");
-    setFromSms("");
-    setFromWhatsApp("");
-    setSmtpUser("");
-    setSmtpPass("");
-    setSmtpPort("465");
-    setOauthClientId("");
-    setOauthClientSecret("");
-    setOauthRefreshToken("");
-    setCalendarId("primary");
-    setConnectItem(item);
+    openConnectForm(item);
   };
 
   return (
@@ -448,27 +475,57 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 </p>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] text-text-muted">
-                    {formatSync(item.connectedAt)}
+                    {isEnvOnlyItem(item)
+                      ? connected
+                        ? (labels.envConfigured ?? "Configured via env")
+                        : (labels.envMissing ?? "Env vars missing")
+                      : formatConnectedAt(item.connectedAt, connected)}
                   </p>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={connected}
-                    onClick={() => void toggle(item)}
-                    className={
-                      connected
-                        ? "relative h-5 w-9 rounded-full bg-text-success"
-                        : "relative h-5 w-9 rounded-full bg-border"
-                    }
-                  >
-                    <span
-                      className={
-                        connected
-                          ? "absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-white"
-                          : "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white"
-                      }
-                    />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!isEnvOnlyItem(item) && connected ? (
+                      <button
+                        type="button"
+                        onClick={() => openConnectForm(item)}
+                        className="text-[11px] font-semibold text-fill-accent underline-offset-2 hover:underline"
+                      >
+                        {labels.editKeys ?? "Edit"}
+                      </button>
+                    ) : null}
+                    {isEnvOnlyItem(item) ? (
+                      <button
+                        type="button"
+                        onClick={() => openConnectForm(item)}
+                        className="rounded-full border border-border bg-surface-1 px-2.5 py-0.5 text-[10px] font-semibold text-text-secondary"
+                      >
+                        {labels.viewEnv ?? "View env"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={connected}
+                        aria-label={
+                          connected
+                            ? (labels.disconnect ?? "Disconnect")
+                            : (labels.connect ?? "Connect")
+                        }
+                        onClick={() => void toggle(item)}
+                        className={
+                          connected
+                            ? "relative h-5 w-9 rounded-full bg-text-success"
+                            : "relative h-5 w-9 rounded-full bg-border"
+                        }
+                      >
+                        <span
+                          className={
+                            connected
+                              ? "absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-white"
+                              : "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white"
+                          }
+                        />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </article>
             );
@@ -482,7 +539,13 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
           setConnectItem(null);
           setModalError(null);
         }}
-        title={labels.connectTitle || "Connect integration"}
+        title={
+          isEnvOnly
+            ? labels.envTitle || "Environment variables"
+            : connectItem?.status === "connected"
+              ? labels.editTitle || "Update integration keys"
+              : labels.connectTitle || "Connect integration"
+        }
         footer={
           <div className="flex justify-end gap-2">
             {isEnvOnly ? (
@@ -525,7 +588,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 >
                   {isSaving
                     ? labels.connecting || "Connecting…"
-                    : labels.connect || "Connect"}
+                    : connectItem?.status === "connected"
+                      ? labels.saveKeys || "Save keys"
+                      : labels.connect || "Connect"}
                 </Button>
               </>
             )}
@@ -536,6 +601,12 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
           {modalError ? (
             <p className="text-sm text-text-warning" role="alert">
               {modalError}
+            </p>
+          ) : null}
+          {!isEnvOnly && connectItem?.status === "connected" ? (
+            <p className="text-xs text-text-muted">
+              {labels.editKeysHint ??
+                "Leave a field blank to keep the existing value. Saving re-enables this integration."}
             </p>
           ) : null}
           {isEnvOnly ? (

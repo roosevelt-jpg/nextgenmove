@@ -88,6 +88,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         type: "select",
         labelKey: "subscriptionStatus",
       },
+      { key: "crmOwner", type: "text", labelKey: "crmOwner" },
+      {
+        key: "crmDealStage",
+        type: "select",
+        labelKey: "crmDealStage",
+      },
     ],
   },
   students: {
@@ -127,6 +133,7 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         type: "select",
         labelKey: "subscriptionStatus",
       },
+      { key: "crmOwner", type: "text", labelKey: "crmOwner" },
       { key: "cvUrl", type: "file", labelKey: "cvUrl" },
       { key: "photoUrl", type: "image", labelKey: "photoUrl" },
       { key: "linkedinUrl", type: "text", labelKey: "linkedinUrl" },
@@ -684,7 +691,10 @@ export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
   string,
   Record<string, string>
 > = {
-  companies: { subscriptionStatus: "subscriptionStatus" },
+  companies: {
+    subscriptionStatus: "subscriptionStatus",
+    crmDealStage: "crmDealStage",
+  },
   students: {
     status: "status_students",
     subscriptionStatus: "subscriptionStatus",
@@ -708,6 +718,12 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
     { value: "active", label: "active" },
     { value: "inactive", label: "inactive" },
     { value: "pending", label: "pending" },
+  ],
+  crmDealStage: [
+    { value: "new", label: "new" },
+    { value: "contacted", label: "contacted" },
+    { value: "qualified", label: "qualified" },
+    { value: "won", label: "won" },
   ],
   status_students: [
     { value: "active", label: "active" },

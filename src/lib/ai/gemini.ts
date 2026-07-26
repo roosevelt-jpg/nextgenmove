@@ -1,8 +1,14 @@
-import { getIntegrationSecrets } from "@/lib/admin/integration-secrets";
+import {
+  getIntegrationSecrets,
+  isIntegrationConnected,
+} from "@/lib/admin/integration-secrets";
 
 const GEMINI_MODEL = "gemini-2.0-flash";
 
 export async function getGeminiApiKey(): Promise<string | null> {
+  if (!(await isIntegrationConnected("gemini"))) {
+    return null;
+  }
   const secrets = await getIntegrationSecrets("gemini");
   const key =
     secrets.apiKey ||

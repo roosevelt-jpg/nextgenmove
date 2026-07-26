@@ -9,6 +9,7 @@ import {
   ResendNotConfiguredError,
   sendViaResend,
 } from "@/lib/email/resend";
+import { isSendGridLive, sendViaSendGrid } from "@/lib/email/sendgrid";
 import {
   isSmtpLive,
   sendViaSmtp,
@@ -39,7 +40,7 @@ async function deliverEmail(options: {
   html: string;
   text: string;
   replyTo?: string;
-}): Promise<"gmail_smtp" | "resend"> {
+}): Promise<"gmail_smtp" | "resend" | "sendgrid"> {
   const smtpReady = await isSmtpLive();
   if (smtpReady) {
     try {
@@ -52,19 +53,34 @@ async function deliverEmail(options: {
     }
   }
 
-  if (!(await isResendLive())) {
+  if (await isResendLive()) {
+    try {
+      await sendViaResend(options);
+      return "resend";
+    } catch (error) {
+      logger.error("email_resend_failed_falling_back", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  if (!(await isSendGridLive())) {
     throw new ResendNotConfiguredError();
   }
-  await sendViaResend(options);
-  return "resend";
+  await sendViaSendGrid(options);
+  return "sendgrid";
 }
 
 export async function isAnyEmailProviderLive(): Promise<boolean> {
-  return (await isSmtpLive()) || (await isResendLive());
+  return (
+    (await isSmtpLive()) ||
+    (await isResendLive()) ||
+    (await isSendGridLive())
+  );
 }
 
 /**
- * Load CMS template, check preferences, send via Gmail SMTP (primary) or Resend.
+ * Load CMS template, check preferences, send via Gmail SMTP → Resend → SendGrid.
  * Never throws to callers for delivery failures — logs and returns status.
  */
 export async function sendTransactional(
