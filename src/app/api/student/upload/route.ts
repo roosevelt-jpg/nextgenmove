@@ -35,15 +35,6 @@ export async function POST(request: Request) {
   const previewBlock = assertNotPreviewMode(session.mode);
   if (previewBlock) return previewBlock;
 
-  const bucketName =
-    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-    process.env.FIREBASE_STORAGE_BUCKET ||
-    "";
-
-  if (!bucketName) {
-    return NextResponse.json({ error: "storage_not_configured" }, { status: 503 });
-  }
-
   try {
     const form = await request.formData();
     const file = form.get("file");
@@ -84,7 +75,6 @@ export async function POST(request: Request) {
       buffer,
       contentType,
       filename,
-      bucketName,
     });
 
     return NextResponse.json(result);

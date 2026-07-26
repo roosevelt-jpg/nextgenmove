@@ -194,6 +194,7 @@ export function RequestTalentForm({ labels }: RequestTalentFormProps) {
         />
         <FileUpload
           storagePath="requests/sourcing"
+          uploadEndpoint="/api/public/upload"
           accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           label={labels.jobDescriptionUpload}
           dropzoneContent={labels.jobDescriptionDropzone}

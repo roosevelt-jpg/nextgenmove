@@ -148,6 +148,7 @@ export function CareersApplicationForm({
       />
       <FileUpload
         storagePath={storagePath}
+        uploadEndpoint="/api/public/upload"
         accept=".pdf,application/pdf"
         label={labels.cvUpload}
         dropzoneContent={labels.cvDropzone}

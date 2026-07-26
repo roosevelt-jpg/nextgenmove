@@ -5,6 +5,7 @@ import {
   resolveStorageFileRef,
   resolveStorageObjectPath,
 } from "@/lib/storage/file-ref";
+import { resolveStorageBucketName } from "@/lib/storage/upload-via-admin";
 
 export async function GET(
   _request: Request,
@@ -57,7 +58,7 @@ export async function GET(
       return NextResponse.json({ error: "no_file" }, { status: 404 });
     }
 
-    const bucket = adminStorage.bucket();
+    const bucket = adminStorage.bucket(await resolveStorageBucketName());
     const file = bucket.file(storagePath);
     const [metadata] = await file.getMetadata();
     const [buffer] = await file.download();

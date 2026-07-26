@@ -89,6 +89,7 @@ export function RoleInterestForm({ role, labels }: RoleInterestFormProps) {
       />
       <FileUpload
         storagePath={`roles/interest/${role.id}`}
+        uploadEndpoint="/api/public/upload"
         accept=".pdf,application/pdf"
         label={labels.cvUpload}
         dropzoneContent={labels.cvDropzone}

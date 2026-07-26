@@ -28,19 +28,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const bucketName =
-    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-    process.env.FIREBASE_STORAGE_BUCKET ||
-    "";
-
-  if (!bucketName) {
-    console.error("account_upload_missing_bucket");
-    return NextResponse.json(
-      { error: "storage_not_configured" },
-      { status: 503 },
-    );
-  }
-
   try {
     const form = await request.formData();
     const file = form.get("file");
@@ -67,14 +54,13 @@ export async function POST(request: Request) {
       buffer,
       contentType,
       filename,
-      bucketName,
     });
 
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("account_upload_failed", message);
-    if (message.includes("bucket") || message.includes("STORAGE")) {
+    if (message.includes("storage_bucket_missing")) {
       return NextResponse.json(
         { error: "storage_not_configured" },
         { status: 503 },
