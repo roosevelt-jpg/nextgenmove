@@ -76,6 +76,31 @@ export function AdminEntityModal({
     setValues(next);
   };
 
+  const validateRequired = (
+    payload: Record<string, unknown>,
+  ): string | null => {
+    for (const field of schema.fields) {
+      if (!field.required) continue;
+      const value = payload[field.key];
+      if (value == null) {
+        return labels.requiredFields ?? "Fill in all required fields.";
+      }
+      if (typeof value === "string" && !value.trim()) {
+        return labels.requiredFields ?? "Fill in all required fields.";
+      }
+      if (
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        value !== null &&
+        "url" in value &&
+        !String((value as { url?: string }).url ?? "").trim()
+      ) {
+        return labels.requiredFields ?? "Fill in all required fields.";
+      }
+    }
+    return null;
+  };
+
   const save = async () => {
     setIsSaving(true);
     setErrorCode(null);
@@ -96,6 +121,13 @@ export function AdminEntityModal({
       ) {
         payload.footerGroup = "none";
       }
+    }
+
+    const validationError = validateRequired(payload);
+    if (validationError) {
+      setIsSaving(false);
+      setErrorCode("required_fields");
+      return;
     }
 
     const response = await fetch(
@@ -157,7 +189,9 @@ export function AdminEntityModal({
         ))}
         {errorCode ? (
           <p className="text-sm text-text-warning" role="alert">
-            {labels[errorCode] ?? errorCode}
+            {errorCode === "required_fields"
+              ? (labels.requiredFields ?? "Fill in all required fields.")
+              : (labels[errorCode] ?? errorCode)}
           </p>
         ) : null}
       </div>

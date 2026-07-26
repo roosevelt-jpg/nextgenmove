@@ -9,6 +9,7 @@ import type {
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Button, EmptyState } from "@/components/ui";
 import { looksLikeHtml, stripHtmlToPlainText } from "@/lib/content/plain-text";
+import { resolveStorageUrl } from "@/lib/storage/file-ref";
 
 interface AdminSingletonEditorProps {
   labels: Record<string, string>;
@@ -58,7 +59,7 @@ function FieldPreview({
   }
 
   if (field.type === "image" || field.type === "file") {
-    const url = asPlainText(value);
+    const url = resolveStorageUrl(value);
     return (
       <div className="space-y-1 border-b border-border py-3">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">

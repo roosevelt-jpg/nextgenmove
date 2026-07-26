@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
 import { getStudentSession, unauthorizedResponse } from "@/lib/student/session";
-import { resolveStorageFileRef } from "@/lib/storage/file-ref";
+import {
+  resolveStorageFileRef,
+  resolveStorageUrl,
+} from "@/lib/storage/file-ref";
 
 export async function GET() {
   const session = await getStudentSession();
@@ -41,7 +44,7 @@ export async function GET() {
         title: data.title ?? "",
         description: data.description ?? "",
         type: data.type ?? "download",
-        thumbnailUrl: data.thumbnailUrl ?? "",
+        thumbnailUrl: resolveStorageUrl(data.thumbnailUrl),
         hasFile,
         downloadHref:
           purchased && hasFile

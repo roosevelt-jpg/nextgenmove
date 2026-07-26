@@ -20,7 +20,10 @@ import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
 import { mergePageHome } from "@/lib/public/merge-page-home";
 import { listLiveVideoCards } from "@/lib/media/video-cards";
 import { getSiteSettings } from "@/lib/collections/site-settings";
-import { resolveStorageFileRef } from "@/lib/storage/file-ref";
+import {
+  resolveStorageFileRef,
+  resolveStorageUrl,
+} from "@/lib/storage/file-ref";
 
 async function loadPageHome(): Promise<PageHomeDocument> {
   const snapshot = await adminDb.collection("page_home").doc("default").get();
@@ -141,7 +144,14 @@ export async function getPageAbout(): Promise<PageAboutDocument | null> {
     const snapshot = await adminDb.collection("page_about").doc("default").get();
     const data = snapshot.data() as PageAboutDocument | undefined;
     if (!data) return null;
-    return serializeForClient(data);
+    const serialized = serializeForClient(data) as PageAboutDocument;
+    if (Array.isArray(serialized.teamMembers)) {
+      serialized.teamMembers = serialized.teamMembers.map((member) => ({
+        ...member,
+        photo: resolveStorageUrl(member.photo),
+      }));
+    }
+    return serialized;
   } catch {
     return null;
   }
@@ -325,7 +335,7 @@ export async function getPublishedArticles(): Promise<ArticleDocument[]> {
           id: doc.id,
           title: data.title ?? "",
           slug: data.slug ?? doc.id,
-          coverImageUrl: data.coverImageUrl ?? "",
+          coverImageUrl: resolveStorageUrl(data.coverImageUrl),
           excerpt: data.excerpt ?? "",
           body: data.body ?? "",
           author: data.author ?? "",
@@ -366,7 +376,7 @@ export async function getArticleBySlug(slug: string): Promise<ArticleDocument | 
       id: doc.id,
       title: data.title ?? "",
       slug: data.slug ?? doc.id,
-      coverImageUrl: data.coverImageUrl ?? "",
+      coverImageUrl: resolveStorageUrl(data.coverImageUrl),
       excerpt: data.excerpt ?? "",
       body: data.body ?? "",
       author: data.author ?? "",

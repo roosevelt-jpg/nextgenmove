@@ -46,8 +46,12 @@ export function AdminEntityListView({
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Record<string, unknown> | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const load = async () => {
+    setLoadError(null);
+    setLoading(true);
     const response = await fetch(`/api/admin/data/${schema.collection}`);
     if (response.ok) {
       const payload = (await response.json()) as {
@@ -55,7 +59,12 @@ export function AdminEntityListView({
         item?: Record<string, unknown> | null;
       };
       setItems(payload.items ?? (payload.item ? [payload.item] : []));
+      setLoading(false);
+      return;
     }
+    setItems([]);
+    setLoadError(labels.loadError ?? "Could not load items.");
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -231,7 +240,7 @@ export function AdminEntityListView({
               setModalOpen(true);
             }}
           >
-            {labels.edit}
+            {labels.edit ?? "Edit"}
           </Button>
           <Button
             size="xs"
@@ -254,7 +263,7 @@ export function AdminEntityListView({
               await load();
             }}
           >
-            {labels.delete}
+            {labels.delete ?? "Delete"}
           </Button>
         </div>
       ),
@@ -272,7 +281,7 @@ export function AdminEntityListView({
             setModalOpen(true);
           }}
         >
-          {labels.create}
+          {labels.create ?? "Create"}
         </Button>
       </div>
 
@@ -280,6 +289,14 @@ export function AdminEntityListView({
         <p className="text-sm text-text-warning" role="status">
           {actionMessage}
         </p>
+      ) : null}
+      {loadError ? (
+        <p className="text-sm text-text-warning" role="alert">
+          {loadError}
+        </p>
+      ) : null}
+      {loading ? (
+        <p className="text-sm text-text-muted">{labels.loading ?? "Loading…"}</p>
       ) : null}
 
       <AdvancedFilters
@@ -294,7 +311,9 @@ export function AdminEntityListView({
         columns={columns}
         data={filteredItems}
         rowKey={(row) => String(row.id)}
-        emptyState={<EmptyState title={labels.empty} />}
+        emptyState={
+          <EmptyState title={labels.empty ?? "No items yet."} />
+        }
       />
 
       <AdminEntityModal

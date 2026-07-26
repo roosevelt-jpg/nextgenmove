@@ -505,6 +505,12 @@ export function AdminHomepageMediaView({
               "Videos sync from YouTube. Edit status or metadata below — no manual cards."}
           </p>
         </div>
+        {videos.length === 0 ? (
+          <p className="rounded-radius border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
+            {labels.videosEmpty ??
+              "No videos yet. Connect YouTube under Integrations, paste a playlist or channel above, then Sync now."}
+          </p>
+        ) : null}
         <ul className="space-y-2">
           {videos.map((item) => (
             <li
@@ -566,6 +572,11 @@ export function AdminHomepageMediaView({
             {labels.addEpisode ?? "+ Add episode"}
           </Button>
         </div>
+        {podcasts.length === 0 ? (
+          <p className="rounded-radius border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
+            {labels.podcastsEmpty ?? "No podcast episodes yet. Add an episode to get started."}
+          </p>
+        ) : null}
         <ul className="space-y-2">
           {podcasts.map((item) => (
             <li

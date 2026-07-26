@@ -76,3 +76,8 @@ export function resolveStorageObjectPath(
   if (ref.url) return storagePathFromDownloadUrl(ref.url);
   return null;
 }
+
+/** URL string for img src / Open Graph — handles legacy strings and metadata objects. */
+export function resolveStorageUrl(raw: unknown): string {
+  return resolveStorageFileRef(raw)?.url ?? "";
+}

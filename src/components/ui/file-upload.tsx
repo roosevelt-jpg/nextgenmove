@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState, type DragEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type ReactNode,
+} from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase-client";
 import { cn } from "@/lib/utils";
@@ -33,6 +40,8 @@ export interface FileUploadProps {
   replaceLabel?: ReactNode;
   /** Label for the clear/remove action after a successful upload. */
   clearLabel?: ReactNode;
+  /** Existing file metadata (edit forms) so the uploaded name stays visible. */
+  initialFile?: Partial<FileUploadMetadata> | null;
 }
 
 function formatFileSize(bytes: number): string {
@@ -57,6 +66,7 @@ export function FileUpload({
   progressLabel,
   replaceLabel,
   clearLabel,
+  initialFile = null,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -64,6 +74,25 @@ export function FileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState<FileUploadMetadata | null>(null);
+
+  useEffect(() => {
+    if (!initialFile?.url) {
+      return;
+    }
+    setUploaded({
+      url: initialFile.url,
+      path: initialFile.path ?? "",
+      filename: initialFile.filename || initialFile.url.split("/").pop() || "file",
+      size: initialFile.size ?? 0,
+      mimeType: initialFile.mimeType ?? "",
+    });
+  }, [
+    initialFile?.url,
+    initialFile?.path,
+    initialFile?.filename,
+    initialFile?.size,
+    initialFile?.mimeType,
+  ]);
 
   const fail = useCallback(
     (error: Error) => {

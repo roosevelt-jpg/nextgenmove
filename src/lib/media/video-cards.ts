@@ -1,4 +1,5 @@
 import { adminDb } from "@/lib/firebase-admin";
+import { resolveStorageUrl } from "@/lib/storage/file-ref";
 import type { VideoCardDocument } from "@/types/cms";
 
 export async function listLiveVideoCards(
@@ -17,7 +18,7 @@ export async function listLiveVideoCards(
       subtitle: String(data.subtitle ?? ""),
       videoUrl: String(data.videoUrl ?? ""),
       duration: String(data.duration ?? ""),
-      thumbnailUrl: String(data.thumbnailUrl ?? ""),
+      thumbnailUrl: resolveStorageUrl(data.thumbnailUrl),
       position: Number(data.position ?? 0),
       status: (data.status as VideoCardDocument["status"]) ?? "draft",
       youtubeVideoId: data.youtubeVideoId
