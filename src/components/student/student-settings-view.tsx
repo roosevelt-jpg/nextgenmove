@@ -416,7 +416,9 @@ export function StudentSettingsView({
             </p>
           ) : null}
           <Button type="submit" disabled={isSaving}>
-            {labels.saveNotifications || "Save notifications"}
+            {isSaving
+              ? labels.saving || "Saving…"
+              : labels.saveNotifications || "Save notifications"}
           </Button>
         </form>
       ) : null}

@@ -5,6 +5,7 @@ import { AdminEntityModal } from "@/components/admin/admin-entity-modal";
 import type { AdminEntitySchema } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
 import { Button } from "@/components/ui";
+import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { cn } from "@/lib/utils";
 import {
   isYoutubePlaylistOrChannelInput,
@@ -167,22 +168,25 @@ export function AdminHomepageMediaView({
     [labels],
   );
 
-  const { status: youtubeAutosaveStatus, suppressNext: suppressYoutube } =
-    useDebouncedAutosave(youtubeDraft, persistYoutubeDraft, {
-      enabled: youtubeHydrated,
-      delayMs: 800,
-    });
+  const {
+    status: youtubeAutosaveStatus,
+    suppressNext: suppressYoutube,
+    flush: flushYoutube,
+  } = useDebouncedAutosave(youtubeDraft, persistYoutubeDraft, {
+    enabled: youtubeHydrated,
+    delayMs: 800,
+  });
   useEffect(() => {
     suppressYoutubeRef.current = suppressYoutube;
   }, [suppressYoutube]);
 
   useEffect(() => {
     if (youtubeAutosaveStatus === "error") {
-      setSyncMessage(labels.youtubeSaveFailed ?? "Could not save settings.");
+      setSyncMessage(labels.youtubeSaveFailed || "Could not save settings.");
     } else if (youtubeAutosaveStatus === "saved") {
-      setSyncMessage(labels.youtubeSaveOk ?? "Playlist settings saved.");
+      setSyncMessage(labels.youtubeSaveOk || "Playlist settings saved.");
     } else if (youtubeAutosaveStatus === "saving") {
-      setSyncMessage(labels.saving ?? "Saving…");
+      setSyncMessage(labels.saving || "Saving…");
     }
   }, [youtubeAutosaveStatus, labels]);
   const load = useCallback(async () => {
@@ -511,26 +515,35 @@ export function AdminHomepageMediaView({
               "Playlist saved. Click Sync now to pull videos into Video cards."}
           </p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={saveBusy}
-            onClick={() => void saveYoutubeSettings({ requirePlaylist: false })}
-          >
-            {saveBusy
-              ? labels.youtubeSaving ?? "Saving…"
-              : labels.youtubeSave ?? "Save playlist settings"}
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" disabled={syncBusy} onClick={() => void runSyncNow()}>
             {syncBusy
-              ? labels.youtubeSyncing ?? "Syncing…"
-              : labels.youtubeSyncNow ?? "Sync now"}
+              ? labels.youtubeSyncing || "Syncing…"
+              : labels.youtubeSyncNow || "Sync now"}
           </Button>
         </div>
-        {syncMessage ? (
-          <p className="text-[12.5px] text-text-secondary">{syncMessage}</p>
-        ) : null}
+        <FormPersistBar
+          status={youtubeAutosaveStatus}
+          isSaving={saveBusy}
+          message={syncMessage}
+          onSave={async () => {
+            setSaveBusy(true);
+            setSyncMessage(null);
+            const ok = await flushYoutube();
+            if (ok) {
+              await load();
+            }
+            setSaveBusy(false);
+          }}
+          labels={{
+            save: labels.youtubeSave || labels.save || "Save playlist settings",
+            saving: labels.youtubeSaving || labels.saving || "Saving…",
+            saved: labels.youtubeSaveOk || labels.saveSuccess || "Saved.",
+            saveError: labels.youtubeSaveFailed || labels.saveError,
+            autosaveHint:
+              labels.autosaveHint || "Playlist settings save automatically",
+          }}
+        />
       </section>
 
       <section className="rounded-radius border border-border bg-grad-card p-4">

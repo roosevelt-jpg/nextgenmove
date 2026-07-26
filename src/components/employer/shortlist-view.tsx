@@ -281,7 +281,7 @@ export function ShortlistView({ labels }: ShortlistViewProps) {
               value={noteText}
               onChange={(event) => setNoteText(event.target.value)}
             />
-            <Button type="submit">{labels.addNote}</Button>
+            <Button type="submit">{labels.addNote || "Add note"}</Button>
           </form>
         </section>
       ) : labels.selectCandidate ? (

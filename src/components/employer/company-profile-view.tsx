@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Badge, Button, Card, CardBody, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
@@ -154,6 +155,15 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
             <p className="text-sm text-brand-lavender">{company.contactEmail}</p>
           ) : null}
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="/employer/settings"
+              className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-on-gradient hover:bg-white/30"
+            >
+              {labels.editCompanyDetails ||
+                labels.editSettings ||
+                labels.edit ||
+                "Edit company details"}
+            </Link>
             {subscriptionLabel ? (
               <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-on-gradient">
                 {subscriptionLabel}

@@ -1291,7 +1291,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                 {labels.activate}
               </Button>
               <Button size="xs" variant="ghost" onClick={() => setEditOpen(true)}>
-                {labels.edit}
+                {labels.edit || "Edit"}
               </Button>
               <Button
                 size="xs"
@@ -1475,7 +1475,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
                   setNote("");
                 }}
               >
-                {labels.saveNote}
+                {labels.saveNote || "Save note"}
               </Button>
             </div>
 

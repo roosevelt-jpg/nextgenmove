@@ -239,15 +239,17 @@ export function AdminSingletonEditor({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-serif text-3xl text-text-primary">{title}</h1>
         <Button onClick={() => setModalOpen(true)}>
-          {labels.edit}
+          {labels.edit || formLabels.edit || "Edit"}
         </Button>
       </div>
 
       {!loaded ? (
-        <p className="text-sm text-text-muted">{labels.loading}</p>
+        <p className="text-sm text-text-muted">
+          {labels.loading || formLabels.loading || "Loading…"}
+        </p>
       ) : !hasContent ? (
         <EmptyState
-          title={labels.empty}
+          title={labels.empty || formLabels.empty || "No content yet"}
         />
       ) : (
         <section className="rounded-radius border border-border bg-grad-card px-4 py-1 sm:px-5">
@@ -271,12 +273,13 @@ export function AdminSingletonEditor({
         labels={{
           ...formLabels,
           ...labels,
-          cancel: labels.cancel || formLabels.cancel,
-          save: labels.save || formLabels.save,
-          createTitle: labels.createTitle || formLabels.createTitle,
-          editTitle: labels.editTitle || formLabels.editTitle,
-          addRow: labels.addRow || formLabels.addRow,
-          removeRow: labels.removeRow || formLabels.removeRow,
+          cancel: labels.cancel || formLabels.cancel || "Cancel",
+          save: labels.save || formLabels.save || "Save",
+          createTitle:
+            labels.createTitle || formLabels.createTitle || "Create",
+          editTitle: labels.editTitle || formLabels.editTitle || "Edit",
+          addRow: labels.addRow || formLabels.addRow || "Add row",
+          removeRow: labels.removeRow || formLabels.removeRow || "Remove",
         }}
         taxonomies={taxonomies}
         onSaved={load}

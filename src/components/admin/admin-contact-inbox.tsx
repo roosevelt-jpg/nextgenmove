@@ -355,7 +355,9 @@ export function AdminContactInbox({ labels }: AdminContactInboxProps) {
               disabled={sending || !replySubject.trim() || !replyBody.trim()}
               onClick={() => void sendReply()}
             >
-              {sending ? labels.sending : labels.sendReply}
+              {sending
+                ? labels.sending || "Sending…"
+                : labels.sendReply || "Send reply"}
             </Button>
           </section>
 
@@ -374,7 +376,9 @@ export function AdminContactInbox({ labels }: AdminContactInboxProps) {
               disabled={savingNotes}
               onClick={() => void saveNotes()}
             >
-              {savingNotes ? labels.saving : labels.saveNotes}
+              {savingNotes
+                ? labels.saving || "Saving…"
+                : labels.saveNotes || "Save notes"}
             </Button>
           </section>
 

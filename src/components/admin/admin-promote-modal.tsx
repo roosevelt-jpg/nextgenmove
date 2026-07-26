@@ -73,7 +73,7 @@ export function AdminPromoteModal({
             {labels.cancel || "Cancel"}
           </Button>
           <Button disabled={isSaving || !companyId || !stageId} onClick={promote}>
-            {labels.promote}
+            {labels.promote || "Promote"}
           </Button>
         </div>
       }
