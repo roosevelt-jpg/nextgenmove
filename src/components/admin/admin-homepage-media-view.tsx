@@ -7,6 +7,7 @@ import type { TaxonomiesDocument } from "@/types/cms";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import {
+  isYoutubePlaylistOrChannelInput,
   looksLikeGoogleApiKey,
   parseYoutubePlaylistId,
 } from "@/lib/media/youtube";
@@ -31,7 +32,8 @@ function mapYoutubeSyncError(
     (key === "playlist_looks_like_api_key"
       ? labels.playlist_looks_like_api_key
       : key === "missing_or_invalid_playlist"
-        ? labels.missing_or_invalid_playlist
+        ? labels.missing_or_invalid_playlist ||
+          "Add a playlist URL, channel URL, or @handle above, then Sync now. The API key alone is not enough."
         : key === "missing_youtube_api_key"
           ? labels.missing_youtube_api_key
           : null);
@@ -284,10 +286,17 @@ export function AdminHomepageMediaView({
         );
         return false;
       }
-      if (playlist && !parseYoutubePlaylistId(playlist)) {
+      if (playlist && !isYoutubePlaylistOrChannelInput(playlist)) {
         setSyncMessage(
           labels.missing_or_invalid_playlist ||
-            "Enter a YouTube playlist URL or id (starts with PL…).",
+            "Enter a playlist URL, channel URL, @handle, or PL… / UU… id.",
+        );
+        return false;
+      }
+      if (!playlist) {
+        setSyncMessage(
+          labels.missing_or_invalid_playlist ||
+            "Add a playlist URL, channel URL, or @handle, then Sync now. Connecting the API key under Integrations is step 1 of 2.",
         );
         return false;
       }
@@ -385,7 +394,7 @@ export function AdminHomepageMediaView({
         </h2>
         <p className="text-[12.5px] text-text-secondary">
           {labels.youtubeSyncBody ??
-            "Paste a playlist URL (youtube.com/playlist?list=PL…). Connect the YouTube Data API key under Integrations → YouTube, then Sync now."}
+            "Step 1: connect the YouTube Data API key under Integrations → YouTube. Step 2: paste a playlist URL, channel URL, or @handle here, then Sync now."}
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">

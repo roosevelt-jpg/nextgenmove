@@ -51,6 +51,26 @@ export function parseYoutubeVideoId(url: string | null | undefined): string | nu
   return null;
 }
 
+/**
+ * True when the value looks like a playlist, channel URL, @handle, or channel id.
+ * Used for client-side save validation — actual resolution happens server-side.
+ */
+export function isYoutubePlaylistOrChannelInput(
+  value: string | null | undefined,
+): boolean {
+  if (!value) return false;
+  const trimmed = value.trim();
+  if (!trimmed || looksLikeGoogleApiKey(trimmed)) return false;
+  if (parseYoutubePlaylistId(trimmed)) return true;
+  if (trimmed.startsWith("@")) return true;
+  if (/^UC[\w-]{8,}$/i.test(trimmed)) return true;
+  if (/^UU[\w-]{8,}$/i.test(trimmed)) return true;
+  if (trimmed.includes("youtube.com") || trimmed.includes("youtu.be")) {
+    return true;
+  }
+  return false;
+}
+
 /** Resolve a playlist id from a playlist URL or raw id. */
 export function parseYoutubePlaylistId(
   urlOrId: string | null | undefined,
