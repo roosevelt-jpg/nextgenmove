@@ -202,6 +202,7 @@ export function RequestTalentForm({ labels }: RequestTalentFormProps) {
           onUploadComplete={(result: FileUploadMetadata) =>
             setJobDescriptionFileUrl(result.url)
           }
+          onClear={() => setJobDescriptionFileUrl("")}
         />
       </div>
 

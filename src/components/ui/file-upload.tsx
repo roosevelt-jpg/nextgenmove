@@ -21,12 +21,25 @@ export interface FileUploadProps {
   uploadKind?: string;
   onUploadComplete: (result: FileUploadMetadata) => void;
   onError?: (error: Error) => void;
+  /** Called when the user clears a successful upload. */
+  onClear?: () => void;
   accept?: string;
   disabled?: boolean;
   className?: string;
   label?: ReactNode;
   dropzoneContent?: ReactNode;
   progressLabel?: ReactNode;
+  /** Label for the replace action after a successful upload. */
+  replaceLabel?: ReactNode;
+  /** Label for the clear/remove action after a successful upload. */
+  clearLabel?: ReactNode;
+}
+
+function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function FileUpload({
@@ -35,18 +48,22 @@ export function FileUpload({
   uploadKind,
   onUploadComplete,
   onError,
+  onClear,
   accept,
   disabled = false,
   className,
   label,
   dropzoneContent,
   progressLabel,
+  replaceLabel,
+  clearLabel,
 }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [uploaded, setUploaded] = useState<FileUploadMetadata | null>(null);
 
   const fail = useCallback(
     (error: Error) => {
@@ -57,6 +74,23 @@ export function FileUpload({
     },
     [onError],
   );
+
+  const complete = useCallback(
+    (result: FileUploadMetadata) => {
+      setIsUploading(false);
+      setProgress(null);
+      setErrorMessage(null);
+      setUploaded(result);
+      onUploadComplete(result);
+    },
+    [onUploadComplete],
+  );
+
+  const clearUploaded = useCallback(() => {
+    setUploaded(null);
+    setErrorMessage(null);
+    onClear?.();
+  }, [onClear]);
 
   const uploadViaApi = useCallback(
     (file: File, endpoint: string) => {
@@ -92,9 +126,7 @@ export function FileUpload({
             fail(new Error(payload.error ?? "upload_failed"));
             return;
           }
-          setIsUploading(false);
-          setProgress(null);
-          onUploadComplete({
+          complete({
             url: payload.url,
             path: payload.path,
             filename: payload.filename ?? file.name,
@@ -113,7 +145,7 @@ export function FileUpload({
       xhr.timeout = 120_000;
       xhr.send(body);
     },
-    [fail, onUploadComplete, uploadKind, storagePath],
+    [complete, fail, uploadKind, storagePath],
   );
 
   const uploadViaStorage = useCallback(
@@ -140,9 +172,7 @@ export function FileUpload({
         async () => {
           try {
             const url = await getDownloadURL(task.snapshot.ref);
-            setIsUploading(false);
-            setProgress(null);
-            onUploadComplete({
+            complete({
               url,
               path,
               filename: file.name,
@@ -155,7 +185,7 @@ export function FileUpload({
         },
       );
     },
-    [fail, onUploadComplete, storagePath],
+    [complete, fail, storagePath],
   );
 
   const uploadFile = useCallback(
@@ -197,53 +227,97 @@ export function FileUpload({
     handleFiles(event.dataTransfer.files);
   };
 
+  const openPicker = () => {
+    if (!disabled && !isUploading) {
+      inputRef.current?.click();
+    }
+  };
+
   return (
     <div className={cn("flex w-full flex-col gap-2", className)}>
       {label ? (
         <span className="text-sm font-medium text-text-secondary">{label}</span>
       ) : null}
-      <div
-        role="button"
-        tabIndex={disabled || isUploading ? -1 : 0}
-        aria-label="Upload file"
-        aria-disabled={disabled || isUploading}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            inputRef.current?.click();
-          }
-        }}
-        onClick={() => {
-          if (!disabled && !isUploading) {
-            inputRef.current?.click();
-          }
-        }}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-radius border-2 border-dashed border-border bg-grad-card px-6 py-8 text-center transition-colors",
-          isDragging && "border-border-accent",
-          (disabled || isUploading) && "cursor-not-allowed opacity-50",
-        )}
-      >
-        {dropzoneContent || (
-          <span className="text-sm text-text-secondary">
-            Click or drop a file to upload
-          </span>
-        )}
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          className="hidden"
-          disabled={disabled || isUploading}
-          onChange={(event) => {
-            handleFiles(event.target.files);
-            event.target.value = "";
+
+      {uploaded && !isUploading ? (
+        <div className="flex flex-col gap-2 rounded-radius border border-border bg-surface-2 px-3 py-3">
+          <div className="flex items-start gap-2">
+            <span
+              className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-bg-success text-[11px] font-semibold text-text-success"
+              aria-hidden
+            >
+              ✓
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-text-primary">
+                {uploaded.filename}
+              </p>
+              <p className="text-xs text-text-muted">
+                {[formatFileSize(uploaded.size), "Uploaded"].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={openPicker}
+              disabled={disabled}
+              className="text-xs font-medium text-text-accent underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              {replaceLabel ?? "Replace file"}
+            </button>
+            <button
+              type="button"
+              onClick={clearUploaded}
+              disabled={disabled}
+              className="text-xs font-medium text-text-secondary underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              {clearLabel ?? "Remove"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          role="button"
+          tabIndex={disabled || isUploading ? -1 : 0}
+          aria-label="Upload file"
+          aria-disabled={disabled || isUploading}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openPicker();
+            }
           }}
-        />
-      </div>
+          onClick={openPicker}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          className={cn(
+            "flex cursor-pointer flex-col items-center justify-center rounded-radius border-2 border-dashed border-border bg-grad-card px-6 py-8 text-center transition-colors",
+            isDragging && "border-border-accent",
+            (disabled || isUploading) && "cursor-not-allowed opacity-50",
+          )}
+        >
+          {dropzoneContent || (
+            <span className="text-sm text-text-secondary">
+              Click or drop a file to upload
+            </span>
+          )}
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        disabled={disabled || isUploading}
+        onChange={(event) => {
+          handleFiles(event.target.files);
+          event.target.value = "";
+        }}
+      />
+
       {isUploading && progress !== null ? (
         <div className="flex flex-col gap-1">
           {progressLabel ? (

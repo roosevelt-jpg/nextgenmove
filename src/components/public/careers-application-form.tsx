@@ -154,6 +154,7 @@ export function CareersApplicationForm({
         dropzoneContent={labels.cvDropzone}
         progressLabel={labels.uploadProgress}
         onUploadComplete={(result: FileUploadMetadata) => setCvUrl(result.url)}
+        onClear={() => setCvUrl("")}
       />
       <Textarea
         id="careers-cover-note"

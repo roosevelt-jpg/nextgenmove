@@ -95,6 +95,7 @@ export function RoleInterestForm({ role, labels }: RoleInterestFormProps) {
         dropzoneContent={labels.cvDropzone}
         progressLabel={labels.uploadProgress}
         onUploadComplete={(result: FileUploadMetadata) => setCvUrl(result.url)}
+        onClear={() => setCvUrl("")}
       />
       <Textarea
         id="interest-why"
