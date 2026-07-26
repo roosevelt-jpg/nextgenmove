@@ -13,6 +13,23 @@ export interface SessionResponse {
   redirectTo: string;
 }
 
+export interface TwoFactorRequiredError {
+  error: "two_factor_required";
+  methods: { email: boolean; phone: boolean };
+  phone?: string | null;
+  phoneHint?: string | null;
+}
+
+export function isTwoFactorRequiredError(
+  value: unknown,
+): value is TwoFactorRequiredError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { error?: string }).error === "two_factor_required"
+  );
+}
+
 export interface EducationEntry {
   institution: string;
   degree?: string;
@@ -71,6 +88,16 @@ export async function signInWithGoogle() {
 /** Reserved for a future Google sign-in provider hook. */
 export type AuthProviderId = "password" | "google";
 
+export class SessionEstablishError extends Error {
+  payload: Record<string, unknown>;
+
+  constructor(payload: Record<string, unknown>) {
+    super(String(payload.error ?? "session_failed"));
+    this.name = "SessionEstablishError";
+    this.payload = payload;
+  }
+}
+
 export async function establishSession(idToken: string): Promise<SessionResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
@@ -85,13 +112,17 @@ export async function establishSession(idToken: string): Promise<SessionResponse
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as
-        | { error?: string }
+        | Record<string, unknown>
         | null;
-      throw new Error(payload?.error ?? "session_failed");
+      if (payload?.error === "two_factor_required") {
+        throw new SessionEstablishError(payload);
+      }
+      throw new Error(String(payload?.error ?? "session_failed"));
     }
 
     return response.json() as Promise<SessionResponse>;
   } catch (error) {
+    if (error instanceof SessionEstablishError) throw error;
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error("session_timeout");
     }
@@ -99,6 +130,32 @@ export async function establishSession(idToken: string): Promise<SessionResponse
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function login2faRequest(body: {
+  action: "send_email_otp" | "verify_email_otp" | "confirm_phone" | "complete_session";
+  idToken: string;
+  code?: string;
+  phoneE164?: string;
+}): Promise<SessionResponse | { ok: true }> {
+  const response = await fetch("/api/auth/login-2fa", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = (await response.json().catch(() => null)) as
+    | (SessionResponse & { error?: string; ok?: boolean })
+    | { error?: string; ok?: boolean }
+    | null;
+
+  if (!response.ok) {
+    throw new Error(payload?.error ?? "login_2fa_failed");
+  }
+
+  if (body.action === "complete_session") {
+    return payload as SessionResponse;
+  }
+  return { ok: true };
 }
 
 export async function clearSession(): Promise<void> {

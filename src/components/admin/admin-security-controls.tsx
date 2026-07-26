@@ -84,8 +84,13 @@ export function AdminSecurityControls({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4 border-b border-border py-2">
         <div>
-          <p className="font-medium text-text-primary">{labels.require2fa}</p>
-          <p className="text-xs text-text-muted">{labels.require2faHelp}</p>
+          <p className="font-medium text-text-primary">
+            {labels.require2fa ?? "Require two-factor authentication"}
+          </p>
+          <p className="text-xs text-text-muted">
+            {labels.require2faHelp ??
+              "Require email or SMS OTP at admin login (Firebase Auth phone + email code)."}
+          </p>
         </div>
         <button
           type="button"

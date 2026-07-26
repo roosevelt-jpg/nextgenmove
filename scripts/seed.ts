@@ -1945,7 +1945,8 @@ const OPERATIONAL_SITE_SETTINGS = {
       manageTeam: "Manage team →",
       securityTitle: "Security",
       require2fa: "Require two-factor authentication",
-      require2faHelp: "Applies to all team members with admin access",
+      require2faHelp:
+        "Require email or SMS OTP at admin login (Firebase Auth phone + email code).",
       featureFlagsTitle: "Feature flags",
       googleSignInEnabled: "Google sign-in",
       googleSignInEnabledHelp: "Show Google sign-in on auth pages",

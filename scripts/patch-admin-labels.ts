@@ -130,7 +130,8 @@ async function main() {
       manageTeam: "Manage team →",
       securityTitle: "Security",
       require2fa: "Require two-factor authentication",
-      require2faHelp: "Applies to all team members with admin access",
+      require2faHelp:
+        "Require email or SMS OTP at admin login (Firebase Auth phone + email code).",
       sessionExpireDays: "Auto-expire sessions after N days",
       sessionExpireHelp: "Forces re-login on all devices (1–14 days)",
       securityEditHint:

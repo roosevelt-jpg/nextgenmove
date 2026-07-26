@@ -199,22 +199,24 @@ export async function POST(request: Request) {
         });
       }
 
-      if (require2fa && !decoded.email_verified) {
-        // Allow incomplete signups through so verify/media steps can set cookies.
-        let profileComplete = false;
-        try {
-          const profileSnap = await withTimeout(
-            adminDb.collection("users").doc(user.uid).get(),
-            1500,
-            "profile_complete_check",
-          );
-          profileComplete = Boolean(profileSnap.data()?.profileComplete);
-        } catch {
-          profileComplete = false;
-        }
-        if (profileComplete) {
+      // Admin login 2FA: require a fresh email/SMS OTP pass before cookies.
+      if (require2fa && user.role === "admin") {
+        const { hasValidLogin2faPass, resolveAdminPhone } = await import(
+          "@/lib/auth/login-2fa"
+        );
+        const passed = await hasValidLogin2faPass(user.uid);
+        if (!passed) {
+          const phone = await resolveAdminPhone(user.uid);
           return NextResponse.json(
-            { error: "email_verification_required" },
+            {
+              error: "two_factor_required",
+              methods: { email: true, phone: Boolean(phone) },
+              // Full E.164 needed client-side for Firebase Phone Auth after password proof.
+              phone: phone || null,
+              phoneHint: phone
+                ? `${phone.slice(0, 4)}…${phone.slice(-2)}`
+                : null,
+            },
             { status: 403 },
           );
         }
@@ -301,6 +303,11 @@ export async function POST(request: Request) {
             }
           })
           .catch(() => undefined);
+      }
+
+      if (require2fa && user.role === "admin") {
+        const { clearLogin2faPass } = await import("@/lib/auth/login-2fa");
+        await clearLogin2faPass(user.uid);
       }
 
       const response = NextResponse.json({
