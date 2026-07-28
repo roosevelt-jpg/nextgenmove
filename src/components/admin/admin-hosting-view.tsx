@@ -302,15 +302,40 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
               : labels.subtitle ||
                 "Purchase Hostinger agency hosting for NextGen Move — plan selection, order summary, then secure card payment."}
           </p>
+          <p className="text-sm text-text-secondary">
+            {labels.comparePricingLabel || "Compare live Hostinger pricing:"}{" "}
+            <a
+              href={
+                labels.comparePricingUrl || "https://www.hostinger.com/pro"
+              }
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-fill-accent underline-offset-2 hover:underline"
+            >
+              {labels.comparePricingUrl || "https://www.hostinger.com/pro"}
+            </a>
+          </p>
         </div>
-        <Image
-          src="/integrations/hostinger.svg"
-          alt={catalog.partnerName || "Hostinger"}
-          width={96}
-          height={20}
-          className="h-5 w-auto max-h-5 max-w-[6rem] object-contain object-right"
-          priority
-        />
+        <div className="flex flex-col items-end gap-2">
+          <Image
+            src="/integrations/hostinger.svg"
+            alt={catalog.partnerName || "Hostinger"}
+            width={96}
+            height={20}
+            className="h-5 w-auto max-h-5 max-w-[6rem] object-contain object-right"
+            priority
+          />
+          <a
+            href={
+              labels.comparePricingUrl || "https://www.hostinger.com/pro"
+            }
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-fill-accent hover:underline"
+          >
+            {labels.comparePricingCta || "hostinger.com/pro"}
+          </a>
+        </div>
       </header>
 
       {!stripeLive ? (

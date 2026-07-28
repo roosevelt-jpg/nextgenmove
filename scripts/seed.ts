@@ -1522,6 +1522,9 @@ const OPERATIONAL_SITE_SETTINGS = {
       title: "Agency hosting",
       subtitle:
         "Purchase Hostinger agency hosting for NextGen Move — choose a plan, review the order, then pay securely on-site.",
+      comparePricingLabel: "Compare live Hostinger pricing:",
+      comparePricingUrl: "https://www.hostinger.com/pro",
+      comparePricingCta: "hostinger.com/pro",
       loading: "Loading…",
       loadError: "Could not load hosting plans.",
       retry: "Retry",
