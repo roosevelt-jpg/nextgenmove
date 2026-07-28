@@ -69,7 +69,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
   const [returnUrl, setReturnUrl] = useState("");
   const [quote, setQuote] = useState<HostingQuote | null>(null);
   const [payer, setPayer] = useState<{ name: string; email: string | null }>({
-    name: "Admin",
+    name: "NextGenMove",
     email: null,
   });
 
@@ -91,7 +91,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
       setStripeLive(Boolean(payload.stripeLive));
       setSubscription(payload.subscription ?? null);
       setPayer({
-        name: payload.payer?.name?.trim() || "Admin",
+        name: payload.payer?.name?.trim() || "NextGenMove",
         email: payload.payer?.email?.trim() || null,
       });
       setPlanId(

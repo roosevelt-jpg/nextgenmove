@@ -27,7 +27,7 @@ export async function GET() {
     subscription,
     payer: {
       email: session.email ?? null,
-      name: session.email?.split("@")[0] || "Admin",
+      name: "NextGenMove",
     },
   });
 }

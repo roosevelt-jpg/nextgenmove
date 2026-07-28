@@ -77,9 +77,16 @@ function ConfirmForm({
 
       // Required when Payment Element hides billing fields (fields: never).
       const billingDetails = {
-        name: billingName.trim() || "Admin",
+        name: billingName.trim() || "NextGenMove",
         email: billingEmail?.trim() || "admin@nextgenmove.agency",
         phone: "",
+        address: {
+          line1: "Dubai",
+          city: "Dubai",
+          state: "DU",
+          postal_code: "00000",
+          country: "AE",
+        },
       };
 
       const { error, paymentIntent } = await stripe.confirmPayment({
