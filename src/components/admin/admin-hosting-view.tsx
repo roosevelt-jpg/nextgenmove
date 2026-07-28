@@ -72,6 +72,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
     name: "NextGenMove",
     email: null,
   });
+  const [activating, setActivating] = useState(false);
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -111,6 +112,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
 
   const markHostingActive = useCallback(
     async (intentId: string) => {
+      setActivating(true);
       try {
         const response = await fetch("/api/admin/hosting/confirm", {
           method: "POST",
@@ -125,6 +127,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
           return false;
         }
         await load();
+        setMessage(null);
         return true;
       } catch {
         setMessage(
@@ -132,6 +135,8 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
             "Payment received, but Hosting Active could not be set. Refresh or contact support.",
         );
         return false;
+      } finally {
+        setActivating(false);
       }
     },
     [labels.activateFailed, load],
@@ -148,8 +153,11 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
       setStep("success");
       const stored = window.sessionStorage.getItem("hostingPaymentIntentId");
       if (stored) {
-        void markHostingActive(stored).then(() => {
-          window.sessionStorage.removeItem("hostingPaymentIntentId");
+        setPaymentIntentId(stored);
+        void markHostingActive(stored).then((ok) => {
+          if (ok) {
+            window.sessionStorage.removeItem("hostingPaymentIntentId");
+          }
         });
       } else {
         void load();
@@ -252,15 +260,33 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-bg-success text-text-success">
           <CheckIcon />
         </div>
-        <p className="inline-flex rounded-full bg-bg-success px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-success">
-          {labels.hostingActiveBadge || "Hosting Active"}
-        </p>
+        {hostingActive ? (
+          <p className="inline-flex rounded-full bg-bg-success px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-success">
+            {labels.hostingActiveBadge || "Hosting Active"}
+          </p>
+        ) : activating ? (
+          <p className="inline-flex rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+            {labels.activatingBadge || "Activating…"}
+          </p>
+        ) : (
+          <p className="inline-flex rounded-full bg-bg-warning px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-warning">
+            {labels.paymentReceivedBadge || "Payment received"}
+          </p>
+        )}
         <h1 className="font-serif text-2xl text-text-primary">
-          {labels.successTitle || "Hosting is now active on NextGen Move"}
+          {hostingActive
+            ? labels.successTitle || "Hosting is now active on NextGen Move"
+            : labels.successPendingTitle || "Payment successful"}
         </h1>
         <p className="text-sm text-text-secondary">
-          {labels.successBody ||
-            "Payment confirmed. Hosting Active is live for nextgenmove.agency."}
+          {hostingActive
+            ? labels.successBody ||
+              "Payment confirmed. Hosting Active is live for nextgenmove.agency."
+            : activating
+              ? labels.activatingBody ||
+                "Payment confirmed. Turning on Hosting Active…"
+              : labels.activateFailed ||
+                "Payment received, but Hosting Active could not be set. Try Activate again."}
         </p>
         {subscription?.planName ? (
           <p className="text-sm font-medium text-text-primary">
@@ -270,15 +296,34 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
               : null}
           </p>
         ) : null}
-        <Button
-          type="button"
-          onClick={() => {
-            setStep("plans");
-            void load();
-          }}
-        >
-          {labels.backToPlans || "Back to plans"}
-        </Button>
+        {message ? (
+          <p className="text-sm text-text-warning" role="alert">
+            {message}
+          </p>
+        ) : null}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {!hostingActive && paymentIntentId ? (
+            <Button
+              type="button"
+              disabled={activating}
+              onClick={() => void markHostingActive(paymentIntentId)}
+            >
+              {activating
+                ? labels.activatingBadge || "Activating…"
+                : labels.activateNow || "Activate hosting"}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant={hostingActive ? "primary" : "outline"}
+            onClick={() => {
+              setStep("plans");
+              void load();
+            }}
+          >
+            {labels.backToPlans || "Back to plans"}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -625,26 +670,22 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                   billingEmail={payer.email}
                   onSuccess={(intentId) => {
                     const id = intentId || paymentIntentId;
-                    if (!id) {
-                      setStep("success");
-                      return;
-                    }
+                    // Show success first, then mark Hosting Active.
+                    setStep("success");
+                    setMessage(null);
+                    if (!id) return;
+                    setPaymentIntentId(id);
                     window.sessionStorage.setItem(
                       "hostingPaymentIntentId",
                       id,
                     );
-                    void (async () => {
-                      const ok = await markHostingActive(id);
-                      window.sessionStorage.removeItem(
-                        "hostingPaymentIntentId",
-                      );
+                    void markHostingActive(id).then((ok) => {
                       if (ok) {
-                        setStep("success");
-                        return;
+                        window.sessionStorage.removeItem(
+                          "hostingPaymentIntentId",
+                        );
                       }
-                      // Payment succeeded — still show success; activation error is in message.
-                      setStep("success");
-                    })();
+                    });
                   }}
                   onError={(errorMessage) => setMessage(errorMessage)}
                 />
