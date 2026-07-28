@@ -203,6 +203,7 @@ export const DEFAULT_HOSTING_CATALOG: HostingCatalog = {
     },
   ],
   periods: [
+    { id: "1", months: 1, label: "1 month" },
     { id: "12", months: 12, label: "12 months" },
     { id: "24", months: 24, label: "24 months" },
   ],

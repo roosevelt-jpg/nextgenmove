@@ -524,9 +524,11 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                 }}
               />
               <p className="mt-2 text-xs text-text-muted">
-                {(
-                  labels.periodRenewHint ||
-                  "Renews after {months} months at {price}/mo for {months} months. Cancel anytime."
+                {(liveQuote?.months === 1
+                  ? labels.periodRenewHintOneMonth ||
+                    "Renews after 1 month at {price}/mo. Cancel anytime."
+                  : labels.periodRenewHint ||
+                    "Renews after {months} months at {price}/mo for {months} months. Cancel anytime."
                 )
                   .replaceAll("{months}", String(liveQuote?.months ?? 12))
                   .replace(
@@ -631,10 +633,10 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                 <p className="font-semibold text-text-primary">{plan.name}</p>
                 <div className="flex justify-between gap-3">
                   <span className="text-text-secondary">
-                    {(labels.periodLine || "{months}-month period").replace(
-                      "{months}",
-                      String(liveQuote.months),
-                    )}
+                    {(liveQuote.months === 1
+                      ? labels.periodLineOneMonth || "1-month period"
+                      : labels.periodLine || "{months}-month period"
+                    ).replace("{months}", String(liveQuote.months))}
                   </span>
                   <span className="text-right">
                     <span className="mr-2 text-text-muted line-through">

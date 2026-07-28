@@ -43,12 +43,17 @@ export async function ensureHostingCatalogSeeded(): Promise<void> {
   const repaired = applyCanonicalHostingPricing(current);
   const startup = repaired.plans.find((plan) => plan.id === "startup");
   const existingStartup = current.plans.find((plan) => plan.id === "startup");
+  const periodIds = new Set(current.periods.map((period) => period.id));
   const needsRepair =
     !existingStartup ||
     existingStartup.monthlyPrice !== startup?.monthlyPrice ||
     existingStartup.listMonthlyPrice !== startup?.listMonthlyPrice ||
     current.taxRatePercent !== repaired.taxRatePercent ||
-    current.defaultPeriodId !== repaired.defaultPeriodId;
+    current.defaultPeriodId !== repaired.defaultPeriodId ||
+    !periodIds.has("1") ||
+    !periodIds.has("12") ||
+    !periodIds.has("24") ||
+    current.periods.length !== repaired.periods.length;
 
   if (!needsRepair) return;
 

@@ -1534,6 +1534,11 @@ const OPERATIONAL_SITE_SETTINGS = {
       periodLabel: "Period",
       periodRenewHint:
         "Renews after {months} months at {price}/mo for {months} months. Cancel anytime.",
+      periodRenewHintOneMonth:
+        "Renews after 1 month at {price}/mo. Cancel anytime.",
+      periodLine: "{months}-month period",
+      periodLineOneMonth: "1-month period",
+      periodMath: "{price}/mo × {months} mo = {subtotal}",
       dealBanner:
         "Switch to a 24-month subscription for the biggest savings.",
       getDeal: "Get deal",
