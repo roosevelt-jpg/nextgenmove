@@ -1,13 +1,15 @@
 import { AdminHomepageMediaView } from "@/components/admin/admin-homepage-media-view";
 import { ENTITY_SCHEMAS } from "@/lib/admin/entity-schemas";
+import { isIntegrationConnected } from "@/lib/admin/integration-secrets";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import { getTaxonomies } from "@/lib/collections/taxonomies";
 import { serializeTimestamp } from "@/lib/firestore-utils";
 
 export default async function AdminHomepageVideosPage() {
-  const [settings, taxonomies] = await Promise.all([
+  const [settings, taxonomies, youtubeApiConnected] = await Promise.all([
     getSiteSettings(),
     getTaxonomies(),
+    isIntegrationConnected("youtube"),
   ]);
   const labels = settings.adminPageLabels?.content ?? settings.formLabels ?? {};
 
@@ -18,6 +20,7 @@ export default async function AdminHomepageVideosPage() {
       taxonomies={taxonomies}
       videoSchema={ENTITY_SCHEMAS.video_cards!}
       podcastSchema={ENTITY_SCHEMAS.podcast_episodes!}
+      youtubeApiConnected={youtubeApiConnected}
       initialYoutube={{
         youtubePlaylistUrl: settings.youtubePlaylistUrl ?? "",
         youtubeSyncEnabled: settings.youtubeSyncEnabled !== false,

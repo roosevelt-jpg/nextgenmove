@@ -73,6 +73,8 @@ interface AdminHomepageMediaViewProps {
   videoSchema: AdminEntitySchema;
   podcastSchema: AdminEntitySchema;
   initialYoutube?: Partial<YoutubeSyncState>;
+  /** True when Integrations → YouTube has a live API key */
+  youtubeApiConnected?: boolean;
 }
 
 const emptyYoutube: YoutubeSyncState = {
@@ -91,6 +93,7 @@ export function AdminHomepageMediaView({
   videoSchema,
   podcastSchema,
   initialYoutube,
+  youtubeApiConnected = false,
 }: AdminHomepageMediaViewProps) {
   const [videos, setVideos] = useState<MediaRow[]>([]);
   const [podcasts, setPodcasts] = useState<MediaRow[]>([]);
@@ -443,8 +446,11 @@ export function AdminHomepageMediaView({
           {labels.youtubeSyncTitle ?? "YouTube playlist sync"}
         </h2>
         <p className="text-[12.5px] text-text-secondary">
-          {labels.youtubeSyncBody ??
-            "Step 1: connect the YouTube Data API key under Integrations → YouTube. Step 2: paste a playlist URL, channel URL, or @handle here, then Sync now."}
+          {youtubeApiConnected
+            ? labels.youtubeSyncBodyConnected ||
+              "Paste a playlist URL, channel URL, or @handle below, then Sync now to pull videos into Video cards."
+            : labels.youtubeSyncBody ||
+              "Step 1: connect the YouTube Data API key under Integrations → YouTube. Step 2: paste a playlist URL, channel URL, or @handle here, then Sync now."}
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">
@@ -521,8 +527,11 @@ export function AdminHomepageMediaView({
         </div>
         {!youtube.youtubePlaylistUrl.trim() ? (
           <p className="text-[11.5px] text-text-muted">
-            {labels.youtubeWaitingForPlaylist ??
-              "Waiting for a playlist / channel URL. The YouTube API key is connected — paste a source above, then Sync now."}
+            {youtubeApiConnected
+              ? labels.youtubeWaitingForPlaylist ||
+                "Waiting for a playlist / channel URL. Paste a source above, then Sync now."
+              : labels.youtubeWaitingNeedsApiKey ||
+                "Waiting for a playlist / channel URL. Connect the YouTube API key under Integrations → YouTube first, then paste a source and Sync now."}
           </p>
         ) : formatSyncTimestamp(youtube.youtubeLastSyncedAt) ||
           youtube.youtubeLastSyncError ? (
