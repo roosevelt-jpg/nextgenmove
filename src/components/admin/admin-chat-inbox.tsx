@@ -26,16 +26,30 @@ export function AdminChatInbox({ labels }: { labels: Record<string, string> }) {
   const [reply, setReply] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const response = await fetch("/api/admin/chat-threads", { cache: "no-store" });
-    if (response.ok) {
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/chat-threads", {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setError(labels.loadError || "Could not load chat threads.");
+        setItems([]);
+        return;
+      }
       const payload = (await response.json()) as { items?: ThreadItem[] };
       setItems(payload.items ?? []);
+    } catch {
+      setError(labels.loadError || "Could not load chat threads.");
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [labels.loadError]);
 
   useEffect(() => {
     void load();
@@ -44,35 +58,95 @@ export function AdminChatInbox({ labels }: { labels: Record<string, string> }) {
   useEffect(() => {
     if (!selectedId) {
       setMessages([]);
+      setDetailError(null);
       return;
     }
-    void fetch(`/api/admin/chat-threads/${selectedId}`)
-      .then((r) => r.json())
-      .then((payload: { messages?: ChatMessage[] }) => {
+    let cancelled = false;
+    setDetailError(null);
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/admin/chat-threads/${selectedId}`,
+          { cache: "no-store" },
+        );
+        if (cancelled) return;
+        if (!response.ok) {
+          setMessages([]);
+          setDetailError(
+            labels.threadLoadError || "Could not load this thread.",
+          );
+          return;
+        }
+        const payload = (await response.json()) as {
+          messages?: ChatMessage[];
+        };
         setMessages(payload.messages ?? []);
-      });
-  }, [selectedId]);
+      } catch {
+        if (!cancelled) {
+          setMessages([]);
+          setDetailError(
+            labels.threadLoadError || "Could not load this thread.",
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, labels.threadLoadError]);
 
   const sendReply = async () => {
     if (!selectedId || !reply.trim()) return;
     setBusy(true);
-    await fetch("/api/admin/chat-threads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ threadId: selectedId, message: reply.trim() }),
-    });
-    setReply("");
-    setBusy(false);
-    const detail = await fetch(`/api/admin/chat-threads/${selectedId}`);
-    if (detail.ok) {
-      const payload = (await detail.json()) as { messages?: ChatMessage[] };
-      setMessages(payload.messages ?? []);
+    setDetailError(null);
+    try {
+      const response = await fetch("/api/admin/chat-threads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          threadId: selectedId,
+          message: reply.trim(),
+        }),
+      });
+      if (!response.ok) {
+        setDetailError(
+          labels.replyFailed || "Could not send reply. Try again.",
+        );
+        return;
+      }
+      setReply("");
+      const detail = await fetch(`/api/admin/chat-threads/${selectedId}`, {
+        cache: "no-store",
+      });
+      if (detail.ok) {
+        const payload = (await detail.json()) as { messages?: ChatMessage[] };
+        setMessages(payload.messages ?? []);
+      }
+      await load();
+    } catch {
+      setDetailError(labels.replyFailed || "Could not send reply. Try again.");
+    } finally {
+      setBusy(false);
     }
-    await load();
   };
 
   if (loading) {
-    return <p className="text-sm text-text-muted">{labels.loading || "Loading…"}</p>;
+    return (
+      <p className="text-sm text-text-muted">{labels.loading || "Loading…"}</p>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-text-warning" role="alert">
+          {error}
+        </p>
+        <Button type="button" variant="outline" onClick={() => void load()}>
+          {labels.retry || "Retry"}
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -95,7 +169,9 @@ export function AdminChatInbox({ labels }: { labels: Record<string, string> }) {
                 onClick={() => setSelectedId(item.id)}
               >
                 <p className="text-sm font-medium text-text-primary">
-                  {item.visitorName || item.visitorEmail || item.id.slice(0, 8)}
+                  {item.visitorName ||
+                    item.visitorEmail ||
+                    item.id.slice(0, 8)}
                 </p>
                 <p className="truncate text-xs text-text-muted">
                   {item.lastMessage}
@@ -113,9 +189,17 @@ export function AdminChatInbox({ labels }: { labels: Record<string, string> }) {
           </p>
         ) : (
           <>
+            {detailError ? (
+              <p className="text-sm text-text-warning" role="alert">
+                {detailError}
+              </p>
+            ) : null}
             <div className="max-h-96 space-y-2 overflow-y-auto">
               {messages.map((msg) => (
-                <div key={msg.id} className="rounded-radius-sm bg-surface-2 p-2 text-sm">
+                <div
+                  key={msg.id}
+                  className="rounded-radius-sm bg-surface-2 p-2 text-sm"
+                >
                   <p className="font-mono text-[10px] uppercase text-text-muted">
                     {msg.role}
                   </p>
@@ -129,8 +213,13 @@ export function AdminChatInbox({ labels }: { labels: Record<string, string> }) {
               onChange={(e) => setReply(e.target.value)}
               rows={3}
             />
-            <Button disabled={busy || !reply.trim()} onClick={() => void sendReply()}>
-              {labels.sendReply || "Send reply"}
+            <Button
+              disabled={busy || !reply.trim()}
+              onClick={() => void sendReply()}
+            >
+              {busy
+                ? labels.sending || "Sending…"
+                : labels.sendReply || "Send reply"}
             </Button>
           </>
         )}

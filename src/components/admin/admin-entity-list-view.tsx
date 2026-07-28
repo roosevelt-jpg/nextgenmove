@@ -32,7 +32,7 @@ export function AdminEntityListView({
   formLabels,
   taxonomies,
   schema,
-  title,
+  title: _title,
 }: AdminEntityListViewProps) {
   const [items, setItems] = useState<Record<string, unknown>[]>([]);
   const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
@@ -155,7 +155,7 @@ export function AdminEntityListView({
   const columns = [
     {
       key: "title" as const,
-      header: labels.titleColumn,
+      header: labels.titleColumn || "Title",
       render: (row: Record<string, unknown>) => String(row.title ?? row.name ?? row.id ?? ""),
     },
     ...(schema.collection === "job_postings"
@@ -169,13 +169,13 @@ export function AdminEntityListView({
       : []),
     {
       key: "status" as const,
-      header: labels.statusColumn,
+      header: labels.statusColumn || "Status",
       render: (row: Record<string, unknown>) =>
         String(row.status ?? row.subscriptionStatus ?? ""),
     },
     {
       key: "actions" as const,
-      header: labels.actionsColumn,
+      header: labels.actionsColumn || "Actions",
       render: (row: Record<string, unknown>) => (
         <div className="flex flex-nowrap items-center gap-1">
           {schema.collection === "job_postings" &&
@@ -273,7 +273,7 @@ export function AdminEntityListView({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[14.5px] font-bold text-text-primary">{title}</h2>
+        <div className="min-w-0" aria-hidden />
         <Button
           size="sm"
           onClick={() => {

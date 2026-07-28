@@ -104,6 +104,7 @@ export function AdminHomepageMediaView({
   const [syncBusy, setSyncBusy] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [youtubeHydrated, setYoutubeHydrated] = useState(false);
   const suppressYoutubeRef = useRef<(() => void) | null>(null);
 
@@ -190,76 +191,95 @@ export function AdminHomepageMediaView({
     }
   }, [youtubeAutosaveStatus, labels]);
   const load = useCallback(async () => {
-    const [vRes, pRes, sRes] = await Promise.all([
-      fetch(`/api/admin/data/${videoSchema.collection}`),
-      fetch(`/api/admin/data/${podcastSchema.collection}`),
-      fetch("/api/admin/data/site_settings/default"),
-    ]);
-    if (vRes.ok) {
-      const payload = (await vRes.json()) as { items: Record<string, unknown>[] };
-      setVideos(
-        (payload.items ?? []).map((item, index) => ({
-          id: String(item.id),
-          title: String(item.title ?? ""),
-          subtitle: [
-            item.source === "youtube_playlist"
-              ? labels.youtubeSourceBadge ?? "YouTube"
-              : null,
-            item.attribution ?? item.subtitle,
-            item.duration,
-            item.position != null ? `Position ${item.position}` : null,
-          ]
-            .filter(Boolean)
-            .join(" · "),
-          status: String(item.status ?? "draft"),
-          thumbLabel: "▶",
-          thumbClass:
-            index % 3 === 0
-              ? "from-[#4B3F9C] to-[#C97A2E]"
-              : index % 3 === 1
-                ? "from-[#27500A] to-[#9A6A3C]"
-                : "from-[#8B3A3A] to-[#4B3F9C]",
-        })),
+    setLoadError(null);
+    try {
+      const [vRes, pRes, sRes] = await Promise.all([
+        fetch(`/api/admin/data/${videoSchema.collection}`),
+        fetch(`/api/admin/data/${podcastSchema.collection}`),
+        fetch("/api/admin/data/site_settings/default"),
+      ]);
+      if (!vRes.ok || !pRes.ok || !sRes.ok) {
+        setLoadError(
+          labels.loadError || "Could not load homepage media. Try again.",
+        );
+      }
+      if (vRes.ok) {
+        const payload = (await vRes.json()) as {
+          items: Record<string, unknown>[];
+        };
+        setVideos(
+          (payload.items ?? []).map((item, index) => ({
+            id: String(item.id),
+            title: String(item.title ?? ""),
+            subtitle: [
+              item.source === "youtube_playlist"
+                ? labels.youtubeSourceBadge ?? "YouTube"
+                : null,
+              item.attribution ?? item.subtitle,
+              item.duration,
+              item.position != null ? `Position ${item.position}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+            status: String(item.status ?? "draft"),
+            thumbLabel: "▶",
+            thumbClass:
+              index % 3 === 0
+                ? "from-[#4B3F9C] to-[#C97A2E]"
+                : index % 3 === 1
+                  ? "from-[#27500A] to-[#9A6A3C]"
+                  : "from-[#8B3A3A] to-[#4B3F9C]",
+          })),
+        );
+      }
+      if (pRes.ok) {
+        const payload = (await pRes.json()) as {
+          items: Record<string, unknown>[];
+        };
+        setPodcasts(
+          (payload.items ?? []).map((item) => ({
+            id: String(item.id),
+            title: String(item.title ?? ""),
+            subtitle: [
+              item.guestName ? `with ${item.guestName}` : null,
+              item.duration,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+            status: String(item.status ?? "draft"),
+            thumbLabel: item.episodeNumber
+              ? `EP${item.episodeNumber}`
+              : "EP",
+            thumbClass: "from-[#3C3489] to-[#C97A2E]",
+          })),
+        );
+      }
+      if (sRes.ok) {
+        const payload = (await sRes.json()) as {
+          item: Record<string, unknown>;
+        };
+        const item = payload.item ?? {};
+        suppressYoutubeRef.current?.();
+        setYoutube({
+          youtubePlaylistUrl: String(item.youtubePlaylistUrl ?? ""),
+          youtubeSyncEnabled: item.youtubeSyncEnabled !== false,
+          youtubeHomepageLimit: Number(item.youtubeHomepageLimit ?? 12) || 12,
+          youtubeLibraryLimit: Number(item.youtubeLibraryLimit ?? 12) || 12,
+          youtubeLastSyncedAt: formatSyncTimestamp(
+            String(item.youtubeLastSyncedAt ?? ""),
+          ),
+          youtubeLastSyncError: String(item.youtubeLastSyncError ?? ""),
+        });
+        setYoutubeHydrated(true);
+      }
+    } catch {
+      setLoadError(
+        labels.loadError || "Could not load homepage media. Try again.",
       );
-    }
-    if (pRes.ok) {
-      const payload = (await pRes.json()) as { items: Record<string, unknown>[] };
-      setPodcasts(
-        (payload.items ?? []).map((item) => ({
-          id: String(item.id),
-          title: String(item.title ?? ""),
-          subtitle: [
-            item.guestName ? `with ${item.guestName}` : null,
-            item.duration,
-          ]
-            .filter(Boolean)
-            .join(" · "),
-          status: String(item.status ?? "draft"),
-          thumbLabel: item.episodeNumber
-            ? `EP${item.episodeNumber}`
-            : "EP",
-          thumbClass: "from-[#3C3489] to-[#C97A2E]",
-        })),
-      );
-    }
-    if (sRes.ok) {
-      const payload = (await sRes.json()) as { item: Record<string, unknown> };
-      const item = payload.item ?? {};
-      suppressYoutubeRef.current?.();
-      setYoutube({
-        youtubePlaylistUrl: String(item.youtubePlaylistUrl ?? ""),
-        youtubeSyncEnabled: item.youtubeSyncEnabled !== false,
-        youtubeHomepageLimit: Number(item.youtubeHomepageLimit ?? 12) || 12,
-        youtubeLibraryLimit: Number(item.youtubeLibraryLimit ?? 12) || 12,
-        youtubeLastSyncedAt: formatSyncTimestamp(
-          String(item.youtubeLastSyncedAt ?? ""),
-        ),
-        youtubeLastSyncError: String(item.youtubeLastSyncError ?? ""),
-      });
-      setYoutubeHydrated(true);
     }
   }, [
     labels.youtubeSourceBadge,
+    labels.loadError,
     podcastSchema.collection,
     videoSchema.collection,
   ]);
@@ -400,6 +420,17 @@ export function AdminHomepageMediaView({
 
   return (
     <div className="space-y-5">
+      {loadError ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-text-warning" role="alert">
+            {loadError}
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={() => void load()}>
+            {labels.retry || "Retry"}
+          </Button>
+        </div>
+      ) : null}
+
       <p className="text-[13px] text-text-secondary">
         {labels.videosTab ?? "Video cards"} ({liveVideos} {labels.liveCount ?? "live"})
         {" · "}

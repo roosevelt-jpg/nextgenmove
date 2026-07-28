@@ -212,20 +212,38 @@ export function AdminSingletonEditor({
   formLabels,
   taxonomies,
   schema,
-  title,
+  title: _title,
 }: AdminSingletonEditorProps) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [modalOpen, setModalOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = async () => {
     const docId = schema.singletonId ?? "default";
-    const response = await fetch(`/api/admin/data/${schema.collection}/${docId}`);
-    if (response.ok) {
-      const payload = (await response.json()) as { item: Record<string, unknown> };
+    setLoadError(null);
+    try {
+      const response = await fetch(
+        `/api/admin/data/${schema.collection}/${docId}`,
+      );
+      if (!response.ok) {
+        setLoadError(
+          labels.loadError || formLabels.loadError || "Could not load content.",
+        );
+        setLoaded(true);
+        return;
+      }
+      const payload = (await response.json()) as {
+        item: Record<string, unknown>;
+      };
       setValues(payload.item ?? {});
+    } catch {
+      setLoadError(
+        labels.loadError || formLabels.loadError || "Could not load content.",
+      );
+    } finally {
+      setLoaded(true);
     }
-    setLoaded(true);
   };
 
   useEffect(() => {
@@ -236,8 +254,7 @@ export function AdminSingletonEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-serif text-3xl text-text-primary">{title}</h1>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <Button onClick={() => setModalOpen(true)}>
           {labels.edit || formLabels.edit || "Edit"}
         </Button>
@@ -247,6 +264,15 @@ export function AdminSingletonEditor({
         <p className="text-sm text-text-muted">
           {labels.loading || formLabels.loading || "Loading…"}
         </p>
+      ) : loadError ? (
+        <div className="space-y-3">
+          <p className="text-sm text-text-warning" role="alert">
+            {loadError}
+          </p>
+          <Button type="button" variant="outline" onClick={() => void load()}>
+            {labels.retry || formLabels.retry || "Retry"}
+          </Button>
+        </div>
       ) : !hasContent ? (
         <EmptyState
           title={labels.empty || formLabels.empty || "No content yet"}

@@ -27,13 +27,13 @@ interface AdminContactInboxProps {
 function statusLabel(status: string | undefined, labels: Record<string, string>) {
   switch (status) {
     case "read":
-      return labels.statusRead;
+      return labels.statusRead || "Read";
     case "replied":
-      return labels.statusReplied;
+      return labels.statusReplied || "Replied";
     case "archived":
-      return labels.statusArchived;
+      return labels.statusArchived || "Archived";
     default:
-      return labels.statusNew;
+      return labels.statusNew || "New";
   }
 }
 
@@ -180,7 +180,10 @@ export function AdminContactInbox({ labels }: AdminContactInboxProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setErrorCode("status_update_failed");
+      return;
+    }
     const payload = (await response.json()) as { item?: ContactSubmissionItem };
     if (payload.item) {
       setItems((prev) =>
@@ -192,7 +195,7 @@ export function AdminContactInbox({ labels }: AdminContactInboxProps) {
   if (loading) {
     return (
       <p className="text-sm text-text-secondary">
-        {labels.loading}
+        {labels.loading || "Loading…"}
       </p>
     );
   }
@@ -200,7 +203,7 @@ export function AdminContactInbox({ labels }: AdminContactInboxProps) {
   if (!items.length) {
     return (
       <p className="text-sm text-text-secondary">
-        {labels.empty}
+        {labels.empty || "No contact submissions yet."}
       </p>
     );
   }
@@ -384,7 +387,12 @@ export function AdminContactInbox({ labels }: AdminContactInboxProps) {
 
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
-              {labels[errorCode] ?? labels.genericError ?? errorCode}
+              {labels[errorCode] ??
+                (errorCode === "status_update_failed"
+                  ? labels.statusUpdateFailed || "Could not update status."
+                  : errorCode === "load_failed"
+                    ? labels.loadError || "Could not load submissions."
+                    : labels.genericError || errorCode)}
             </p>
           ) : null}
         </div>

@@ -78,12 +78,18 @@ interface AdminCrmViewProps {
   labels: Record<string, string>;
   formLabels: Record<string, string>;
   taxonomies: TaxonomiesDocument;
+  initialTab?: CrmTab;
 }
 
 const DEAL_STAGES: DealStage[] = ["new", "contacted", "qualified", "won"];
 
-export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewProps) {
-  const [tab, setTab] = useState<CrmTab>("contacts");
+export function AdminCrmView({
+  labels,
+  formLabels,
+  taxonomies,
+  initialTab = "contacts",
+}: AdminCrmViewProps) {
+  const [tab, setTab] = useState<CrmTab>(initialTab);
   const [rows, setRows] = useState<CrmRow[]>([]);
   const [contacts, setContacts] = useState<CrmRow[]>([]);
   const [deals, setDeals] = useState<Record<DealStage, CrmRow[]>>({
@@ -127,6 +133,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   const [messageChannel, setMessageChannel] = useState<"email" | "sms" | "whatsapp">(
     "email",
   );
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [messageSubject, setMessageSubject] = useState("");
   const [messageBody, setMessageBody] = useState("");
   const [messageSending, setMessageSending] = useState(false);
@@ -138,23 +145,40 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
   const [deleting, setDeleting] = useState(false);
 
   const loadOverview = async () => {
-    const response = await fetch("/api/admin/crm/overview");
-    if (!response.ok) return;
-    const payload = (await response.json()) as {
-      stats: CrmStats;
-      deals: Record<DealStage, CrmRow[]>;
-      contacts: CrmRow[];
-    };
-    setStats(payload.stats);
-    setDeals(payload.deals);
-    setContacts(payload.contacts);
+    setLoadError(null);
+    try {
+      const response = await fetch("/api/admin/crm/overview");
+      if (!response.ok) {
+        setLoadError(labels.loadError || "Could not load CRM overview.");
+        return;
+      }
+      const payload = (await response.json()) as {
+        stats: CrmStats;
+        deals: Record<DealStage, CrmRow[]>;
+        contacts: CrmRow[];
+      };
+      setStats(payload.stats);
+      setDeals(payload.deals);
+      setContacts(payload.contacts);
+    } catch {
+      setLoadError(labels.loadError || "Could not load CRM overview.");
+    }
   };
 
   const loadRows = async (nextTab: "companies" | "students") => {
-    const response = await fetch(`/api/admin/crm/${nextTab}`);
-    if (response.ok) {
+    setLoadError(null);
+    try {
+      const response = await fetch(`/api/admin/crm/${nextTab}`);
+      if (!response.ok) {
+        setLoadError(labels.loadError || "Could not load CRM rows.");
+        setRows([]);
+        return;
+      }
       const payload = (await response.json()) as { items: CrmRow[] };
       setRows(payload.items);
+    } catch {
+      setLoadError(labels.loadError || "Could not load CRM rows.");
+      setRows([]);
     }
   };
 
@@ -886,17 +910,27 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
           </p>
         ) : null}
         <h1 className="font-serif text-[clamp(1.5rem,3vw,2.125rem)] text-text-primary">
-          {labels.title}
+          {labels.title || "CRM"}
         </h1>
         {labels.subtitle ? (
           <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>
-        ) : null}
+        ) : (
+          <p className="max-w-2xl text-sm text-text-secondary">
+            Contacts, companies, and students in one workspace.
+          </p>
+        )}
         <div className="pt-1">
           <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
             {labels.importContacts ?? "Import CSV / Excel"}
           </Button>
         </div>
       </header>
+
+      {loadError ? (
+        <p className="text-sm text-text-warning" role="alert">
+          {loadError}
+        </p>
+      ) : null}
 
       {actionMessage ? (
         <p className="text-sm text-text-secondary" role="status">
@@ -908,9 +942,21 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         activeTabId={tab}
         onTabChange={(nextTab) => setTab(nextTab as CrmTab)}
         tabs={[
-          { id: "contacts", label: labels.contactsTab, content: null },
-          { id: "companies", label: labels.companiesTab, content: null },
-          { id: "students", label: labels.studentsTab, content: null },
+          {
+            id: "contacts",
+            label: labels.contactsTab || "Contacts",
+            content: null,
+          },
+          {
+            id: "companies",
+            label: labels.companiesTab || "Companies",
+            content: null,
+          },
+          {
+            id: "students",
+            label: labels.studentsTab || "Students",
+            content: null,
+          },
         ]}
       />
 
@@ -1000,7 +1046,7 @@ export function AdminCrmView({ labels, formLabels, taxonomies }: AdminCrmViewPro
         columns={columns}
         data={filteredRows}
         rowKey={(row) => row.id}
-        emptyState={<EmptyState title={labels.empty} />}
+        emptyState={<EmptyState title={labels.empty || "No records yet"} />}
       />
 
       <Modal

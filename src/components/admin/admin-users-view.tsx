@@ -54,6 +54,7 @@ function field(
 
 export function AdminUsersView({ labels }: AdminUsersViewProps) {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
     search: "",
     role: "",
@@ -68,10 +69,19 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
   const [viewAsLoading, setViewAsLoading] = useState(false);
 
   const load = async () => {
-    const response = await fetch("/api/admin/users");
-    if (response.ok) {
+    setLoadError(null);
+    try {
+      const response = await fetch("/api/admin/users");
+      if (!response.ok) {
+        setLoadError(labels.loadError || "Could not load users.");
+        setUsers([]);
+        return;
+      }
       const payload = (await response.json()) as { items: UserRow[] };
       setUsers(payload.items);
+    } catch {
+      setLoadError(labels.loadError || "Could not load users.");
+      setUsers([]);
     }
   };
 
@@ -268,18 +278,28 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        {labels.eyebrow ? (
-          <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.8px] text-text-label">
-            {labels.eyebrow}
-          </p>
-        ) : null}
+        <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.8px] text-text-label">
+          {labels.eyebrow || "Directory"}
+        </p>
         <h1 className="font-serif text-[1.75rem] text-text-primary md:text-[2rem]">
           {labels.title ?? "Team & users"}
         </h1>
-        {labels.subtitle ? (
-          <p className="max-w-2xl text-sm text-text-secondary">{labels.subtitle}</p>
-        ) : null}
+        <p className="text-sm text-text-secondary">
+          {labels.subtitle ||
+            "Manage accounts, roles, and portal access across the workspace."}
+        </p>
       </header>
+
+      {loadError ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-text-warning" role="alert">
+            {loadError}
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={() => void load()}>
+            {labels.retry || "Retry"}
+          </Button>
+        </div>
+      ) : null}
 
       {actionMessage ? (
         <p className="text-sm text-text-secondary" role="status">
@@ -321,7 +341,11 @@ export function AdminUsersView({ labels }: AdminUsersViewProps) {
             ) : null}
             {kind === "student" || kind === "company" ? (
               <Link
-                href="/admin/crm"
+                href={
+                  kind === "student"
+                    ? "/admin/crm?tab=students"
+                    : "/admin/crm?tab=companies"
+                }
                 className="btn-brand inline-flex min-h-5 items-center whitespace-nowrap px-1.5 py-0.5 text-[10px]"
               >
                 {labels.openInCrm ?? "Open in CRM"}

@@ -20,16 +20,32 @@ const CONTENT_SECTIONS = [
   { key: "forms", href: "/admin/content/forms" },
 ] as const;
 
+const CONTENT_SECTION_FALLBACKS: Record<string, string> = {
+  library: "Library",
+  videos: "Videos",
+  podcast: "Podcast",
+  home: "Home",
+  about: "About",
+  careers: "Careers",
+  roles: "Roles",
+  journal: "Journal",
+  howItWorks: "How it works",
+  pricing: "Pricing",
+  tracks: "Tracks",
+  pages: "Pages",
+  forms: "Forms",
+};
+
 export function AdminContentNav({ labels }: { labels: Record<string, string> }) {
   const pathname = usePathname();
 
   return (
     <nav className="mb-5 flex flex-wrap gap-1.5" aria-label="Homepage content">
       {CONTENT_SECTIONS.map((section) => {
-        const label = labels[section.key];
-        if (!label) {
-          return null;
-        }
+        const label =
+          labels[section.key]?.trim() ||
+          CONTENT_SECTION_FALLBACKS[section.key] ||
+          section.key;
 
         const isActive =
           section.href === "/admin/content"
