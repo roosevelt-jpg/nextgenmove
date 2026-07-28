@@ -119,6 +119,8 @@ export interface PageHomeDocument {
   storiesEyebrow?: string;
   storiesHeadline?: string;
   storiesManagedLabel?: string;
+  /** Small uppercase label on each video card (e.g. Candidate story) */
+  storiesCardBadge?: string;
   podcastEyebrow?: string;
   podcastHeadline?: string;
   podcastManagedLabel?: string;

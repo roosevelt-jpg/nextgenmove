@@ -39,6 +39,7 @@ export function mergePageHome(
     storiesHeadline: overlay.storiesHeadline || base.storiesHeadline,
     storiesManagedLabel:
       overlay.storiesManagedLabel || base.storiesManagedLabel,
+    storiesCardBadge: overlay.storiesCardBadge || base.storiesCardBadge,
     podcastEyebrow: overlay.podcastEyebrow || base.podcastEyebrow,
     podcastHeadline: overlay.podcastHeadline || base.podcastHeadline,
     podcastManagedLabel:

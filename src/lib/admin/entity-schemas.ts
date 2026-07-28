@@ -319,6 +319,7 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "storiesEyebrow", type: "text", labelKey: "storiesEyebrow" },
       { key: "storiesHeadline", type: "text", labelKey: "storiesHeadline" },
       { key: "storiesManagedLabel", type: "text", labelKey: "storiesManagedLabel" },
+      { key: "storiesCardBadge", type: "text", labelKey: "storiesCardBadge" },
       { key: "podcastEyebrow", type: "text", labelKey: "podcastEyebrow" },
       { key: "podcastHeadline", type: "text", labelKey: "podcastHeadline" },
       { key: "podcastManagedLabel", type: "text", labelKey: "podcastManagedLabel" },

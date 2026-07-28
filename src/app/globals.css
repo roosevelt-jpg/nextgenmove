@@ -417,26 +417,6 @@ html.dark .dashboard-shell main {
   background-image: none;
 }
 
-/* Homepage Stories — continuous 3-card-visible marquee */
-@keyframes home-stories-marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.home-stories-marquee {
-  animation: home-stories-marquee 40s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-stories-marquee {
-    animation: none;
-  }
-}
-
 /* Public site — casual copy deterrents */
 .public-site,
 .public-site-protect {
