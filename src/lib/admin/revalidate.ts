@@ -42,6 +42,8 @@ const COLLECTION_REVALIDATE_PATHS: Record<string, string[]> = {
     "/sign-in",
     "/sign-up",
     "/pages",
+    "/admin/hosting",
+    "/admin/settings",
   ],
   cms_pages: ["/", "/pages"],
   cms_forms: ["/forms"],

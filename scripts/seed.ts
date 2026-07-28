@@ -1558,9 +1558,16 @@ const OPERATIONAL_SITE_SETTINGS = {
       paymentIntentFailed: "Could not start payment. Try again.",
       stripeNotConfigured:
         "Connect Hosting Plan (Stripe) under Integrations to enable checkout.",
-      successTitle: "Hosting purchase confirmed",
+      successTitle: "Hosting is now active on NextGen Move",
       successBody:
-        "Your Hostinger hosting plan payment went through. You’ll receive confirmation shortly.",
+        "Payment confirmed. Hosting Active is live for nextgenmove.agency.",
+      hostingActiveBadge: "Hosting Active",
+      hostingInactiveBadge: "Not active",
+      activeUntil: "Active until",
+      activeSubtitle:
+        "Hosting is active on nextgenmove.agency for this workspace.",
+      activateFailed:
+        "Payment received, but Hosting Active could not be set. Refresh or contact support.",
     },
     dashboard: {
       eyebrow: "Admin",

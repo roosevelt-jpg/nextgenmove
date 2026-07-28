@@ -105,6 +105,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       orderId: orderRef.id,
+      paymentIntentId: paymentIntent.id,
       clientSecret: paymentIntent.client_secret,
       publishableKey,
       quote,

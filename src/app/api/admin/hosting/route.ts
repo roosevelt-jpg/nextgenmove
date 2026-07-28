@@ -4,6 +4,7 @@ import {
   ensureHostingCatalogSeeded,
   getHostingCatalog,
 } from "@/lib/billing/hosting-catalog";
+import { getHostingSubscription } from "@/lib/billing/hosting-activation";
 import { isHostingStripeLive } from "@/lib/billing/stripe-hosting";
 
 export const dynamic = "force-dynamic";
@@ -14,13 +15,15 @@ export async function GET() {
 
   await ensureHostingCatalogSeeded().catch(() => undefined);
 
-  const [catalog, stripeLive] = await Promise.all([
+  const [catalog, stripeLive, subscription] = await Promise.all([
     getHostingCatalog(),
     isHostingStripeLive(),
+    getHostingSubscription(),
   ]);
 
   return NextResponse.json({
     catalog,
     stripeLive,
+    subscription,
   });
 }

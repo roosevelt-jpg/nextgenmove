@@ -308,6 +308,18 @@ export interface SiteSettingsDocument {
   operatorPlanLabel?: string;
   operatorPlanDetail?: string;
   billingManageUrl?: string;
+  /** Set when Admin Hosting Stripe payment succeeds */
+  hostingSubscription?: {
+    status?: "active" | "inactive" | "pending" | string;
+    planId?: string | null;
+    planName?: string | null;
+    periodId?: string | null;
+    orderId?: string | null;
+    months?: number | null;
+    activatedAt?: string | null;
+    expiresAt?: string | null;
+    paymentIntentId?: string | null;
+  };
   /** YouTube playlist URL or ID used by the daily video sync */
   youtubePlaylistUrl?: string;
   /** When false, cron / Sync now skip the YouTube pull */

@@ -1,55 +1,15 @@
 import { NextResponse } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
 import type Stripe from "stripe";
-import { adminDb } from "@/lib/firebase-admin";
 import {
   getHostingStripeClient,
   getHostingStripeWebhookSecret,
 } from "@/lib/billing/stripe-hosting";
+import { activateHostingFromPaymentIntent } from "@/lib/billing/hosting-activation";
+import { adminDb } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { logger } from "@/lib/observability/logger";
-import { stripUndefined } from "@/lib/stripUndefined";
 
 export const runtime = "nodejs";
-
-async function markOrderPaid(paymentIntent: Stripe.PaymentIntent) {
-  const orderId = paymentIntent.metadata?.orderId;
-  if (!orderId) return;
-
-  const ref = adminDb.collection("hosting_orders").doc(orderId);
-  const snap = await ref.get();
-  if (!snap.exists) return;
-
-  const status = String(snap.data()?.status ?? "");
-  if (status === "paid") return;
-
-  await ref.set(
-    stripUndefined({
-      status: "paid",
-      paidAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      stripePaymentIntentId: paymentIntent.id,
-      stripeChargeId:
-        typeof paymentIntent.latest_charge === "string"
-          ? paymentIntent.latest_charge
-          : paymentIntent.latest_charge?.id ?? null,
-    }),
-    { merge: true },
-  );
-
-  await adminDb.collection("site_settings").doc("default").set(
-    stripUndefined({
-      hostingSubscription: {
-        status: "active",
-        planId: paymentIntent.metadata?.planId ?? null,
-        periodId: paymentIntent.metadata?.periodId ?? null,
-        orderId,
-        activatedAt: new Date().toISOString(),
-      },
-      updatedAt: FieldValue.serverTimestamp(),
-    }),
-    { merge: true },
-  );
-}
 
 async function handleHostingStripeEvent(event: Stripe.Event) {
   const eventRef = adminDb.collection("stripe_webhook_events").doc(event.id);
@@ -64,7 +24,9 @@ async function handleHostingStripeEvent(event: Stripe.Event) {
   });
 
   if (event.type === "payment_intent.succeeded") {
-    await markOrderPaid(event.data.object as Stripe.PaymentIntent);
+    await activateHostingFromPaymentIntent(
+      event.data.object as Stripe.PaymentIntent,
+    );
   }
 }
 

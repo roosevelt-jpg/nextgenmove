@@ -64,6 +64,16 @@ export interface HostingQuote {
   currencySymbol: string;
 }
 
+export interface HostingSubscriptionStatus {
+  status: "active" | "inactive" | "pending";
+  planId: string | null;
+  planName: string | null;
+  periodId: string | null;
+  orderId: string | null;
+  activatedAt: string | null;
+  expiresAt: string | null;
+}
+
 /** Operational defaults — mirrored into Firestore by seed. */
 export const DEFAULT_HOSTING_CATALOG: HostingCatalog = {
   currency: "USD",

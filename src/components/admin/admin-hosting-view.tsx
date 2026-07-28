@@ -8,6 +8,7 @@ import type {
   HostingCatalog,
   HostingPlan,
   HostingQuote,
+  HostingSubscriptionStatus,
 } from "@/lib/billing/hosting-catalog-shared";
 import { buildHostingQuote } from "@/lib/billing/hosting-catalog-shared";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,8 @@ function CheckIcon() {
 
 export function AdminHostingView({ labels }: AdminHostingViewProps) {
   const [catalog, setCatalog] = useState<HostingCatalog | null>(null);
+  const [subscription, setSubscription] =
+    useState<HostingSubscriptionStatus | null>(null);
   const [stripeLive, setStripeLive] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("plans");
@@ -62,6 +65,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [publishableKey, setPublishableKey] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [returnUrl, setReturnUrl] = useState("");
   const [quote, setQuote] = useState<HostingQuote | null>(null);
 
@@ -76,15 +80,53 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
       const payload = (await response.json()) as {
         catalog: HostingCatalog;
         stripeLive: boolean;
+        subscription?: HostingSubscriptionStatus;
       };
       setCatalog(payload.catalog);
       setStripeLive(Boolean(payload.stripeLive));
-      setPlanId(payload.catalog.defaultPlanId || "startup");
-      setPeriodId(payload.catalog.defaultPeriodId || "12");
+      setSubscription(payload.subscription ?? null);
+      setPlanId(
+        payload.subscription?.planId ||
+          payload.catalog.defaultPlanId ||
+          "startup",
+      );
+      setPeriodId(
+        payload.subscription?.periodId ||
+          payload.catalog.defaultPeriodId ||
+          "12",
+      );
     } catch {
       setLoadError(labels.loadError || "Could not load hosting plans.");
     }
   }, [labels.loadError]);
+
+  const markHostingActive = useCallback(
+    async (intentId: string) => {
+      try {
+        const response = await fetch("/api/admin/hosting/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentIntentId: intentId }),
+        });
+        if (!response.ok) {
+          setMessage(
+            labels.activateFailed ||
+              "Payment received, but Hosting Active could not be set. Refresh or contact support.",
+          );
+          return false;
+        }
+        await load();
+        return true;
+      } catch {
+        setMessage(
+          labels.activateFailed ||
+            "Payment received, but Hosting Active could not be set. Refresh or contact support.",
+        );
+        return false;
+      }
+    },
+    [labels.activateFailed, load],
+  );
 
   useEffect(() => {
     void load();
@@ -95,8 +137,18 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
     const params = new URLSearchParams(window.location.search);
     if (params.get("paid") === "1") {
       setStep("success");
+      const stored = window.sessionStorage.getItem("hostingPaymentIntentId");
+      if (stored) {
+        void markHostingActive(stored).then(() => {
+          window.sessionStorage.removeItem("hostingPaymentIntentId");
+        });
+      } else {
+        void load();
+      }
     }
-  }, []);
+  }, [load, markHostingActive]);
+
+  const hostingActive = subscription?.status === "active";
 
   const plan: HostingPlan | null = useMemo(() => {
     if (!catalog) return null;
@@ -130,6 +182,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         error?: string;
         clientSecret?: string;
         publishableKey?: string;
+        paymentIntentId?: string;
         returnUrl?: string;
         quote?: HostingQuote;
       };
@@ -146,6 +199,13 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
       }
       setClientSecret(payload.clientSecret ?? null);
       setPublishableKey(payload.publishableKey ?? null);
+      setPaymentIntentId(payload.paymentIntentId ?? null);
+      if (payload.paymentIntentId) {
+        window.sessionStorage.setItem(
+          "hostingPaymentIntentId",
+          payload.paymentIntentId,
+        );
+      }
       setReturnUrl(payload.returnUrl || `${window.location.origin}/admin/hosting?paid=1`);
       if (payload.quote) setQuote(payload.quote);
       setStep("payment");
@@ -183,14 +243,31 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-bg-success text-text-success">
           <CheckIcon />
         </div>
+        <p className="inline-flex rounded-full bg-bg-success px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-success">
+          {labels.hostingActiveBadge || "Hosting Active"}
+        </p>
         <h1 className="font-serif text-2xl text-text-primary">
-          {labels.successTitle || "Hosting purchase confirmed"}
+          {labels.successTitle || "Hosting is now active on NextGen Move"}
         </h1>
         <p className="text-sm text-text-secondary">
           {labels.successBody ||
-            "Your Hostinger hosting plan payment went through. You’ll receive confirmation shortly."}
+            "Payment confirmed. Hosting Active is live for nextgenmove.agency."}
         </p>
-        <Button type="button" onClick={() => setStep("plans")}>
+        {subscription?.planName ? (
+          <p className="text-sm font-medium text-text-primary">
+            {subscription.planName}
+            {subscription.expiresAt
+              ? ` · ${labels.activeUntil || "Active until"} ${subscription.expiresAt.slice(0, 10)}`
+              : null}
+          </p>
+        ) : null}
+        <Button
+          type="button"
+          onClick={() => {
+            setStep("plans");
+            void load();
+          }}
+        >
           {labels.backToPlans || "Back to plans"}
         </Button>
       </div>
@@ -204,12 +281,26 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
             {labels.eyebrow || "Hosting"}
           </p>
-          <h1 className="font-serif text-3xl text-text-primary">
-            {labels.title || "Agency hosting"}
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-serif text-3xl text-text-primary">
+              {labels.title || "Agency hosting"}
+            </h1>
+            {hostingActive ? (
+              <span className="rounded-full bg-bg-success px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-success">
+                {labels.hostingActiveBadge || "Hosting Active"}
+              </span>
+            ) : (
+              <span className="rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                {labels.hostingInactiveBadge || "Not active"}
+              </span>
+            )}
+          </div>
           <p className="max-w-xl text-sm text-text-secondary">
-            {labels.subtitle ||
-              "Purchase Hostinger agency hosting for NextGen Move — plan selection, order summary, then secure card payment."}
+            {hostingActive
+              ? labels.activeSubtitle ||
+                `Hosting is active on nextgenmove.agency${subscription?.planName ? ` · ${subscription.planName}` : ""}${subscription?.expiresAt ? ` · until ${subscription.expiresAt.slice(0, 10)}` : ""}.`
+              : labels.subtitle ||
+                "Purchase Hostinger agency hosting for NextGen Move — plan selection, order summary, then secure card payment."}
           </p>
         </div>
         <Image
@@ -468,7 +559,17 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                   publishableKey={publishableKey}
                   returnUrl={returnUrl}
                   labels={labels}
-                  onSuccess={() => setStep("success")}
+                  onSuccess={(intentId) => {
+                    const id = intentId || paymentIntentId;
+                    setStep("success");
+                    if (id) {
+                      window.sessionStorage.setItem(
+                        "hostingPaymentIntentId",
+                        id,
+                      );
+                      void markHostingActive(id);
+                    }
+                  }}
                   onError={(errorMessage) => setMessage(errorMessage)}
                 />
               </section>

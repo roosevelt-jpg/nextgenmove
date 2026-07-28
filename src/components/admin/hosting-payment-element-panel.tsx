@@ -21,17 +21,19 @@ function stripePromiseFor(publishableKey: string) {
   return promise;
 }
 
+interface ConfirmFormProps {
+  labels: Record<string, string>;
+  returnUrl: string;
+  onSuccess: (paymentIntentId: string) => void;
+  onError: (message: string) => void;
+}
+
 function ConfirmForm({
   labels,
   returnUrl,
   onSuccess,
   onError,
-}: {
-  labels: Record<string, string>;
-  returnUrl: string;
-  onSuccess: () => void;
-  onError: (message: string) => void;
-}) {
+}: ConfirmFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -64,7 +66,7 @@ function ConfirmForm({
       paymentIntent?.status === "succeeded" ||
       paymentIntent?.status === "processing"
     ) {
-      onSuccess();
+      onSuccess(paymentIntent.id);
       return;
     }
 
@@ -104,7 +106,7 @@ export function HostingPaymentElementPanel({
   publishableKey: string;
   returnUrl: string;
   labels: Record<string, string>;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onError: (message: string) => void;
 }) {
   return (
