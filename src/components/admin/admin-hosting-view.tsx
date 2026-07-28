@@ -625,14 +625,26 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                   billingEmail={payer.email}
                   onSuccess={(intentId) => {
                     const id = intentId || paymentIntentId;
-                    setStep("success");
-                    if (id) {
-                      window.sessionStorage.setItem(
-                        "hostingPaymentIntentId",
-                        id,
-                      );
-                      void markHostingActive(id);
+                    if (!id) {
+                      setStep("success");
+                      return;
                     }
+                    window.sessionStorage.setItem(
+                      "hostingPaymentIntentId",
+                      id,
+                    );
+                    void (async () => {
+                      const ok = await markHostingActive(id);
+                      window.sessionStorage.removeItem(
+                        "hostingPaymentIntentId",
+                      );
+                      if (ok) {
+                        setStep("success");
+                        return;
+                      }
+                      // Payment succeeded — still show success; activation error is in message.
+                      setStep("success");
+                    })();
                   }}
                   onError={(errorMessage) => setMessage(errorMessage)}
                 />
