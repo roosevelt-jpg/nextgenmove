@@ -306,9 +306,9 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         <Image
           src="/integrations/hostinger.svg"
           alt={catalog.partnerName || "Hostinger"}
-          width={160}
-          height={36}
-          className="h-9 w-auto"
+          width={96}
+          height={20}
+          className="h-5 w-auto max-h-5 max-w-[6rem] object-contain object-right"
           priority
         />
       </header>
