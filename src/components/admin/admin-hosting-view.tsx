@@ -68,6 +68,10 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [returnUrl, setReturnUrl] = useState("");
   const [quote, setQuote] = useState<HostingQuote | null>(null);
+  const [payer, setPayer] = useState<{ name: string; email: string | null }>({
+    name: "Admin",
+    email: null,
+  });
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -81,10 +85,15 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         catalog: HostingCatalog;
         stripeLive: boolean;
         subscription?: HostingSubscriptionStatus;
+        payer?: { name?: string | null; email?: string | null };
       };
       setCatalog(payload.catalog);
       setStripeLive(Boolean(payload.stripeLive));
       setSubscription(payload.subscription ?? null);
+      setPayer({
+        name: payload.payer?.name?.trim() || "Admin",
+        email: payload.payer?.email?.trim() || null,
+      });
       setPlanId(
         payload.subscription?.planId ||
           payload.catalog.defaultPlanId ||
@@ -612,6 +621,8 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                   publishableKey={publishableKey}
                   returnUrl={returnUrl}
                   labels={labels}
+                  billingName={payer.name}
+                  billingEmail={payer.email}
                   onSuccess={(intentId) => {
                     const id = intentId || paymentIntentId;
                     setStep("success");

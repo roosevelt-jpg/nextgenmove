@@ -25,5 +25,9 @@ export async function GET() {
     catalog,
     stripeLive,
     subscription,
+    payer: {
+      email: session.email ?? null,
+      name: session.email?.split("@")[0] || "Admin",
+    },
   });
 }

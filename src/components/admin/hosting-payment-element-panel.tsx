@@ -25,6 +25,8 @@ function stripePromiseFor(publishableKey: string) {
 interface ConfirmFormProps {
   labels: Record<string, string>;
   returnUrl: string;
+  billingName: string;
+  billingEmail: string | null;
   onSuccess: (paymentIntentId: string) => void;
   onError: (message: string) => void;
 }
@@ -32,6 +34,8 @@ interface ConfirmFormProps {
 function ConfirmForm({
   labels,
   returnUrl,
+  billingName,
+  billingEmail,
   onSuccess,
   onError,
 }: ConfirmFormProps) {
@@ -71,11 +75,21 @@ function ConfirmForm({
         return;
       }
 
+      // Required when Payment Element hides billing fields (fields: never).
+      const billingDetails = {
+        name: billingName.trim() || "Admin",
+        email: billingEmail?.trim() || "admin@nextgenmove.agency",
+        phone: "",
+      };
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         redirect: "if_required",
         confirmParams: {
           return_url: returnUrl,
+          payment_method_data: {
+            billing_details: billingDetails,
+          },
         },
       });
       if (timedOut) return;
@@ -158,6 +172,8 @@ export function HostingPaymentElementPanel({
   publishableKey,
   returnUrl,
   labels,
+  billingName,
+  billingEmail,
   onSuccess,
   onError,
 }: {
@@ -165,6 +181,8 @@ export function HostingPaymentElementPanel({
   publishableKey: string;
   returnUrl: string;
   labels: Record<string, string>;
+  billingName: string;
+  billingEmail: string | null;
   onSuccess: (paymentIntentId: string) => void;
   onError: (message: string) => void;
 }) {
@@ -189,6 +207,8 @@ export function HostingPaymentElementPanel({
       <ConfirmForm
         labels={labels}
         returnUrl={returnUrl}
+        billingName={billingName}
+        billingEmail={billingEmail}
         onSuccess={onSuccess}
         onError={onError}
       />
