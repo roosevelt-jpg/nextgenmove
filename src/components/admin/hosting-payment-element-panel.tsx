@@ -11,6 +11,7 @@ import { loadStripe, type Stripe } from "@stripe/stripe-js";
 import { Button } from "@/components/ui";
 
 const stripePromiseCache = new Map<string, Promise<Stripe | null>>();
+const PAY_TIMEOUT_MS = 90_000;
 
 function stripePromiseFor(publishableKey: string) {
   let promise = stripePromiseCache.get(publishableKey);
@@ -48,29 +49,70 @@ function ConfirmForm({
     }
 
     setSubmitting(true);
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: "if_required",
-      confirmParams: {
-        return_url: returnUrl,
-      },
-    });
-    setSubmitting(false);
+    let timedOut = false;
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      setSubmitting(false);
+      onError(
+        labels.paymentTimeout ||
+          "Payment is taking too long. Check your bank prompt or try again.",
+      );
+    }, PAY_TIMEOUT_MS);
 
-    if (error) {
-      onError(error.message || labels.paymentFailed || "Payment failed.");
-      return;
+    try {
+      const { error: submitError } = await elements.submit();
+      if (timedOut) return;
+      if (submitError) {
+        onError(
+          submitError.message ||
+            labels.paymentFailed ||
+            "Check your card details and try again.",
+        );
+        return;
+      }
+
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        redirect: "if_required",
+        confirmParams: {
+          return_url: returnUrl,
+        },
+      });
+      if (timedOut) return;
+
+      if (error) {
+        onError(error.message || labels.paymentFailed || "Payment failed.");
+        return;
+      }
+
+      if (
+        paymentIntent?.status === "succeeded" ||
+        paymentIntent?.status === "processing"
+      ) {
+        onSuccess(paymentIntent.id);
+        return;
+      }
+
+      if (paymentIntent?.status === "requires_action") {
+        onError(
+          labels.paymentActionRequired ||
+            "Complete the verification prompt from your bank, then try again.",
+        );
+        return;
+      }
+
+      onError(labels.paymentFailed || "Payment did not complete. Try again.");
+    } catch (error) {
+      if (timedOut) return;
+      onError(
+        error instanceof Error
+          ? error.message
+          : labels.paymentFailed || "Payment failed.",
+      );
+    } finally {
+      window.clearTimeout(timeoutId);
+      if (!timedOut) setSubmitting(false);
     }
-
-    if (
-      paymentIntent?.status === "succeeded" ||
-      paymentIntent?.status === "processing"
-    ) {
-      onSuccess(paymentIntent.id);
-      return;
-    }
-
-    onError(labels.paymentFailed || "Payment did not complete. Try again.");
   };
 
   return (
@@ -78,6 +120,7 @@ function ConfirmForm({
       <PaymentElement
         options={{
           layout: "tabs",
+          paymentMethodOrder: ["card"],
           fields: {
             billingDetails: {
               name: "never",
@@ -89,6 +132,10 @@ function ConfirmForm({
           wallets: {
             applePay: "never",
             googlePay: "never",
+            link: "never",
+          },
+          terms: {
+            card: "never",
           },
         }}
       />
