@@ -11,6 +11,7 @@ import {
   getLiveVideoCards,
   getPageHome,
 } from "@/lib/collections/pages";
+import { resolveHomeStoryCards } from "@/lib/public/demo-story-videos";
 import {
   applyCurrentYearToken,
   getPublicHomeMetrics,
@@ -25,6 +26,8 @@ export default async function HomePage() {
     getLiveVideoCards(),
     getLivePodcastEpisodes(),
   ]);
+
+  const storyCards = resolveHomeStoryCards(videoCards);
 
   const metrics = await getPublicHomeMetrics(page.originCities?.length ?? 0);
   const statBlocks = resolveHomeStatBlocks(page.statBlocks, metrics);
@@ -58,7 +61,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      <HomeStoriesSection page={page} cards={videoCards} />
+      <HomeStoriesSection page={page} cards={storyCards} />
       <HomePodcastSection page={page} episodes={podcastEpisodes} />
 
       {(page.testimonialQuote || page.testimonialAttribution) && (

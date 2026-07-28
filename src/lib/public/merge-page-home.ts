@@ -40,6 +40,7 @@ export function mergePageHome(
     storiesManagedLabel:
       overlay.storiesManagedLabel || base.storiesManagedLabel,
     storiesCardBadge: overlay.storiesCardBadge || base.storiesCardBadge,
+    storiesDemoBadge: overlay.storiesDemoBadge || base.storiesDemoBadge,
     podcastEyebrow: overlay.podcastEyebrow || base.podcastEyebrow,
     podcastHeadline: overlay.podcastHeadline || base.podcastHeadline,
     podcastManagedLabel:

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { PageHomeDocument, VideoCardDocument } from "@/types/cms";
 import { SectionEyebrow } from "@/components/ui";
 import { parseYoutubeVideoId } from "@/lib/media/youtube";
+import { isDemoStoryCards } from "@/lib/public/demo-story-videos";
 import styles from "./home-stories-section.module.css";
 
 function youtubeWatchUrl(card: VideoCardDocument): string | null {
@@ -101,7 +102,10 @@ export function HomeStoriesSection({
   cards: VideoCardDocument[];
 }) {
   const loopCards = useMemo(() => buildLoop(cards), [cards]);
-  const badge = page?.storiesCardBadge?.trim() || "";
+  const showingDemos = isDemoStoryCards(cards);
+  const badge = showingDemos
+    ? page?.storiesDemoBadge?.trim() || page?.storiesCardBadge?.trim() || ""
+    : page?.storiesCardBadge?.trim() || "";
 
   if (!cards.length && !page?.storiesEyebrow && !page?.storiesHeadline) {
     return null;

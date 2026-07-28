@@ -197,6 +197,7 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   storiesHeadline: "Hear it from them.",
   storiesManagedLabel: "Managed in admin · Homepage content",
   storiesCardBadge: "Candidate story",
+  storiesDemoBadge: "Sample",
   podcastEyebrow: "The Move Podcast",
   podcastHeadline: "Conversations from the route.",
   podcastManagedLabel: "Managed in admin · Homepage content",

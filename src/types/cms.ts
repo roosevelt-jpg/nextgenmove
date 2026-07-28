@@ -121,6 +121,8 @@ export interface PageHomeDocument {
   storiesManagedLabel?: string;
   /** Small uppercase label on each video card (e.g. Candidate story) */
   storiesCardBadge?: string;
+  /** Badge used while showing homepage demo videos (before real uploads) */
+  storiesDemoBadge?: string;
   podcastEyebrow?: string;
   podcastHeadline?: string;
   podcastManagedLabel?: string;
@@ -146,8 +148,8 @@ export interface VideoCardDocument {
   status: "draft" | "live" | "archived";
   /** YouTube video id when synced or pasted from YouTube */
   youtubeVideoId?: string;
-  /** `youtube_playlist` for cron-synced cards; `manual` or omitted for admin CRUD */
-  source?: "youtube_playlist" | "manual";
+  /** `youtube_playlist` for cron-synced cards; `manual` or omitted for admin CRUD; `demo` = homepage placeholder only */
+  source?: "youtube_playlist" | "manual" | "demo";
   syncedAt?: string | null;
 }
 
