@@ -687,15 +687,19 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                     </span>
                   </div>
                 ))}
-                <div className="flex justify-between border-t border-border pt-3">
-                  <span className="text-text-secondary">
-                    {labels.taxes || "Taxes"}
-                  </span>
-                  <span className="font-semibold text-text-primary">
-                    {money(liveQuote.taxAmount, catalog.currencySymbol)}
-                  </span>
-                </div>
-                <div className="flex items-end justify-between pt-1">
+                {liveQuote.taxAmount > 0 ? (
+                  <div className="flex justify-between border-t border-border pt-3">
+                    <span className="text-text-secondary">
+                      {labels.taxes || "Taxes"}
+                    </span>
+                    <span className="font-semibold text-text-primary">
+                      {money(liveQuote.taxAmount, catalog.currencySymbol)}
+                    </span>
+                  </div>
+                ) : null}
+                <div
+                  className={`flex items-end justify-between ${liveQuote.taxAmount > 0 ? "pt-1" : "border-t border-border pt-3"}`}
+                >
                   <span className="text-base font-semibold text-text-primary">
                     {labels.total || "Total"}
                   </span>

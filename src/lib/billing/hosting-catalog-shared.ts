@@ -79,7 +79,7 @@ export const DEFAULT_HOSTING_CATALOG: HostingCatalog = {
   currency: "USD",
   currencySymbol: "$",
   partnerName: "Hostinger",
-  taxRatePercent: 21,
+  taxRatePercent: 0,
   defaultPlanId: "startup",
   defaultPeriodId: "12",
   dealPeriodId: "24",
@@ -89,9 +89,9 @@ export const DEFAULT_HOSTING_CATALOG: HostingCatalog = {
       name: "Agency Startup",
       shortName: "Startup",
       tagline: "Optimized for business and ecommerce websites.",
-      monthlyPrice: 25,
+      monthlyPrice: 29,
       listMonthlyPrice: 69,
-      savePercent: 64,
+      savePercent: 58,
       renewMonthlyPrice: 49,
       resources: [
         "6 CPU cores",
@@ -272,7 +272,7 @@ export function asNumber(value: unknown, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-/** Keep plan sticker prices locked to code defaults (Startup = $25/mo). */
+/** Keep plan sticker prices locked to code defaults (Startup = $29/mo → $348 / 12 mo). */
 export function applyCanonicalHostingPricing(
   catalog: HostingCatalog,
 ): HostingCatalog {

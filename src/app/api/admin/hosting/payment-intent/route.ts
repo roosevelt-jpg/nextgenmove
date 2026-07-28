@@ -63,7 +63,8 @@ export async function POST(request: Request) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountCents,
       currency: quote.currency.toLowerCase(),
-      automatic_payment_methods: { enabled: true },
+      // Card only — Payment Element should not collect name/email/address.
+      payment_method_types: ["card"],
       metadata: {
         kind: "hosting_purchase",
         orderId: orderRef.id,

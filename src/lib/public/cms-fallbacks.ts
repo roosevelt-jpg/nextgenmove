@@ -77,6 +77,14 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   ctaSecondaryLabel: "I'm hiring",
   ctaSecondaryHref: "/request-talent",
   hubLabel: "DXB",
+  hubCaption: "Internship hub",
+  globeStoryEyebrow: "Live routes",
+  globeStoryTitle: "Students take off. Internships connect.",
+  globeStoryBody:
+    "From home cities to your hub — coaches, visas, and employers on one route.",
+  globeStoryChipStudent: "Student",
+  globeStoryChipFlight: "Flight",
+  globeStoryChipInternship: "Internship",
   currentRoutesLabel: "Current routes",
   currentRoutesItems: [
     { code: "AMS" },

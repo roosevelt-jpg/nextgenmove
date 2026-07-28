@@ -5,6 +5,56 @@
   width: 100%;
 }
 
+.skyLayer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.08);
+  filter: blur(2px);
+}
+
+.cloudA {
+  width: 9rem;
+  height: 2.4rem;
+  top: 14%;
+  left: 42%;
+  animation: cloud-drift 28s linear infinite;
+}
+
+.cloudB {
+  width: 13rem;
+  height: 3rem;
+  top: 22%;
+  right: 8%;
+  opacity: 0.7;
+  animation: cloud-drift 36s linear infinite reverse;
+}
+
+.cloudC {
+  width: 7rem;
+  height: 1.8rem;
+  bottom: 28%;
+  right: 28%;
+  opacity: 0.5;
+  animation: cloud-drift 42s linear infinite;
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-8%);
+  }
+  to {
+    transform: translateX(12%);
+  }
+}
+
 .heroInner {
   width: 100%;
   max-width: var(--page-max);
@@ -21,9 +71,15 @@
 
 @media (min-width: 900px) {
   .heroInner {
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 1.25rem;
-    min-height: min(70vh, 36rem);
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.22fr);
+    gap: 0.75rem;
+    min-height: min(82vh, 46rem);
+  }
+}
+
+@media (min-width: 1100px) {
+  .heroInner {
+    min-height: min(84vh, 48rem);
   }
 }
 
@@ -150,22 +206,45 @@
   color: var(--hero-on);
 }
 
-/* —— Animated globe —— */
+/* —— Animated globe / migration scene —— */
 
 .globeWrap {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 22rem;
+  max-width: min(100%, 28rem);
   margin-inline: auto;
-  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
 }
 
 @media (min-width: 900px) {
   .globeWrap {
-    max-width: 26rem;
+    max-width: min(100%, 38rem);
     justify-self: end;
   }
+}
+
+@media (min-width: 1100px) {
+  .globeWrap {
+    max-width: min(100%, 44rem);
+  }
+}
+
+.globeGlow {
+  position: absolute;
+  inset: 8% 10% 22%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 253, 248, 0.18) 0%,
+    rgba(201, 122, 46, 0.12) 42%,
+    transparent 70%
+  );
+  pointer-events: none;
+  filter: blur(8px);
 }
 
 .globeSvg {
@@ -173,23 +252,33 @@
   width: 100%;
   height: auto;
   overflow: visible;
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 1;
 }
 
 .graticule {
   fill: none;
-  stroke: rgba(255, 253, 248, 0.16);
+  stroke: rgba(255, 253, 248, 0.18);
   stroke-width: 1;
 }
 
+.graticuleSoft {
+  fill: rgba(255, 253, 248, 0.025);
+  stroke: rgba(255, 253, 248, 0.12);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 10;
+}
+
 .globeOutline {
-  fill: rgba(255, 253, 248, 0.03);
-  stroke: rgba(255, 253, 248, 0.22);
-  stroke-width: 1;
+  fill: rgba(255, 253, 248, 0.04);
+  stroke: rgba(255, 253, 248, 0.28);
+  stroke-width: 1.25;
 }
 
 .globeSpin {
   transform-origin: 250px 250px;
-  animation: globe-spin 40s linear infinite;
+  animation: globe-spin 48s linear infinite;
 }
 
 @keyframes globe-spin {
@@ -204,16 +293,69 @@
 .routeArc {
   fill: none;
   stroke: var(--brand-amber-1);
-  stroke-width: 1.6;
+  stroke-width: 2;
   stroke-linecap: round;
-  stroke-dasharray: 6 8;
-  opacity: 0.85;
-  animation: route-flow 2.4s linear infinite;
+  stroke-dasharray: 5 9;
+  opacity: 0.92;
+  animation: route-flow 2.2s linear infinite;
 }
 
 @keyframes route-flow {
   to {
     stroke-dashoffset: -140;
+  }
+}
+
+.routePlane {
+  color: #fffdf8;
+  filter: drop-shadow(0 0 4px rgba(201, 122, 46, 0.55));
+}
+
+.planeIcon {
+  color: inherit;
+}
+
+.skyPlaneA {
+  animation: sky-fly-a 18s linear infinite;
+  opacity: 0.75;
+}
+
+.skyPlaneB {
+  animation: sky-fly-b 24s linear infinite;
+  opacity: 0.55;
+}
+
+@keyframes sky-fly-a {
+  0% {
+    transform: translate(-40px, 10px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.75;
+  }
+  90% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(420px, -20px);
+    opacity: 0;
+  }
+}
+
+@keyframes sky-fly-b {
+  0% {
+    transform: translate(40px, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  88% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-380px, 24px);
+    opacity: 0;
   }
 }
 
@@ -225,23 +367,39 @@
   fill: none;
   stroke: var(--brand-amber-1);
   stroke-width: 1.5;
-  opacity: 0.8;
+  opacity: 0.75;
   transform-box: fill-box;
   transform-origin: center;
-  animation: hub-pulse 2.2s ease-out infinite;
+  animation: hub-pulse 2.4s ease-out infinite;
 }
 
 @keyframes hub-pulse {
   0% {
-    r: 8;
-    opacity: 0.9;
-    stroke-width: 2;
+    transform: scale(1);
+    opacity: 0.85;
   }
   100% {
-    r: 34;
+    transform: scale(3.6);
     opacity: 0;
-    stroke-width: 0.5;
   }
+}
+
+.hubIcon {
+  pointer-events: none;
+}
+
+.hubBuilding {
+  fill: #fffdf8;
+  opacity: 0.95;
+}
+
+.hubWindow {
+  fill: var(--brand-indigo-2);
+  opacity: 0.85;
+}
+
+.hubDoor {
+  fill: var(--brand-amber-1);
 }
 
 .cityDot {
@@ -250,6 +408,27 @@
 
 .traveler {
   fill: #fffdf8;
+  opacity: 0.85;
+}
+
+.studentMark {
+  opacity: 0.95;
+}
+
+.studentHead {
+  fill: #fffdf8;
+}
+
+.studentBody {
+  fill: none;
+  stroke: #fffdf8;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.studentBag {
+  fill: var(--brand-amber-1);
+  opacity: 0.95;
 }
 
 .avatarBubble {
@@ -262,12 +441,13 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-7px);
+    transform: translateY(-8px);
   }
 }
 
 .avatarCircle {
   fill: #fffdf8;
+  filter: drop-shadow(0 2px 6px rgba(26, 26, 24, 0.18));
 }
 
 .avatarText {
@@ -282,18 +462,89 @@
 .avatarLabel {
   font-family: var(--font-mono);
   font-size: 9px;
-  fill: var(--brand-hero-muted);
+  fill: rgba(255, 253, 248, 0.78);
   text-anchor: middle;
   letter-spacing: 0.5px;
 }
 
 .dxbLabel {
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   fill: #fffdf8;
   text-anchor: middle;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
+}
+
+.hubCaption {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+  fill: var(--brand-amber-1);
+  text-anchor: middle;
+  letter-spacing: 1.4px;
+}
+
+.storyCard {
+  width: min(100%, 22rem);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 253, 248, 0.22);
+  background: rgba(26, 26, 24, 0.28);
+  backdrop-filter: blur(8px);
+  padding: 0.85rem 1rem;
+  color: var(--hero-on);
+  position: relative;
+  z-index: 2;
+}
+
+.storyEyebrow {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-amber-1);
+}
+
+.storyTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #fffdf8;
+}
+
+.storyBody {
+  margin: 0.35rem 0 0.7rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(255, 253, 248, 0.78);
+}
+
+.storyChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fffdf8;
+}
+
+.storyChips span:not(.chipArrow) {
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.12);
+  border: 1px solid rgba(255, 253, 248, 0.2);
+  padding: 0.28rem 0.55rem;
+}
+
+.chipArrow {
+  color: var(--brand-amber-1);
 }
 
 .routeBar {
@@ -334,12 +585,12 @@
     font-size: 8px;
   }
 
-  .avatarCircle {
-    r: 14;
+  .storyCard {
+    width: 100%;
   }
 
-  .avatarText {
-    font-size: 9px;
+  .hubCaption {
+    font-size: 7px;
   }
 }
 
@@ -353,11 +604,17 @@
   .globeSpin,
   .routeArc,
   .hubRing,
-  .avatarBubble {
+  .avatarBubble,
+  .skyPlaneA,
+  .skyPlaneB,
+  .cloudA,
+  .cloudB,
+  .cloudC {
     animation: none;
   }
 
-  .traveler {
+  .traveler,
+  .routePlane {
     display: none;
   }
 }

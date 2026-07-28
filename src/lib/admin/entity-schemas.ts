@@ -231,6 +231,13 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "ctaSecondaryLabel", type: "text", labelKey: "ctaSecondaryLabel" },
       { key: "ctaSecondaryHref", type: "text", labelKey: "ctaSecondaryHref" },
       { key: "hubLabel", type: "text", labelKey: "hubLabel" },
+      { key: "hubCaption", type: "text", labelKey: "hubCaption" },
+      { key: "globeStoryEyebrow", type: "text", labelKey: "globeStoryEyebrow" },
+      { key: "globeStoryTitle", type: "text", labelKey: "globeStoryTitle" },
+      { key: "globeStoryBody", type: "textarea", labelKey: "globeStoryBody" },
+      { key: "globeStoryChipStudent", type: "text", labelKey: "globeStoryChipStudent" },
+      { key: "globeStoryChipFlight", type: "text", labelKey: "globeStoryChipFlight" },
+      { key: "globeStoryChipInternship", type: "text", labelKey: "globeStoryChipInternship" },
       { key: "currentRoutesLabel", type: "text", labelKey: "currentRoutesLabel" },
       {
         key: "currentRoutesItems",

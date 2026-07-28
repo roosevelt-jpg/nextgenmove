@@ -93,6 +93,15 @@ export interface PageHomeDocument {
   ctaSecondaryLabel?: string;
   ctaSecondaryHref?: string;
   hubLabel?: string;
+  /** Caption under hub code on the hero globe (e.g. Internship hub) */
+  hubCaption?: string;
+  /** Story card under the enlarged globe animation */
+  globeStoryEyebrow?: string;
+  globeStoryTitle?: string;
+  globeStoryBody?: string;
+  globeStoryChipStudent?: string;
+  globeStoryChipFlight?: string;
+  globeStoryChipInternship?: string;
   originCities?: OriginCity[];
   currentRoutesLabel?: string;
   /** Editable marquee entries — admin can add/remove any number */

@@ -22,7 +22,7 @@ export async function getHostingCatalog(): Promise<HostingCatalog> {
 
 /**
  * Seed if missing, and always repair Startup/plan sticker prices to code defaults
- * so checkout cannot drift (e.g. $29/mo vs $25/mo on the plan card).
+ * so checkout cannot drift (Startup stays $29/mo → $348 for 12 months).
  */
 export async function ensureHostingCatalogSeeded(): Promise<void> {
   const ref = adminDb.collection("hosting_plans").doc("default");

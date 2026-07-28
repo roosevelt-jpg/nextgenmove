@@ -78,6 +78,18 @@ function ConfirmForm({
       <PaymentElement
         options={{
           layout: "tabs",
+          fields: {
+            billingDetails: {
+              name: "never",
+              email: "never",
+              phone: "never",
+              address: "never",
+            },
+          },
+          wallets: {
+            applePay: "never",
+            googlePay: "never",
+          },
         }}
       />
       <Button
