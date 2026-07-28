@@ -1,6 +1,8 @@
 /** Default brand logos for known integrations (under /public/integrations). */
 export const INTEGRATION_LOGO_PATHS: Record<string, string> = {
   stripe: "/integrations/stripe.svg",
+  stripe_hosting: "/integrations/stripe.svg",
+  hostinger: "/integrations/hostinger.svg",
   resend: "/integrations/resend.svg",
   sendgrid: "/integrations/sendgrid.svg",
   twilio: "/integrations/twilio.svg",

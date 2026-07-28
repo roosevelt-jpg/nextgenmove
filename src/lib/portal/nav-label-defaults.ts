@@ -12,6 +12,7 @@ export const DEFAULT_ADMIN_NAV_LABELS: Record<string, string> = {
   levers: "Program Levers",
   settings: "Settings",
   users: "Users",
+  hosting: "Hosting",
   account: "My account",
   adminSection: "Admin",
   workspaceSection: "Workspace",

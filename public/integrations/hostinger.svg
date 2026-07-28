@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 36" fill="none" role="img" aria-label="Hostinger">
+  <rect width="36" height="36" rx="8" fill="#3C3489"/>
+  <path d="M10 8h4.2v8.2H21.8V8H26v20h-4.2v-8.2h-7.6V28H10V8z" fill="#FFFFFF"/>
+  <text x="46" y="24" fill="#1A1A18" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">Hostinger</text>
+</svg>

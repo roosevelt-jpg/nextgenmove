@@ -52,6 +52,11 @@ function envMarksConnected(id: string): boolean {
   if (id === "stripe") {
     return Boolean(process.env.STRIPE_SECRET_KEY?.trim()?.startsWith("sk_"));
   }
+  if (id === "stripe_hosting") {
+    return Boolean(
+      process.env.STRIPE_HOSTING_SECRET_KEY?.trim()?.startsWith("sk_"),
+    );
+  }
   if (id === "twilio") {
     return Boolean(
       process.env.TWILIO_ACCOUNT_SID?.trim() &&

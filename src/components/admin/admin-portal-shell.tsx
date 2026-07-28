@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { key: "levers", href: "/admin/levers", match: "prefix" as const },
   { key: "settings", href: "/admin/settings", match: "prefix" as const },
   { key: "users", href: "/admin/users", match: "prefix" as const },
+  { key: "hosting", href: "/admin/hosting", match: "prefix" as const },
 ] as const;
 
 function NavIcon({ name }: { name: string }) {
@@ -103,6 +104,16 @@ function NavIcon({ name }: { name: string }) {
         <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           <circle cx="8" cy="5.5" r="2.25" />
           <path d="M3.5 13c.8-2.2 2.4-3.25 4.5-3.25S11.7 10.8 12.5 13" />
+        </svg>
+      );
+    case "hosting":
+      return (
+        <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <rect x="2.5" y="3" width="11" height="3.5" rx="0.75" />
+          <rect x="2.5" y="7.25" width="11" height="3.5" rx="0.75" />
+          <rect x="2.5" y="11.5" width="11" height="2" rx="0.75" />
+          <circle cx="4.5" cy="4.75" r="0.6" fill="currentColor" stroke="none" />
+          <circle cx="4.5" cy="9" r="0.6" fill="currentColor" stroke="none" />
         </svg>
       );
     default:

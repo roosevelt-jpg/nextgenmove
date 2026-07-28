@@ -26,6 +26,17 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     config: { category: "Payments & subscriptions" },
   },
   {
+    id: "stripe_hosting",
+    name: "Hosting Plan (Stripe)",
+    category: "Payments & subscriptions",
+    description:
+      "Separate Stripe account for Admin → Hosting plan purchases (Hostinger-style checkout). Paste sk_/pk_/whsec keys dedicated to hosting.",
+    iconUrl: "",
+    status: "not_connected",
+    connectedAt: null,
+    config: { category: "Payments & subscriptions" },
+  },
+  {
     id: "resend",
     name: "Resend",
     category: "Transactional email",

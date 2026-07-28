@@ -165,7 +165,9 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
     void load();
   }, []);
 
-  const isStripe = connectItem?.id === "stripe";
+  const isStripe =
+    connectItem?.id === "stripe" || connectItem?.id === "stripe_hosting";
+  const isHostingStripe = connectItem?.id === "stripe_hosting";
   const isResend = connectItem?.id === "resend";
   const isSendGrid = connectItem?.id === "sendgrid";
   const isGmailSmtp = connectItem?.id === "gmail_smtp";
@@ -206,7 +208,10 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       body = {
         config: {
           publishableKey,
-          webhookUrl: labels.stripeWebhookPath ?? "/api/webhooks/stripe",
+          webhookUrl: isHostingStripe
+            ? (labels.hostingStripeWebhookPath ??
+              "/api/webhooks/stripe-hosting")
+            : (labels.stripeWebhookPath ?? "/api/webhooks/stripe"),
         },
         secrets: {
           ...(secretKey ? { secretKey } : {}),
@@ -651,24 +656,48 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
               <Input
                 id="stripe-secret"
                 type="password"
-                label={labels.stripeSecretKey ?? "Secret key (sk_…)"}
+                label={
+                  isHostingStripe
+                    ? (labels.hostingStripeSecretKey ??
+                      labels.stripeSecretKey ??
+                      "Secret key (sk_…)")
+                    : (labels.stripeSecretKey ?? "Secret key (sk_…)")
+                }
                 value={secretKey}
                 onChange={(event) => setSecretKey(event.target.value)}
               />
               <Input
                 id="stripe-publishable"
-                label={labels.stripePublishableKey ?? "Publishable key (pk_…)"}
+                label={
+                  isHostingStripe
+                    ? (labels.hostingStripePublishableKey ??
+                      labels.stripePublishableKey ??
+                      "Publishable key (pk_…)")
+                    : (labels.stripePublishableKey ?? "Publishable key (pk_…)")
+                }
                 value={publishableKey}
                 onChange={(event) => setPublishableKey(event.target.value)}
               />
               <Input
                 id="stripe-webhook"
                 type="password"
-                label={labels.stripeWebhookSecret ?? "Webhook signing secret (whsec_…)"}
+                label={
+                  isHostingStripe
+                    ? (labels.hostingStripeWebhookSecret ??
+                      labels.stripeWebhookSecret ??
+                      "Webhook signing secret (whsec_…)")
+                    : (labels.stripeWebhookSecret ??
+                      "Webhook signing secret (whsec_…)")
+                }
                 value={webhookSecret}
                 onChange={(event) => setWebhookSecret(event.target.value)}
               />
-              {labels.stripeWebhookHelp ? (
+              {isHostingStripe ? (
+                <p className="text-xs text-text-muted">
+                  {labels.hostingStripeWebhookHelp ??
+                    "In Stripe Dashboard → Developers → Webhooks, add endpoint: {APP_URL}/api/webhooks/stripe-hosting — events: payment_intent.succeeded"}
+                </p>
+              ) : labels.stripeWebhookHelp ? (
                 <p className="text-xs text-text-muted">{labels.stripeWebhookHelp}</p>
               ) : null}
             </>

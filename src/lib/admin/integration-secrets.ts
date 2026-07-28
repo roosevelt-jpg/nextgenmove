@@ -17,6 +17,13 @@ const ENV_SECRET_FALLBACKS: Record<string, Record<string, () => string>> = {
     publishableKey: () => process.env.STRIPE_PUBLISHABLE_KEY?.trim() ?? "",
     webhookSecret: () => process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? "",
   },
+  stripe_hosting: {
+    secretKey: () => process.env.STRIPE_HOSTING_SECRET_KEY?.trim() ?? "",
+    publishableKey: () =>
+      process.env.STRIPE_HOSTING_PUBLISHABLE_KEY?.trim() ?? "",
+    webhookSecret: () =>
+      process.env.STRIPE_HOSTING_WEBHOOK_SECRET?.trim() ?? "",
+  },
   twilio: {
     accountSid: () => process.env.TWILIO_ACCOUNT_SID?.trim() ?? "",
     authToken: () => process.env.TWILIO_AUTH_TOKEN?.trim() ?? "",
@@ -207,7 +214,7 @@ export function secretsSatisfyIntegration(
       secrets.apiKey?.startsWith("SG.") && secrets.fromEmail?.includes("@"),
     );
   }
-  if (integrationId === "stripe") {
+  if (integrationId === "stripe" || integrationId === "stripe_hosting") {
     return Boolean(secrets.secretKey?.startsWith("sk_"));
   }
   if (integrationId === "twilio") {

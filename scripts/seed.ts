@@ -14,6 +14,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore, type Firestore } from "firebase-admin/firestore";
 import { stripUndefined } from "../src/lib/stripUndefined";
+import { DEFAULT_HOSTING_CATALOG } from "../src/lib/billing/hosting-catalog-shared";
 import { EMAIL_TEMPLATES } from "./email-templates";
 
 loadEnv({ path: resolve(process.cwd(), ".env.local") });
@@ -102,6 +103,7 @@ const ADMIN_NAV_KEYS = [
   "account",
   "integrations",
   "users",
+  "hosting",
 ];
 
 const TAXONOMIES = {
@@ -1511,9 +1513,55 @@ const OPERATIONAL_SITE_SETTINGS = {
     account: "My account",
     integrations: "Integrations",
     users: "Users",
+    hosting: "Hosting",
   },
   adminNotificationKeys: ["pending_requests", "weekly_digest", "sms_alerts"],
   adminPageLabels: {
+    hosting: {
+      eyebrow: "Hosting",
+      title: "Agency hosting",
+      subtitle:
+        "Purchase Hostinger agency hosting for NextGen Move — choose a plan, review the order, then pay securely on-site.",
+      loading: "Loading…",
+      loadError: "Could not load hosting plans.",
+      retry: "Retry",
+      resourcesTitle: "Resources",
+      saveBadge: "SAVE {percent}%",
+      perMonth: "/mo",
+      choosePlan: "Choose plan",
+      renewHint: "For 24-month term. {price}/mo when you renew",
+      planCardTitle: "{name} plan",
+      periodLabel: "Period",
+      periodRenewHint:
+        "Renews after {months} months at {price}/mo for {months} months. Cancel anytime.",
+      dealBanner:
+        "Switch to a 24-month subscription for the biggest savings.",
+      getDeal: "Get deal",
+      freeDomainNote:
+        "Great news! You get a FREE domain for 1 year with this order.",
+      orderSummary: "Order summary",
+      periodLine: "{months}-month period",
+      taxes: "Taxes",
+      total: "Total",
+      continue: "Continue",
+      continuing: "Continuing…",
+      back: "Back",
+      backToPlans: "Back to plans",
+      saveAmount: "Save {amount}",
+      paymentTitle: "Card details",
+      paymentHelp:
+        "Enter your card below. Payment runs securely in the background — you stay on NextGen Move.",
+      payNow: "Pay now",
+      paying: "Paying…",
+      paymentUnavailable: "Card form is still loading. Try again in a moment.",
+      paymentFailed: "Payment failed.",
+      paymentIntentFailed: "Could not start payment. Try again.",
+      stripeNotConfigured:
+        "Connect Hosting Plan (Stripe) under Integrations to enable checkout.",
+      successTitle: "Hosting purchase confirmed",
+      successBody:
+        "Your Hostinger hosting plan payment went through. You’ll receive confirmation shortly.",
+    },
     dashboard: {
       eyebrow: "Admin",
       title: "Operations dashboard.",
@@ -2099,6 +2147,12 @@ const OPERATIONAL_SITE_SETTINGS = {
       stripeWebhookHelp:
         "In Stripe Dashboard → Developers → Webhooks, add endpoint: {APP_URL}/api/webhooks/stripe — events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed",
       stripeWebhookPath: "/api/webhooks/stripe",
+      hostingStripeSecretKey: "Secret key (sk_…)",
+      hostingStripePublishableKey: "Publishable key (pk_…)",
+      hostingStripeWebhookSecret: "Webhook signing secret (whsec_…)",
+      hostingStripeWebhookPath: "/api/webhooks/stripe-hosting",
+      hostingStripeWebhookHelp:
+        "Dedicated Stripe account for Admin → Hosting. Webhook endpoint: {APP_URL}/api/webhooks/stripe-hosting — event: payment_intent.succeeded",
       sendgridHint:
         "Legacy SendGrid — Nextgenmove sends transactional email via Resend.",
       sendgridApiKey: "API key (SG.…)",
@@ -2455,6 +2509,17 @@ async function seedIntegrations(db: Firestore) {
       config: { category: "Payments & subscriptions" },
     },
     {
+      id: "stripe_hosting",
+      name: "Hosting Plan (Stripe)",
+      category: "Payments & subscriptions",
+      description:
+        "Separate Stripe account for Admin → Hosting plan purchases. Paste sk_/pk_/whsec keys dedicated to hosting.",
+      iconUrl: "",
+      status: "not_connected",
+      connectedAt: null,
+      config: { category: "Payments & subscriptions" },
+    },
+    {
       id: "resend",
       name: "Resend",
       category: "Transactional email",
@@ -2569,6 +2634,22 @@ async function seedPipelineStages(db: Firestore) {
   }
 }
 
+async function seedHostingPlans(db: Firestore) {
+  const ref = db.collection("hosting_plans").doc("default");
+  const snap = await ref.get();
+  if (snap.exists) {
+    console.log("  skip hosting_plans/default (already exists)");
+    return;
+  }
+  await ref.set(
+    stripUndefined({
+      ...DEFAULT_HOSTING_CATALOG,
+      updatedAt: FieldValue.serverTimestamp(),
+    }),
+  );
+  console.log("  created hosting_plans/default");
+}
+
 async function main() {
   console.log("Nextgenmove seed — operational config only\n");
 
@@ -2600,6 +2681,9 @@ async function main() {
 
   console.log("\n8. Pipeline stages");
   await seedPipelineStages(db);
+
+  console.log("\n9. Hosting plans catalog");
+  await seedHostingPlans(db);
 
   console.log("\nSeed complete.");
 }
