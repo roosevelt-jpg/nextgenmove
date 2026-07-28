@@ -271,6 +271,37 @@ export function asNumber(value: unknown, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/** Keep plan sticker prices locked to code defaults (Startup = $25/mo). */
+export function applyCanonicalHostingPricing(
+  catalog: HostingCatalog,
+): HostingCatalog {
+  const byId = new Map(
+    DEFAULT_HOSTING_CATALOG.plans.map((plan) => [plan.id, plan]),
+  );
+  return {
+    ...catalog,
+    currency: DEFAULT_HOSTING_CATALOG.currency,
+    currencySymbol: DEFAULT_HOSTING_CATALOG.currencySymbol,
+    taxRatePercent: DEFAULT_HOSTING_CATALOG.taxRatePercent,
+    defaultPeriodId: DEFAULT_HOSTING_CATALOG.defaultPeriodId,
+    periods: DEFAULT_HOSTING_CATALOG.periods.map((period) => {
+      const existing = catalog.periods.find((item) => item.id === period.id);
+      return existing ? { ...period, label: existing.label || period.label } : period;
+    }),
+    plans: catalog.plans.map((plan) => {
+      const canonical = byId.get(plan.id);
+      if (!canonical) return plan;
+      return {
+        ...plan,
+        monthlyPrice: canonical.monthlyPrice,
+        listMonthlyPrice: canonical.listMonthlyPrice,
+        savePercent: canonical.savePercent,
+        renewMonthlyPrice: canonical.renewMonthlyPrice,
+      };
+    }),
+  };
+}
+
 export function normalizeHostingCatalog(
   raw: Record<string, unknown>,
 ): HostingCatalog {
@@ -279,7 +310,7 @@ export function normalizeHostingCatalog(
   const periodsRaw = Array.isArray(raw.periods) ? raw.periods : base.periods;
   const addOnsRaw = Array.isArray(raw.addOns) ? raw.addOns : base.addOns;
 
-  return {
+  const normalized: HostingCatalog = {
     currency: String(raw.currency ?? base.currency),
     currencySymbol: String(raw.currencySymbol ?? base.currencySymbol),
     partnerName: String(raw.partnerName ?? base.partnerName),
@@ -289,9 +320,13 @@ export function normalizeHostingCatalog(
     dealPeriodId: String(raw.dealPeriodId ?? base.dealPeriodId),
     plans: plansRaw.map((item, index) => {
       const row = (item ?? {}) as Record<string, unknown>;
-      const fallback = base.plans[index] ?? base.plans[0]!;
+      const id = String(row.id ?? base.plans[index]?.id ?? `plan_${index}`);
+      const fallback =
+        base.plans.find((plan) => plan.id === id) ??
+        base.plans[index] ??
+        base.plans[0]!;
       return {
-        id: String(row.id ?? fallback.id),
+        id,
         name: String(row.name ?? fallback.name),
         shortName: String(row.shortName ?? fallback.shortName),
         tagline: String(row.tagline ?? fallback.tagline),
@@ -328,22 +363,32 @@ export function normalizeHostingCatalog(
     }),
     periods: periodsRaw.map((item, index) => {
       const row = (item ?? {}) as Record<string, unknown>;
-      const fallback = base.periods[index] ?? base.periods[0]!;
+      const id = String(row.id ?? base.periods[index]?.id ?? `period_${index}`);
+      const fallback =
+        base.periods.find((period) => period.id === id) ??
+        base.periods[index] ??
+        base.periods[0]!;
       return {
-        id: String(row.id ?? fallback.id),
+        id,
         months: asNumber(row.months, fallback.months),
         label: String(row.label ?? fallback.label),
       };
     }),
     addOns: addOnsRaw.map((item, index) => {
       const row = (item ?? {}) as Record<string, unknown>;
-      const fallback = base.addOns[index] ?? base.addOns[0]!;
+      const id = String(row.id ?? base.addOns[index]?.id ?? `addon_${index}`);
+      const fallback =
+        base.addOns.find((addOn) => addOn.id === id) ??
+        base.addOns[index] ??
+        base.addOns[0]!;
       return {
-        id: String(row.id ?? fallback.id),
+        id,
         label: String(row.label ?? fallback.label),
         listAmount: asNumber(row.listAmount, fallback.listAmount),
         amount: asNumber(row.amount, fallback.amount),
       };
     }),
   };
+
+  return applyCanonicalHostingPricing(normalized);
 }

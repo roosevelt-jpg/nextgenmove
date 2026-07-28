@@ -464,15 +464,41 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
                 </div>
                 <div className="ml-auto text-right">
                   <p className="font-serif text-2xl text-text-primary">
-                    {money(plan.monthlyPrice, catalog.currencySymbol)}
+                    {money(
+                      liveQuote?.monthlyPrice ?? plan.monthlyPrice,
+                      catalog.currencySymbol,
+                    )}
                     <span className="text-sm font-sans text-text-secondary">
                       {labels.perMonth || "/mo"}
                     </span>
                   </p>
                   <p className="text-xs text-text-muted line-through">
-                    {money(plan.listMonthlyPrice, catalog.currencySymbol)}
+                    {money(
+                      liveQuote?.listMonthlyPrice ?? plan.listMonthlyPrice,
+                      catalog.currencySymbol,
+                    )}
                     {labels.perMonth || "/mo"}
                   </p>
+                  {liveQuote ? (
+                    <p className="mt-1 text-[11px] text-text-muted">
+                      {(
+                        labels.periodMath ||
+                        "{price}/mo × {months} mo = {subtotal}"
+                      )
+                        .replace(
+                          "{price}",
+                          money(liveQuote.monthlyPrice, catalog.currencySymbol),
+                        )
+                        .replace("{months}", String(liveQuote.months))
+                        .replace(
+                          "{subtotal}",
+                          money(
+                            liveQuote.planSubtotal,
+                            catalog.currencySymbol,
+                          ),
+                        )}
+                    </p>
+                  ) : null}
                   {liveQuote ? (
                     <span className="mt-1 inline-flex rounded-full bg-bg-success px-2 py-0.5 text-[11px] font-semibold text-text-success">
                       {(labels.saveAmount || "Save {amount}").replace(

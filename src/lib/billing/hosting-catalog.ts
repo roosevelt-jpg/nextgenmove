@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
 import {
+  applyCanonicalHostingPricing,
   DEFAULT_HOSTING_CATALOG,
   normalizeHostingCatalog,
   type HostingCatalog,
@@ -19,14 +20,43 @@ export async function getHostingCatalog(): Promise<HostingCatalog> {
   }
 }
 
+/**
+ * Seed if missing, and always repair Startup/plan sticker prices to code defaults
+ * so checkout cannot drift (e.g. $29/mo vs $25/mo on the plan card).
+ */
 export async function ensureHostingCatalogSeeded(): Promise<void> {
   const ref = adminDb.collection("hosting_plans").doc("default");
   const snap = await ref.get();
-  if (snap.exists) return;
+  if (!snap.exists) {
+    await ref.set(
+      stripUndefined({
+        ...DEFAULT_HOSTING_CATALOG,
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+    );
+    return;
+  }
+
+  const current = normalizeHostingCatalog(
+    snap.data() as Record<string, unknown>,
+  );
+  const repaired = applyCanonicalHostingPricing(current);
+  const startup = repaired.plans.find((plan) => plan.id === "startup");
+  const existingStartup = current.plans.find((plan) => plan.id === "startup");
+  const needsRepair =
+    !existingStartup ||
+    existingStartup.monthlyPrice !== startup?.monthlyPrice ||
+    existingStartup.listMonthlyPrice !== startup?.listMonthlyPrice ||
+    current.taxRatePercent !== repaired.taxRatePercent ||
+    current.defaultPeriodId !== repaired.defaultPeriodId;
+
+  if (!needsRepair) return;
+
   await ref.set(
     stripUndefined({
-      ...DEFAULT_HOSTING_CATALOG,
+      ...repaired,
       updatedAt: FieldValue.serverTimestamp(),
     }),
+    { merge: true },
   );
 }
