@@ -19,6 +19,7 @@ import { cachedPublicCms } from "@/lib/public/cms-cache";
 import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
 import { mergePageHome } from "@/lib/public/merge-page-home";
 import { listLiveVideoCards } from "@/lib/media/video-cards";
+import { selectRotatingHomepageWindow } from "@/lib/media/homepage-video-rotation";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import {
   resolveStorageFileRef,
@@ -74,17 +75,18 @@ export const getPageHome = cache(async () =>
 
 async function loadLiveVideoCards(): Promise<VideoCardDocument[]> {
   const settings = await getSiteSettings();
-  // Prefer full library size for the homepage marquee; homepage limit is an optional cap.
+  // Sync pool for Stories + portals; homepage shows a daily rotating window.
   const libraryLimit = Math.max(
     1,
-    Number(settings.youtubeLibraryLimit ?? 12) || 12,
+    Number(settings.youtubeLibraryLimit ?? 50) || 50,
   );
-  const homepageCap = Number(settings.youtubeHomepageLimit);
-  const limit =
-    Number.isFinite(homepageCap) && homepageCap > 0
-      ? Math.min(libraryLimit, Math.max(1, homepageCap))
-      : libraryLimit;
-  return listLiveVideoCards(limit);
+  const homepageCapRaw = Number(settings.youtubeHomepageLimit);
+  const homepageCap =
+    Number.isFinite(homepageCapRaw) && homepageCapRaw > 0
+      ? Math.max(1, homepageCapRaw)
+      : 12;
+  const library = await listLiveVideoCards(libraryLimit);
+  return selectRotatingHomepageWindow(library, homepageCap);
 }
 
 export const getLiveVideoCards = cache(async () => {
@@ -101,7 +103,7 @@ export const getPortalVideoLibrary = cache(async () => {
     const settings = await getSiteSettings();
     const limit = Math.max(
       1,
-      Number(settings.youtubeLibraryLimit ?? 12) || 12,
+      Number(settings.youtubeLibraryLimit ?? 50) || 50,
     );
     return listLiveVideoCards(limit);
   } catch {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasActivePaidPlan } from "@/lib/access/paid-plan";
+import { selectRotatingHomepageWindow } from "@/lib/media/homepage-video-rotation";
 import {
   formatYoutubeDuration,
   parseYoutubePlaylistId,
@@ -67,6 +68,32 @@ describe("formatYoutubeDuration", () => {
 describe("youtubeEmbedUrl", () => {
   it("builds embed url", () => {
     expect(youtubeEmbedUrl("dQw4w9WgXcQ")).toContain("embed/dQw4w9WgXcQ");
+  });
+});
+
+describe("selectRotatingHomepageWindow", () => {
+  const items = Array.from({ length: 30 }, (_, i) => i);
+  const day0 = 0;
+  const day1 = 24 * 60 * 60 * 1000;
+
+  it("returns all items when library fits the window", () => {
+    expect(selectRotatingHomepageWindow([1, 2, 3], 12, day0)).toEqual([1, 2, 3]);
+  });
+
+  it("advances the window once per UTC day", () => {
+    expect(selectRotatingHomepageWindow(items, 12, day0)).toEqual(
+      items.slice(0, 12),
+    );
+    expect(selectRotatingHomepageWindow(items, 12, day1)).toEqual(
+      items.slice(12, 24),
+    );
+  });
+
+  it("wraps when the day window crosses the end of the library", () => {
+    const day2 = 2 * 24 * 60 * 60 * 1000;
+    expect(selectRotatingHomepageWindow(items, 12, day2)).toEqual([
+      24, 25, 26, 27, 28, 29, 0, 1, 2, 3, 4, 5,
+    ]);
   });
 });
 

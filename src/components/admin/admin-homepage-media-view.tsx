@@ -42,6 +42,18 @@ function mapYoutubeSyncError(
             ? labels.missing_youtube_api_key
             : null);
   if (mapped) return mapped;
+  if (error.includes("API_KEY_HTTP_REFERRER_BLOCKED") || error.includes("referer <empty>")) {
+    return (
+      labels.youtube_error_api_key_referrer ||
+      "This API key is restricted to browser HTTP referrers, so server sync is blocked. In Google Cloud → Credentials, create a key with Application restrictions = None (or IP addresses), enable YouTube Data API v3, then reconnect under Integrations."
+    );
+  }
+  if (error.startsWith("youtube_api_403")) {
+    return (
+      labels.youtube_error_forbidden ||
+      "YouTube API returned 403. Enable YouTube Data API v3 on the key’s Google Cloud project, and do not use an HTTP-referrer–restricted key for server sync."
+    );
+  }
   if (error.startsWith("youtube_api_400")) {
     return (
       labels.youtube_error_invalid_playlist ||
@@ -84,7 +96,7 @@ const emptyYoutube: YoutubeSyncState = {
   youtubePlaylistUrl: "",
   youtubeSyncEnabled: true,
   youtubeHomepageLimit: 12,
-  youtubeLibraryLimit: 12,
+  youtubeLibraryLimit: 50,
   youtubeLastSyncedAt: "",
   youtubeLastSyncError: "",
 };
@@ -451,9 +463,9 @@ export function AdminHomepageMediaView({
         <p className="text-[12.5px] text-text-secondary">
           {youtubeApiConnected
             ? labels.youtubeSyncBodyConnected ||
-              "Set your channel, playlist, or @handle once below. Sync now pulls that feed’s videos automatically — you don’t paste individual video links."
+              "Channel is connected. An hourly job pulls new uploads into Video cards. Homepage shows up to “Homepage cards” and rotates that window every 24 hours when the library is larger — the marquee keeps scrolling."
             : labels.youtubeSyncBody ||
-              "Step 1: connect YouTube under Integrations (API key + channel). Step 2: Sync now pulls videos automatically."}
+              "Step 1: connect YouTube under Integrations (API key + channel). Sync then runs hourly; homepage marquee rotates a daily window when you have more videos than Homepage cards."}
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">
@@ -516,23 +528,27 @@ export function AdminHomepageMediaView({
             <input
               type="number"
               min={1}
-              max={50}
+              max={100}
               value={youtube.youtubeLibraryLimit}
               onChange={(e) =>
                 setYoutube((prev) => ({
                   ...prev,
-                  youtubeLibraryLimit: Number(e.target.value) || 12,
+                  youtubeLibraryLimit: Number(e.target.value) || 50,
                 }))
               }
               className="w-16 rounded-radius-sm border border-border bg-surface-1 px-2 py-1 text-sm"
             />
           </label>
         </div>
+        <p className="text-[11.5px] text-text-muted">
+          {labels.youtubeRotationHint ||
+            "Library size = how many uploads to keep synced. Homepage cards = how many scroll in Stories; when the library is larger, that set rotates every 24 hours."}
+        </p>
         {!youtube.youtubePlaylistUrl.trim() ? (
           <p className="text-[11.5px] text-text-muted">
             {youtubeApiConnected
               ? labels.youtubeWaitingForPlaylist ||
-                "Add your channel, playlist, or @handle once above, then Sync now to pull videos."
+                "Add your channel, playlist, or @handle once above — Sync now (or the hourly job) pulls videos."
               : labels.youtubeWaitingNeedsApiKey ||
                 "Connect YouTube under Integrations (API key + channel), then Sync now."}
           </p>

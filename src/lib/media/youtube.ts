@@ -163,7 +163,10 @@ export async function resolveYoutubeUploadsPlaylistId(
     `https://www.googleapis.com/youtube/v3/channels?${params}`,
     { next: { revalidate: 0 } },
   );
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`youtube_api_${res.status}:${body.slice(0, 240)}`);
+  }
   const data = (await res.json()) as {
     items?: Array<{ contentDetails?: { relatedPlaylists?: { uploads?: string } } }>;
   };

@@ -3,7 +3,8 @@ import { syncYoutubePlaylistVideos } from "@/lib/media/youtube-sync";
 import { withRequestLog } from "@/lib/observability/api-handler";
 
 /**
- * Hourly YouTube playlist → video_cards sync.
+ * Hourly YouTube channel/playlist → video_cards sync (auto-pull new uploads).
+ * Homepage Stories rotates a daily window from this library; marquee keeps moving.
  * Protect with CRON_SECRET: Authorization: Bearer <CRON_SECRET>
  */
 export async function GET(request: Request) {

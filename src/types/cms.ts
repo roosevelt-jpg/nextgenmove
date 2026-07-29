@@ -333,13 +333,13 @@ export interface SiteSettingsDocument {
     expiresAt?: string | null;
     paymentIntentId?: string | null;
   };
-  /** YouTube playlist URL or ID used by the daily video sync */
+  /** YouTube channel / playlist / @handle used by the hourly video sync */
   youtubePlaylistUrl?: string;
   /** When false, cron / Sync now skip the YouTube pull */
   youtubeSyncEnabled?: boolean;
-  /** How many live cards to show on the public homepage (default 3) */
+  /** How many live cards to show on the public homepage marquee (default 12) */
   youtubeHomepageLimit?: number;
-  /** Max synced live videos kept for paid dashboards (default 12) */
+  /** Max synced live videos kept in the pool; homepage rotates a daily window from this (default 50) */
   youtubeLibraryLimit?: number;
   youtubeLastSyncedAt?: string | null;
   youtubeLastSyncError?: string | null;

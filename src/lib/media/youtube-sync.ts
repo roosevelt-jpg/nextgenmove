@@ -15,7 +15,7 @@ import {
   youtubeWatchUrl,
 } from "@/lib/media/youtube";
 
-const DEFAULT_LIBRARY_LIMIT = 12;
+const DEFAULT_LIBRARY_LIMIT = 50;
 const YOUTUBE_API = "https://www.googleapis.com/youtube/v3";
 export const YOUTUBE_INTEGRATION_ID = "youtube";
 
@@ -279,8 +279,16 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
     // Allow channel URL / @handle — resolve to uploads playlist (UU…).
     try {
       playlistId = await resolveYoutubeUploadsPlaylistId(apiKey, playlistRaw);
-    } catch {
-      playlistId = null;
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "sync_failed";
+      await settingsRef.set(
+        stripUndefined({
+          youtubeLastSyncError: error,
+          youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+        }),
+        { merge: true },
+      );
+      return { ok: false, upserted: 0, archived: 0, error };
     }
   }
 
