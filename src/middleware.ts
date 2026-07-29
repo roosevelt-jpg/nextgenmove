@@ -59,10 +59,13 @@ export async function middleware(request: NextRequest) {
 
   if (isAuthPath(pathname)) {
     // Only bounce signed-in users away when BOTH cookies exist and the role
-    // JWT verifies. A lone/stale __ngm_role cookie caused sign-in ↔ portal loops.
+    // JWT verifies. Incomplete signups must stay on /sign-up to finish verify/media.
     if (roleToken && sessionCookie) {
       const payload = await verifyRoleToken(roleToken);
       if (payload) {
+        if (pathname === "/sign-up") {
+          return NextResponse.next();
+        }
         return NextResponse.redirect(
           new URL(PORTAL_HOME[payload.role], request.url),
         );

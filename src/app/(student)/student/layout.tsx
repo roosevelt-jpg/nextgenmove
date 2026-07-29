@@ -1,5 +1,7 @@
 import { WorkspacePortalShell } from "@/components/layout/workspace-portal-shell";
+import { redirect } from "next/navigation";
 import { getCurrentUser, getSessionActor } from "@/lib/auth";
+import { getProfileOnboardingState } from "@/lib/auth/profile-onboarding";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import {
   DEFAULT_STUDENT_NAV_LABELS,
@@ -23,6 +25,20 @@ export default async function StudentPortalLayout({
 }>) {
   const settings = await getSiteSettings();
   const [actor, user] = await Promise.all([getSessionActor(), getCurrentUser()]);
+
+  // Incomplete signup must finish verify/media before using the portal.
+  if (
+    user &&
+    !user.actorUid &&
+    actor?.role === "student" &&
+    user.role === "student"
+  ) {
+    const onboarding = await getProfileOnboardingState(user.uid);
+    if (!onboarding.profileComplete) {
+      redirect("/sign-up");
+    }
+  }
+
   const impersonating =
     Boolean(user?.actorUid) && user?.role === "student"
       ? {

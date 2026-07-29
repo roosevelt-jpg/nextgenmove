@@ -42,8 +42,19 @@ export const FALLBACK_AUTH_LABELS: AuthLabels = {
   register_failed: "Registration failed. Please try again.",
   email_exists: "An account with that email already exists.",
   invalid_request: "Please check the form and try again.",
+  invalid_phone:
+    "Enter a valid international phone number (country code + number).",
+  invalid_token: "Your Google session expired. Continue with Google again.",
+  missing_email: "Google did not return an email for this account.",
   consent_required: "Please accept the required terms to continue.",
   password_mismatch: "Passwords do not match.",
+  referralWarning: "Account created. Referral code could not be applied.",
+  googleContinueHint:
+    "Continue with Google selected — pick your role, accept terms, then finish your profile.",
+  googleProfileHint:
+    "Google connected. Choose your role and complete your profile.",
+  resumeOnboardingHint:
+    "Welcome back — finish verifying your email and phone.",
   email_verification_required:
     "Verify your email before signing in.",
   two_factor_required: "Enter the verification code to finish signing in.",

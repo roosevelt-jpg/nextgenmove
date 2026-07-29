@@ -13,6 +13,7 @@ import {
 import {
   establishSession,
   registerAccount,
+  registerGoogleAccount,
   signInWithEmail,
   signInWithGoogle,
 } from "@/lib/auth-client";
@@ -23,13 +24,26 @@ import {
   startPhoneVerification,
   toE164Phone,
 } from "@/lib/auth/phone-otp-client";
+import { normalizeToE164 } from "@/lib/phone/e164";
+import { PhoneE164Field } from "@/components/ui/phone-e164-field";
 import type { ConfirmationResult } from "firebase/auth";
 import type { AuthLabels, SignUpRole } from "@/types/user";
+
+export interface SignUpResumeState {
+  uid: string;
+  role: SignUpRole;
+  email: string;
+  phone: string | null;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  nextStep: "verify" | "media";
+}
 
 export interface SignUpFormProps {
   labels: AuthLabels;
   onRoleChange?: (role: SignUpRole) => void;
   googleSignInEnabled?: boolean;
+  resume?: SignUpResumeState;
 }
 
 type Step = "account" | "details" | "verify" | "media";
@@ -50,16 +64,19 @@ export function SignUpForm({
   labels,
   onRoleChange,
   googleSignInEnabled = false,
+  resume,
 }: SignUpFormProps) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("account");
-  const [uid, setUid] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>(resume?.nextStep ?? "account");
+  const [uid, setUid] = useState<string | null>(resume?.uid ?? null);
+  const [googleMode, setGoogleMode] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(resume?.email ?? "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<SignUpRole>("company");
-  const [consentRequired, setConsentRequired] = useState(false);
+  const [role, setRole] = useState<SignUpRole>(resume?.role ?? "company");
+  const [consentRequired, setConsentRequired] = useState(Boolean(resume));
   const [consentMarketing, setConsentMarketing] = useState(false);
 
   const selectRole = (next: SignUpRole) => {
@@ -68,7 +85,7 @@ export function SignUpForm({
   };
 
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(resume?.phone ?? "");
   const [nationality, setNationality] = useState("");
   const [gender, setGender] = useState("");
   const [workExperience, setWorkExperience] = useState("");
@@ -112,11 +129,30 @@ export function SignUpForm({
 
   const [emailOtp, setEmailOtp] = useState("");
   const [smsOtp, setSmsOtp] = useState("");
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(
+    Boolean(resume?.emailVerified),
+  );
+  const [phoneVerified, setPhoneVerified] = useState(
+    Boolean(resume?.phoneVerified),
+  );
   const [phoneConfirmation, setPhoneConfirmation] =
     useState<ConfirmationResult | null>(null);
   const [smsSent, setSmsSent] = useState(false);
+
+  useEffect(() => {
+    if (!resume) return;
+    onRoleChange?.(resume.role);
+    void fetch("/api/auth/verification")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!payload) return;
+        setEmailVerified(Boolean(payload.emailVerified));
+        setPhoneVerified(Boolean(payload.phoneVerified));
+        if (payload.phone) setPhone(String(payload.phone));
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resume once on mount
+  }, []);
 
   useEffect(() => {
     void fetch("/api/places?action=autocomplete&query=xx")
@@ -226,13 +262,20 @@ export function SignUpForm({
   const goToDetails = (event: React.FormEvent) => {
     event.preventDefault();
     setErrorCode(null);
+    setInfoMessage(null);
     if (!consentRequired) {
       setErrorCode("consent_required");
       return;
     }
-    if (password !== confirmPassword) {
-      setErrorCode("password_mismatch");
-      return;
+    if (!googleMode) {
+      if (password !== confirmPassword) {
+        setErrorCode("password_mismatch");
+        return;
+      }
+      if (password.trim().length < 8) {
+        setErrorCode("invalid_request");
+        return;
+      }
     }
     if (role === "company") {
       if (!contactName.trim() || !companyName.trim()) {
@@ -249,9 +292,120 @@ export function SignUpForm({
   const createAccount = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorCode(null);
+    setInfoMessage(null);
     setIsSubmitting(true);
 
     try {
+      if (!normalizeToE164(phone)) {
+        setErrorCode("invalid_phone");
+        return;
+      }
+
+      const studentPayload =
+        role === "student"
+          ? {
+              fullName: fullName.trim(),
+              phone: phone.trim(),
+              nationality,
+              gender: gender.trim() || undefined,
+              workExperience: workExperience.trim(),
+              education: education
+                .filter((row) => row.institution.trim())
+                .map((row) => ({
+                  institution: row.institution.trim(),
+                  degree: row.degree.trim() || undefined,
+                  year: row.year.trim() || undefined,
+                })),
+              sector,
+              seniority,
+              currentCity: (
+                studentLocation.city ||
+                studentLocation.town ||
+                studentLocation.country
+              ).trim(),
+              targetCities: splitList(targetCities),
+              country: studentLocation.country || undefined,
+              countryCode: studentLocation.countryCode || undefined,
+              town: studentLocation.town || undefined,
+              suburb: studentLocation.suburb || undefined,
+              placeId: studentLocation.placeId || undefined,
+              formattedAddress: studentLocation.formattedAddress || undefined,
+              bio: bio.trim() || undefined,
+              skills: splitList(skills),
+              availability: availability.trim() || undefined,
+              linkedinUrl: linkedinUrl.trim() || undefined,
+              portfolioUrl: portfolioUrl.trim() || undefined,
+              referralCode: referralCode.trim() || undefined,
+            }
+          : undefined;
+      const companyPayload =
+        role === "company"
+          ? {
+              companyName: companyName.trim(),
+              contactName: contactName.trim(),
+              phone: phone.trim(),
+              nationality,
+              industry,
+              website: website.trim() || undefined,
+              preferredLocations: (() => {
+                const fromList = splitList(preferredLocations);
+                const hq = [
+                  companyLocation.suburb,
+                  companyLocation.town,
+                  companyLocation.city,
+                  companyLocation.country,
+                ]
+                  .filter(Boolean)
+                  .join(", ");
+                if (hq && !fromList.includes(hq)) fromList.unshift(hq);
+                return fromList.length ? fromList : hq ? [hq] : [];
+              })(),
+              country: companyLocation.country || undefined,
+              countryCode: companyLocation.countryCode || undefined,
+              city: companyLocation.city || undefined,
+              town: companyLocation.town || undefined,
+              suburb: companyLocation.suburb || undefined,
+              placeId: companyLocation.placeId || undefined,
+              formattedAddress: companyLocation.formattedAddress || undefined,
+              hiringNeeds: hiringNeeds.trim() || undefined,
+            }
+          : undefined;
+
+      if (googleMode) {
+        const { auth } = await import("@/lib/firebase-client");
+        const googleUser = auth.currentUser;
+        if (!googleUser) throw new Error("sign_in_failed");
+        const idToken = await googleUser.getIdToken(true);
+        const result = await registerGoogleAccount({
+          idToken,
+          role,
+          consentRequired: true,
+          consentMarketing,
+          consentRequiredAt: new Date().toISOString(),
+          student: studentPayload,
+          company: companyPayload,
+        });
+        await establishSession(idToken);
+        setUid(result.uid);
+        if (result.phone) setPhone(result.phone);
+        setEmailVerified(Boolean(result.emailVerified));
+        setPhoneVerified(Boolean(result.phoneVerified));
+        if (result.referralWarning) {
+          setInfoMessage(
+            labels[`referral_${result.referralWarning}`] ||
+              labels.referralWarning ||
+              "Account created. Referral code could not be applied.",
+          );
+        }
+        if (result.profileComplete || result.nextStep === "done") {
+          router.replace(resolvePostAuthRedirect(role, null));
+          router.refresh();
+          return;
+        }
+        setStep(result.nextStep === "media" ? "media" : "verify");
+        return;
+      }
+
       const result = await registerAccount({
         email,
         password,
@@ -259,71 +413,8 @@ export function SignUpForm({
         consentRequired: true,
         consentMarketing,
         consentRequiredAt: new Date().toISOString(),
-        student:
-          role === "student"
-            ? {
-                fullName: fullName.trim(),
-                phone: phone.trim(),
-                nationality,
-                gender: gender.trim() || undefined,
-                workExperience: workExperience.trim(),
-                education: education
-                  .filter((row) => row.institution.trim())
-                  .map((row) => ({
-                    institution: row.institution.trim(),
-                    degree: row.degree.trim() || undefined,
-                    year: row.year.trim() || undefined,
-                  })),
-                sector,
-                seniority,
-                currentCity: (
-                  studentLocation.city ||
-                  studentLocation.town ||
-                  studentLocation.country
-                ).trim(),
-                targetCities: splitList(targetCities),
-                country: studentLocation.country || undefined,
-                town: studentLocation.town || undefined,
-                suburb: studentLocation.suburb || undefined,
-                placeId: studentLocation.placeId || undefined,
-                bio: bio.trim() || undefined,
-                skills: splitList(skills),
-                availability: availability.trim() || undefined,
-                linkedinUrl: linkedinUrl.trim() || undefined,
-                portfolioUrl: portfolioUrl.trim() || undefined,
-                referralCode: referralCode.trim() || undefined,
-              }
-            : undefined,
-        company:
-          role === "company"
-            ? {
-                companyName: companyName.trim(),
-                contactName: contactName.trim(),
-                phone: phone.trim(),
-                nationality,
-                industry,
-                website: website.trim() || undefined,
-                preferredLocations: (() => {
-                  const fromList = splitList(preferredLocations);
-                  const hq = [
-                    companyLocation.suburb,
-                    companyLocation.town,
-                    companyLocation.city,
-                    companyLocation.country,
-                  ]
-                    .filter(Boolean)
-                    .join(", ");
-                  if (hq && !fromList.includes(hq)) fromList.unshift(hq);
-                  return fromList.length ? fromList : hq ? [hq] : [];
-                })(),
-                country: companyLocation.country || undefined,
-                city: companyLocation.city || undefined,
-                town: companyLocation.town || undefined,
-                suburb: companyLocation.suburb || undefined,
-                placeId: companyLocation.placeId || undefined,
-                hiringNeeds: hiringNeeds.trim() || undefined,
-              }
-            : undefined,
+        student: studentPayload,
+        company: companyPayload,
       });
 
       const credential = await signInWithEmail(email, password);
@@ -333,7 +424,11 @@ export function SignUpForm({
 
       setUid(result.uid);
       if (result.referralWarning) {
-        setErrorCode(`referral_${result.referralWarning}`);
+        setInfoMessage(
+          labels[`referral_${result.referralWarning}`] ||
+            labels.referralWarning ||
+            "Account created. Referral code could not be applied.",
+        );
       }
       setStep("verify");
       // Kick off email OTP resend in case register-time send failed
@@ -599,35 +694,43 @@ export function SignUpForm({
               type="email"
               autoComplete="email"
               required
+              readOnly={googleMode}
               placeholder={labels.emailPlaceholder || "you@email.com"}
               aria-label={labels.emailLabel || "Email"}
               label={labels.emailLabel || "Email"}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
-            <div className="grid gap-3.5 sm:grid-cols-2">
-              <Input
-                id="sign-up-password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                aria-label={labels.passwordLabel || "Password"}
-                label={labels.passwordLabel || "Password"}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              <Input
-                id="sign-up-confirm-password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                label={labels.confirmPasswordLabel || "Confirm password"}
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-              />
-            </div>
+            {!googleMode ? (
+              <div className="grid gap-3.5 sm:grid-cols-2">
+                <Input
+                  id="sign-up-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  aria-label={labels.passwordLabel || "Password"}
+                  label={labels.passwordLabel || "Password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                <Input
+                  id="sign-up-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  label={labels.confirmPasswordLabel || "Confirm password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                />
+              </div>
+            ) : (
+              <p className="text-[12.5px] text-text-secondary">
+                {labels.googleContinueHint ||
+                  "Continue with Google selected — pick your role, accept terms, then finish your profile."}
+              </p>
+            )}
             <label className="flex items-start gap-2.5 text-[13px] text-text-primary">
               <input
                 type="checkbox"
@@ -646,6 +749,11 @@ export function SignUpForm({
                 {labels[errorCode] ?? labels.genericErrorLabel}
               </p>
             ) : null}
+            {infoMessage ? (
+              <p className="text-sm text-text-secondary" role="status">
+                {infoMessage}
+              </p>
+            ) : null}
             <Button type="submit" className="h-11 w-full">
               {labels.createAccountLabel ||
                 labels.signUpSubmitLabel ||
@@ -653,7 +761,7 @@ export function SignUpForm({
             </Button>
           </form>
 
-          {googleSignInEnabled ? (
+          {googleSignInEnabled && !googleMode ? (
             <>
               <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-text-muted">
                 <span className="h-px flex-1 bg-border" />
@@ -668,15 +776,70 @@ export function SignUpForm({
                 onClick={() => {
                   void (async () => {
                     setErrorCode(null);
+                    setInfoMessage(null);
                     setIsSubmitting(true);
                     try {
                       const credential = await signInWithGoogle();
                       const idToken = await credential.user.getIdToken(true);
-                      const session = await establishSession(idToken);
-                      router.replace(
-                        resolvePostAuthRedirect(session.role, null),
-                      );
-                      router.refresh();
+                      const googleEmail =
+                        credential.user.email?.trim().toLowerCase() || "";
+                      if (googleEmail) setEmail(googleEmail);
+                      if (credential.user.displayName && role === "student") {
+                        setFullName((prev) => prev || credential.user.displayName || "");
+                      }
+                      if (credential.user.displayName && role === "company") {
+                        setContactName(
+                          (prev) => prev || credential.user.displayName || "",
+                        );
+                      }
+
+                      try {
+                        const session = await establishSession(idToken);
+                        const accountRes = await fetch("/api/account", {
+                          cache: "no-store",
+                        });
+                        if (accountRes.ok) {
+                          const accountPayload = (await accountRes.json()) as {
+                            account?: { profileComplete?: boolean };
+                          };
+                          if (accountPayload.account?.profileComplete) {
+                            router.replace(
+                              resolvePostAuthRedirect(session.role, null),
+                            );
+                            router.refresh();
+                            return;
+                          }
+                        }
+                        // Existing incomplete profile — resume onboarding.
+                        setUid(credential.user.uid);
+                        setGoogleMode(true);
+                        setStep("verify");
+                        void fetch("/api/auth/verification")
+                          .then((r) => (r.ok ? r.json() : null))
+                          .then((payload) => {
+                            if (!payload) return;
+                            setEmailVerified(Boolean(payload.emailVerified));
+                            setPhoneVerified(Boolean(payload.phoneVerified));
+                            if (payload.phone) setPhone(String(payload.phone));
+                            if (
+                              payload.emailVerified &&
+                              payload.phoneVerified
+                            ) {
+                              setStep("media");
+                            }
+                          });
+                        setInfoMessage(
+                          labels.resumeOnboardingHint ||
+                            "Welcome back — finish verifying your email and phone.",
+                        );
+                      } catch {
+                        // No Firestore profile yet — stay on signup and collect details.
+                        setGoogleMode(true);
+                        setInfoMessage(
+                          labels.googleProfileHint ||
+                            "Google connected. Choose your role and complete your profile.",
+                        );
+                      }
                     } catch (error) {
                       const message =
                         error instanceof Error ? error.message : "sign_in_failed";
@@ -712,13 +875,16 @@ export function SignUpForm({
 
       {step === "details" && role === "student" ? (
         <form className="flex flex-col gap-3" onSubmit={(e) => void createAccount(e)}>
-          <Input
+          <PhoneE164Field
             id="student-phone"
-            type="tel"
             required
             label={labels.phoneLabel || "Phone"}
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={setPhone}
+            hint={
+              labels.phoneE164Hint ||
+              "Include your country code. Example: AE +971 5X XXX XXXX"
+            }
           />
           {nationalityOptions.length > 0 ? (
             <Select
@@ -955,13 +1121,16 @@ export function SignUpForm({
 
       {step === "details" && role === "company" ? (
         <form className="flex flex-col gap-3" onSubmit={(e) => void createAccount(e)}>
-          <Input
+          <PhoneE164Field
             id="company-phone"
-            type="tel"
             required
             label={labels.phoneLabel || "Phone"}
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={setPhone}
+            hint={
+              labels.phoneE164Hint ||
+              "Include your country code. Example: AE +971 5X XXX XXXX"
+            }
           />
           {nationalityOptions.length > 0 ? (
             <Select
@@ -1190,6 +1359,11 @@ export function SignUpForm({
           {errorCode ? (
             <p className="text-sm text-text-warning" role="alert">
               {labels[errorCode] ?? errorCode}
+            </p>
+          ) : null}
+          {infoMessage ? (
+            <p className="text-sm text-text-secondary" role="status">
+              {infoMessage}
             </p>
           ) : null}
 

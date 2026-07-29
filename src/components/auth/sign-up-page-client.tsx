@@ -5,7 +5,10 @@ import {
   AuthSplitShell,
   type AuthPanel,
 } from "@/components/auth/auth-split-shell";
-import { SignUpForm } from "@/components/auth/sign-up-form";
+import {
+  SignUpForm,
+  type SignUpResumeState,
+} from "@/components/auth/sign-up-form";
 import type { AuthLabels, SignUpRole } from "@/types/user";
 
 export function SignUpPageClient({
@@ -14,14 +17,18 @@ export function SignUpPageClient({
   brandMark,
   logoUrl,
   googleSignInEnabled = false,
+  resume,
 }: {
   labels: AuthLabels;
   siteName: string;
   brandMark: string;
   logoUrl?: string | null;
   googleSignInEnabled?: boolean;
+  resume?: SignUpResumeState;
 }) {
-  const [panel, setPanel] = useState<AuthPanel>("signUpCompany");
+  const [panel, setPanel] = useState<AuthPanel>(
+    resume?.role === "student" ? "signUpTalent" : "signUpCompany",
+  );
 
   return (
     <AuthSplitShell
@@ -34,6 +41,7 @@ export function SignUpPageClient({
       <SignUpForm
         labels={labels}
         googleSignInEnabled={googleSignInEnabled}
+        resume={resume}
         onRoleChange={(role: SignUpRole) =>
           setPanel(role === "company" ? "signUpCompany" : "signUpTalent")
         }

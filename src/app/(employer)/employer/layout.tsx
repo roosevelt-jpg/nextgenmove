@@ -1,5 +1,7 @@
 import { WorkspacePortalShell } from "@/components/layout/workspace-portal-shell";
+import { redirect } from "next/navigation";
 import { getCurrentUser, getSessionActor } from "@/lib/auth";
+import { getProfileOnboardingState } from "@/lib/auth/profile-onboarding";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import {
   DEFAULT_EMPLOYER_NAV_LABELS,
@@ -22,6 +24,19 @@ export default async function EmployerPortalLayout({
 }>) {
   const settings = await getSiteSettings();
   const [actor, user] = await Promise.all([getSessionActor(), getCurrentUser()]);
+
+  if (
+    user &&
+    !user.actorUid &&
+    actor?.role === "company" &&
+    user.role === "company"
+  ) {
+    const onboarding = await getProfileOnboardingState(user.uid);
+    if (!onboarding.profileComplete) {
+      redirect("/sign-up");
+    }
+  }
+
   const impersonating =
     Boolean(user?.actorUid) && user?.role === "company"
       ? {

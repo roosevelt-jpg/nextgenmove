@@ -48,9 +48,11 @@ export interface RegisterStudentProfile {
   currentCity: string;
   targetCities: string[];
   country?: string;
+  countryCode?: string;
   town?: string;
   suburb?: string;
   placeId?: string;
+  formattedAddress?: string;
   bio?: string;
   skills?: string[];
   availability?: string;
@@ -68,10 +70,12 @@ export interface RegisterCompanyProfile {
   website?: string;
   preferredLocations: string[];
   country?: string;
+  countryCode?: string;
   city?: string;
   town?: string;
   suburb?: string;
   placeId?: string;
+  formattedAddress?: string;
   hiringNeeds?: string;
 }
 
@@ -196,4 +200,39 @@ export async function registerAccount(input: {
     nextStep: string;
     referralWarning?: string;
   }>;
+}
+
+export async function registerGoogleAccount(input: {
+  idToken: string;
+  role: "company" | "student";
+  consentRequired: true;
+  consentMarketing?: boolean;
+  consentRequiredAt?: string;
+  student?: RegisterStudentProfile;
+  company?: RegisterCompanyProfile;
+}): Promise<{
+  uid: string;
+  role: string;
+  nextStep: string;
+  alreadyRegistered?: boolean;
+  profileComplete?: boolean;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  phone?: string | null;
+  referralWarning?: string;
+}> {
+  const response = await fetch("/api/auth/register-google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+    throw new Error(payload?.error ?? "register_failed");
+  }
+
+  return response.json();
 }
