@@ -25,8 +25,15 @@ function statusText(
   status: AutosaveStatus,
   labels: FormPersistBarProps["labels"],
   message?: string | null,
+  busy?: boolean,
 ): string | null {
-  if (status === "saving") return labels?.saving || "Saving…";
+  // Button already shows "Saving…" — avoid a duplicate blinking status label.
+  if (status === "saving") {
+    if (busy && (!message || message === (labels?.saving || "Saving…"))) {
+      return null;
+    }
+    return message || labels?.saving || "Saving…";
+  }
   if (status === "error") {
     return message || labels?.saveError || "Could not save.";
   }
@@ -46,7 +53,7 @@ export function FormPersistBar({
   className,
 }: FormPersistBarProps) {
   const busy = isSaving || status === "saving";
-  const text = statusText(status, labels, message);
+  const text = statusText(status, labels, message, busy);
 
   return (
     <div

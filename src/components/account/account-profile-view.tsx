@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
@@ -21,6 +21,17 @@ interface AccountPayload {
   phone: string | null;
   role: string;
   notificationPreferences: Record<string, boolean>;
+}
+
+function prefsEqual(
+  a: Record<string, boolean>,
+  b: Record<string, boolean>,
+): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    if (Boolean(a[key]) !== Boolean(b[key])) return false;
+  }
+  return true;
 }
 
 export function AccountProfileView({
@@ -45,6 +56,7 @@ export function AccountProfileView({
   );
   const [hydrated, setHydrated] = useState(false);
   const router = useRouter();
+  const suppressNextRef = useRef<() => void>(() => undefined);
 
   const profileDraft = useMemo(() => {
     if (!hydrated) return null;
@@ -87,17 +99,15 @@ export function AccountProfileView({
         setStatusMessage(labels.saveError || "Could not save.");
         return false;
       }
-      setNotificationPreferences(prefs);
+      // Prevent echo: applying prefs must not schedule another autosave.
+      suppressNextRef.current();
+      setNotificationPreferences((prev) =>
+        prefsEqual(prev, prefs) ? prev : prefs,
+      );
       setStatusMessage(labels.saveSuccess || "Saved.");
-      router.refresh();
       return true;
     },
-    [
-      completePreferences,
-      labels.saveError,
-      labels.saveSuccess,
-      router,
-    ],
+    [completePreferences, labels.saveError, labels.saveSuccess],
   );
 
   const { status: autosaveStatus, suppressNext } = useDebouncedAutosave(
@@ -106,59 +116,62 @@ export function AccountProfileView({
     { enabled: hydrated, delayMs: 800 },
   );
 
-  const persistPhotoUrl = useCallback(
-    async (nextUrl: string | null) => {
-      const response = await fetch("/api/account", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl: nextUrl }),
-      });
-      if (response.ok) {
-        router.refresh();
-      }
-      return response.ok;
-    },
-    [router],
-  );
+  useEffect(() => {
+    suppressNextRef.current = suppressNext;
+  }, [suppressNext]);
 
-  const load = useCallback(async () => {
-    setLoadState("loading");
-    try {
-      const response = await fetch("/api/account", { cache: "no-store" });
-      if (!response.ok) {
-        setLoadState("error");
-        return;
-      }
-      const data = (await response.json()) as {
-        account: AccountPayload;
-        warning?: string;
-      };
-      suppressNext();
-      setAccount(data.account);
-      setDisplayName(data.account.displayName);
-      setPhone(data.account.phone ?? "");
-      setPhotoUrl(data.account.photoUrl);
-      const stored = data.account.notificationPreferences ?? {};
-      const nextPrefs: Record<string, boolean> = {};
-      for (const key of notificationKeys) {
-        nextPrefs[key] =
-          Object.prototype.hasOwnProperty.call(stored, key)
+  const persistPhotoUrl = useCallback(async (nextUrl: string | null) => {
+    const response = await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ photoUrl: nextUrl }),
+    });
+    return response.ok;
+  }, []);
+
+  const load = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = Boolean(opts?.silent);
+      if (!silent) setLoadState("loading");
+      try {
+        const response = await fetch("/api/account", { cache: "no-store" });
+        if (!response.ok) {
+          if (!silent) setLoadState("error");
+          return;
+        }
+        const data = (await response.json()) as {
+          account: AccountPayload;
+          warning?: string;
+        };
+        suppressNext();
+        setAccount(data.account);
+        setDisplayName(data.account.displayName);
+        setPhone(data.account.phone ?? "");
+        setPhotoUrl(data.account.photoUrl);
+        const stored = data.account.notificationPreferences ?? {};
+        const nextPrefs: Record<string, boolean> = {};
+        for (const key of notificationKeys) {
+          nextPrefs[key] = Object.prototype.hasOwnProperty.call(stored, key)
             ? Boolean(stored[key])
             : true;
-      }
-      setNotificationPreferences(nextPrefs);
-      if (data.warning === "account_degraded") {
-        setStatusMessage(
-          labels.degradedWarning ||
-            "Profile details may be incomplete while the database is slow.",
+        }
+        setNotificationPreferences((prev) =>
+          prefsEqual(prev, nextPrefs) ? prev : nextPrefs,
         );
+        if (data.warning === "account_degraded") {
+          setStatusMessage(
+            labels.degradedWarning ||
+              "Profile details may be incomplete while the database is slow.",
+          );
+        }
+        setHydrated(true);
+        setLoadState("ready");
+      } catch {
+        if (!silent) setLoadState("error");
       }
-      setHydrated(true);
-      setLoadState("ready");
-    } catch {
-      setLoadState("error");
-    }
-  }, [labels.degradedWarning, notificationKeys, suppressNext]);
+    },
+    [labels.degradedWarning, notificationKeys, suppressNext],
+  );
 
   useEffect(() => {
     void load();
@@ -174,11 +187,13 @@ export function AccountProfileView({
       body: JSON.stringify({ notificationPreferences: payload }),
     });
     if (response.ok) {
-      setNotificationPreferences(payload);
+      suppressNext();
+      setNotificationPreferences((prev) =>
+        prefsEqual(prev, payload) ? prev : payload,
+      );
       setStatusMessage(
         labels.prefsSaved || labels.saveSuccess || "Preferences saved.",
       );
-      router.refresh();
       return true;
     }
     setStatusMessage(labels.saveError || "Could not save.");
@@ -191,10 +206,12 @@ export function AccountProfileView({
       ...notificationPreferences,
       [key]: checked,
     });
+    suppressNext();
     setNotificationPreferences(next);
     setStatusMessage(null);
     const ok = await persistNotificationPreferences(next);
     if (!ok) {
+      suppressNext();
       setNotificationPreferences(previous);
     }
   };
@@ -205,10 +222,12 @@ export function AccountProfileView({
     for (const key of notificationKeys) {
       next[key] = checked;
     }
+    suppressNext();
     setNotificationPreferences(next);
     setStatusMessage(null);
     const ok = await persistNotificationPreferences(next);
     if (!ok) {
+      suppressNext();
       setNotificationPreferences(previous);
     }
   };
@@ -239,11 +258,14 @@ export function AccountProfileView({
     setIsSaving(false);
 
     if (response.ok) {
-      setNotificationPreferences(prefsPayload);
+      suppressNext();
+      setNotificationPreferences((prev) =>
+        prefsEqual(prev, prefsPayload) ? prev : prefsPayload,
+      );
       setStatusMessage(labels.saveSuccess || "Saved.");
       setCurrentPassword("");
       setNewPassword("");
-      await load();
+      await load({ silent: true });
       router.refresh();
     } else {
       const payload = (await response.json().catch(() => null)) as
@@ -295,7 +317,9 @@ export function AccountProfileView({
           </p>
         ) : null}
         {labels.accountTitle ? (
-          <h1 className="font-serif text-3xl text-text-primary">{labels.accountTitle}</h1>
+          <h1 className="font-serif text-3xl text-text-primary">
+            {labels.accountTitle}
+          </h1>
         ) : null}
         {labels.accountSubtitle ? (
           <p className="text-sm text-text-secondary">{labels.accountSubtitle}</p>
@@ -326,6 +350,8 @@ export function AccountProfileView({
             }
             progressLabel={labels.uploadProgress || "Uploading…"}
             onUploadComplete={async (result: FileUploadMetadata) => {
+              // Photo is persisted immediately — don't let autosave re-fire a loop.
+              suppressNext();
               setPhotoUrl(result.url);
               setStatusMessage(null);
               const ok = await persistPhotoUrl(result.url);
@@ -333,7 +359,7 @@ export function AccountProfileView({
                 setStatusMessage(
                   labels.photoSaved ?? labels.photoReady ?? "Photo saved.",
                 );
-                await load();
+                router.refresh();
               } else {
                 setStatusMessage(
                   labels.photoReady ??
@@ -361,14 +387,15 @@ export function AccountProfileView({
               size="sm"
               onClick={() => {
                 void (async () => {
+                  suppressNext();
                   setPhotoUrl(null);
                   const ok = await persistPhotoUrl(null);
                   setStatusMessage(
                     ok
-                      ? labels.photoRemoved ?? "Photo removed."
-                      : labels.saveError ?? "Could not remove photo.",
+                      ? (labels.photoRemoved ?? "Photo removed.")
+                      : (labels.saveError ?? "Could not remove photo."),
                   );
-                  if (ok) await load();
+                  if (ok) router.refresh();
                 })();
               }}
             >
@@ -380,7 +407,9 @@ export function AccountProfileView({
 
       <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
         {labels.personalDetailsTitle ? (
-          <h2 className="font-medium text-text-primary">{labels.personalDetailsTitle}</h2>
+          <h2 className="font-medium text-text-primary">
+            {labels.personalDetailsTitle}
+          </h2>
         ) : null}
         <Input
           id="account-name"
@@ -435,7 +464,9 @@ export function AccountProfileView({
       {notificationKeys.length > 0 ? (
         <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
           {labels.notificationsTitle ? (
-            <h2 className="font-medium text-text-primary">{labels.notificationsTitle}</h2>
+            <h2 className="font-medium text-text-primary">
+              {labels.notificationsTitle}
+            </h2>
           ) : null}
           <label className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm font-medium">
             <span>
