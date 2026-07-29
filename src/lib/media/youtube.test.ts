@@ -16,6 +16,12 @@ describe("parseYoutubeVideoId", () => {
     expect(parseYoutubeVideoId("https://www.youtube.com/embed/dQw4w9WgXcQ")).toBe(
       "dQw4w9WgXcQ",
     );
+    expect(parseYoutubeVideoId("https://youtube.com/shorts/k5vI0llrej0")).toBe(
+      "k5vI0llrej0",
+    );
+    expect(parseYoutubeVideoId("https://www.youtube.com/shorts/k5vI0llrej0")).toBe(
+      "k5vI0llrej0",
+    );
   });
 
   it("returns null for non-youtube urls", () => {

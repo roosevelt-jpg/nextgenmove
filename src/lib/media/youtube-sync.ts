@@ -10,6 +10,7 @@ import {
   formatYoutubeDuration,
   looksLikeGoogleApiKey,
   parseYoutubePlaylistId,
+  parseYoutubeVideoId,
   resolveYoutubeUploadsPlaylistId,
   youtubeWatchUrl,
 } from "@/lib/media/youtube";
@@ -164,13 +165,74 @@ async function fetchDurations(
   return map;
 }
 
+async function fetchSingleVideo(
+  apiKey: string,
+  videoId: string,
+): Promise<{
+  videoId: string;
+  title: string;
+  subtitle: string;
+  thumbnailUrl: string;
+  duration: string;
+} | null> {
+  const params = new URLSearchParams({
+    part: "snippet,contentDetails,status",
+    id: videoId,
+    key: apiKey,
+  });
+  const data = await fetchJson<{
+    items?: Array<{
+      id?: string;
+      status?: { privacyStatus?: string; embeddable?: boolean };
+      snippet?: PlaylistItemSnippet & { channelTitle?: string };
+      contentDetails?: { duration?: string };
+    }>;
+  }>(`${YOUTUBE_API}/videos?${params}`);
+
+  const item = data.items?.[0];
+  if (!item?.id) return null;
+  if (item.status?.privacyStatus === "private") return null;
+  const snippet = item.snippet ?? {};
+  return {
+    videoId: item.id,
+    title: String(snippet.title ?? "").trim() || item.id,
+    subtitle: String(snippet.channelTitle ?? "").trim(),
+    thumbnailUrl: pickThumbnail(snippet),
+    duration: formatYoutubeDuration(item.contentDetails?.duration),
+  };
+}
+
 export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
   const settingsRef = adminDb.collection("site_settings").doc("default");
   const settingsSnap = await settingsRef.get();
   const settings = (settingsSnap.data() ?? {}) as Record<string, unknown>;
 
   const enabled = settings.youtubeSyncEnabled !== false;
-  const playlistRaw = String(settings.youtubePlaylistUrl ?? "").trim();
+  let playlistRaw = String(settings.youtubePlaylistUrl ?? "").trim();
+
+  // Fall back to channel saved on Integrations → YouTube (set once at connect).
+  if (!playlistRaw) {
+    try {
+      const ytSnap = await adminDb
+        .collection("integrations")
+        .doc(YOUTUBE_INTEGRATION_ID)
+        .get();
+      const channelUrl = String(ytSnap.data()?.config?.channelUrl ?? "").trim();
+      if (channelUrl) {
+        playlistRaw = channelUrl;
+        await settingsRef.set(
+          stripUndefined({
+            youtubePlaylistUrl: channelUrl,
+            updatedAt: FieldValue.serverTimestamp(),
+          }),
+          { merge: true },
+        );
+      }
+    } catch {
+      // Keep empty — missing_or_invalid_playlist below.
+    }
+  }
+
   const libraryLimit = Math.max(
     1,
     Number(settings.youtubeLibraryLimit ?? DEFAULT_LIBRARY_LIMIT) ||
@@ -221,6 +283,73 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       playlistId = null;
     }
   }
+
+  // Single video / Shorts URL — upsert that card only (do not archive playlist syncs).
+  const singleVideoId = !playlistId ? parseYoutubeVideoId(playlistRaw) : null;
+  if (singleVideoId) {
+    try {
+      const video = await fetchSingleVideo(apiKey, singleVideoId);
+      if (!video) {
+        const error = "video_not_found_or_private";
+        await settingsRef.set(
+          stripUndefined({
+            youtubeLastSyncError: error,
+            youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+          }),
+          { merge: true },
+        );
+        return { ok: false, upserted: 0, archived: 0, error };
+      }
+
+      await adminDb
+        .collection("video_cards")
+        .doc(`yt_${video.videoId}`)
+        .set(
+          stripUndefined({
+            title: video.title,
+            subtitle: video.subtitle,
+            videoUrl: youtubeWatchUrl(video.videoId),
+            thumbnailUrl: video.thumbnailUrl,
+            duration: video.duration,
+            position: 1,
+            status: "live",
+            youtubeVideoId: video.videoId,
+            source: "youtube_playlist",
+            syncedAt: FieldValue.serverTimestamp(),
+          }),
+          { merge: true },
+        );
+
+      await settingsRef.set(
+        stripUndefined({
+          youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+          youtubeLastSyncError: null,
+        }),
+        { merge: true },
+      );
+
+      revalidateAdminCollection("video_cards");
+      revalidateAdminCollection("site_settings");
+
+      return {
+        ok: true,
+        upserted: 1,
+        archived: 0,
+        playlistId: `video:${video.videoId}`,
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err.message : "sync_failed";
+      await settingsRef.set(
+        stripUndefined({
+          youtubeLastSyncError: error,
+          youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+        }),
+        { merge: true },
+      );
+      return { ok: false, upserted: 0, archived: 0, error };
+    }
+  }
+
   if (!playlistId) {
     const error = "missing_or_invalid_playlist";
     await settingsRef.set(

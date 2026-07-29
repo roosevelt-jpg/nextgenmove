@@ -84,7 +84,7 @@ export const INTEGRATION_CATALOG: IntegrationShell[] = [
     name: "YouTube",
     category: "Media",
     description:
-      "YouTube Data API — sync a playlist into homepage Stories and paid portal video libraries.",
+      "YouTube Data API — connect once with your API key and channel/@handle; Sync pulls videos into Stories and the portal library.",
     iconUrl: "",
     status: "not_connected",
     connectedAt: null,

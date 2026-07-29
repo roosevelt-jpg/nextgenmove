@@ -34,10 +34,13 @@ function mapYoutubeSyncError(
       ? labels.playlist_looks_like_api_key
       : key === "missing_or_invalid_playlist"
         ? labels.missing_or_invalid_playlist ||
-          "Add a playlist URL, channel URL, or @handle above, then Sync now. The API key alone is not enough."
-        : key === "missing_youtube_api_key"
-          ? labels.missing_youtube_api_key
-          : null);
+          "Add a playlist, channel, @handle, or single video / Shorts URL above, then Sync now."
+        : key === "video_not_found_or_private"
+          ? labels.video_not_found_or_private ||
+            "That video was not found or is private. Check the URL and try again."
+          : key === "missing_youtube_api_key"
+            ? labels.missing_youtube_api_key
+            : null);
   if (mapped) return mapped;
   if (error.startsWith("youtube_api_400")) {
     return (
@@ -324,14 +327,14 @@ export function AdminHomepageMediaView({
       if (playlist && !isYoutubePlaylistOrChannelInput(playlist)) {
         setSyncMessage(
           labels.missing_or_invalid_playlist ||
-            "Enter a playlist URL, channel URL, @handle, or PL… / UU… id.",
+            "Enter a playlist, channel, @handle, or single video / Shorts URL.",
         );
         return false;
       }
       if (requirePlaylist && !playlist) {
         setSyncMessage(
           labels.missing_or_invalid_playlist ||
-            "Add a playlist URL, channel URL, or @handle, then Sync now. Connecting the API key under Integrations is step 1 of 2.",
+            "Add a playlist, channel, @handle, or video / Shorts URL, then Sync now.",
         );
         return false;
       }
@@ -443,24 +446,24 @@ export function AdminHomepageMediaView({
 
       <section className="rounded-radius border border-border bg-grad-card p-4 space-y-3">
         <h2 className="text-[14.5px] font-bold text-text-primary">
-          {labels.youtubeSyncTitle ?? "YouTube playlist sync"}
+          {labels.youtubeSyncTitle ?? "YouTube channel sync"}
         </h2>
         <p className="text-[12.5px] text-text-secondary">
           {youtubeApiConnected
             ? labels.youtubeSyncBodyConnected ||
-              "Paste a playlist URL, channel URL, or @handle below, then Sync now to pull videos into Video cards."
+              "Set your channel, playlist, or @handle once below. Sync now pulls that feed’s videos automatically — you don’t paste individual video links."
             : labels.youtubeSyncBody ||
-              "Step 1: connect the YouTube Data API key under Integrations → YouTube. Step 2: paste a playlist URL, channel URL, or @handle here, then Sync now."}
+              "Step 1: connect YouTube under Integrations (API key + channel). Step 2: Sync now pulls videos automatically."}
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">
-            {labels.youtubePlaylistUrl ?? "Playlist / channel URL or ID"}
+            {labels.youtubePlaylistUrl ?? "Channel / playlist / @handle"}
           </span>
           <input
             type="text"
             placeholder={
               labels.youtubePlaylistPlaceholder ||
-              "https://youtube.com/@handle, channel URL, or playlist PL… / UU…"
+              "https://youtube.com/@yourchannel or playlist URL"
             }
             value={youtube.youtubePlaylistUrl}
             onChange={(e) =>
@@ -529,9 +532,9 @@ export function AdminHomepageMediaView({
           <p className="text-[11.5px] text-text-muted">
             {youtubeApiConnected
               ? labels.youtubeWaitingForPlaylist ||
-                "Waiting for a playlist / channel URL. Paste a source above, then Sync now."
+                "Add your channel, playlist, or @handle once above, then Sync now to pull videos."
               : labels.youtubeWaitingNeedsApiKey ||
-                "Waiting for a playlist / channel URL. Connect the YouTube API key under Integrations → YouTube first, then paste a source and Sync now."}
+                "Connect YouTube under Integrations (API key + channel), then Sync now."}
           </p>
         ) : formatSyncTimestamp(youtube.youtubeLastSyncedAt) ||
           youtube.youtubeLastSyncError ? (
@@ -599,7 +602,7 @@ export function AdminHomepageMediaView({
         {videos.length === 0 ? (
           <p className="rounded-radius border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
             {labels.videosEmpty ??
-              "No videos yet. Connect YouTube under Integrations, paste a playlist or channel above, then Sync now."}
+              "No videos yet. Connect YouTube with your channel under Integrations, then Sync now — videos pull in automatically."}
           </p>
         ) : null}
         <ul className="space-y-2">

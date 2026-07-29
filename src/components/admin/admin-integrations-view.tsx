@@ -53,6 +53,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const [items, setItems] = useState<IntegrationItem[]>([]);
   const [connectItem, setConnectItem] = useState<IntegrationItem | null>(null);
   const [apiKey, setApiKey] = useState("");
+  const [youtubeChannelUrl, setYoutubeChannelUrl] = useState("");
   const [configHost, setConfigHost] = useState("");
   const [secretKey, setSecretKey] = useState("");
   const [publishableKey, setPublishableKey] = useState("");
@@ -112,6 +113,7 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
   const openConnectForm = (item: IntegrationItem) => {
     setModalError(null);
     setApiKey("");
+    setYoutubeChannelUrl(item.config?.channelUrl ?? "");
     setConfigHost("");
     setSecretKey("");
     setPublishableKey("");
@@ -272,7 +274,12 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
       };
     } else if (isYoutube) {
       body = {
-        config: { category: "Media" },
+        config: {
+          category: "Media",
+          ...(youtubeChannelUrl.trim()
+            ? { channelUrl: youtubeChannelUrl.trim() }
+            : {}),
+        },
         secrets: { ...(apiKey ? { apiKey } : {}) },
       };
     } else if (isGooglePlaces) {
@@ -824,9 +831,10 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
             </>
           ) : isYoutube ? (
             <>
-              {labels.youtubeHint ? (
-                <p className="text-sm text-text-secondary">{labels.youtubeHint}</p>
-              ) : null}
+              <p className="text-sm text-text-secondary">
+                {labels.youtubeHint ??
+                  "Add your Data API key and the channel or playlist to sync. After that, Sync now pulls videos automatically — no need to paste individual video links."}
+              </p>
               <Input
                 id="youtube-api-key"
                 type="password"
@@ -834,9 +842,23 @@ export function AdminIntegrationsView({ labels }: AdminIntegrationsViewProps) {
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
               />
-              {labels.youtubeHelp ? (
-                <p className="text-xs text-text-muted">{labels.youtubeHelp}</p>
-              ) : null}
+              <Input
+                id="youtube-channel-url"
+                label={
+                  labels.youtubeChannelUrl ??
+                  "Channel, playlist, or @handle to sync"
+                }
+                value={youtubeChannelUrl}
+                onChange={(event) => setYoutubeChannelUrl(event.target.value)}
+                placeholder={
+                  labels.youtubeChannelPlaceholder ??
+                  "https://youtube.com/@yourchannel or playlist URL"
+                }
+              />
+              <p className="text-xs text-text-muted">
+                {labels.youtubeHelp ??
+                  "Google Cloud → enable YouTube Data API v3 → create an API key. Sync uses this channel’s uploads (or the playlist you enter)."}
+              </p>
             </>
           ) : isGooglePlaces ? (
             <>

@@ -121,6 +121,23 @@ export async function POST(
     }).catch(() => undefined);
 
     if (id === "youtube") {
+      const channelUrl = String(body.config?.channelUrl ?? "").trim();
+      if (channelUrl) {
+        void adminDb
+          .collection("site_settings")
+          .doc("default")
+          .set(
+            stripUndefined({
+              youtubePlaylistUrl: channelUrl,
+              youtubeSyncEnabled: true,
+              updatedAt: FieldValue.serverTimestamp(),
+            }),
+            { merge: true },
+          )
+          .catch((error) =>
+            console.error("youtube_channel_to_site_settings_failed", error),
+          );
+      }
       void import("@/lib/media/youtube-sync")
         .then(({ syncYoutubePlaylistVideos }) => syncYoutubePlaylistVideos())
         .catch((error) =>
