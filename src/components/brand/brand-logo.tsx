@@ -23,7 +23,7 @@ const SIZE_STYLE: Record<
   header: { height: 36, maxWidth: 148 },
   footer: { height: 32, maxWidth: 136 },
   sidebar: { height: 32, maxWidth: 132 },
-  auth: { height: 36, maxWidth: 148 },
+  auth: { height: 48, maxWidth: 196 },
 };
 
 export interface BrandLogoProps {

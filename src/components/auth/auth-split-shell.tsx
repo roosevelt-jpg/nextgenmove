@@ -14,33 +14,11 @@ export interface AuthSplitShellProps {
   children: React.ReactNode;
 }
 
-function BrandMark({
-  siteName,
-  variant,
-}: {
-  siteName: string;
-  brandMark: string;
-  logoUrl?: string | null;
-  variant: "light" | "dark";
-}) {
-  const name = siteName || "Nextgenmove";
-
-  return (
-    <span className="inline-flex items-center">
-      <BrandLogo
-        size="auth"
-        tone={variant === "dark" ? "onDark" : "color"}
-        alt={name}
-      />
-    </span>
-  );
-}
-
 export function AuthSplitShell({
   labels,
   siteName,
-  brandMark,
-  logoUrl,
+  brandMark: _brandMark,
+  logoUrl: _logoUrl,
   panel = "signIn",
   children,
 }: AuthSplitShellProps) {
@@ -96,13 +74,12 @@ export function AuthSplitShell({
   return (
     <div className="flex min-h-screen w-full bg-bg">
       <aside className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[image:var(--grad-horizon)] p-10 text-white lg:flex">
-        <Link href="/" className="relative z-10 flex items-center gap-2.5">
-          <BrandMark
-            siteName={name}
-            brandMark={brandMark}
-            logoUrl={logoUrl}
-            variant="light"
-          />
+        <Link
+          href="/"
+          className="relative z-10 inline-flex items-center"
+          aria-label={name}
+        >
+          <BrandLogo size="auth" tone="onDark" alt={name} priority />
         </Link>
 
         <blockquote className="relative z-10 max-w-md">
@@ -124,15 +101,15 @@ export function AuthSplitShell({
         </dl>
       </aside>
 
-      <div className="flex w-full flex-col justify-center bg-[#F8FAFC] px-5 py-8 text-text-primary sm:px-8 lg:w-1/2 lg:px-12 xl:px-16 dark:bg-surface-1">
+      <div className="flex w-full flex-col items-center justify-center bg-[#F8FAFC] px-5 py-8 text-text-primary sm:px-8 lg:w-1/2 lg:px-12 xl:px-16 dark:bg-surface-1">
         <div className="w-full max-w-[22.5rem]">
-          <Link href="/" className="mb-6 flex items-center gap-2.5 lg:mb-8">
-            <BrandMark
-              siteName={name}
-              brandMark={brandMark}
-              logoUrl={logoUrl}
-              variant="dark"
-            />
+          {/* Brand mark centered above the form heading (sign-in / sign-up). */}
+          <Link
+            href="/"
+            className="mb-7 flex w-full justify-center sm:mb-8"
+            aria-label={name}
+          >
+            <BrandLogo size="auth" tone="color" alt={name} priority />
           </Link>
           {children}
         </div>
