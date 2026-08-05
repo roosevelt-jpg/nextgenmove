@@ -47,7 +47,6 @@ interface AdminSettingsViewProps {
     contactAddress?: string;
     timezone?: string;
     defaultCurrency?: string;
-    require2fa?: boolean;
     googleSignInEnabled?: boolean;
     sessionExpireDays?: number;
     operatorPlanLabel?: string;
@@ -302,7 +301,6 @@ export function AdminSettingsView({ labels, settings }: AdminSettingsViewProps) 
               <div className="space-y-6">
                 <AdminSecurityControls
                   labels={labels}
-                  initialRequire2fa={Boolean(workspace.require2fa)}
                   initialSessionExpireDays={Number(
                     workspace.sessionExpireDays ?? 5,
                   )}

@@ -529,7 +529,6 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "contactAddress", type: "textarea", labelKey: "contactAddress" },
       { key: "timezone", type: "text", labelKey: "timezone" },
       { key: "defaultCurrency", type: "text", labelKey: "defaultCurrency" },
-      { key: "require2fa", type: "boolean", labelKey: "require2fa" },
       {
         key: "googleSignInEnabled",
         type: "boolean",

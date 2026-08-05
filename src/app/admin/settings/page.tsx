@@ -28,7 +28,6 @@ export default async function AdminSiteSettingsPage() {
         contactAddress: settings.contactAddress,
         timezone: settings.timezone,
         defaultCurrency: settings.defaultCurrency,
-        require2fa: settings.require2fa,
         googleSignInEnabled: settings.googleSignInEnabled,
         sessionExpireDays: settings.sessionExpireDays,
         operatorPlanLabel: settings.operatorPlanLabel,

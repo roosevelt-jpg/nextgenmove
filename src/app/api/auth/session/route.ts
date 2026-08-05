@@ -180,7 +180,6 @@ export async function POST(request: Request) {
       }
 
       let expireDays = 5;
-      let require2fa = false;
       try {
         const settingsSnap = await withTimeout(
           adminDb.collection("site_settings").doc("default").get(),
@@ -189,7 +188,6 @@ export async function POST(request: Request) {
         );
         const settingsData = settingsSnap.data() ?? {};
         expireDays = Number(settingsData.sessionExpireDays ?? 5);
-        require2fa = Boolean(settingsData.require2fa);
       } catch (settingsError) {
         logger.error("session_settings_unavailable", {
           error:
@@ -197,29 +195,6 @@ export async function POST(request: Request) {
               ? settingsError.message
               : String(settingsError),
         });
-      }
-
-      // Admin login 2FA: require a fresh email/SMS OTP pass before cookies.
-      if (require2fa && user.role === "admin") {
-        const { hasValidLogin2faPass, resolveAdminPhone } = await import(
-          "@/lib/auth/login-2fa"
-        );
-        const passed = await hasValidLogin2faPass(user.uid);
-        if (!passed) {
-          const phone = await resolveAdminPhone(user.uid);
-          return NextResponse.json(
-            {
-              error: "two_factor_required",
-              methods: { email: true, phone: Boolean(phone) },
-              // Full E.164 needed client-side for Firebase Phone Auth after password proof.
-              phone: phone || null,
-              phoneHint: phone
-                ? `${phone.slice(0, 4)}…${phone.slice(-2)}`
-                : null,
-            },
-            { status: 403 },
-          );
-        }
       }
 
       // Always require verified email for student/employer once profile is complete.
@@ -303,11 +278,6 @@ export async function POST(request: Request) {
             }
           })
           .catch(() => undefined);
-      }
-
-      if (require2fa && user.role === "admin") {
-        const { clearLogin2faPass } = await import("@/lib/auth/login-2fa");
-        await clearLogin2faPass(user.uid);
       }
 
       const response = NextResponse.json({
