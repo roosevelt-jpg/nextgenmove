@@ -36,14 +36,9 @@ export async function withRequestLog(
       latencyMs,
     });
 
-    const headers = new Headers(response.headers);
-    headers.set("x-request-id", requestId);
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
+    // Mutate headers in place — reconstructing Response can drop Set-Cookie.
+    response.headers.set("x-request-id", requestId);
+    return response;
   } catch (error) {
     const latencyMs = Date.now() - started;
 

@@ -111,6 +111,8 @@ export async function establishSession(idToken: string): Promise<SessionResponse
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
+      // Same-origin, but include so Set-Cookie is always applied before redirect.
+      credentials: "same-origin",
       signal: controller.signal,
     });
 

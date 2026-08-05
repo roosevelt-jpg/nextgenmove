@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRef, useState } from "react";
 import type { ConfirmationResult } from "firebase/auth";
 import { Button, Input } from "@/components/ui";
 import {
@@ -39,8 +39,8 @@ export function SignInForm({
   labels,
   googleSignInEnabled = false,
 }: SignInFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const redirectingRef = useRef(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -83,13 +83,14 @@ export function SignInForm({
 
   const redirectAfterSession = (role: string) => {
     const nextPath = searchParams.get("next");
-    router.push(
-      resolvePostAuthRedirect(
-        role as "admin" | "student" | "company",
-        nextPath,
-      ),
+    const target = resolvePostAuthRedirect(
+      role as "admin" | "student" | "company",
+      nextPath,
     );
-    router.refresh();
+    redirectingRef.current = true;
+    // Full navigation so middleware sees the new HttpOnly session cookies.
+    // Soft router.push often lands back on /sign-in after a fresh login.
+    window.location.assign(target);
   };
 
   const finishLogin = async (idToken: string) => {
@@ -126,6 +127,20 @@ export function SignInForm({
     }
   };
 
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number, code: string) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+          timer = setTimeout(() => reject(new Error(code)), ms);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorCode(null);
@@ -138,9 +153,19 @@ export function SignInForm({
         setEmailError(labels.invalid_email || "Email is invalid");
         return;
       }
-      const credential = await signInWithEmail(email.trim(), password);
-      const idToken = await credential.user.getIdToken(true);
+      const credential = await withTimeout(
+        signInWithEmail(email.trim(), password),
+        25000,
+        "session_timeout",
+      );
+      const idToken = await withTimeout(
+        credential.user.getIdToken(true),
+        15000,
+        "session_timeout",
+      );
       await finishLogin(idToken);
+      // Hard redirect in progress — keep the submitting state until unload.
+      return;
     } catch (error) {
       const code =
         error && typeof error === "object" && "code" in error
@@ -150,7 +175,9 @@ export function SignInForm({
         error instanceof Error ? error.message : "sign_in_failed";
       mapError(code, message);
     } finally {
-      setIsSubmitting(false);
+      if (!redirectingRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -158,9 +185,18 @@ export function SignInForm({
     setErrorCode(null);
     setIsSubmitting(true);
     try {
-      const credential = await signInWithGoogle();
-      const idToken = await credential.user.getIdToken(true);
+      const credential = await withTimeout(
+        signInWithGoogle(),
+        60000,
+        "session_timeout",
+      );
+      const idToken = await withTimeout(
+        credential.user.getIdToken(true),
+        15000,
+        "session_timeout",
+      );
       await finishLogin(idToken);
+      return;
     } catch (error) {
       const code =
         error && typeof error === "object" && "code" in error
@@ -169,13 +205,21 @@ export function SignInForm({
       if (code === "auth/popup-closed-by-user") {
         return;
       }
+      const message =
+        error instanceof Error ? error.message : "google_sign_in_failed";
+      if (message === "session_timeout" || message === "session_failed") {
+        setErrorCode(message);
+        return;
+      }
       setErrorCode(
         code.startsWith("auth/")
           ? code
           : labels.google_coming_soon || "google_sign_in_failed",
       );
     } finally {
-      setIsSubmitting(false);
+      if (!redirectingRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
