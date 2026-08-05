@@ -337,9 +337,9 @@ export interface SiteSettingsDocument {
   youtubePlaylistUrl?: string;
   /** When false, cron / Sync now skip the YouTube pull */
   youtubeSyncEnabled?: boolean;
-  /** How many live cards to show on the public homepage marquee (default 12) */
+  /** How many live cards to show on the public homepage marquee (default 12) — newest first */
   youtubeHomepageLimit?: number;
-  /** Max synced live videos kept in the pool; homepage rotates a daily window from this (default 50) */
+  /** Max synced live videos kept in the pool; homepage shows the newest slice (default 50) */
   youtubeLibraryLimit?: number;
   youtubeLastSyncedAt?: string | null;
   youtubeLastSyncError?: string | null;

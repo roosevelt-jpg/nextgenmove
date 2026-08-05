@@ -463,9 +463,9 @@ export function AdminHomepageMediaView({
         <p className="text-[12.5px] text-text-secondary">
           {youtubeApiConnected
             ? labels.youtubeSyncBodyConnected ||
-              "Channel is connected. An hourly job pulls new uploads into Video cards. Homepage shows up to “Homepage cards” and rotates that window every 24 hours when the library is larger — the marquee keeps scrolling."
+              "Channel is connected. An hourly job pulls new uploads into Video cards automatically. Homepage always shows the newest cards — the marquee keeps scrolling, and viewers play videos on-site."
             : labels.youtubeSyncBody ||
-              "Step 1: connect YouTube under Integrations (API key + channel). Sync then runs hourly; homepage marquee rotates a daily window when you have more videos than Homepage cards."}
+              "Step 1: connect YouTube under Integrations (API key + channel). Sync then runs hourly so new uploads appear on the homepage."}
         </p>
         <label className="block space-y-1">
           <span className="text-[11px] font-medium uppercase tracking-wide text-text-label">
@@ -542,7 +542,7 @@ export function AdminHomepageMediaView({
         </div>
         <p className="text-[11.5px] text-text-muted">
           {labels.youtubeRotationHint ||
-            "Library size = how many uploads to keep synced. Homepage cards = how many scroll in Stories; when the library is larger, that set rotates every 24 hours."}
+            "Library size = how many uploads to keep synced. Homepage cards = how many newest videos scroll in Stories (auto-updated when the hourly sync finds new uploads)."}
         </p>
         {!youtube.youtubePlaylistUrl.trim() ? (
           <p className="text-[11.5px] text-text-muted">

@@ -4,6 +4,7 @@ import { adminAuth, adminDb } from "@/lib/firebase-admin";
 import { appBaseUrl } from "@/lib/billing/stripe";
 import { notifyPasswordReset } from "@/lib/email/notify";
 import { withRequestLog } from "@/lib/observability/api-handler";
+import { logger } from "@/lib/observability/logger";
 import {
   clientIpFromRequest,
   enforceRateLimit,
@@ -14,7 +15,23 @@ const schema = z.object({
   email: z.string().email(),
 });
 
-/** Always returns ok to avoid email enumeration. */
+function inAppResetUrl(firebaseLink: string, base: string): string {
+  try {
+    const parsed = new URL(firebaseLink);
+    const oobCode = parsed.searchParams.get("oobCode");
+    if (oobCode) {
+      const reset = new URL("/reset-password", base);
+      reset.searchParams.set("oobCode", oobCode);
+      reset.searchParams.set("mode", "resetPassword");
+      return reset.toString();
+    }
+  } catch {
+    // fall through
+  }
+  return firebaseLink;
+}
+
+/** Always returns ok to avoid email enumeration (except validation / rate limit). */
 export async function POST(request: Request) {
   return withRequestLog(request, { route: "/api/auth/forgot-password" }, async () => {
     const ip = clientIpFromRequest(request);
@@ -35,7 +52,6 @@ export async function POST(request: Request) {
         .limit(1)
         .get();
 
-      // Also try exact email match if stored with different casing
       let uid: string | null = null;
       let displayName = "";
       if (!userSnap.empty) {
@@ -53,17 +69,28 @@ export async function POST(request: Request) {
 
       if (uid) {
         const base = appBaseUrl(request);
-        const resetUrl = await adminAuth.generatePasswordResetLink(normalized, {
-          url: `${base}/sign-in`,
-          handleCodeInApp: false,
-        });
+        const firebaseLink = await adminAuth.generatePasswordResetLink(
+          normalized,
+          {
+            url: `${base}/sign-in`,
+            handleCodeInApp: false,
+          },
+        );
+        const resetUrl = inAppResetUrl(firebaseLink, base);
 
-        await notifyPasswordReset({
+        const sent = await notifyPasswordReset({
           email: normalized,
           displayName,
           resetUrl,
           request,
         });
+
+        if (!sent) {
+          logger.error("forgot_password_email_not_sent", {
+            uid,
+            email: normalized,
+          });
+        }
       }
 
       return NextResponse.json({ ok: true });
@@ -71,6 +98,9 @@ export async function POST(request: Request) {
       if (error instanceof z.ZodError) {
         return NextResponse.json({ error: "invalid_request" }, { status: 400 });
       }
+      logger.error("forgot_password_failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       // Still return ok — do not leak existence
       return NextResponse.json({ ok: true });
     }

@@ -158,8 +158,9 @@ export async function notifyPasswordReset(options: {
   displayName?: string;
   resetUrl: string;
   request?: Request;
-}) {
-  queueTransactional({
+}): Promise<boolean> {
+  const { sendTransactional } = await import("@/lib/email/send");
+  const result = await sendTransactional({
     templateId: "password_reset",
     to: options.email,
     vars: {
@@ -167,7 +168,9 @@ export async function notifyPasswordReset(options: {
       resetUrl: options.resetUrl,
     },
     request: options.request,
+    dedupeKey: null,
   });
+  return result.sent;
 }
 
 export async function notifyPasswordChanged(options: {

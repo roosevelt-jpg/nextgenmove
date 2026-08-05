@@ -102,8 +102,16 @@ export function parseYoutubePlaylistId(
   return null;
 }
 
-export function youtubeEmbedUrl(videoId: string): string {
-  return `https://www.youtube.com/embed/${videoId}?rel=0`;
+export function youtubeEmbedUrl(
+  videoId: string,
+  options?: { autoplay?: boolean },
+): string {
+  const params = new URLSearchParams({ rel: "0" });
+  if (options?.autoplay) {
+    params.set("autoplay", "1");
+    params.set("mute", "0");
+  }
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
 }
 
 export function youtubeWatchUrl(videoId: string): string {

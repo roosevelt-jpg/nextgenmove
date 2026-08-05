@@ -30,6 +30,23 @@ export const FALLBACK_AUTH_LABELS: AuthLabels = {
   signInLinkLabel: "Already have an account? Sign in",
   signUpLinkLabel: "Need an account? Sign up",
   forgotPasswordLinkLabel: "Forgot password?",
+  forgotPasswordTitle: "Reset password",
+  forgotPasswordIntro:
+    "Enter your email and we will send a secure reset link if an account exists. Works for student, employer, and admin accounts.",
+  forgotPasswordSubmit: "Send reset link",
+  forgotPasswordSent:
+    "If an account exists for that email, a reset link is on its way.",
+  resetPasswordTitle: "Choose a new password",
+  resetPasswordIntro:
+    "Enter a new password of at least 8 characters. This works for all account types.",
+  resetPasswordSubmit: "Update password",
+  resetPasswordSubmitting: "Updating…",
+  resetPasswordSuccess: "Password updated. Redirecting to sign in…",
+  newPasswordLabel: "New password",
+  password_too_short: "Use at least 8 characters.",
+  reset_link_invalid:
+    "This reset link is missing, expired, or already used. Request a new one.",
+  reset_failed: "Could not reset password. Request a new link and try again.",
   genericErrorLabel: "Something went wrong. Please try again.",
   sign_in_failed: "Sign in failed. Check your email and password.",
   unauthorized_domain:

@@ -39,7 +39,8 @@ export function isAuthPath(pathname: string): boolean {
   return (
     pathname === "/sign-in" ||
     pathname === "/sign-up" ||
-    pathname === "/forgot-password"
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password"
   );
 }
 

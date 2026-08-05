@@ -89,6 +89,13 @@
   isolation: isolate;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.28);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
 .card:hover,
@@ -245,4 +252,81 @@
   .viewport {
     mask-image: none;
   }
+}
+
+.modalRoot {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(26 26 24 / 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.modalPanel {
+  width: min(56rem, 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-1, #fff);
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.35);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalMeta {
+  min-width: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.modalSubtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.modalClose {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2, #f1efe8);
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modalClose:hover {
+  background: var(--surface-1, #fff);
+}
+
+.modalFrame {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  background: #000;
+}
+
+.modalIframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }

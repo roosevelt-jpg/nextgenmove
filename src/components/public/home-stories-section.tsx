@@ -1,32 +1,27 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PageHomeDocument, VideoCardDocument } from "@/types/cms";
 import { SectionEyebrow } from "@/components/ui";
-import { parseYoutubeVideoId } from "@/lib/media/youtube";
+import {
+  parseYoutubeVideoId,
+  youtubeEmbedUrl,
+} from "@/lib/media/youtube";
 import { isDemoStoryCards } from "@/lib/public/demo-story-videos";
 import styles from "./home-stories-section.module.css";
 
-function youtubeWatchUrl(card: VideoCardDocument): string | null {
-  if (card.videoUrl) {
-    const id = parseYoutubeVideoId(card.videoUrl);
-    if (id) return `https://www.youtube.com/watch?v=${id}`;
-    if (/^https?:\/\//i.test(card.videoUrl)) return card.videoUrl;
-  }
-  if (card.youtubeVideoId) {
-    return `https://www.youtube.com/watch?v=${card.youtubeVideoId}`;
-  }
+function resolveVideoId(card: VideoCardDocument): string | null {
+  if (card.youtubeVideoId) return card.youtubeVideoId;
+  if (card.videoUrl) return parseYoutubeVideoId(card.videoUrl);
   return null;
 }
 
 function buildLoop(cards: VideoCardDocument[]): VideoCardDocument[] {
   if (!cards.length) return [];
   let sequence = [...cards];
-  // Enough cards so the strip feels full on wide screens
   while (sequence.length < 6) {
     sequence = [...sequence, ...cards];
   }
-  // Exact duplicate for seamless -50% marquee
   return [...sequence, ...sequence];
 }
 
@@ -34,12 +29,14 @@ function VideoCard({
   card,
   index,
   badge,
+  onPlay,
 }: {
   card: VideoCardDocument;
   index: number;
   badge?: string;
+  onPlay?: (card: VideoCardDocument) => void;
 }) {
-  const href = youtubeWatchUrl(card);
+  const videoId = resolveVideoId(card);
   const thumbStyle = card.thumbnailUrl
     ? {
         backgroundImage: `url(${card.thumbnailUrl})`,
@@ -77,21 +74,89 @@ function VideoCard({
 
   const label = [card.title, card.subtitle].filter(Boolean).join(" — ");
 
-  if (href) {
+  if (videoId && onPlay) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
+      <button
+        type="button"
         className={styles.card}
-        aria-label={label || undefined}
+        aria-label={label ? `Play ${label}` : "Play video"}
+        onClick={() => onPlay(card)}
       >
         {inner}
-      </a>
+      </button>
     );
   }
 
   return <div className={styles.card}>{inner}</div>;
+}
+
+function StoryPlayerModal({
+  card,
+  onClose,
+}: {
+  card: VideoCardDocument;
+  onClose: () => void;
+}) {
+  const videoId = resolveVideoId(card);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  if (!videoId) return null;
+
+  return (
+    <div
+      className={styles.modalRoot}
+      role="dialog"
+      aria-modal="true"
+      aria-label={card.title || "Video"}
+      onClick={onClose}
+    >
+      <div
+        className={styles.modalPanel}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className={styles.modalHeader}>
+          <div className={styles.modalMeta}>
+            {card.title ? (
+              <p className={styles.modalTitle}>{card.title}</p>
+            ) : null}
+            {card.subtitle ? (
+              <p className={styles.modalSubtitle}>{card.subtitle}</p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className={styles.modalClose}
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <div className={styles.modalFrame}>
+          <iframe
+            src={youtubeEmbedUrl(videoId, { autoplay: true })}
+            title={card.title || "YouTube"}
+            className={styles.modalIframe}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function HomeStoriesSection({
@@ -101,6 +166,7 @@ export function HomeStoriesSection({
   page: PageHomeDocument | null;
   cards: VideoCardDocument[];
 }) {
+  const [active, setActive] = useState<VideoCardDocument | null>(null);
   const loopCards = useMemo(() => buildLoop(cards), [cards]);
   const showingDemos = isDemoStoryCards(cards);
   const badge = showingDemos
@@ -140,11 +206,16 @@ export function HomeStoriesSection({
                   card={card}
                   index={index}
                   badge={badge}
+                  onPlay={setActive}
                 />
               ))}
             </div>
           </div>
         </div>
+      ) : null}
+
+      {active ? (
+        <StoryPlayerModal card={active} onClose={() => setActive(null)} />
       ) : null}
     </section>
   );

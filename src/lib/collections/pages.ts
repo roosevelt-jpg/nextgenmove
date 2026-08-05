@@ -19,7 +19,6 @@ import { cachedPublicCms } from "@/lib/public/cms-cache";
 import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
 import { mergePageHome } from "@/lib/public/merge-page-home";
 import { listLiveVideoCards } from "@/lib/media/video-cards";
-import { selectRotatingHomepageWindow } from "@/lib/media/homepage-video-rotation";
 import { getSiteSettings } from "@/lib/collections/site-settings";
 import {
   resolveStorageFileRef,
@@ -75,7 +74,8 @@ export const getPageHome = cache(async () =>
 
 async function loadLiveVideoCards(): Promise<VideoCardDocument[]> {
   const settings = await getSiteSettings();
-  // Sync pool for Stories + portals; homepage shows a daily rotating window.
+  // Hourly sync keeps the library fresh (newest uploads first by position).
+  // Homepage always shows the newest N so new videos appear as they sync.
   const libraryLimit = Math.max(
     1,
     Number(settings.youtubeLibraryLimit ?? 50) || 50,
@@ -86,7 +86,7 @@ async function loadLiveVideoCards(): Promise<VideoCardDocument[]> {
       ? Math.max(1, homepageCapRaw)
       : 12;
   const library = await listLiveVideoCards(libraryLimit);
-  return selectRotatingHomepageWindow(library, homepageCap);
+  return library.slice(0, homepageCap);
 }
 
 export const getLiveVideoCards = cache(async () => {
