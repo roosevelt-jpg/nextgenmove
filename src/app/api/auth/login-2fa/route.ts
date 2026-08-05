@@ -73,8 +73,9 @@ function isSeedAdminEmail(email: string | null | undefined): boolean {
     const e = raw.trim().toLowerCase();
     if (e) emails.add(e);
   }
-  emails.add("admin@venturo.ae");
+  emails.add("info@nextgenmove.agency");
   emails.add("admin@nextgenmove.agency");
+  emails.add("admin@venturo.ae");
   return emails.has(normalized);
 }
 

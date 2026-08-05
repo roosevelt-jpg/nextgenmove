@@ -78,7 +78,7 @@ function ConfirmForm({
       // Required when Payment Element hides billing fields (fields: never).
       const billingDetails = {
         name: billingName.trim() || "NextGenMove",
-        email: billingEmail?.trim() || "admin@nextgenmove.agency",
+        email: billingEmail?.trim() || "info@nextgenmove.agency",
         phone: "",
         address: {
           line1: "Dubai",

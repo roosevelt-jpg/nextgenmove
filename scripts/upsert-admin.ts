@@ -1,7 +1,7 @@
 /**
  * Create/update the super-admin Auth user + Firestore role.
  * Reads SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD from .env.local
- * Also ensures admin@nextgenmove.agency exists (domain migration alias).
+ * Preferentially migrates an existing admin account to info@nextgenmove.agency.
  * Run: npx tsx scripts/upsert-admin.ts
  */
 import { config } from "dotenv";
@@ -13,8 +13,12 @@ import { stripUndefined } from "../src/lib/stripUndefined";
 
 config({ path: resolve(process.cwd(), ".env.local") });
 
-const DOMAIN_ALIAS_EMAIL = "admin@nextgenmove.agency";
-const LEGACY_EMAILS = ["admin@nextgenmove.local", "admin@venturo.ae"];
+const PRIMARY_ADMIN_EMAIL = "info@nextgenmove.agency";
+const LEGACY_EMAILS = [
+  "admin@nextgenmove.agency",
+  "admin@venturo.ae",
+  "admin@nextgenmove.local",
+];
 
 async function upsertAdminUser(options: {
   email: string;
@@ -81,12 +85,75 @@ async function upsertAdminUser(options: {
   return uid;
 }
 
+/** Move an existing admin Auth user to PRIMARY_ADMIN_EMAIL when possible. */
+async function migrateExistingAdminEmail(password: string): Promise<boolean> {
+  const auth = getAuth();
+  const db = getFirestore();
+  const target = PRIMARY_ADMIN_EMAIL;
+
+  try {
+    await auth.getUserByEmail(target);
+    console.log(`${target} already exists — will upsert credentials`);
+    return false;
+  } catch (error: unknown) {
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code: string }).code)
+        : "";
+    if (code !== "auth/user-not-found") throw error;
+  }
+
+  const seed = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const candidates = [
+    ...(seed && seed !== target ? [seed] : []),
+    ...LEGACY_EMAILS.filter((e) => e !== target && e !== seed),
+  ];
+
+  for (const fromEmail of candidates) {
+    try {
+      const existing = await auth.getUserByEmail(fromEmail);
+      await auth.updateUser(existing.uid, {
+        email: target,
+        password,
+        emailVerified: true,
+        disabled: false,
+      });
+      await auth.setCustomUserClaims(existing.uid, { role: "admin" });
+      await db
+        .collection("users")
+        .doc(existing.uid)
+        .set(
+          stripUndefined({
+            uid: existing.uid,
+            email: target,
+            role: "admin",
+            displayName: "Nextgenmove Admin",
+            status: "active",
+            updatedAt: FieldValue.serverTimestamp(),
+          }),
+          { merge: true },
+        );
+      console.log(`migrated ${fromEmail} → ${target} (uid=${existing.uid})`);
+      return true;
+    } catch (error: unknown) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? String((error as { code: string }).code)
+          : "";
+      if (code === "auth/user-not-found") continue;
+      throw error;
+    }
+  }
+
+  return false;
+}
+
 async function main() {
-  const email = process.env.SEED_ADMIN_EMAIL?.trim();
+  const email = (process.env.SEED_ADMIN_EMAIL?.trim() || PRIMARY_ADMIN_EMAIL).toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;
 
-  if (!email || !password) {
-    throw new Error("SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD must be set");
+  if (!password) {
+    throw new Error("SEED_ADMIN_PASSWORD must be set");
   }
 
   if (!getApps().length) {
@@ -99,31 +166,24 @@ async function main() {
     });
   }
 
-  const primary = email.toLowerCase();
-  await upsertAdminUser({
-    email: primary,
-    password,
-    displayName: "Nextgenmove Admin",
-    keepActive: true,
-  });
-
-  // Always ensure the new domain admin works, even if SEED still uses venturo.ae
-  if (primary !== DOMAIN_ALIAS_EMAIL) {
+  const migrated = await migrateExistingAdminEmail(password);
+  if (!migrated) {
     await upsertAdminUser({
-      email: DOMAIN_ALIAS_EMAIL,
+      email: PRIMARY_ADMIN_EMAIL,
       password,
       displayName: "Nextgenmove Admin",
       keepActive: true,
     });
   }
 
-  for (const legacy of LEGACY_EMAILS) {
-    if (legacy === primary || legacy === DOMAIN_ALIAS_EMAIL) continue;
-    // Keep admin@venturo.ae active if it is the seed email; otherwise leave alone
-    // (do not auto-disable venturo — operators may still use it during DNS cutover)
+  // Keep seed email in sync if it differs (e.g. still pointing at an old alias)
+  if (email !== PRIMARY_ADMIN_EMAIL) {
+    console.log(
+      `Note: SEED_ADMIN_EMAIL is ${email}; primary login is ${PRIMARY_ADMIN_EMAIL}`,
+    );
   }
 
-  // Only disable the old .local seed account
+  // Disable only the old .local seed account
   try {
     const auth = getAuth();
     const db = getFirestore();
@@ -138,10 +198,9 @@ async function main() {
     // fine
   }
 
-  console.log("\nLogin with either:");
-  console.log(`  ${primary}`);
-  if (primary !== DOMAIN_ALIAS_EMAIL) console.log(`  ${DOMAIN_ALIAS_EMAIL}`);
-  console.log("  (same password from SEED_ADMIN_PASSWORD)");
+  console.log("\nLogin with:");
+  console.log(`  ${PRIMARY_ADMIN_EMAIL}`);
+  console.log("  (password from SEED_ADMIN_PASSWORD)");
   console.log(
     "\nIf browser login fails on the new domain, add these to Firebase Console → Authentication → Settings → Authorized domains:",
   );

@@ -51,8 +51,9 @@ function seedAdminEmails(): Set<string> {
     if (email) emails.add(email);
   }
   // Domain migration aliases — keep login working across cutover
-  emails.add("admin@venturo.ae");
+  emails.add("info@nextgenmove.agency");
   emails.add("admin@nextgenmove.agency");
+  emails.add("admin@venturo.ae");
   return emails;
 }
 
