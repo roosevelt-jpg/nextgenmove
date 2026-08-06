@@ -11,7 +11,7 @@ import {
   looksLikeGoogleApiKey,
   parseYoutubePlaylistId,
   parseYoutubeVideoId,
-  resolveYoutubeUploadsPlaylistId,
+  resolveYoutubeChannel,
   youtubeWatchUrl,
 } from "@/lib/media/youtube";
 
@@ -72,6 +72,78 @@ async function fetchJson<T>(url: string): Promise<T> {
     throw new Error(`youtube_api_${res.status}:${body.slice(0, 200)}`);
   }
   return (await res.json()) as T;
+}
+
+async function listChannelVideosViaSearch(
+  apiKey: string,
+  channelId: string,
+  maxItems: number,
+): Promise<
+  Array<{
+    videoId: string;
+    title: string;
+    subtitle: string;
+    thumbnailUrl: string;
+    position: number;
+  }>
+> {
+  const collected: Array<{
+    videoId: string;
+    title: string;
+    subtitle: string;
+    thumbnailUrl: string;
+    position: number;
+  }> = [];
+  let pageToken = "";
+
+  while (collected.length < maxItems) {
+    const params = new URLSearchParams({
+      part: "snippet",
+      channelId,
+      order: "date",
+      type: "video",
+      maxResults: String(Math.min(50, maxItems - collected.length)),
+      key: apiKey,
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+
+    const data = await fetchJson<{
+      nextPageToken?: string;
+      items?: Array<{
+        id?: { videoId?: string };
+        snippet?: PlaylistItemSnippet & { channelTitle?: string };
+      }>;
+    }>(`${YOUTUBE_API}/search?${params}`);
+
+    for (const item of data.items ?? []) {
+      const videoId = item.id?.videoId;
+      if (!videoId) continue;
+      const snippet = item.snippet ?? {};
+      collected.push({
+        videoId,
+        title: String(snippet.title ?? "").trim() || videoId,
+        subtitle: String(snippet.channelTitle ?? "").trim(),
+        thumbnailUrl: pickThumbnail(snippet),
+        position: collected.length,
+      });
+      if (collected.length >= maxItems) break;
+    }
+
+    if (!data.nextPageToken) break;
+    pageToken = data.nextPageToken;
+  }
+
+  return collected;
+}
+
+function isPlaylistNotFoundError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  return (
+    message.includes("youtube_api_404") ||
+    lower.includes("playlistnotfound") ||
+    (lower.includes("playlist") && lower.includes("cannot be found"))
+  );
 }
 
 async function listPlaylistVideos(
@@ -275,10 +347,14 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
   }
 
   let playlistId = parseYoutubePlaylistId(playlistRaw);
+  let channelId: string | null = null;
+
   if (!playlistId) {
-    // Allow channel URL / @handle — resolve to uploads playlist (UU…).
+    // Allow channel URL / @handle — resolve to channel + uploads playlist (UU…).
     try {
-      playlistId = await resolveYoutubeUploadsPlaylistId(apiKey, playlistRaw);
+      const resolved = await resolveYoutubeChannel(apiKey, playlistRaw);
+      channelId = resolved?.channelId ?? null;
+      playlistId = resolved?.uploadsPlaylistId ?? null;
     } catch (err) {
       const error = err instanceof Error ? err.message : "sync_failed";
       await settingsRef.set(
@@ -293,7 +369,7 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
   }
 
   // Single video / Shorts URL — upsert that card only (do not archive playlist syncs).
-  const singleVideoId = !playlistId ? parseYoutubeVideoId(playlistRaw) : null;
+  const singleVideoId = !playlistId && !channelId ? parseYoutubeVideoId(playlistRaw) : null;
   if (singleVideoId) {
     try {
       const video = await fetchSingleVideo(apiKey, singleVideoId);
@@ -358,7 +434,7 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
     }
   }
 
-  if (!playlistId) {
+  if (!playlistId && !channelId) {
     const error = "missing_or_invalid_playlist";
     await settingsRef.set(
       stripUndefined({
@@ -371,7 +447,34 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
   }
 
   try {
-    const items = await listPlaylistVideos(apiKey, playlistId, libraryLimit);
+    let items: Array<{
+      videoId: string;
+      title: string;
+      subtitle: string;
+      thumbnailUrl: string;
+      position: number;
+    }> = [];
+
+    if (playlistId) {
+      try {
+        items = await listPlaylistVideos(apiKey, playlistId, libraryLimit);
+      } catch (playlistError) {
+        if (!isPlaylistNotFoundError(playlistError)) throw playlistError;
+        // Uploads playlist 404 is a known YouTube API quirk — fall back to search.
+        if (!channelId && /^UU[\w-]{8,}$/i.test(playlistId)) {
+          channelId = `UC${playlistId.slice(2)}`;
+        }
+        if (!channelId) throw playlistError;
+        items = await listChannelVideosViaSearch(
+          apiKey,
+          channelId,
+          libraryLimit,
+        );
+      }
+    } else if (channelId) {
+      items = await listChannelVideosViaSearch(apiKey, channelId, libraryLimit);
+    }
+
     const durations = await fetchDurations(
       apiKey,
       items.map((item) => item.videoId),
@@ -439,7 +542,7 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       ok: true,
       upserted,
       archived,
-      playlistId,
+      playlistId: playlistId ?? undefined,
     };
   } catch (err) {
     const error = err instanceof Error ? err.message : "sync_failed";
@@ -450,6 +553,12 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       }),
       { merge: true },
     );
-    return { ok: false, upserted: 0, archived: 0, error, playlistId };
+    return {
+      ok: false,
+      upserted: 0,
+      archived: 0,
+      error,
+      playlistId: playlistId ?? undefined,
+    };
   }
 }

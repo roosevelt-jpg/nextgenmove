@@ -118,16 +118,34 @@ export function youtubeWatchUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
-/** Resolve a channel uploads playlist (UU…) from a channel URL, @handle, or channel id. */
-export async function resolveYoutubeUploadsPlaylistId(
+export interface YoutubeChannelResolution {
+  channelId: string;
+  uploadsPlaylistId: string | null;
+}
+
+/** Derive the conventional uploads playlist id (UU…) from a channel id (UC…). */
+export function uploadsPlaylistIdFromChannelId(channelId: string): string | null {
+  const trimmed = channelId.trim();
+  if (!/^UC[\w-]{8,}$/i.test(trimmed)) return null;
+  return `UU${trimmed.slice(2)}`;
+}
+
+/**
+ * Resolve channel id (+ uploads playlist when available) from a channel URL,
+ * @handle, channel id, or uploads playlist id.
+ */
+export async function resolveYoutubeChannel(
   apiKey: string,
   channelRaw: string,
-): Promise<string | null> {
+): Promise<YoutubeChannelResolution | null> {
   const trimmed = channelRaw.trim();
   if (!trimmed || looksLikeGoogleApiKey(trimmed)) return null;
 
-  // Already a uploads playlist id.
-  if (/^UU[\w-]{8,}$/i.test(trimmed)) return trimmed;
+  // Already an uploads playlist — recover channel id by UC↔UU convention.
+  if (/^UU[\w-]{8,}$/i.test(trimmed)) {
+    const channelId = `UC${trimmed.slice(2)}`;
+    return { channelId, uploadsPlaylistId: trimmed };
+  }
 
   let channelId: string | null = null;
   let forHandle: string | null = null;
@@ -135,10 +153,14 @@ export async function resolveYoutubeUploadsPlaylistId(
 
   if (/^UC[\w-]{8,}$/i.test(trimmed)) {
     channelId = trimmed;
+  } else if (trimmed.startsWith("@")) {
+    forHandle = trimmed.slice(1);
   } else {
     try {
       const parsed = new URL(
-        trimmed.includes("://") ? trimmed : `https://youtube.com/${trimmed.replace(/^@/, "@")}`,
+        trimmed.includes("://")
+          ? trimmed
+          : `https://youtube.com/${trimmed.startsWith("@") ? trimmed : `@${trimmed}`}`,
       );
       const host = parsed.hostname.replace(/^www\./, "");
       if (host.includes("youtube.com")) {
@@ -154,12 +176,15 @@ export async function resolveYoutubeUploadsPlaylistId(
         }
       }
     } catch {
-      if (trimmed.startsWith("@")) forHandle = trimmed.slice(1);
+      // Bare handle without @ — treat as handle when it looks like one.
+      if (/^[\w.-]{3,}$/i.test(trimmed) && !trimmed.includes(" ")) {
+        forHandle = trimmed.replace(/^@/, "");
+      }
     }
   }
 
   const params = new URLSearchParams({
-    part: "contentDetails",
+    part: "id,contentDetails",
     key: apiKey,
   });
   if (channelId) params.set("id", channelId);
@@ -176,9 +201,67 @@ export async function resolveYoutubeUploadsPlaylistId(
     throw new Error(`youtube_api_${res.status}:${body.slice(0, 240)}`);
   }
   const data = (await res.json()) as {
-    items?: Array<{ contentDetails?: { relatedPlaylists?: { uploads?: string } } }>;
+    items?: Array<{
+      id?: string;
+      contentDetails?: { relatedPlaylists?: { uploads?: string } };
+    }>;
   };
-  return data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads ?? null;
+  const item = data.items?.[0];
+  if (!item?.id) {
+    // Fallback: search for the handle/title when forHandle misses (common with dotted handles).
+    if (forHandle) {
+      const searchParams = new URLSearchParams({
+        part: "snippet",
+        q: forHandle.startsWith("@") ? forHandle : `@${forHandle}`,
+        type: "channel",
+        maxResults: "5",
+        key: apiKey,
+      });
+      const searchRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?${searchParams}`,
+        { next: { revalidate: 0 } },
+      );
+      if (searchRes.ok) {
+        const searchData = (await searchRes.json()) as {
+          items?: Array<{ id?: { channelId?: string }; snippet?: { customUrl?: string; title?: string } }>;
+        };
+        const needle = forHandle.replace(/^@/, "").toLowerCase();
+        const match =
+          searchData.items?.find((row) => {
+            const custom = String(row.snippet?.customUrl ?? "")
+              .replace(/^@/, "")
+              .toLowerCase();
+            return custom === needle || custom === `@${needle}`;
+          }) ?? searchData.items?.[0];
+        const foundId = match?.id?.channelId;
+        if (foundId) {
+          return {
+            channelId: foundId,
+            uploadsPlaylistId: uploadsPlaylistIdFromChannelId(foundId),
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  const uploads =
+    item.contentDetails?.relatedPlaylists?.uploads ??
+    uploadsPlaylistIdFromChannelId(item.id);
+
+  return {
+    channelId: item.id,
+    uploadsPlaylistId: uploads || null,
+  };
+}
+
+/** Resolve a channel uploads playlist (UU…) from a channel URL, @handle, or channel id. */
+export async function resolveYoutubeUploadsPlaylistId(
+  apiKey: string,
+  channelRaw: string,
+): Promise<string | null> {
+  const resolved = await resolveYoutubeChannel(apiKey, channelRaw);
+  return resolved?.uploadsPlaylistId ?? null;
 }
 
 /** Convert ISO-8601 duration (PT#H#M#S) to mm:ss or h:mm:ss. */

@@ -57,6 +57,16 @@ describe("parseYoutubePlaylistId", () => {
   });
 });
 
+describe("uploadsPlaylistIdFromChannelId", () => {
+  it("maps UC channel ids to UU uploads playlists", async () => {
+    const { uploadsPlaylistIdFromChannelId } = await import("@/lib/media/youtube");
+    expect(uploadsPlaylistIdFromChannelId("UCabcdefghijklmnop")).toBe(
+      "UUabcdefghijklmnop",
+    );
+    expect(uploadsPlaylistIdFromChannelId("bad")).toBeNull();
+  });
+});
+
 describe("formatYoutubeDuration", () => {
   it("formats ISO durations", () => {
     expect(formatYoutubeDuration("PT1H2M3S")).toBe("1:02:03");

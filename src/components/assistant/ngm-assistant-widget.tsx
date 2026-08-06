@@ -132,13 +132,15 @@ export function NgmAssistantWidget({
 
       if (!response.ok) {
         const code = payload?.error ?? "chat_failed";
-        setError(
-          labels[code] ??
-            labels.assistantError ??
-            (code === "gemini_not_configured"
-              ? "Assistant is not configured yet."
-              : "Could not send message. Try again."),
-        );
+        const fallback =
+          code === "gemini_not_configured"
+            ? "Assistant is not configured yet. Connect Gemini under Integrations."
+            : code === "gemini_invalid_key"
+              ? "Gemini API key was rejected. Re-save the key under Integrations."
+              : code === "gemini_model_unavailable"
+                ? "Gemini model is unavailable. Try again shortly."
+                : "Could not send message. Try again.";
+        setError(labels[code] ?? labels.assistantError ?? fallback);
         return;
       }
 

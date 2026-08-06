@@ -42,6 +42,12 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message === "gemini_not_configured") {
       return NextResponse.json({ error: "gemini_not_configured" }, { status: 503 });
     }
+    if (error instanceof Error && error.message === "gemini_invalid_key") {
+      return NextResponse.json({ error: "gemini_invalid_key" }, { status: 503 });
+    }
+    if (error instanceof Error && error.message === "gemini_model_unavailable") {
+      return NextResponse.json({ error: "gemini_model_unavailable" }, { status: 503 });
+    }
     console.error("assistant_chat_failed", error);
     return NextResponse.json({ error: "assistant_failed" }, { status: 500 });
   }

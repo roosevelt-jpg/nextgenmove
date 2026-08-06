@@ -114,7 +114,12 @@ export async function POST(request: Request) {
         history: body.history,
       });
     } catch (error) {
-      if (error instanceof Error && error.message === "gemini_not_configured") {
+      if (
+        error instanceof Error &&
+        (error.message === "gemini_not_configured" ||
+          error.message === "gemini_invalid_key" ||
+          error.message === "gemini_model_unavailable")
+      ) {
         reply =
           "Thanks for reaching out. Our assistant is temporarily offline — please use the contact form and our team will reply soon.";
       } else {
