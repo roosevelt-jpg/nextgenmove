@@ -184,7 +184,7 @@ export async function resolveYoutubeChannel(
   }
 
   const params = new URLSearchParams({
-    part: "id,contentDetails",
+    part: "id,contentDetails,statistics,snippet",
     key: apiKey,
   });
   if (channelId) params.set("id", channelId);
@@ -203,6 +203,8 @@ export async function resolveYoutubeChannel(
   const data = (await res.json()) as {
     items?: Array<{
       id?: string;
+      snippet?: { title?: string; customUrl?: string };
+      statistics?: { videoCount?: string };
       contentDetails?: { relatedPlaylists?: { uploads?: string } };
     }>;
   };
@@ -223,7 +225,10 @@ export async function resolveYoutubeChannel(
       );
       if (searchRes.ok) {
         const searchData = (await searchRes.json()) as {
-          items?: Array<{ id?: { channelId?: string }; snippet?: { customUrl?: string; title?: string } }>;
+          items?: Array<{
+            id?: { channelId?: string };
+            snippet?: { customUrl?: string; title?: string };
+          }>;
         };
         const needle = forHandle.replace(/^@/, "").toLowerCase();
         const match =

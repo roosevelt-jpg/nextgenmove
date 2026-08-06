@@ -348,13 +348,21 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
 
   let playlistId = parseYoutubePlaylistId(playlistRaw);
   let channelId: string | null = null;
+  const isExplicitPlaylist = Boolean(playlistId && !/^UU[\w-]{8,}$/i.test(playlistId));
 
-  if (!playlistId) {
-    // Allow channel URL / @handle — resolve to channel + uploads playlist (UU…).
+  // Channel / @handle / uploads UU… — resolve channel id first.
+  if (!isExplicitPlaylist) {
     try {
-      const resolved = await resolveYoutubeChannel(apiKey, playlistRaw);
+      const resolved = await resolveYoutubeChannel(
+        apiKey,
+        playlistId && /^UU[\w-]{8,}$/i.test(playlistId)
+          ? playlistId
+          : playlistRaw,
+      );
       channelId = resolved?.channelId ?? null;
-      playlistId = resolved?.uploadsPlaylistId ?? null;
+      if (!playlistId) {
+        playlistId = resolved?.uploadsPlaylistId ?? null;
+      }
     } catch (err) {
       const error = err instanceof Error ? err.message : "sync_failed";
       await settingsRef.set(
@@ -369,7 +377,8 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
   }
 
   // Single video / Shorts URL — upsert that card only (do not archive playlist syncs).
-  const singleVideoId = !playlistId && !channelId ? parseYoutubeVideoId(playlistRaw) : null;
+  const singleVideoId =
+    !playlistId && !channelId ? parseYoutubeVideoId(playlistRaw) : null;
   if (singleVideoId) {
     try {
       const video = await fetchSingleVideo(apiKey, singleVideoId);
@@ -455,24 +464,66 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       position: number;
     }> = [];
 
-    if (playlistId) {
+    // Prefer channel search for @handle / channel sources — uploads playlists
+    // often 404 or return empty even when the channel has public videos.
+    if (channelId && !isExplicitPlaylist) {
+      items = await listChannelVideosViaSearch(apiKey, channelId, libraryLimit);
+    }
+
+    if (items.length === 0 && playlistId) {
       try {
         items = await listPlaylistVideos(apiKey, playlistId, libraryLimit);
       } catch (playlistError) {
         if (!isPlaylistNotFoundError(playlistError)) throw playlistError;
-        // Uploads playlist 404 is a known YouTube API quirk — fall back to search.
         if (!channelId && /^UU[\w-]{8,}$/i.test(playlistId)) {
           channelId = `UC${playlistId.slice(2)}`;
         }
-        if (!channelId) throw playlistError;
+        if (channelId) {
+          items = await listChannelVideosViaSearch(
+            apiKey,
+            channelId,
+            libraryLimit,
+          );
+        } else if (isExplicitPlaylist) {
+          throw playlistError;
+        }
+      }
+    }
+
+    // Empty uploads playlist (200 + 0 items) — fall back to channel search.
+    if (items.length === 0 && channelId) {
+      items = await listChannelVideosViaSearch(apiKey, channelId, libraryLimit);
+    }
+
+    // Last resort: re-resolve handle and search.
+    if (items.length === 0 && !isExplicitPlaylist) {
+      const resolved = await resolveYoutubeChannel(apiKey, playlistRaw);
+      channelId = resolved?.channelId ?? channelId;
+      if (channelId) {
         items = await listChannelVideosViaSearch(
           apiKey,
           channelId,
           libraryLimit,
         );
       }
-    } else if (channelId) {
-      items = await listChannelVideosViaSearch(apiKey, channelId, libraryLimit);
+    }
+
+    if (items.length === 0) {
+      const error = "no_public_videos_found";
+      await settingsRef.set(
+        stripUndefined({
+          youtubeLastSyncError: error,
+          youtubeLastSyncedAt: FieldValue.serverTimestamp(),
+        }),
+        { merge: true },
+      );
+      return {
+        ok: false,
+        upserted: 0,
+        archived: 0,
+        error,
+        playlistId: playlistId ?? undefined,
+      };
     }
 
     const durations = await fetchDurations(
@@ -507,6 +558,7 @@ export async function syncYoutubePlaylistVideos(): Promise<YoutubeSyncResult> {
       upserted += 1;
     }
 
+    // Never archive the library when a sync returned nothing — that was wiping cards.
     const syncedSnap = await adminDb
       .collection("video_cards")
       .where("source", "==", "youtube_playlist")

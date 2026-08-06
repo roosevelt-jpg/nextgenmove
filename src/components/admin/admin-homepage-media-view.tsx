@@ -40,7 +40,10 @@ function mapYoutubeSyncError(
             "That video was not found or is private. Check the URL and try again."
           : key === "missing_youtube_api_key"
             ? labels.missing_youtube_api_key
-            : null);
+            : key === "no_public_videos_found"
+              ? labels.no_public_videos_found ||
+                "YouTube reports 0 public videos for this channel. Unlisted/Private uploads are invisible to API sync — set videos to Public on YouTube, then Sync now. Or paste a public playlist URL / individual watch links."
+              : null);
   if (mapped) return mapped;
   if (error.includes("API_KEY_HTTP_REFERRER_BLOCKED") || error.includes("referer <empty>")) {
     return (
