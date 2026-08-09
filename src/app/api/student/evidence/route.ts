@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 const createSchema = z.object({
   kind: z.enum(EVIDENCE_KINDS),
   label: z.string().trim().min(1).max(120),
+  expiresAt: z.string().datetime().nullable().optional(),
   file: z.object({
     url: z.string().url(),
     path: z.string().min(1),
@@ -51,6 +52,7 @@ export async function POST(request: Request) {
         kind: body.kind,
         label: body.label,
         file: body.file,
+        expiresAt: body.expiresAt ?? null,
       });
       const readiness = await recomputeAndPersistStudentReadiness(session.studentId);
       return NextResponse.json({ item, readiness });

@@ -239,6 +239,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /talent_stories/{docId} {
+      allow read, write: if false;
+    }
+
     match /job_postings/{docId} {
       allow read: if isAdmin() || resource.data.status == 'open';
       allow write: if isAdmin();
@@ -271,6 +275,11 @@ service cloud.firestore {
     }
 
     match /page_tracks/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /page_visa_path/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -327,6 +336,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
     match /sponsor_links/{id} {
+      allow read, write: if false;
+    }
+    // PII unlock/view audit — Admin SDK only.
+    match /pii_access_events/{id} {
       allow read, write: if false;
     }
 

@@ -80,8 +80,20 @@ These fields must never be writable by portal clients — rules block direct Cli
 | `companies` | `plan`, `subscriptionStatus` | `/api/admin/**`, `/api/employer/plan-request` |
 | `students` | `credits` | `/api/student/store/purchase` (transaction) |
 | `students` | `status` | `/api/admin/**`, `/api/student/deactivate` |
+| `companies` | PII + `subscriptionStatus` | `/api/employer/deactivate` (anonymize) |
 | `users` | `role`, `status` | `/api/admin/users`, registration & suspend flows |
 | `integrations` | secrets | `/api/admin/integrations/[id]/connect` → `integration_secrets` |
+
+---
+
+## Account anonymization (DSAR deactivate)
+
+Self-serve deactivate endpoints call `anonymizeAndSuspendAccount` in `src/lib/security/anonymize-account.ts`:
+
+- `POST /api/student/deactivate`
+- `POST /api/employer/deactivate`
+
+These suspend Auth, revoke sessions, and scrub PII on user + student/company docs while preserving referential IDs. JSON DSAR exports live at `/api/student/compliance/export` and `/api/employer/compliance/export` (Admin SDK; no client Firestore reads of sensitive collections).
 
 ---
 

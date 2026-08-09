@@ -23,6 +23,11 @@ async function main() {
       ...DEFAULT_MOVE_OS_LEVERS.evidenceKindWeights,
       ...((existing.evidenceKindWeights as Record<string, number>) ?? {}),
     },
+    shadowSprintTemplates:
+      Array.isArray(existing.shadowSprintTemplates) &&
+      existing.shadowSprintTemplates.length > 0
+        ? existing.shadowSprintTemplates
+        : DEFAULT_MOVE_OS_LEVERS.shadowSprintTemplates,
   };
   await leversRef.set(
     stripUndefined({

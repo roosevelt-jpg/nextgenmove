@@ -4,6 +4,7 @@ import { stripUndefined } from "@/lib/stripUndefined";
 import type { ShadowSprint } from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { updateMilestone } from "./itinerary";
+import { notifyMoveOsParty } from "./notify";
 
 function addDaysIso(days: number): string {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -16,8 +17,24 @@ export async function createShadowSprint(input: {
   companyId: string;
   title: string;
   brief: string;
+  templateId?: string | null;
+  rubric?: string[];
 }): Promise<ShadowSprint> {
   const levers = await getMoveOsLevers();
+  let title = input.title;
+  let brief = input.brief;
+  let templateId = input.templateId ?? null;
+  let rubric = input.rubric ?? [];
+
+  if (templateId) {
+    const template = levers.shadowSprintTemplates.find((t) => t.id === templateId);
+    if (template) {
+      title = template.title;
+      brief = template.brief;
+      rubric = template.rubric;
+    }
+  }
+
   const ref = adminDb.collection("shadow_sprints").doc();
   const startsAt = new Date().toISOString();
   const endsAt = addDaysIso(levers.shadowSprintDays);
@@ -27,8 +44,10 @@ export async function createShadowSprint(input: {
     moveId: input.moveId,
     studentId: input.studentId,
     companyId: input.companyId,
-    title: input.title,
-    brief: input.brief,
+    title,
+    brief,
+    templateId,
+    rubric: rubric.length > 0 ? rubric : null,
     status: "active" as const,
     deliverableUrl: null,
     studentRating: null,
@@ -48,6 +67,14 @@ export async function createShadowSprint(input: {
     key: "shadow_sprint",
     status: "in_progress",
   });
+
+  void notifyMoveOsParty({
+    userId: input.studentId,
+    kind: "sprint_started",
+    body: `Shadow sprint started: ${title}. Due by ${endsAt}.`,
+    link: "/student/move",
+  });
+
   return doc as ShadowSprint;
 }
 
@@ -69,7 +96,44 @@ export async function submitShadowDeliverable(input: {
     }),
     { merge: true },
   );
+
+  void notifyMoveOsParty({
+    userId: data.companyId,
+    kind: "sprint_submitted",
+    body: `Shadow sprint deliverable submitted for ${data.title}.`,
+    link: "/employer/bench",
+  });
+
   return { ...data, deliverableUrl: input.deliverableUrl, status: "submitted" };
+}
+
+async function emailSprintFinalDecision(sprint: ShadowSprint, status: "go" | "no_go") {
+  const [studentSnap, companySnap] = await Promise.all([
+    adminDb.collection("students").doc(sprint.studentId).get(),
+    adminDb.collection("companies").doc(sprint.companyId).get(),
+  ]);
+  const studentEmail = String(studentSnap.data()?.email ?? "").trim();
+  const companyEmail = String(companySnap.data()?.contactEmail ?? "").trim();
+  const kind = status === "go" ? "sprint_go" : "sprint_no_go";
+  const body =
+    status === "go"
+      ? `Shadow sprint "${sprint.title}" received dual GO.`
+      : `Shadow sprint "${sprint.title}" ended in NO-GO.`;
+
+  void notifyMoveOsParty({
+    userId: sprint.studentId,
+    kind,
+    body,
+    link: "/student/move",
+    emailTo: studentEmail || null,
+  });
+  void notifyMoveOsParty({
+    userId: sprint.companyId,
+    kind,
+    body,
+    link: "/employer/bench",
+    emailTo: companyEmail || null,
+  });
 }
 
 export async function rateShadowSprint(input: {
@@ -100,6 +164,7 @@ export async function rateShadowSprint(input: {
   const companyGo =
     input.actor === "company" ? input.go : (data.companyGo ?? null);
 
+  const previousStatus = data.status;
   let status = data.status;
   if (studentGo !== null && companyGo !== null) {
     status = studentGo && companyGo ? "go" : "no_go";
@@ -129,6 +194,17 @@ export async function rateShadowSprint(input: {
       status: "blocked",
       blocker: "Shadow sprint did not get dual GO.",
     });
+  }
+
+  const becameFinal =
+    (status === "go" || status === "no_go") &&
+    previousStatus !== "go" &&
+    previousStatus !== "no_go";
+  if (becameFinal && (status === "go" || status === "no_go")) {
+    void emailSprintFinalDecision(
+      { ...data, ...patch, status },
+      status,
+    );
   }
 
   return {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button, Input } from "@/components/ui";
-import type { MoveOsLevers } from "@/types/move-os";
+import type { MoveOsLevers, StudentReadiness } from "@/types/move-os";
 
 function fileUrl(item: Record<string, unknown>): string | null {
   const file = item.file as { url?: string } | undefined;
@@ -24,6 +24,9 @@ export function AdminMoveOsView() {
   const [levers, setLevers] = useState<MoveOsLevers | null>(null);
   const [grantCompanyId, setGrantCompanyId] = useState("");
   const [grantAmount, setGrantAmount] = useState(100);
+  const [studentLookupId, setStudentLookupId] = useState("");
+  const [studentReadiness, setStudentReadiness] =
+    useState<StudentReadiness | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -59,6 +62,33 @@ export function AdminMoveOsView() {
     }
     setMessage(`Evidence ${status}.`);
     await load();
+  };
+
+  const lookupStudent = async () => {
+    const id = studentLookupId.trim();
+    if (!id) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch(
+        `/api/admin/move-os?studentId=${encodeURIComponent(id)}`,
+        { cache: "no-store" },
+      );
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        readiness?: StudentReadiness;
+        student?: { id: string } | null;
+      };
+      if (!res.ok || !payload.student) {
+        setStudentReadiness(null);
+        setMessage(payload.error || "Student not found.");
+        return;
+      }
+      setStudentReadiness(payload.readiness ?? null);
+      setMessage(`Loaded readiness for ${payload.student.id}.`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const saveLevers = async () => {
@@ -129,6 +159,47 @@ export function AdminMoveOsView() {
       </header>
 
       {message ? <p className="text-sm text-text-secondary">{message}</p> : null}
+
+      <section className="space-y-3 rounded-radius border border-border p-4">
+        <h2 className="font-serif text-xl">Student readiness</h2>
+        <div className="flex flex-wrap gap-2">
+          <Input
+            label="Student ID"
+            value={studentLookupId}
+            onChange={(e) => setStudentLookupId(e.target.value)}
+          />
+          <Button
+            type="button"
+            disabled={busy || !studentLookupId.trim()}
+            onClick={() => void lookupStudent()}
+          >
+            Load
+          </Button>
+        </div>
+        {studentReadiness ? (
+          <div className="space-y-1 text-sm text-text-secondary">
+            <p>
+              Score{" "}
+              <span className="font-serif text-2xl text-fill-accent">
+                {studentReadiness.score}
+              </span>{" "}
+              · Bench {studentReadiness.benchStatus}
+            </p>
+            <p className="text-xs">
+              Verified:{" "}
+              {studentReadiness.verifiedKinds.length
+                ? studentReadiness.verifiedKinds.join(", ")
+                : "none"}
+            </p>
+            <p className="text-xs">
+              Missing:{" "}
+              {studentReadiness.missingKinds.length
+                ? studentReadiness.missingKinds.join(", ")
+                : "none"}
+            </p>
+          </div>
+        ) : null}
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-serif text-xl">Pending evidence</h2>

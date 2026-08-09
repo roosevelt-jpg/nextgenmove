@@ -71,9 +71,40 @@ export function mergePageHome(
       overlay.testimonialsPhotoLabel || base.testimonialsPhotoLabel,
     testimonialsNameLabel:
       overlay.testimonialsNameLabel || base.testimonialsNameLabel,
+    testimonialsVerifiedLabel:
+      overlay.testimonialsVerifiedLabel || base.testimonialsVerifiedLabel,
     testimonialsSlider: {
       ...base.testimonialsSlider,
       ...overlay.testimonialsSlider,
     },
+    corridorIntelEyebrow:
+      overlay.corridorIntelEyebrow || base.corridorIntelEyebrow,
+    corridorIntelHeadline:
+      overlay.corridorIntelHeadline || base.corridorIntelHeadline,
+    corridorIntelSubtext:
+      overlay.corridorIntelSubtext || base.corridorIntelSubtext,
+    corridorIntelSkillsLabel:
+      overlay.corridorIntelSkillsLabel || base.corridorIntelSkillsLabel,
+    corridorIntelCitiesLabel:
+      overlay.corridorIntelCitiesLabel || base.corridorIntelCitiesLabel,
+    corridorIntelNationalitiesLabel:
+      overlay.corridorIntelNationalitiesLabel ||
+      base.corridorIntelNationalitiesLabel,
+    corridorIntelEmptyText:
+      overlay.corridorIntelEmptyText || base.corridorIntelEmptyText,
+    talentStoriesEyebrow:
+      overlay.talentStoriesEyebrow || base.talentStoriesEyebrow,
+    talentStoriesHeadline:
+      overlay.talentStoriesHeadline || base.talentStoriesHeadline,
+    talentStoriesSubtext:
+      overlay.talentStoriesSubtext || base.talentStoriesSubtext,
+    talentStoriesManagedLabel:
+      overlay.talentStoriesManagedLabel || base.talentStoriesManagedLabel,
+    talentStoriesEmptyText:
+      overlay.talentStoriesEmptyText || base.talentStoriesEmptyText,
+    talentStoriesViewAllLabel:
+      overlay.talentStoriesViewAllLabel || base.talentStoriesViewAllLabel,
+    talentStoriesViewAllHref:
+      overlay.talentStoriesViewAllHref || base.talentStoriesViewAllHref,
   };
 }

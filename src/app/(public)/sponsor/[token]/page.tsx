@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Button } from "@/components/ui";
 
 export default function SponsorPortalPage() {
   const params = useParams<{ token: string }>();
@@ -41,6 +42,7 @@ export default function SponsorPortalPage() {
   const evidence = (data.evidence ?? []) as Array<Record<string, unknown>>;
   const move = data.move as Record<string, unknown> | null;
   const milestones = (move?.milestones ?? []) as Array<Record<string, unknown>>;
+  const token = params?.token;
 
   return (
     <main className="page-container space-y-6 py-12">
@@ -55,6 +57,32 @@ export default function SponsorPortalPage() {
           Read-only view of {String(student.displayName ?? "talent")}’s Dubai-ready
           progress. Employer deal terms are never shown here.
         </p>
+        {token ? (
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                window.open(
+                  `/api/sponsor/${token}/report`,
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+            >
+              Download / Print progress
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => window.print()}
+            >
+              Print this page
+            </Button>
+          </div>
+        ) : null}
       </header>
 
       <section className="rounded-radius border border-border bg-grad-card p-4">

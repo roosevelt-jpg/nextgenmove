@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { expireStaleBenchHolds } from "@/lib/move-os/bench";
 import { enforceArrivalSlas } from "@/lib/move-os/arrival";
+import { flushSponsorWhatsAppDigests } from "@/lib/move-os/sponsor";
 import { withRequestLog } from "@/lib/observability/api-handler";
 
 /**
- * Expire Visa-Cleared Bench holds and auto-flag Arrival SLA misses.
+ * Expire Visa-Cleared Bench holds, auto-flag Arrival SLA misses,
+ * and best-effort flush Family Trust Pack WhatsApp digests.
  * Protect with CRON_SECRET: Authorization: Bearer <CRON_SECRET>
  */
 export async function POST(request: Request) {
@@ -15,15 +17,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
-    const [expiredHolds, slaFlagged] = await Promise.all([
+    const [expiredHolds, slaFlagged, sponsorDigests] = await Promise.all([
       expireStaleBenchHolds(100),
       enforceArrivalSlas(50),
+      flushSponsorWhatsAppDigests(40),
     ]);
 
     return NextResponse.json({
       ok: true,
       expiredHolds,
       slaFlagged,
+      sponsorDigests,
     });
   });
 }

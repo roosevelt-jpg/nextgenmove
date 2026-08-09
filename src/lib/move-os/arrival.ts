@@ -5,6 +5,7 @@ import type { ArrivalEvent, ArrivalEventKind } from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { resolveDualCommit } from "./escrow";
 import { getMoveById, updateMilestone } from "./itinerary";
+import { notifyMoveOsParty } from "./notify";
 
 export async function recordArrivalEvent(input: {
   moveId: string;
@@ -77,6 +78,20 @@ export async function recordArrivalEvent(input: {
       matchId: move.matchId,
       outcome: "refund_both",
     });
+    const breachBody =
+      "Arrival SLA was breached. Dual-commit stakes were refunded to both parties.";
+    void notifyMoveOsParty({
+      userId: move.studentId,
+      kind: "arrival_sla_breach",
+      body: breachBody,
+      link: "/student/move",
+    });
+    void notifyMoveOsParty({
+      userId: move.companyId,
+      kind: "arrival_sla_breach",
+      body: breachBody,
+      link: "/employer/bench",
+    });
   }
   if (input.kind === "sla_met") {
     await resolveDualCommit({
@@ -84,6 +99,18 @@ export async function recordArrivalEvent(input: {
       outcome: "release",
     });
   }
+
+  // Best-effort Family Trust Pack WhatsApp digest for opt-in sponsors.
+  void import("./sponsor")
+    .then(({ notifySponsorsOnArrival }) =>
+      notifySponsorsOnArrival({
+        studentId: move.studentId,
+        eventKind: input.kind,
+      }),
+    )
+    .catch((error) => {
+      console.error("sponsor_arrival_digest_failed", error);
+    });
 
   return event as ArrivalEvent;
 }

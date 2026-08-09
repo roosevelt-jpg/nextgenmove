@@ -69,13 +69,26 @@ function isQuotaExhausted(status: number, body: string): boolean {
   );
 }
 
-function extractText(data: {
+type GeminiPart = {
+  text?: string;
+  functionCall?: { name?: string; args?: Record<string, unknown> };
+  functionResponse?: {
+    name: string;
+    response: Record<string, unknown>;
+  };
+};
+
+type GeminiContent = { role: string; parts: GeminiPart[] };
+
+type GeminiGenerateResponse = {
   candidates?: Array<{
-    content?: { parts?: Array<{ text?: string }> };
+    content?: { parts?: GeminiPart[] };
     finishReason?: string;
   }>;
   promptFeedback?: { blockReason?: string };
-}): string | null {
+};
+
+function extractText(data: GeminiGenerateResponse): string | null {
   if (data.promptFeedback?.blockReason) {
     return null;
   }
@@ -85,6 +98,57 @@ function extractText(data: {
     .join("")
     .trim();
   return text || null;
+}
+
+function extractFunctionCalls(
+  data: GeminiGenerateResponse,
+): Array<{ name: string; args: Record<string, unknown> }> {
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  for (const part of parts) {
+    const name = part.functionCall?.name?.trim();
+    if (!name) continue;
+    calls.push({
+      name,
+      args:
+        part.functionCall?.args && typeof part.functionCall.args === "object"
+          ? part.functionCall.args
+          : {},
+    });
+  }
+  return calls;
+}
+
+async function postGeminiGenerateContent(options: {
+  apiKey: string;
+  model: string;
+  payload: Record<string, unknown>;
+}): Promise<{ ok: true; data: GeminiGenerateResponse } | { ok: false; status: number; body: string }> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:generateContent?key=${encodeURIComponent(options.apiKey)}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(options.payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    return { ok: false, status: response.status, body };
+  }
+
+  const data = (await response.json()) as GeminiGenerateResponse;
+  return { ok: true, data };
+}
+
+function throwMappedGeminiHttpError(status: number, body: string): never {
+  console.error("gemini_request_failed", status, body.slice(0, 400));
+  if (isQuotaExhausted(status, body)) {
+    throw new Error("gemini_quota_exhausted");
+  }
+  if (status === 400 || status === 401 || status === 403) {
+    throw new Error("gemini_invalid_key");
+  }
+  throw new Error("gemini_request_failed");
 }
 
 export async function generateGeminiReply(options: {
@@ -97,12 +161,12 @@ export async function generateGeminiReply(options: {
     throw new Error("gemini_not_configured");
   }
 
-  const contents = [
+  const contents: GeminiContent[] = [
     ...(options.history ?? []).map((turn) => ({
       role: turn.role,
       parts: [{ text: turn.text }],
     })),
-    { role: "user" as const, parts: [{ text: options.userMessage }] },
+    { role: "user", parts: [{ text: options.userMessage }] },
   ];
 
   const payload = {
@@ -117,53 +181,201 @@ export async function generateGeminiReply(options: {
   let lastError = "gemini_request_failed";
 
   for (const model of GEMINI_MODEL_CANDIDATES) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const result = await postGeminiGenerateContent({
+      apiKey,
+      model,
+      payload,
     });
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      console.error(
-        "gemini_request_failed",
-        model,
-        response.status,
-        body.slice(0, 400),
-      );
-      if (isQuotaExhausted(response.status, body)) {
+    if (!result.ok) {
+      if (isQuotaExhausted(result.status, result.body)) {
         throw new Error("gemini_quota_exhausted");
       }
-      if (isModelUnavailable(response.status, body)) {
+      if (isModelUnavailable(result.status, result.body)) {
         lastError = "gemini_model_unavailable";
+        console.error(
+          "gemini_request_failed",
+          model,
+          result.status,
+          result.body.slice(0, 400),
+        );
         continue;
       }
-      if (
-        response.status === 400 ||
-        response.status === 401 ||
-        response.status === 403
-      ) {
-        throw new Error("gemini_invalid_key");
-      }
-      throw new Error("gemini_request_failed");
+      throwMappedGeminiHttpError(result.status, result.body);
     }
 
-    const data = (await response.json()) as {
-      candidates?: Array<{
-        content?: { parts?: Array<{ text?: string }> };
-        finishReason?: string;
-      }>;
-      promptFeedback?: { blockReason?: string };
-    };
-
-    const text = extractText(data);
+    const text = extractText(result.data);
     if (!text) {
       lastError = "gemini_empty_response";
       continue;
     }
 
     return text;
+  }
+
+  throw new Error(lastError);
+}
+
+export type GeminiToolDeclaration = {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+};
+
+/**
+ * Admin tool loop: call Gemini with functionDeclarations, execute allowed tools
+ * server-side, send functionResponse parts back until a final text reply.
+ */
+export async function generateGeminiReplyWithTools(options: {
+  system: string;
+  userMessage: string;
+  history?: Array<{ role: "user" | "model"; text: string }>;
+  tools: readonly GeminiToolDeclaration[];
+  executeTool: (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<string>;
+  maxRounds?: number;
+}): Promise<string> {
+  const apiKey = await getGeminiApiKey();
+  if (!apiKey) {
+    throw new Error("gemini_not_configured");
+  }
+
+  const allowed = new Set(options.tools.map((t) => t.name));
+  const contents: GeminiContent[] = [
+    ...(options.history ?? []).map((turn) => ({
+      role: turn.role,
+      parts: [{ text: turn.text }],
+    })),
+    { role: "user", parts: [{ text: options.userMessage }] },
+  ];
+
+  const basePayload = {
+    systemInstruction: { parts: [{ text: options.system }] },
+    tools: [
+      {
+        functionDeclarations: options.tools.map((t) => ({
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        })),
+      },
+    ],
+    toolConfig: {
+      functionCallingConfig: { mode: "AUTO" },
+    },
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 1536,
+    },
+  };
+
+  const maxRounds = Math.max(1, Math.min(options.maxRounds ?? 4, 6));
+  let lastError = "gemini_request_failed";
+
+  for (let round = 0; round < maxRounds; round += 1) {
+    let roundData: GeminiGenerateResponse | null = null;
+
+    for (const model of GEMINI_MODEL_CANDIDATES) {
+      const result = await postGeminiGenerateContent({
+        apiKey,
+        model,
+        payload: { ...basePayload, contents },
+      });
+
+      if (!result.ok) {
+        if (isQuotaExhausted(result.status, result.body)) {
+          throw new Error("gemini_quota_exhausted");
+        }
+        if (isModelUnavailable(result.status, result.body)) {
+          lastError = "gemini_model_unavailable";
+          console.error(
+            "gemini_request_failed",
+            model,
+            result.status,
+            result.body.slice(0, 400),
+          );
+          continue;
+        }
+        // Some models reject tools — fall back to plain reply on first round.
+        if (round === 0 && contents.length <= (options.history?.length ?? 0) + 1) {
+          console.error(
+            "gemini_tools_unavailable",
+            model,
+            result.status,
+            result.body.slice(0, 300),
+          );
+          return generateGeminiReply({
+            system: options.system,
+            userMessage: options.userMessage,
+            history: options.history,
+          });
+        }
+        throwMappedGeminiHttpError(result.status, result.body);
+      }
+
+      roundData = result.data;
+      break;
+    }
+
+    if (!roundData) {
+      throw new Error(lastError);
+    }
+
+    const calls = extractFunctionCalls(roundData);
+    if (calls.length) {
+      const modelParts =
+        roundData.candidates?.[0]?.content?.parts ??
+        calls.map((c) => ({
+          functionCall: { name: c.name, args: c.args },
+        }));
+      contents.push({ role: "model", parts: modelParts });
+
+      const responseParts: GeminiPart[] = [];
+      for (const call of calls) {
+        if (!allowed.has(call.name)) {
+          responseParts.push({
+            functionResponse: {
+              name: call.name,
+              response: { error: "tool_not_allowed" },
+            },
+          });
+          continue;
+        }
+        try {
+          const resultText = await options.executeTool(call.name, call.args);
+          let parsed: Record<string, unknown>;
+          try {
+            parsed = JSON.parse(resultText) as Record<string, unknown>;
+          } catch {
+            parsed = { result: resultText };
+          }
+          responseParts.push({
+            functionResponse: {
+              name: call.name,
+              response: parsed,
+            },
+          });
+        } catch (error) {
+          responseParts.push({
+            functionResponse: {
+              name: call.name,
+              response: {
+                error: error instanceof Error ? error.message : "tool_failed",
+              },
+            },
+          });
+        }
+      }
+      contents.push({ role: "user", parts: responseParts });
+      continue;
+    }
+
+    const text = extractText(roundData);
+    if (text) return text;
+    lastError = "gemini_empty_response";
+    break;
   }
 
   throw new Error(lastError);

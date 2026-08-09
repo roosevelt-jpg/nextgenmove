@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Badge, Card, CardBody, StatCard } from "@/components/ui";
 import { PortalVideosSection } from "@/components/portal/portal-videos-section";
+import { CorridorIntelligenceStrip } from "@/components/public/corridor-intelligence-strip";
 import {
   resolveStageColor,
   stageTrackBackground,
@@ -121,6 +122,20 @@ export function EmployerDashboardView({ labels }: EmployerDashboardViewProps) {
           </p>
         ) : null}
       </header>
+
+      <CorridorIntelligenceStrip
+        compact
+        labels={{
+          corridorIntelEyebrow: labels.corridorIntelEyebrow,
+          corridorIntelHeadline: labels.corridorIntelHeadline,
+          corridorIntelSubtext: labels.corridorIntelSubtext,
+          corridorIntelSkillsLabel: labels.corridorIntelSkillsLabel,
+          corridorIntelCitiesLabel: labels.corridorIntelCitiesLabel,
+          corridorIntelNationalitiesLabel:
+            labels.corridorIntelNationalitiesLabel,
+          corridorIntelEmptyText: labels.corridorIntelEmptyText,
+        }}
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard

@@ -14,7 +14,13 @@ export const EVIDENCE_KINDS = [
 
 export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
 
-export type EvidenceStatus = "pending" | "verified" | "rejected" | "expired";
+export type EvidenceStatus =
+  | "pending"
+  | "verified"
+  | "rejected"
+  | "expired"
+  | "archived"
+  | "superseded";
 
 export interface EvidenceItem {
   id: string;
@@ -135,6 +141,14 @@ export type ShadowSprintStatus =
   | "no_go"
   | "cancelled";
 
+export interface ShadowSprintTemplate {
+  id: string;
+  sector: string;
+  title: string;
+  brief: string;
+  rubric: string[];
+}
+
 export interface ShadowSprint {
   id: string;
   matchId: string;
@@ -144,6 +158,8 @@ export interface ShadowSprint {
   title: string;
   brief: string;
   status: ShadowSprintStatus;
+  templateId?: string | null;
+  rubric?: string[];
   deliverableUrl?: string | null;
   studentRating?: number | null;
   companyRating?: number | null;
@@ -178,8 +194,27 @@ export interface SponsorLink {
   sponsorName: string;
   sponsorEmail: string;
   status: "active" | "revoked";
+  /** E.164-ish phone for optional WhatsApp digests. */
+  phone?: string | null;
+  whatsappOptIn?: boolean;
+  lastWhatsAppDigestAt?: string | null;
   createdAt?: string | null;
   lastAccessAt?: string | null;
+}
+
+export type InterviewRecommendation = "advance" | "hold" | "reject";
+
+export interface InterviewScorecardCriterion {
+  label: string;
+  score: number;
+}
+
+export interface InterviewScorecard {
+  criteria: InterviewScorecardCriterion[];
+  notes?: string | null;
+  recommendation: InterviewRecommendation;
+  submittedAt: string;
+  submittedBy: string;
 }
 
 export interface MoveOsLevers {
@@ -189,7 +224,9 @@ export interface MoveOsLevers {
   benchHoldHours: number;
   dualCommitStudentCredits: number;
   dualCommitCompanyCredits: number;
+  dualCommitInsuranceCredits: number;
   arrivalSlaHours: number;
   shadowSprintDays: number;
   sponsorEnabled: boolean;
+  shadowSprintTemplates: ShadowSprintTemplate[];
 }

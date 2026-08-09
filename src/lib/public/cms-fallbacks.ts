@@ -27,6 +27,8 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
     journal: "Journal",
     browseRoles: "Browse roles",
     howItWorks: "How it works",
+    visaPath: "Visa path",
+    stories: "Stories",
     credits: "Credits",
     pricing: "Pricing",
     tracks: "Tracks",
@@ -53,6 +55,9 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
     dashboard: "Dashboard",
     wallet: "Wallet",
     store: "Content store",
+    evidence: "Evidence vault",
+    visaPath: "Visa path",
+    move: "My move",
     profile: "Profile",
     settings: "Settings",
   },
@@ -222,12 +227,30 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   testimonialsRatingLabel: "Rating",
   testimonialsPhotoLabel: "Photo (optional)",
   testimonialsNameLabel: "Your name",
+  testimonialsVerifiedLabel: "Verified placement",
   testimonialsSlider: {
     enabled: true,
     speedSec: 48,
     pauseOnHover: true,
     direction: "ltr",
   },
+  corridorIntelEyebrow: "Corridor intelligence",
+  corridorIntelHeadline: "What the live pool looks like.",
+  corridorIntelSubtext:
+    "Aggregate signals only — skills from open roles, cities and nationalities from talent profiles. No names or emails.",
+  corridorIntelSkillsLabel: "Top skills",
+  corridorIntelCitiesLabel: "Top cities",
+  corridorIntelNationalitiesLabel: "Nationalities",
+  corridorIntelEmptyText:
+    "Live corridor aggregates will appear as the pool grows.",
+  talentStoriesEyebrow: "Talent stories",
+  talentStoriesHeadline: "Placed voices, in their words.",
+  talentStoriesSubtext:
+    "Opt-in stories from talent who completed a placement. Published after review.",
+  talentStoriesManagedLabel: "Managed in admin · Talent stories",
+  talentStoriesEmptyText: "Published talent stories will appear here.",
+  talentStoriesViewAllLabel: "View all stories →",
+  talentStoriesViewAllHref: "/stories",
   talentCta: {
     eyebrow: "For talent",
     title: "Your seat is waiting.",
@@ -305,3 +328,48 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
     },
   ],
 };
+
+export const FALLBACK_PAGE_VISA_PATH: import("@/types/cms").PageVisaPathDocument = {
+  eyebrow: "Visa path",
+  headline: "Simulate your corridor timeline.",
+  subtext:
+    "Pick a corridor to see milestone timing and the evidence kinds employers expect before boarding.",
+  selectCorridorLabel: "Choose a corridor",
+  timelineLabel: "Timeline",
+  evidenceLabel: "Required evidence",
+  missingEvidenceLabel: "Missing from your vault",
+  presentEvidenceLabel: "In your vault",
+  signInPrompt: "Sign in as a student to compare against your evidence vault.",
+  signInCta: "Sign in",
+  totalDaysLabel: "{days} days total",
+  emptyCorridorsText: "Visa corridors will appear here soon.",
+  corridors: [
+    {
+      id: "eu_dxb",
+      label: "EU → Dubai",
+      steps: [
+        {
+          title: "Passport & eligibility pack",
+          days: 7,
+          evidenceKinds: ["passport", "visa_eligibility_pack"],
+        },
+        {
+          title: "Funds & English proof",
+          days: 14,
+          evidenceKinds: ["funds_proof", "english_proof"],
+        },
+        {
+          title: "CV & attested portfolio",
+          days: 10,
+          evidenceKinds: ["cv", "attested_portfolio"],
+        },
+        {
+          title: "Housing readiness",
+          days: 21,
+          evidenceKinds: ["housing_readiness"],
+        },
+      ],
+    },
+  ],
+};
+

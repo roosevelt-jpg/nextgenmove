@@ -1,5 +1,6 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { getSiteSettings } from "@/lib/collections/site-settings";
+import { isPubliclyPublished } from "@/lib/cms/publish-visibility";
 
 /**
  * Build live platform context for NGM Assistant / public chat.
@@ -25,6 +26,7 @@ export async function buildAssistantContext(): Promise<string> {
     const faqBits: string[] = [];
     for (const doc of faqSnap.docs) {
       const data = doc.data();
+      if (!isPubliclyPublished(data)) continue;
       const title = String(data.title ?? data.slug ?? "").trim();
       const body = String(data.body ?? data.metaDescription ?? "")
         .replace(/<[^>]+>/g, " ")

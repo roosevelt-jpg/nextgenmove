@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Input } from "@/components/ui";
-import type { MoveItinerary, ShadowSprint } from "@/types/move-os";
+import type {
+  MoveItinerary,
+  MoveMilestoneKey,
+  ShadowSprint,
+} from "@/types/move-os";
 
 type SlaInfo = {
   withinSla: boolean;
@@ -12,14 +16,30 @@ type SlaInfo = {
   hasLanded: boolean;
 } | null;
 
+const ARRIVAL_CONCIERGE_KEYS: Array<{
+  key: Extract<
+    MoveMilestoneKey,
+    "housing" | "flight" | "bank" | "emirates_id"
+  >;
+  label: string;
+}> = [
+  { key: "housing", label: "Housing" },
+  { key: "flight", label: "Flight" },
+  { key: "bank", label: "Bank / funds" },
+  { key: "emirates_id", label: "Emirates ID" },
+];
+
 export function StudentMoveView() {
   const [moves, setMoves] = useState<MoveItinerary[]>([]);
   const [sprints, setSprints] = useState<ShadowSprint[]>([]);
   const [slaByMoveId, setSlaByMoveId] = useState<Record<string, SlaInfo>>({});
   const [sponsorName, setSponsorName] = useState("");
   const [sponsorEmail, setSponsorEmail] = useState("");
+  const [sponsorPhone, setSponsorPhone] = useState("");
+  const [sponsorWhatsappOptIn, setSponsorWhatsappOptIn] = useState(false);
   const [sponsorUrl, setSponsorUrl] = useState<string | null>(null);
   const [deliverableUrl, setDeliverableUrl] = useState("");
+  const [deliverableFile, setDeliverableFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -75,6 +95,35 @@ export function StudentMoveView() {
     }
   };
 
+  const markConciergeDone = async (
+    moveId: string,
+    key: (typeof ARRIVAL_CONCIERGE_KEYS)[number]["key"],
+  ) => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/student/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "milestone_update",
+          moveId,
+          key,
+          status: "done",
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setMessage(payload.error || "Could not update milestone.");
+        return;
+      }
+      setMessage(`${key.replace("_", " ")} marked done.`);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const inviteSponsor = async () => {
     setBusy(true);
     setMessage(null);
@@ -86,6 +135,8 @@ export function StudentMoveView() {
           action: "sponsor_invite",
           sponsorName,
           sponsorEmail,
+          phone: sponsorPhone.trim() || null,
+          whatsappOptIn: sponsorWhatsappOptIn,
         }),
       });
       const payload = (await res.json().catch(() => ({}))) as {
@@ -104,22 +155,37 @@ export function StudentMoveView() {
   };
 
   const submitSprint = async (sprintId: string) => {
-    if (!deliverableUrl.trim()) {
-      setMessage("Add a deliverable URL first.");
+    if (!deliverableUrl.trim() && !deliverableFile) {
+      setMessage("Add a deliverable URL or upload a file first.");
       return;
     }
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/student/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "sprint_submit",
-          sprintId,
-          deliverableUrl: deliverableUrl.trim(),
-        }),
-      });
+      let res: Response;
+      if (deliverableFile) {
+        const form = new FormData();
+        form.set("action", "sprint_submit");
+        form.set("sprintId", sprintId);
+        if (deliverableUrl.trim()) {
+          form.set("deliverableUrl", deliverableUrl.trim());
+        }
+        form.set("file", deliverableFile);
+        res = await fetch("/api/student/move", {
+          method: "POST",
+          body: form,
+        });
+      } else {
+        res = await fetch("/api/student/move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "sprint_submit",
+            sprintId,
+            deliverableUrl: deliverableUrl.trim(),
+          }),
+        });
+      }
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         setMessage(payload.error || "Could not submit sprint.");
@@ -127,6 +193,7 @@ export function StudentMoveView() {
       }
       setMessage("Shadow sprint submitted.");
       setDeliverableUrl("");
+      setDeliverableFile(null);
       await load();
     } finally {
       setBusy(false);
@@ -185,6 +252,9 @@ export function StudentMoveView() {
         moves.map((move) => {
           const sla = slaByMoveId[move.id];
           const moveSprints = sprintsByMove.get(move.id) ?? [];
+          const milestoneByKey = new Map(
+            (move.milestones ?? []).map((m) => [m.key, m]),
+          );
           return (
             <section
               key={move.id}
@@ -235,6 +305,54 @@ export function StudentMoveView() {
                 ))}
               </ol>
 
+              <div className="space-y-2 border-t border-border pt-3">
+                <h3 className="font-mono text-[11px] uppercase tracking-wide text-text-label">
+                  Arrival Concierge
+                </h3>
+                {sla?.deadline ? (
+                  <p className="text-xs text-text-secondary">
+                    SLA deadline: {new Date(sla.deadline).toLocaleString()}
+                    {sla.breached
+                      ? " · breached"
+                      : sla.withinSla
+                        ? " · on track"
+                        : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs text-text-muted">
+                    SLA deadline appears once flight or arrival timing is set.
+                  </p>
+                )}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {ARRIVAL_CONCIERGE_KEYS.map(({ key, label }) => {
+                    const milestone = milestoneByKey.get(key);
+                    const done = milestone?.status === "done";
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-2 rounded-radius border border-border px-3 py-2 text-sm"
+                      >
+                        <div>
+                          <p className="font-medium">{label}</p>
+                          <p className="font-mono text-[10px] uppercase text-text-muted">
+                            {milestone?.status ?? "—"}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={done ? "outline" : "primary"}
+                          disabled={busy || done}
+                          onClick={() => void markConciergeDone(move.id, key)}
+                        >
+                          {done ? "Done" : "Mark done"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {moveSprints.length > 0 ? (
                 <div className="space-y-2 border-t border-border pt-3">
                   <h3 className="font-mono text-[11px] uppercase tracking-wide text-text-label">
@@ -249,13 +367,26 @@ export function StudentMoveView() {
                         {sprint.title} · {sprint.status}
                       </p>
                       <p className="text-xs text-text-muted">{sprint.brief}</p>
-                      {sprint.status === "active" || sprint.status === "proposed" ? (
+                      {sprint.status === "active" ||
+                      sprint.status === "proposed" ? (
                         <div className="space-y-2">
                           <Input
                             label="Deliverable URL"
                             value={deliverableUrl}
                             onChange={(e) => setDeliverableUrl(e.target.value)}
                           />
+                          <label className="block space-y-1 text-sm">
+                            <span className="text-text-secondary">
+                              Or upload file
+                            </span>
+                            <input
+                              type="file"
+                              className="block w-full text-xs"
+                              onChange={(e) =>
+                                setDeliverableFile(e.target.files?.[0] ?? null)
+                              }
+                            />
+                          </label>
                           <Button
                             type="button"
                             size="sm"
@@ -328,6 +459,22 @@ export function StudentMoveView() {
           value={sponsorEmail}
           onChange={(e) => setSponsorEmail(e.target.value)}
         />
+        <Input
+          label="Sponsor phone (optional, WhatsApp)"
+          type="tel"
+          value={sponsorPhone}
+          onChange={(e) => setSponsorPhone(e.target.value)}
+          placeholder="+971…"
+        />
+        <label className="flex items-center gap-2 text-sm text-text-primary">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-[var(--fill-accent)]"
+            checked={sponsorWhatsappOptIn}
+            onChange={(e) => setSponsorWhatsappOptIn(e.target.checked)}
+          />
+          Send progress digests on WhatsApp when Twilio is configured
+        </label>
         <Button
           type="button"
           disabled={busy || !sponsorName.trim() || !sponsorEmail.trim()}

@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { key: "jobs", href: "/student/jobs" },
   { key: "applications", href: "/student/applications" },
   { key: "evidence", href: "/student/evidence" },
+  { key: "visaPath", href: "/student/visa-path" },
   { key: "move", href: "/student/move" },
   { key: "wallet", href: "/student/wallet" },
   { key: "store", href: "/student/store" },

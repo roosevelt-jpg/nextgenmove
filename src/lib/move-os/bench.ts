@@ -4,6 +4,7 @@ import { stripUndefined } from "@/lib/stripUndefined";
 import type { BenchReservation } from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { ensureMoveItinerary } from "./itinerary";
+import { notifyMoveOsParty } from "./notify";
 
 function addHoursIso(hours: number): string {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
@@ -75,6 +76,13 @@ export async function reserveBenchSeat(input: {
       companyId: input.companyId,
     });
   }
+
+  void notifyMoveOsParty({
+    userId: input.studentId,
+    kind: "bench_reserved",
+    body: `An employer reserved your Visa-Cleared Bench seat until ${expiresAt}.`,
+    link: "/student/move",
+  });
 
   return reservation as BenchReservation;
 }
@@ -182,4 +190,49 @@ export async function cancelBenchReservation(input: {
       );
     }
   });
+}
+
+/** Mark a held reservation converted (proceed toward hire / dual commit). */
+export async function convertBenchReservation(input: {
+  reservationId: string;
+  companyId: string;
+}): Promise<BenchReservation> {
+  const ref = adminDb.collection("bench_reservations").doc(input.reservationId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new Error("reservation_not_found");
+  const data = snap.data() as BenchReservation;
+  if (data.companyId !== input.companyId) throw new Error("forbidden");
+  if (data.status !== "held") throw new Error("reservation_not_held");
+
+  await adminDb.runTransaction(async (tx) => {
+    const fresh = await tx.get(ref);
+    if (!fresh.exists || String(fresh.data()?.status) !== "held") {
+      throw new Error("reservation_not_held");
+    }
+    const studentRef = adminDb.collection("students").doc(data.studentId);
+    const studentSnap = await tx.get(studentRef);
+    tx.set(
+      ref,
+      stripUndefined({
+        status: "converted",
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+      { merge: true },
+    );
+    if (
+      studentSnap.exists &&
+      String(studentSnap.data()?.benchReservationId ?? "") === input.reservationId
+    ) {
+      tx.set(
+        studentRef,
+        stripUndefined({
+          benchStatus: "placed",
+          updatedAt: FieldValue.serverTimestamp(),
+        }),
+        { merge: true },
+      );
+    }
+  });
+
+  return { ...data, status: "converted" };
 }

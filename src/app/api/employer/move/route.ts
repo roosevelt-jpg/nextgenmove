@@ -17,6 +17,7 @@ import {
   rateShadowSprint,
 } from "@/lib/move-os/shadow-sprint";
 import { evaluateArrivalSla, recordArrivalEvent } from "@/lib/move-os/arrival";
+import { getMoveOsLevers } from "@/lib/move-os/config";
 import { withRequestLog } from "@/lib/observability/api-handler";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +26,10 @@ export async function GET(request: Request) {
   return withRequestLog(request, { route: "/api/employer/move" }, async () => {
     const session = await getEmployerSession();
     if (!session) return unauthorizedResponse();
-    const [moves, sprints] = await Promise.all([
+    const [moves, sprints, levers] = await Promise.all([
       listMovesForCompany(session.companyId),
       listSprintsForCompany(session.companyId),
+      getMoveOsLevers(),
     ]);
     const sla = await Promise.all(
       moves.map(async (move) => {
@@ -43,6 +45,7 @@ export async function GET(request: Request) {
       moves,
       sprints,
       slaByMoveId: Object.fromEntries(sla),
+      shadowSprintTemplates: levers.shadowSprintTemplates,
     });
   });
 }
@@ -57,8 +60,9 @@ const actionSchema = z.discriminatedUnion("action", [
     action: z.literal("start_shadow_sprint"),
     moveId: z.string().min(1),
     matchId: z.string().min(1),
-    title: z.string().trim().min(1).max(160),
-    brief: z.string().trim().min(1).max(4000),
+    templateId: z.string().trim().min(1).optional(),
+    title: z.string().trim().min(1).max(160).optional(),
+    brief: z.string().trim().min(1).max(4000).optional(),
   }),
   z.object({
     action: z.literal("sprint_rate"),
@@ -112,6 +116,7 @@ export async function POST(request: Request) {
           moveId: body.moveId,
           studentId: move.studentId,
           companyId: session.companyId,
+          request,
         });
         return NextResponse.json({ ok: true, ...result });
       }
@@ -124,13 +129,27 @@ export async function POST(request: Request) {
         ) {
           return NextResponse.json({ error: "forbidden" }, { status: 403 });
         }
+        const levers = await getMoveOsLevers();
+        const template = body.templateId
+          ? levers.shadowSprintTemplates.find((t) => t.id === body.templateId)
+          : null;
+        const title =
+          body.title?.trim() ||
+          template?.title ||
+          "Pre-flight shadow sprint";
+        const brief =
+          body.brief?.trim() ||
+          template?.brief ||
+          "Complete a 5-day micro-project in our real workflow before travel.";
         const sprint = await createShadowSprint({
           matchId: body.matchId,
           moveId: body.moveId,
           studentId: move.studentId,
           companyId: session.companyId,
-          title: body.title,
-          brief: body.brief,
+          title,
+          brief,
+          templateId: body.templateId ?? template?.id ?? null,
+          rubric: template?.rubric,
         });
         return NextResponse.json({ ok: true, sprint });
       }

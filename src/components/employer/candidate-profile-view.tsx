@@ -14,6 +14,15 @@ interface CandidateDetail {
     matchScore: number | null;
     identityUnlocked?: boolean;
     unlockRequestStatus?: "none" | "pending" | "approved" | "declined";
+    interviewAt?: string | null;
+    applicationStatus?: string | null;
+    interviewScorecard?: {
+      criteria: Array<{ label: string; score: number }>;
+      notes?: string | null;
+      recommendation: "advance" | "hold" | "reject";
+      submittedAt: string;
+      submittedBy: string;
+    } | null;
   };
   student: {
     id: string;
@@ -76,6 +85,16 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [interviewAt, setInterviewAt] = useState("");
   const [busy, setBusy] = useState(false);
+  const [scoreNotes, setScoreNotes] = useState("");
+  const [recommendation, setRecommendation] = useState<
+    "advance" | "hold" | "reject"
+  >("hold");
+  const [criteria, setCriteria] = useState([
+    { label: "Communication", score: 3 },
+    { label: "Role fit", score: 3 },
+    { label: "Motivation", score: 3 },
+  ]);
+  const [stageSuggestion, setStageSuggestion] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -98,6 +117,7 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
   const patchMatch = async (body: Record<string, unknown>) => {
     setBusy(true);
     setActionMessage(null);
+    setStageSuggestion(null);
     const response = await fetch(`/api/employer/matches/${matchId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -113,10 +133,21 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
           labels.identityLockedError ||
             "Unlock this profile before scheduling an interview or hiring.",
         );
+      } else if (payload?.error === "interview_not_scheduled") {
+        setActionMessage(
+          labels.interviewRequiredError ||
+            "Schedule an interview before submitting a scorecard.",
+        );
       } else {
         setActionMessage(labels.actionError || "Could not update applicant.");
       }
       return false;
+    }
+    const payload = (await response.json().catch(() => null)) as {
+      suggestedStageName?: string | null;
+    } | null;
+    if (payload?.suggestedStageName) {
+      setStageSuggestion(payload.suggestedStageName);
     }
     await load();
     return true;
@@ -540,6 +571,134 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
           onChange={(e) => setInterviewAt(e.target.value)}
         />
       </Modal>
+
+      {match.interviewAt || match.applicationStatus === "interviewing" ? (
+        <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
+          <h2 className="font-serif text-xl text-text-primary">
+            {labels.scorecardTitle || "Interview scorecard"}
+          </h2>
+          {match.interviewAt ? (
+            <p className="text-sm text-text-secondary">
+              {(labels.interviewScheduledLabel || "Interview scheduled") +
+                `: ${new Date(match.interviewAt).toLocaleString()}`}
+            </p>
+          ) : null}
+          {match.interviewScorecard ? (
+            <div className="space-y-2 text-sm">
+              <p className="text-text-secondary">
+                {(labels.scorecardSubmittedLabel || "Submitted") +
+                  `: ${new Date(match.interviewScorecard.submittedAt).toLocaleString()}`}
+              </p>
+              <p className="font-medium text-text-primary">
+                {(labels.recommendationLabel || "Recommendation") +
+                  `: ${match.interviewScorecard.recommendation}`}
+              </p>
+              <ul className="space-y-1">
+                {match.interviewScorecard.criteria.map((c) => (
+                  <li
+                    key={c.label}
+                    className="flex justify-between border-b border-border py-1"
+                  >
+                    <span>{c.label}</span>
+                    <span className="font-mono text-text-muted">{c.score}/5</span>
+                  </li>
+                ))}
+              </ul>
+              {match.interviewScorecard.notes ? (
+                <p className="text-text-secondary">{match.interviewScorecard.notes}</p>
+              ) : null}
+            </div>
+          ) : (
+            <form
+              className="space-y-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void patchMatch({
+                  action: "submit_scorecard",
+                  scorecard: {
+                    criteria,
+                    notes: scoreNotes.trim() || null,
+                    recommendation,
+                  },
+                });
+              }}
+            >
+              {criteria.map((row, index) => (
+                <div key={`${row.label}-${index}`} className="flex flex-wrap items-end gap-2">
+                  <Input
+                    label={labels.criterionLabel || "Criterion"}
+                    value={row.label}
+                    onChange={(e) => {
+                      const next = [...criteria];
+                      next[index] = { ...row, label: e.target.value };
+                      setCriteria(next);
+                    }}
+                  />
+                  <label className="block space-y-1 text-sm">
+                    <span className="text-text-secondary">
+                      {labels.scoreLabel || "Score (1–5)"}
+                    </span>
+                    <select
+                      className="rounded-radius-sm border border-border bg-surface-1 px-2 py-1.5"
+                      value={row.score}
+                      onChange={(e) => {
+                        const next = [...criteria];
+                        next[index] = {
+                          ...row,
+                          score: Number(e.target.value),
+                        };
+                        setCriteria(next);
+                      }}
+                    >
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              ))}
+              <label className="block space-y-1 text-sm">
+                <span className="text-text-secondary">
+                  {labels.recommendationLabel || "Recommendation"}
+                </span>
+                <select
+                  className="w-full rounded-radius-sm border border-border bg-surface-1 px-2 py-1.5"
+                  value={recommendation}
+                  onChange={(e) =>
+                    setRecommendation(
+                      e.target.value as "advance" | "hold" | "reject",
+                    )
+                  }
+                >
+                  <option value="advance">
+                    {labels.recAdvance || "Advance"}
+                  </option>
+                  <option value="hold">{labels.recHold || "Hold"}</option>
+                  <option value="reject">
+                    {labels.recReject || "Reject"}
+                  </option>
+                </select>
+              </label>
+              <Input
+                label={labels.scoreNotesLabel || "Notes"}
+                value={scoreNotes}
+                onChange={(e) => setScoreNotes(e.target.value)}
+              />
+              <Button type="submit" disabled={busy}>
+                {labels.submitScorecard || "Submit scorecard"}
+              </Button>
+            </form>
+          )}
+          {stageSuggestion ? (
+            <p className="text-sm text-text-secondary" role="status">
+              {(labels.stageSuggestionLabel || "Suggested stage") +
+                `: ${stageSuggestion}`}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
 import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   cancelBenchReservation,
+  convertBenchReservation,
   expireStaleBenchHolds,
   listCompanyReservations,
   listReadyBenchStudents,
@@ -35,20 +36,34 @@ export async function GET(request: Request) {
       listSprintsForCompany(session.companyId),
     ]);
 
-    const bench = ready.map((student) => ({
-      id: String(student.id),
-      dubaiReadyScore: Number(student.dubaiReadyScore ?? 0),
-      benchStatus: String(student.benchStatus ?? "ready"),
-      sector: String(student.sector ?? ""),
-      seniority: String(student.seniority ?? ""),
-      nationality: String(student.nationality ?? ""),
-      targetCities: Array.isArray(student.targetCities)
-        ? student.targetCities.map(String)
-        : [],
-      skills: Array.isArray(student.skills)
-        ? student.skills.map(String).slice(0, 8)
-        : [],
-    }));
+    const bench = ready.map((student) => {
+      const missingKinds = Array.isArray(student.missingKinds)
+        ? student.missingKinds.map(String)
+        : Array.isArray(student.readinessMissingKinds)
+          ? student.readinessMissingKinds.map(String)
+          : [];
+      const verifiedKinds = Array.isArray(student.verifiedKinds)
+        ? student.verifiedKinds.map(String)
+        : [];
+      return {
+        id: String(student.id),
+        dubaiReadyScore: Number(student.dubaiReadyScore ?? 0),
+        benchStatus: String(student.benchStatus ?? "ready"),
+        sector: String(student.sector ?? ""),
+        seniority: String(student.seniority ?? ""),
+        nationality: String(student.nationality ?? ""),
+        currentCity: String(student.currentCity ?? ""),
+        targetCities: Array.isArray(student.targetCities)
+          ? student.targetCities.map(String)
+          : [],
+        skills: Array.isArray(student.skills)
+          ? student.skills.map(String).slice(0, 8)
+          : [],
+        missingKinds,
+        verifiedKinds,
+        missingKindsCount: missingKinds.length,
+      };
+    });
 
     const companySnap = await adminDb
       .collection("companies")
@@ -89,6 +104,11 @@ const cancelSchema = z.object({
   reservationId: z.string().min(1),
 });
 
+const convertSchema = z.object({
+  action: z.literal("convert_reservation"),
+  reservationId: z.string().min(1),
+});
+
 export async function POST(request: Request) {
   return withRequestLog(request, { route: "/api/employer/bench" }, async () => {
     const session = await getEmployerSession();
@@ -105,6 +125,14 @@ export async function POST(request: Request) {
           companyId: session.companyId,
         });
         return NextResponse.json({ ok: true });
+      }
+      if (raw.action === "convert_reservation") {
+        const body = convertSchema.parse(raw);
+        const reservation = await convertBenchReservation({
+          reservationId: body.reservationId,
+          companyId: session.companyId,
+        });
+        return NextResponse.json({ ok: true, reservation });
       }
 
       const body = reserveSchema.parse(raw);

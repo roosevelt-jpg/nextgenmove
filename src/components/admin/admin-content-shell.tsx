@@ -31,6 +31,18 @@ const SECTION_COPY: Record<
     subtitleKey: "testimonialsSubtitle",
     fallbackTitle: "Testimonials",
   },
+  "/admin/content/stories": {
+    eyebrowKey: "storiesEyebrow",
+    titleKey: "storiesTitle",
+    subtitleKey: "storiesSubtitle",
+    fallbackTitle: "Talent stories",
+  },
+  "/admin/content/visa-path": {
+    eyebrowKey: "visaPathEyebrow",
+    titleKey: "visaPathTitle",
+    subtitleKey: "visaPathSubtitle",
+    fallbackTitle: "Visa path simulator",
+  },
   "/admin/content/home": {
     eyebrowKey: "homeEyebrow",
     titleKey: "homeTitle",

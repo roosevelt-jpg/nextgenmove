@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import { StudentWalletPanel } from "@/components/student/student-wallet-panel";
 import { PortalVideosSection } from "@/components/portal/portal-videos-section";
+import { CorridorIntelligenceStrip } from "@/components/public/corridor-intelligence-strip";
+import { StudentTalentStoryOptIn } from "@/components/student/student-talent-story-opt-in";
 import { cn } from "@/lib/utils";
 import { resolveStageColor } from "@/lib/pipeline-colors";
 
@@ -312,6 +314,22 @@ export function StudentDashboardView({ labels }: StudentDashboardViewProps) {
           </p>
         ) : null}
       </header>
+
+      <CorridorIntelligenceStrip
+        compact
+        labels={{
+          corridorIntelEyebrow: labels.corridorIntelEyebrow,
+          corridorIntelHeadline: labels.corridorIntelHeadline,
+          corridorIntelSubtext: labels.corridorIntelSubtext,
+          corridorIntelSkillsLabel: labels.corridorIntelSkillsLabel,
+          corridorIntelCitiesLabel: labels.corridorIntelCitiesLabel,
+          corridorIntelNationalitiesLabel:
+            labels.corridorIntelNationalitiesLabel,
+          corridorIntelEmptyText: labels.corridorIntelEmptyText,
+        }}
+      />
+
+      <StudentTalentStoryOptIn labels={labels} />
 
       <section className="grid gap-3 sm:grid-cols-3">
         <Link

@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import type Stripe from "stripe";
 import { adminDb } from "@/lib/firebase-admin";
 import { applyCreditDelta } from "@/lib/credits/ledger";
+import { applyCompanyCreditDelta } from "@/lib/move-os/escrow";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { logger } from "@/lib/observability/logger";
 import {
@@ -148,6 +149,59 @@ export async function createCreditTopUpCheckout(options: {
           product_data: {
             name: options.label,
             metadata: { packageId: options.packageId },
+          },
+        },
+      },
+    ],
+  });
+
+  if (!session.url) {
+    throw new Error("checkout_url_missing");
+  }
+
+  return { url: session.url, sessionId: session.id };
+}
+
+export async function createCompanyCreditTopUpCheckout(options: {
+  companyId: string;
+  companyEmail?: string;
+  companyName: string;
+  packageId: string;
+  credits: number;
+  priceEur: number;
+  label: string;
+  request: Request;
+}): Promise<{ url: string; sessionId: string }> {
+  const stripe = await getStripeClient();
+  const base = appBaseUrl(options.request);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    ...(options.companyEmail
+      ? { customer_email: options.companyEmail }
+      : {}),
+    client_reference_id: options.companyId,
+    success_url: `${base}/employer/bench?credits=success`,
+    cancel_url: `${base}/employer/bench?credits=cancelled`,
+    metadata: {
+      kind: "company_credit_topup",
+      companyId: options.companyId,
+      packageId: options.packageId,
+      creditAmount: String(options.credits),
+      credits: String(options.credits),
+    },
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "eur",
+          unit_amount: eurosToCents(options.priceEur),
+          product_data: {
+            name: options.label,
+            metadata: {
+              packageId: options.packageId,
+              companyId: options.companyId,
+            },
           },
         },
       },
@@ -364,11 +418,76 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       packageId,
       sessionId: session.id,
     });
+    return;
+  }
+
+  if (kind === "company_credit_topup") {
+    const companyId = session.metadata?.companyId;
+    const creditAmount = Number(
+      session.metadata?.creditAmount ?? session.metadata?.credits ?? 0,
+    );
+    const packageId = session.metadata?.packageId ?? "unknown";
+    if (!companyId || !creditAmount) return;
+
+    const grant = await applyCompanyCreditDelta({
+      companyId,
+      amount: creditAmount,
+      source: `stripe_company_topup:${session.id}`,
+      once: true,
+      ledgerId: `stripe_company_topup_${session.id}`,
+      meta: { packageId, creditAmount },
+    });
+
+    if (grant.applied) {
+      const { createNotification } = await import("@/lib/notifications/create");
+      void createNotification({
+        userId: companyId,
+        type: "activity",
+        title: "Company credits added",
+        body: `${creditAmount} commit credits added. Balance: ${grant.credits}.`,
+        link: "/employer/bench",
+      });
+    }
+
+    logger.info("stripe_company_credit_topup_applied", {
+      companyId,
+      creditAmount,
+      packageId,
+      sessionId: session.id,
+      applied: grant.applied,
+    });
   }
 }
 
 async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
   const kind = intent.metadata?.kind;
+  if (kind === "company_credit_topup") {
+    const companyId = intent.metadata?.companyId;
+    const creditAmount = Number(
+      intent.metadata?.creditAmount ?? intent.metadata?.credits ?? 0,
+    );
+    const packageId = intent.metadata?.packageId ?? "unknown";
+    if (!companyId || !creditAmount) return;
+
+    const grant = await applyCompanyCreditDelta({
+      companyId,
+      amount: creditAmount,
+      source: `stripe_company_topup:${intent.id}`,
+      once: true,
+      ledgerId: `stripe_company_topup_${intent.id}`,
+      meta: { packageId, creditAmount },
+    });
+
+    logger.info("stripe_company_credit_topup_pi_applied", {
+      companyId,
+      creditAmount,
+      packageId,
+      paymentIntentId: intent.id,
+      applied: grant.applied,
+    });
+    return;
+  }
+
   if (kind !== "credit_topup") return;
 
   const studentId = intent.metadata?.studentId;

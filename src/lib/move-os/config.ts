@@ -1,6 +1,37 @@
 import { adminDb } from "@/lib/firebase-admin";
-import type { EvidenceKind, MoveOsLevers } from "@/types/move-os";
+import type {
+  EvidenceKind,
+  MoveOsLevers,
+  ShadowSprintTemplate,
+} from "@/types/move-os";
 import { EVIDENCE_KINDS } from "@/types/move-os";
+
+export const DEFAULT_SHADOW_SPRINT_TEMPLATES: ShadowSprintTemplate[] = [
+  {
+    id: "fintech_ops",
+    sector: "Fintech",
+    title: "Ops readiness micro-sprint",
+    brief:
+      "Map a real workflow in our stack, ship a short written brief, and flag one risk before travel.",
+    rubric: ["Clarity", "Ownership", "Delivery quality"],
+  },
+  {
+    id: "hospitality_guest",
+    sector: "Hospitality",
+    title: "Guest journey shadow sprint",
+    brief:
+      "Audit a guest touchpoint, propose one improvement, and deliver a one-pager for the floor lead.",
+    rubric: ["Guest empathy", "Practicality", "Communication"],
+  },
+  {
+    id: "general_delivery",
+    sector: "General",
+    title: "Pre-flight delivery sprint",
+    brief:
+      "Complete a 5-day micro-project in our real workflow before travel and submit a shareable deliverable.",
+    rubric: ["Timeliness", "Quality", "Collaboration"],
+  },
+];
 
 export const DEFAULT_MOVE_OS_LEVERS: MoveOsLevers = {
   evidenceRequiredKinds: [
@@ -24,10 +55,40 @@ export const DEFAULT_MOVE_OS_LEVERS: MoveOsLevers = {
   benchHoldHours: 72,
   dualCommitStudentCredits: 50,
   dualCommitCompanyCredits: 100,
+  dualCommitInsuranceCredits: 50,
   arrivalSlaHours: 72,
   shadowSprintDays: 5,
   sponsorEnabled: true,
+  shadowSprintTemplates: DEFAULT_SHADOW_SPRINT_TEMPLATES,
 };
+
+function normalizeTemplates(
+  raw: unknown,
+): ShadowSprintTemplate[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_SHADOW_SPRINT_TEMPLATES;
+  }
+  const parsed: ShadowSprintTemplate[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const id = String(row.id ?? "").trim();
+    const title = String(row.title ?? "").trim();
+    const brief = String(row.brief ?? "").trim();
+    if (!id || !title || !brief) continue;
+    const rubric = Array.isArray(row.rubric)
+      ? row.rubric.map((r) => String(r).trim()).filter(Boolean)
+      : [];
+    parsed.push({
+      id,
+      sector: String(row.sector ?? "General").trim() || "General",
+      title,
+      brief,
+      rubric,
+    });
+  }
+  return parsed.length > 0 ? parsed : DEFAULT_SHADOW_SPRINT_TEMPLATES;
+}
 
 export async function getMoveOsLevers(): Promise<MoveOsLevers> {
   try {
@@ -50,6 +111,7 @@ export async function getMoveOsLevers(): Promise<MoveOsLevers> {
         ...DEFAULT_MOVE_OS_LEVERS.evidenceKindWeights,
         ...(raw.evidenceKindWeights ?? {}),
       },
+      shadowSprintTemplates: normalizeTemplates(raw.shadowSprintTemplates),
     };
   } catch {
     return DEFAULT_MOVE_OS_LEVERS;

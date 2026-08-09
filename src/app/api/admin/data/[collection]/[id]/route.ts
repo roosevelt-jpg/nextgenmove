@@ -12,6 +12,13 @@ import { revalidateAdminCollection } from "@/lib/admin/revalidate";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { sanitizePlainTextFields } from "@/lib/admin/sanitize-plain-text";
 import { normalizeToE164 } from "@/lib/phone/e164";
+import { isFuturePublishAt } from "@/lib/cms/publish-visibility";
+
+const CMS_CONTENT_COLLECTIONS = new Set([
+  "cms_pages",
+  "testimonials",
+  "talent_stories",
+]);
 
 function normalizePhoneFields(
   collection: string,
@@ -45,6 +52,43 @@ function serializeDoc(id: string, data: FirebaseFirestore.DocumentData) {
   }
 
   return output;
+}
+
+/**
+ * Content OS: stamp updatedBy; when publishing, set publishedAt only if
+ * publishAt is empty or already due. Future publishAt stays status=published
+ * as schedule metadata — public loaders filter publishAt <= now.
+ */
+function applyCmsContentOsFields(
+  collection: string,
+  rest: Record<string, unknown>,
+  existing: FirebaseFirestore.DocumentData | undefined,
+  actorUid: string,
+): Record<string, unknown> {
+  if (!CMS_CONTENT_COLLECTIONS.has(collection)) {
+    return rest;
+  }
+
+  const next: Record<string, unknown> = { ...rest, updatedBy: actorUid };
+  const nextStatus = next.status ?? existing?.status;
+  const publishAt =
+    next.publishAt !== undefined ? next.publishAt : existing?.publishAt;
+  const becomingPublished =
+    nextStatus === "published" &&
+    (next.status === "published" || existing?.status !== "published");
+
+  if (becomingPublished) {
+    if (isFuturePublishAt(publishAt)) {
+      // Scheduled: keep status published as metadata; defer publishedAt stamp.
+    } else if (!next.publishedAt && !existing?.publishedAt) {
+      next.publishedAt = FieldValue.serverTimestamp();
+    }
+    if (collection === "testimonials" || collection === "talent_stories") {
+      next.reviewedBy = actorUid;
+    }
+  }
+
+  return next;
 }
 
 export async function GET(
@@ -107,15 +151,13 @@ export async function PATCH(
     } else if (!snapshot.exists) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     } else {
-      const { id: _id, updatedAt: _u, createdAt: _c, ...rest } = body;
-      if (
-        collection === "testimonials" &&
-        rest.status === "published" &&
-        !rest.publishedAt
-      ) {
-        rest.publishedAt = FieldValue.serverTimestamp();
-        rest.reviewedBy = session.uid;
-      }
+      const { id: _id, updatedAt: _u, createdAt: _c, ...rawRest } = body;
+      const rest = applyCmsContentOsFields(
+        collection,
+        rawRest,
+        snapshot.data(),
+        session.uid,
+      );
       await ref.update({
         ...stripUndefined(rest),
         updatedAt: FieldValue.serverTimestamp(),

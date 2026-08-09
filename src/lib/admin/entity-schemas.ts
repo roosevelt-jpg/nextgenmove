@@ -52,6 +52,8 @@ export const ADMIN_COLLECTIONS = [
   "video_cards",
   "podcast_episodes",
   "testimonials",
+  "talent_stories",
+  "page_visa_path",
 ] as const;
 
 export type AdminCollection = (typeof ADMIN_COLLECTIONS)[number];
@@ -420,6 +422,11 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         labelKey: "testimonialsNameLabel",
       },
       {
+        key: "testimonialsVerifiedLabel",
+        type: "text",
+        labelKey: "testimonialsVerifiedLabel",
+      },
+      {
         key: "testimonialsSlider",
         type: "object",
         labelKey: "testimonialsSlider",
@@ -433,6 +440,72 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
             labelKey: "marqueePauseOnHover",
           },
         ],
+      },
+      { key: "corridorIntelEyebrow", type: "text", labelKey: "corridorIntelEyebrow" },
+      {
+        key: "corridorIntelHeadline",
+        type: "text",
+        labelKey: "corridorIntelHeadline",
+      },
+      {
+        key: "corridorIntelSubtext",
+        type: "textarea",
+        labelKey: "corridorIntelSubtext",
+      },
+      {
+        key: "corridorIntelSkillsLabel",
+        type: "text",
+        labelKey: "corridorIntelSkillsLabel",
+      },
+      {
+        key: "corridorIntelCitiesLabel",
+        type: "text",
+        labelKey: "corridorIntelCitiesLabel",
+      },
+      {
+        key: "corridorIntelNationalitiesLabel",
+        type: "text",
+        labelKey: "corridorIntelNationalitiesLabel",
+      },
+      {
+        key: "corridorIntelEmptyText",
+        type: "textarea",
+        labelKey: "corridorIntelEmptyText",
+      },
+      {
+        key: "talentStoriesEyebrow",
+        type: "text",
+        labelKey: "talentStoriesEyebrow",
+      },
+      {
+        key: "talentStoriesHeadline",
+        type: "text",
+        labelKey: "talentStoriesHeadline",
+      },
+      {
+        key: "talentStoriesSubtext",
+        type: "textarea",
+        labelKey: "talentStoriesSubtext",
+      },
+      {
+        key: "talentStoriesManagedLabel",
+        type: "text",
+        labelKey: "talentStoriesManagedLabel",
+      },
+      {
+        key: "talentStoriesEmptyText",
+        type: "textarea",
+        labelKey: "talentStoriesEmptyText",
+      },
+      {
+        key: "talentStoriesViewAllLabel",
+        type: "text",
+        labelKey: "talentStoriesViewAllLabel",
+      },
+      {
+        key: "talentStoriesViewAllHref",
+        type: "text",
+        labelKey: "talentStoriesViewAllHref",
       },
       {
         key: "talentCta",
@@ -707,6 +780,9 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "showInHeader", type: "boolean", labelKey: "showInHeader" },
       { key: "footerGroup", type: "select", labelKey: "footerGroup" },
       { key: "status", type: "select", labelKey: "status" },
+      { key: "publishAt", type: "date", labelKey: "publishAt" },
+      { key: "publishedAt", type: "date", labelKey: "publishedAt" },
+      { key: "updatedBy", type: "text", labelKey: "updatedBy" },
     ],
   },
   cms_forms: {
@@ -778,9 +854,72 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "quote", type: "textarea", labelKey: "quote", required: true },
       { key: "rating", type: "number", labelKey: "rating", required: true },
       { key: "photo", type: "image", labelKey: "photo" },
+      { key: "videoUrl", type: "text", labelKey: "videoUrl" },
+      { key: "youtubeVideoId", type: "text", labelKey: "youtubeVideoId" },
+      { key: "tags", type: "multiselect", labelKey: "tags" },
+      { key: "verifiedPlacement", type: "boolean", labelKey: "verifiedPlacement" },
       { key: "authorRole", type: "select", labelKey: "authorRole" },
       { key: "status", type: "select", labelKey: "status", required: true },
       { key: "authorUid", type: "text", labelKey: "authorUid" },
+      { key: "publishAt", type: "date", labelKey: "publishAt" },
+      { key: "publishedAt", type: "date", labelKey: "publishedAt" },
+      { key: "updatedBy", type: "text", labelKey: "updatedBy" },
+    ],
+  },
+  talent_stories: {
+    collection: "talent_stories",
+    fields: [
+      { key: "studentId", type: "text", labelKey: "studentId", required: true },
+      { key: "displayName", type: "text", labelKey: "displayName" },
+      { key: "quote", type: "textarea", labelKey: "quote", required: true },
+      { key: "photo", type: "image", labelKey: "photo" },
+      { key: "youtubeVideoId", type: "text", labelKey: "youtubeVideoId" },
+      { key: "corridor", type: "text", labelKey: "corridor" },
+      { key: "status", type: "select", labelKey: "status", required: true },
+      { key: "publishAt", type: "date", labelKey: "publishAt" },
+      { key: "publishedAt", type: "date", labelKey: "publishedAt" },
+      { key: "updatedBy", type: "text", labelKey: "updatedBy" },
+    ],
+  },
+  page_visa_path: {
+    collection: "page_visa_path",
+    singletonId: "default",
+    fields: [
+      { key: "eyebrow", type: "text", labelKey: "eyebrow" },
+      { key: "headline", type: "text", labelKey: "headline" },
+      { key: "subtext", type: "textarea", labelKey: "subtext" },
+      { key: "selectCorridorLabel", type: "text", labelKey: "selectCorridorLabel" },
+      { key: "timelineLabel", type: "text", labelKey: "timelineLabel" },
+      { key: "evidenceLabel", type: "text", labelKey: "evidenceLabel" },
+      { key: "missingEvidenceLabel", type: "text", labelKey: "missingEvidenceLabel" },
+      { key: "presentEvidenceLabel", type: "text", labelKey: "presentEvidenceLabel" },
+      { key: "signInPrompt", type: "text", labelKey: "signInPrompt" },
+      { key: "signInCta", type: "text", labelKey: "signInCta" },
+      { key: "totalDaysLabel", type: "text", labelKey: "totalDaysLabel" },
+      { key: "emptyCorridorsText", type: "textarea", labelKey: "emptyCorridorsText" },
+      {
+        key: "corridors",
+        type: "repeatable",
+        labelKey: "corridors",
+        fields: [
+          { key: "id", type: "text", labelKey: "corridorId", required: true },
+          { key: "label", type: "text", labelKey: "corridorLabel", required: true },
+          {
+            key: "steps",
+            type: "repeatable",
+            labelKey: "visaPathSteps",
+            fields: [
+              { key: "title", type: "text", labelKey: "stepTitle", required: true },
+              { key: "days", type: "number", labelKey: "stepDays", required: true },
+              {
+                key: "evidenceKinds",
+                type: "multiselect",
+                labelKey: "evidenceKinds",
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
 };
@@ -808,6 +947,12 @@ export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
   testimonials: {
     status: "status_testimonial",
     authorRole: "authorRole_testimonial",
+  },
+  talent_stories: {
+    status: "status_testimonial",
+  },
+  page_visa_path: {
+    evidenceKinds: "evidenceKinds",
   },
   page_home: {
     direction: "marqueeDirection",
@@ -863,6 +1008,16 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
   authorRole_testimonial: [
     { value: "student", label: "student" },
     { value: "company", label: "company" },
+  ],
+  evidenceKinds: [
+    { value: "passport", label: "passport" },
+    { value: "cv", label: "cv" },
+    { value: "funds_proof", label: "funds_proof" },
+    { value: "english_proof", label: "english_proof" },
+    { value: "attested_portfolio", label: "attested_portfolio" },
+    { value: "housing_readiness", label: "housing_readiness" },
+    { value: "visa_eligibility_pack", label: "visa_eligibility_pack" },
+    { value: "other", label: "other" },
   ],
   fieldType: [
     { value: "text", label: "text" },

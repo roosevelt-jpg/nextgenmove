@@ -1,8 +1,10 @@
 import { AnimatedGlobeHero } from "@/components/public/animated-globe-hero";
+import { CorridorIntelligenceStrip } from "@/components/public/corridor-intelligence-strip";
 import { HomeAudienceCtaSection } from "@/components/public/home-audience-cta-section";
 import { HomeGlobalReachSection } from "@/components/public/home-global-reach-section";
 import { HomePodcastSection } from "@/components/public/home-podcast-section";
 import { HomeStoriesSection } from "@/components/public/home-stories-section";
+import { HomeTalentStoriesSection } from "@/components/public/home-talent-stories-section";
 import { HomeTestimonialsSection } from "@/components/public/home-testimonials-section";
 import { StatBlocksSection } from "@/components/public/stat-blocks-section";
 import { StepsSection } from "@/components/public/steps-section";
@@ -13,21 +15,26 @@ import {
   getPageHome,
 } from "@/lib/collections/pages";
 import { getPublishedTestimonials } from "@/lib/collections/testimonials";
+import { getPublishedTalentStories } from "@/lib/collections/talent-stories";
 import { resolveHomeStoryCards } from "@/lib/public/demo-story-videos";
 import {
   getPublicHomeMetrics,
   resolveHomeStatBlocks,
 } from "@/lib/public/home-stats";
+import { getCorridorIntelligence } from "@/lib/public/corridor-intelligence";
 
 export const revalidate = 30;
 
 export default async function HomePage() {
-  const [page, videoCards, podcastEpisodes, testimonials] = await Promise.all([
-    getPageHome(),
-    getLiveVideoCards(),
-    getLivePodcastEpisodes(),
-    getPublishedTestimonials(),
-  ]);
+  const [page, videoCards, podcastEpisodes, testimonials, talentStories, corridorIntel] =
+    await Promise.all([
+      getPageHome(),
+      getLiveVideoCards(),
+      getLivePodcastEpisodes(),
+      getPublishedTestimonials(),
+      getPublishedTalentStories(6),
+      getCorridorIntelligence(),
+    ]);
 
   const storyCards = resolveHomeStoryCards(videoCards);
 
@@ -43,6 +50,8 @@ export default async function HomePage() {
       </section>
 
       <HomeGlobalReachSection page={page} />
+
+      <CorridorIntelligenceStrip labels={page} initialData={corridorIntel} />
 
       {(page.itineraryEyebrow ||
         page.itineraryHeadline ||
@@ -63,6 +72,7 @@ export default async function HomePage() {
       )}
 
       <HomeStoriesSection page={page} cards={storyCards} />
+      <HomeTalentStoriesSection page={page} items={talentStories} />
       <HomePodcastSection page={page} episodes={podcastEpisodes} />
 
       <HomeTestimonialsSection page={page} items={testimonials} />

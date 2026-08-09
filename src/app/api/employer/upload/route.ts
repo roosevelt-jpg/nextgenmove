@@ -52,7 +52,9 @@ export async function POST(request: Request) {
 
     const contentType = String(file.type || "");
     const kind =
-      kindHint === "logo" || kindHint === "requirements"
+      kindHint === "logo" ||
+      kindHint === "requirements" ||
+      kindHint === "sprint_deliverable"
         ? kindHint
         : contentType.startsWith("image/")
           ? "logo"
@@ -72,7 +74,14 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const filename = sanitizeUploadFilename(
-      String(file.name || (kind === "logo" ? "logo.png" : "requirement.pdf")),
+      String(
+        file.name ||
+          (kind === "logo"
+            ? "logo.png"
+            : kind === "sprint_deliverable"
+              ? "sprint-deliverable.pdf"
+              : "requirement.pdf"),
+      ),
     );
     const path = `companies/${session.companyId}/${kind}/${Date.now()}-${filename}`;
 

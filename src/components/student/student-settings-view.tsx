@@ -44,12 +44,22 @@ export function StudentSettingsView({
     clientSecret: string;
     publishableKey: string;
   } | null>(null);
+  const [consentRecords, setConsentRecords] = useState<
+    Array<{
+      id: string;
+      source: string;
+      marketing: boolean;
+      createdAt: string | null;
+    }>
+  >([]);
+  const [exportBusy, setExportBusy] = useState(false);
 
   const loadAccount = useCallback(async () => {
-    const [accountRes, referralRes, topUpRes] = await Promise.all([
+    const [accountRes, referralRes, topUpRes, consentsRes] = await Promise.all([
       fetch("/api/student/account"),
       fetch("/api/student/referral"),
       fetch("/api/student/credits/top-up"),
+      fetch("/api/student/consents"),
     ]);
 
     if (accountRes.ok) {
@@ -84,6 +94,18 @@ export function StudentSettingsView({
         packages: { id: string; label: string; credits: number; priceEur: number }[];
       };
       setTopUpPackages(data.packages ?? []);
+    }
+
+    if (consentsRes.ok) {
+      const data = (await consentsRes.json()) as {
+        records: Array<{
+          id: string;
+          source: string;
+          marketing: boolean;
+          createdAt: string | null;
+        }>;
+      };
+      setConsentRecords(data.records ?? []);
     }
   }, [notificationKeys]);
 
@@ -154,6 +176,30 @@ export function StudentSettingsView({
 
     setIsDeactivating(false);
     setErrorCode("deactivate_failed");
+  };
+
+  const exportMyData = async () => {
+    setExportBusy(true);
+    setStatusMessage(null);
+    try {
+      const response = await fetch("/api/student/compliance/export", {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setStatusMessage(labels.exportFailed || "Could not export data.");
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "nextgenmove-student-export.json";
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setStatusMessage(labels.exportReady || "Export downloaded.");
+    } finally {
+      setExportBusy(false);
+    }
   };
 
   return (
@@ -423,6 +469,55 @@ export function StudentSettingsView({
         </form>
       ) : null}
 
+      <section className="space-y-3 rounded-radius border border-border bg-grad-card p-4">
+        <h2 className="font-serif text-xl text-text-primary">
+          {labels.privacyTitle || "Privacy & data"}
+        </h2>
+        <p className="text-sm text-text-secondary">
+          {labels.exportIntro ||
+            "Download a JSON copy of your profile, consents, unlocks, credits, evidence metadata, and move itineraries."}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={exportBusy}
+          onClick={() => void exportMyData()}
+        >
+          {exportBusy
+            ? labels.exporting || "Exporting…"
+            : labels.exportMyData || "Export my data"}
+        </Button>
+        <div className="space-y-2 pt-2">
+          <p className="font-mono text-[11px] uppercase tracking-wide text-text-label">
+            {labels.consentTimelineTitle || "Consent timeline"}
+          </p>
+          {consentRecords.length === 0 ? (
+            <p className="text-sm text-text-muted">
+              {labels.consentEmpty || "No consent records yet."}
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {consentRecords.map((record) => (
+                <li
+                  key={record.id}
+                  className="rounded-radius border border-border px-3 py-2 text-sm"
+                >
+                  <p className="text-text-primary">
+                    {record.source}
+                    {record.marketing ? " · marketing" : ""}
+                  </p>
+                  <p className="font-mono text-xs text-text-muted">
+                    {record.createdAt
+                      ? new Date(record.createdAt).toLocaleString()
+                      : "—"}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
       <section className="space-y-4 rounded-radius border border-border bg-grad-card p-5">
         {labels.dangerZoneTitle ? (
           <h2 className="font-serif text-xl text-text-primary">{labels.dangerZoneTitle}</h2>
@@ -434,7 +529,11 @@ export function StudentSettingsView({
           <Button variant="outline" disabled={isDeactivating} onClick={deactivateAccount}>
             {labels.deactivateAccount}
           </Button>
-        ) : null}
+        ) : (
+          <Button variant="outline" disabled={isDeactivating} onClick={deactivateAccount}>
+            Deactivate account
+          </Button>
+        )}
       </section>
     </div>
   );

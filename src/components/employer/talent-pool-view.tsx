@@ -48,6 +48,13 @@ interface BrowseRow {
   currentCity: string;
   skills: string[];
   matchScore: number;
+  matchBreakdown?: {
+    total: number;
+    skills: number;
+    location: number;
+    completeness: number;
+    reasons: string[];
+  };
 }
 
 export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProps) {
@@ -62,6 +69,9 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
   });
   const [isLoading, setIsLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [expandedBreakdownId, setExpandedBreakdownId] = useState<string | null>(
+    null,
+  );
 
   const loadRows = useCallback(async () => {
     setIsLoading(true);
@@ -379,10 +389,37 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
                           .join(" · ")}
                       </p>
                     </div>
-                    <span className="rounded-full bg-bg-purple px-2 py-0.5 font-mono text-[10px] text-text-label">
+                    <button
+                      type="button"
+                      className="rounded-full bg-bg-purple px-2 py-0.5 font-mono text-[10px] text-text-label"
+                      title={
+                        row.matchBreakdown?.reasons?.join(" · ") ??
+                        undefined
+                      }
+                      onClick={() =>
+                        setExpandedBreakdownId((prev) =>
+                          prev === row.studentId ? null : row.studentId,
+                        )
+                      }
+                    >
                       {row.matchScore}%
-                    </span>
+                    </button>
                   </div>
+                  {expandedBreakdownId === row.studentId &&
+                  row.matchBreakdown ? (
+                    <div className="mt-2 space-y-1 rounded-radius-sm border border-border bg-surface-2 px-2 py-2 text-[11px] text-text-secondary">
+                      <p>
+                        Skills {row.matchBreakdown.skills} · Location{" "}
+                        {row.matchBreakdown.location} · Completeness{" "}
+                        {row.matchBreakdown.completeness}
+                      </p>
+                      <ul className="list-inside list-disc space-y-0.5">
+                        {row.matchBreakdown.reasons.map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                   {row.skills.length ? (
                     <ul className="mt-2 flex flex-wrap gap-1">
                       {row.skills.map((skill) => (

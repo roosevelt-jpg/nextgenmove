@@ -147,16 +147,62 @@ export interface PageHomeDocument {
   testimonialsRatingLabel?: string;
   testimonialsPhotoLabel?: string;
   testimonialsNameLabel?: string;
+  testimonialsVerifiedLabel?: string;
   testimonialsSlider?: Pick<
     RoutesMarqueeSettings,
     "speedSec" | "pauseOnHover" | "enabled" | "direction"
   >;
+  /** Corridor intelligence strip (aggregate skills / cities / nationalities) */
+  corridorIntelEyebrow?: string;
+  corridorIntelHeadline?: string;
+  corridorIntelSubtext?: string;
+  corridorIntelSkillsLabel?: string;
+  corridorIntelCitiesLabel?: string;
+  corridorIntelNationalitiesLabel?: string;
+  corridorIntelEmptyText?: string;
+  /** Public talent stories (opt-in quotes from placed students) */
+  talentStoriesEyebrow?: string;
+  talentStoriesHeadline?: string;
+  talentStoriesSubtext?: string;
+  talentStoriesManagedLabel?: string;
+  talentStoriesEmptyText?: string;
+  talentStoriesViewAllLabel?: string;
+  talentStoriesViewAllHref?: string;
   talentCta?: AudienceCtaBand;
   companyCta?: AudienceCtaBand;
   /** Third homepage audience CTA (e.g. open roles) */
   rolesCta?: AudienceCtaBand;
   statBlocks?: StatBlock[];
   steps?: StepItem[];
+}
+
+export interface VisaPathStep {
+  title: string;
+  days: number;
+  evidenceKinds: string[];
+}
+
+export interface VisaPathCorridor {
+  id: string;
+  label: string;
+  steps: VisaPathStep[];
+}
+
+export interface PageVisaPathDocument {
+  id?: string;
+  eyebrow?: string;
+  headline?: string;
+  subtext?: string;
+  selectCorridorLabel?: string;
+  timelineLabel?: string;
+  evidenceLabel?: string;
+  missingEvidenceLabel?: string;
+  presentEvidenceLabel?: string;
+  signInPrompt?: string;
+  signInCta?: string;
+  totalDaysLabel?: string;
+  emptyCorridorsText?: string;
+  corridors?: VisaPathCorridor[];
 }
 
 export interface VideoCardDocument {
@@ -188,9 +234,36 @@ export interface TestimonialDocument {
   rating: number;
   photo: StorageFileRef | null;
   status: TestimonialStatus;
+  videoUrl?: string | null;
+  youtubeVideoId?: string | null;
+  tags?: string[];
+  verifiedPlacement?: boolean;
+  /** Schedule metadata — public loaders require publishAt <= now when set. */
+  publishAt?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
   publishedAt?: string | null;
+  updatedBy?: string | null;
+  reviewedBy?: string | null;
+}
+
+export type TalentStoryStatus = "pending" | "published" | "rejected";
+
+export interface TalentStoryDocument {
+  id: string;
+  studentId: string;
+  quote: string;
+  photo: StorageFileRef | null;
+  youtubeVideoId?: string | null;
+  corridor?: string | null;
+  displayName?: string;
+  status: TalentStoryStatus;
+  /** Schedule metadata — public loaders require publishAt <= now when set. */
+  publishAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  publishedAt?: string | null;
+  updatedBy?: string | null;
   reviewedBy?: string | null;
 }
 
@@ -303,6 +376,10 @@ export interface CmsPageDocument {
   headline?: string;
   body?: string;
   status: "draft" | "published";
+  /** Schedule metadata — public loaders require publishAt <= now when set. */
+  publishAt?: string | null;
+  publishedAt?: string | null;
+  updatedBy?: string | null;
   /** @deprecated Prefer showInHeader */
   showInNav?: boolean;
   showInHeader?: boolean;
@@ -500,6 +577,8 @@ export interface CreditTopUpPackage {
   label: string;
   credits: number;
   priceEur: number;
+  /** When true, pack is offered on employer company-credit top-up (if dedicated list empty). */
+  companyCredits?: boolean;
 }
 
 export interface ProgramLeversDocument {
@@ -511,6 +590,8 @@ export interface ProgramLeversDocument {
   /** Notify students when wallet balance falls at or below this amount. */
   lowCreditThreshold: number;
   creditTopUpPackages: CreditTopUpPackage[];
+  /** Employer dual-commit / Move OS company credit packs. */
+  companyCreditTopUpPackages?: CreditTopUpPackage[];
   waysToEarn: WayToEarn[];
   updatedAt: string | null;
 }

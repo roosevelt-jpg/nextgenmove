@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AdminEntityModal } from "@/components/admin/admin-entity-modal";
 import type { AdminEntitySchema } from "@/lib/admin/entity-schemas";
 import type { TaxonomiesDocument } from "@/types/cms";
@@ -231,6 +232,14 @@ export function AdminEntityListView({
                 {labels.rejectJobAction || labels.reject || "Reject"}
               </Button>
             </>
+          ) : null}
+          {schema.collection === "cms_pages" ? (
+            <Link
+              href={`/admin/content/pages/preview/${String(row.id)}`}
+              className="inline-flex items-center rounded-radius px-2 py-1 text-xs text-text-label underline-offset-2 hover:underline"
+            >
+              {labels.preview ?? "Preview"}
+            </Link>
           ) : null}
           <Button
             size="xs"

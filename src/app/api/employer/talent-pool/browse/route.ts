@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { adminDb } from "@/lib/firebase-admin";
-import { computeMatchScore } from "@/lib/matching/score";
+import { computeMatchScore, scoreWithBreakdown } from "@/lib/matching/score";
 import { matchDocId } from "@/lib/matching/recompute";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { assertNotPreviewMode } from "@/lib/auth/portal-session";
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
         if (!haystack.includes(search)) continue;
       }
 
-      const matchScore = computeMatchScore({
+      const breakdown = scoreWithBreakdown({
         student: {
           fullName: student.fullName ?? "",
           sector: student.sector ?? "",
@@ -89,6 +89,7 @@ export async function GET(request: Request) {
           requirementTags: session.company.requirementTags ?? [],
         },
       });
+      const matchScore = breakdown.total;
 
       const projected = projectStudentForEmployer(
         { id: doc.id, ...student },
@@ -106,6 +107,13 @@ export async function GET(request: Request) {
         currentCity: projected.currentCity,
         skills: projected.skills.slice(0, 3),
         matchScore,
+        matchBreakdown: {
+          total: breakdown.total,
+          skills: breakdown.skills,
+          location: breakdown.location,
+          completeness: breakdown.completeness,
+          reasons: breakdown.reasons,
+        },
         candidateLabel: anonymizedDisplayName(doc.id),
       });
     }

@@ -3,9 +3,16 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import {
   generateGeminiReply,
+  generateGeminiReplyWithTools,
   NGM_ASSISTANT_SYSTEM,
 } from "@/lib/ai/gemini";
 import { buildAssistantContext } from "@/lib/ai/assistant-context";
+import {
+  ASSISTANT_TOOL_DECLARATIONS,
+  canUseAssistantTools,
+  executeAssistantTool,
+  runToolsFromIntentKeywords,
+} from "@/lib/ai/assistant-tools";
 
 const schema = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -29,12 +36,44 @@ export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
     const context = await buildAssistantContext();
-    const reply = await generateGeminiReply({
-      system: `${NGM_ASSISTANT_SYSTEM}\nCaller role: ${user.role}.\n\n${context}`,
-      userMessage: body.message,
-      history: body.history,
-    });
-    return NextResponse.json({ reply });
+    const toolsEnabled = canUseAssistantTools(user.role);
+
+    let toolContext = "";
+    if (toolsEnabled) {
+      try {
+        toolContext = (await runToolsFromIntentKeywords(body.message)) ?? "";
+      } catch (error) {
+        console.error("assistant_tool_intent_failed", error);
+      }
+    }
+
+    const system = [
+      NGM_ASSISTANT_SYSTEM,
+      `Caller role: ${user.role}.`,
+      toolsEnabled
+        ? "Admin tools are available. Use them for live ops queues; never invent queue counts."
+        : "No admin tools. Do not claim access to internal queues.",
+      context,
+      toolContext,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const reply = toolsEnabled
+      ? await generateGeminiReplyWithTools({
+          system,
+          userMessage: body.message,
+          history: body.history,
+          tools: ASSISTANT_TOOL_DECLARATIONS,
+          executeTool: executeAssistantTool,
+        })
+      : await generateGeminiReply({
+          system,
+          userMessage: body.message,
+          history: body.history,
+        });
+
+    return NextResponse.json({ reply, toolsEnabled });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

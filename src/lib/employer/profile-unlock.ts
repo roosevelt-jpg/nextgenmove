@@ -9,6 +9,7 @@ import { notifyAdminsOfPending } from "@/lib/email/notify-admins";
 import { notifyProfileUnlocked } from "@/lib/email/notify";
 import { anonymizedDisplayName } from "@/lib/employer/student-visibility";
 import type { UnlockRequestStatus } from "@/lib/employer/student-visibility";
+import { logPiiAccess } from "@/lib/security/pii-access-log";
 
 export const PROFILE_UNLOCK_TYPE = "profile_unlock";
 
@@ -277,6 +278,18 @@ export async function approveProfileUnlock(options: {
     );
 
   await upsertMatchAccess(companyId, studentId);
+
+  void logPiiAccess({
+    actorUid: options.adminUid,
+    studentId,
+    action: "unlock_approve",
+    meta: {
+      requestId: options.requestId,
+      companyId,
+      matchId,
+      note: options.note ?? null,
+    },
+  });
 
   await reqSnap.ref.update(
     stripUndefined({

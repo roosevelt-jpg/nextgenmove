@@ -95,10 +95,16 @@ export async function POST(
     const ref = adminDb.collection(collection).doc();
 
     const { id: _bodyId, createdAt: _c, updatedAt: _u, ...rest } = body;
+    const cmsCollections = new Set([
+      "cms_pages",
+      "testimonials",
+      "talent_stories",
+    ]);
     await ref.set({
       ...stripUndefined({
         id: ref.id,
         ...rest,
+        ...(cmsCollections.has(collection) ? { updatedBy: session.uid } : {}),
       }),
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

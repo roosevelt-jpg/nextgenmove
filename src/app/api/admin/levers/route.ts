@@ -59,6 +59,7 @@ const packageSchema = z.object({
   label: optionalString,
   credits: finiteNumber,
   priceEur: finiteNumber,
+  companyCredits: z.boolean().optional(),
 });
 
 const patchSchema = z.object({
@@ -69,6 +70,7 @@ const patchSchema = z.object({
   creditsPerEuro: finiteNumber.optional(),
   lowCreditThreshold: finiteNumber.optional(),
   creditTopUpPackages: z.array(packageSchema).optional(),
+  companyCreditTopUpPackages: z.array(packageSchema).optional(),
   waysToEarn: z.array(waySchema).optional(),
 });
 
@@ -122,6 +124,7 @@ export async function PATCH(request: Request) {
         creditsPerEuro: data.creditsPerEuro ?? 4,
         lowCreditThreshold: Number(data.lowCreditThreshold ?? 50) || 50,
         creditTopUpPackages: data.creditTopUpPackages ?? [],
+        companyCreditTopUpPackages: data.companyCreditTopUpPackages ?? [],
         waysToEarn: data.waysToEarn ?? [],
         updatedAt: serializeTimestamp(data.updatedAt),
       },

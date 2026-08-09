@@ -9,6 +9,7 @@ export function StudentEvidenceView() {
   const [readiness, setReadiness] = useState<StudentReadiness | null>(null);
   const [kind, setKind] = useState<(typeof EVIDENCE_KINDS)[number]>("passport");
   const [label, setLabel] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -57,6 +58,9 @@ export function StudentEvidenceView() {
         body: JSON.stringify({
           kind,
           label: label.trim() || kind.replaceAll("_", " "),
+          expiresAt: expiresAt
+            ? new Date(expiresAt).toISOString()
+            : null,
           file: {
             url: uploadPayload.url,
             path: uploadPayload.path,
@@ -72,6 +76,7 @@ export function StudentEvidenceView() {
         return;
       }
       setLabel("");
+      setExpiresAt("");
       await load();
       setMessage("Evidence submitted for verification.");
     } finally {
@@ -133,6 +138,15 @@ export function StudentEvidenceView() {
             placeholder="Passport bio page"
           />
         </label>
+        <label className="block space-y-1 text-sm">
+          <span className="text-text-label">Expires (optional)</span>
+          <input
+            type="date"
+            className="w-full rounded-radius-sm border border-border bg-surface-1 px-3 py-2"
+            value={expiresAt}
+            onChange={(e) => setExpiresAt(e.target.value)}
+          />
+        </label>
         <input
           type="file"
           disabled={busy}
@@ -158,6 +172,9 @@ export function StudentEvidenceView() {
                 <p className="font-medium text-text-primary">{item.label}</p>
                 <p className="text-xs text-text-muted">
                   {item.kind} · {item.status}
+                  {item.expiresAt
+                    ? ` · expires ${new Date(item.expiresAt).toLocaleDateString()}`
+                    : ""}
                 </p>
               </div>
               {item.file?.url ? (

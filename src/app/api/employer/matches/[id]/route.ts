@@ -15,16 +15,51 @@ import {
   projectStudentForEmployer,
 } from "@/lib/employer/student-visibility";
 import { getUnlockRequestStatus } from "@/lib/employer/profile-unlock";
+import { logPiiAccess } from "@/lib/security/pii-access-log";
 
 const patchSchema = z.object({
   shortlisted: z.boolean().optional(),
   stageId: z.string().min(1).optional(),
-  action: z.enum(["hire", "reject", "schedule_interview"]).optional(),
+  action: z
+    .enum(["hire", "reject", "schedule_interview", "submit_scorecard"])
+    .optional(),
   interviewAt: z.string().datetime().optional(),
   applicationStatus: z
     .enum(["pending", "interviewing", "hired", "rejected"])
     .optional(),
+  scorecard: z
+    .object({
+      criteria: z
+        .array(
+          z.object({
+            label: z.string().trim().min(1).max(120),
+            score: z.number().int().min(1).max(5),
+          }),
+        )
+        .min(1)
+        .max(12),
+      notes: z.string().trim().max(2000).optional().nullable(),
+      recommendation: z.enum(["advance", "hold", "reject"]),
+    })
+    .optional(),
 });
+
+function serializeInterviewAt(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { toDate?: () => Date }).toDate === "function"
+  ) {
+    try {
+      return (value as { toDate: () => Date }).toDate().toISOString();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 export async function GET(
   _request: Request,
@@ -77,6 +112,19 @@ export async function GET(
     },
   );
 
+  if (identityUnlocked) {
+    void logPiiAccess({
+      actorUid: session.user.uid,
+      studentId,
+      action: "unlock_view",
+      meta: {
+        matchId: id,
+        companyId: session.companyId,
+        route: "employer_match_get",
+      },
+    });
+  }
+
   return NextResponse.json({
     match: {
       id,
@@ -86,6 +134,11 @@ export async function GET(
       identityUnlocked,
       unlockRequestStatus: projected.unlockRequestStatus,
       notes: match.notes ?? [],
+      interviewAt: serializeInterviewAt(match.interviewAt),
+      applicationStatus: match.applicationStatus
+        ? String(match.applicationStatus)
+        : null,
+      interviewScorecard: match.interviewScorecard ?? null,
     },
     student: {
       id: projected.id,
@@ -139,15 +192,98 @@ export async function PATCH(
     }
 
     const identityUnlocked = isMatchIdentityUnlocked(match);
-    // Interview / hire require NGM-approved identity unlock (server-enforced).
+    // Interview / hire / scorecard require NGM-approved identity unlock (server-enforced).
     if (
-      (body.action === "hire" || body.action === "schedule_interview") &&
+      (body.action === "hire" ||
+        body.action === "schedule_interview" ||
+        body.action === "submit_scorecard") &&
       !identityUnlocked
     ) {
       return NextResponse.json(
         { error: "identity_locked" },
         { status: 403 },
       );
+    }
+
+    if (body.action === "submit_scorecard") {
+      if (!body.scorecard) {
+        return NextResponse.json({ error: "scorecard_required" }, { status: 400 });
+      }
+      if (!match.interviewAt && match.applicationStatus !== "interviewing") {
+        return NextResponse.json(
+          { error: "interview_not_scheduled" },
+          { status: 400 },
+        );
+      }
+
+      const interviewScorecard = stripUndefined({
+        criteria: body.scorecard.criteria,
+        notes: body.scorecard.notes ?? null,
+        recommendation: body.scorecard.recommendation,
+        submittedAt: new Date().toISOString(),
+        submittedBy: session.user.uid,
+      });
+
+      const stages = await adminDb.collection("pipeline_stages").get();
+      const stageDocs = stages.docs.map((d) => ({
+        id: d.id,
+        name: String(d.data()?.name ?? ""),
+        isTerminal: Boolean(d.data()?.isTerminal),
+      }));
+
+      let suggestedStageId: string | null = null;
+      let suggestedStageName: string | null = null;
+      if (body.scorecard.recommendation === "advance") {
+        const offer = stageDocs.find((s) =>
+          /offer|advance|hired|placed/i.test(s.name),
+        );
+        if (offer) {
+          suggestedStageId = offer.id;
+          suggestedStageName = offer.name;
+        }
+      } else if (body.scorecard.recommendation === "reject") {
+        const rejected = stageDocs.find((s) => /reject|declin/i.test(s.name));
+        if (rejected) {
+          suggestedStageId = rejected.id;
+          suggestedStageName = rejected.name || "Rejected";
+        } else {
+          suggestedStageName = "Rejected";
+        }
+      } else {
+        suggestedStageName = "Hold";
+      }
+
+      await adminDb
+        .collection("matches")
+        .doc(id)
+        .update(
+          stripUndefined({
+            interviewScorecard,
+            updatedAt: FieldValue.serverTimestamp(),
+          }),
+        );
+
+      const { notifyMatchUpdate } = await import("@/lib/email/notify");
+      void notifyMatchUpdate({
+        studentId: String(match.studentId),
+        stageName: "Interview update",
+      });
+
+      const { createNotification } = await import("@/lib/notifications/create");
+      void createNotification({
+        userId: String(match.studentId),
+        type: "match_update",
+        title: "Interview update",
+        body: "Your application has an interview update from the employer.",
+        link: "/student/applications",
+      });
+
+      return NextResponse.json({
+        ok: true,
+        interviewScorecard,
+        suggestedStageId,
+        suggestedStageName,
+      });
     }
 
     let stageIsTerminal = false;
@@ -238,6 +374,9 @@ export async function PATCH(
           ...(body.shortlisted !== undefined ? { shortlisted: body.shortlisted } : {}),
           ...(nextStageId ? { stageId: nextStageId } : {}),
           ...(applicationStatus ? { applicationStatus } : {}),
+          ...(body.action === "hire"
+            ? { hiredAt: FieldValue.serverTimestamp() }
+            : {}),
           ...(body.action === "schedule_interview" && body.interviewAt
             ? { interviewAt: new Date(body.interviewAt) }
             : {}),

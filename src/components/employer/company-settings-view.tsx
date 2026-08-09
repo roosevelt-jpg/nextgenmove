@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Input } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import type { CompanyDocument } from "@/lib/employer/session";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
+import { clearSession } from "@/lib/auth-client";
 
 export interface CompanySettingsViewProps {
   labels: Record<string, string>;
@@ -21,6 +22,8 @@ type CompanyDraft = {
   requirementTags: string;
   hiringNeeds: string;
   notificationPreferences: Record<string, boolean>;
+  autoTopUpThreshold: string;
+  autoTopUpPackId: string;
 };
 
 export function CompanySettingsView({
@@ -38,9 +41,16 @@ export function CompanySettingsView({
   const [notificationPreferences, setNotificationPreferences] = useState<
     Record<string, boolean>
   >({});
+  const [autoTopUpThreshold, setAutoTopUpThreshold] = useState("");
+  const [autoTopUpPackId, setAutoTopUpPackId] = useState("");
+  const [creditPacks, setCreditPacks] = useState<
+    Array<{ id: string; label: string; credits: number }>
+  >([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
   const suppressRef = useRef<(() => void) | null>(null);
 
   const draft = useMemo<CompanyDraft | null>(() => {
@@ -54,6 +64,8 @@ export function CompanySettingsView({
       requirementTags,
       hiringNeeds,
       notificationPreferences,
+      autoTopUpThreshold,
+      autoTopUpPackId,
     };
   }, [
     hydrated,
@@ -65,6 +77,8 @@ export function CompanySettingsView({
     requirementTags,
     hiringNeeds,
     notificationPreferences,
+    autoTopUpThreshold,
+    autoTopUpPackId,
   ]);
 
   const persistDraft = useCallback(
@@ -90,6 +104,11 @@ export function CompanySettingsView({
             .filter(Boolean),
           hiringNeeds: next.hiringNeeds.trim() || undefined,
           notificationPreferences: next.notificationPreferences,
+          autoTopUpThreshold:
+            next.autoTopUpThreshold.trim() === ""
+              ? null
+              : Number(next.autoTopUpThreshold),
+          autoTopUpPackId: next.autoTopUpPackId.trim() || null,
         }),
       });
       if (!response.ok) {
@@ -112,12 +131,15 @@ export function CompanySettingsView({
   }, [suppressNext]);
 
   const loadCompany = useCallback(async () => {
-    const response = await fetch("/api/employer/company");
-    if (!response.ok) {
+    const [companyRes, creditsRes] = await Promise.all([
+      fetch("/api/employer/company"),
+      fetch("/api/employer/credits/top-up"),
+    ]);
+    if (!companyRes.ok) {
       return;
     }
 
-    const data = (await response.json()) as { company: CompanyDocument };
+    const data = (await companyRes.json()) as { company: CompanyDocument };
     suppressRef.current?.();
     setCompany(data.company);
     setName(data.company.name);
@@ -127,6 +149,12 @@ export function CompanySettingsView({
     setPreferredLocations((data.company.preferredLocations ?? []).join(", "));
     setRequirementTags((data.company.requirementTags ?? []).join(", "));
     setHiringNeeds(data.company.hiringNeeds ?? "");
+    setAutoTopUpThreshold(
+      data.company.autoTopUpThreshold != null
+        ? String(data.company.autoTopUpThreshold)
+        : "",
+    );
+    setAutoTopUpPackId(data.company.autoTopUpPackId ?? "");
     const stored = data.company.notificationPreferences ?? {};
     const nextPrefs: Record<string, boolean> = {};
     for (const key of notificationKeys) {
@@ -135,6 +163,12 @@ export function CompanySettingsView({
         : true;
     }
     setNotificationPreferences(nextPrefs);
+    if (creditsRes.ok) {
+      const creditsPayload = (await creditsRes.json()) as {
+        packages?: Array<{ id: string; label: string; credits: number }>;
+      };
+      setCreditPacks(creditsPayload.packages ?? []);
+    }
     setHydrated(true);
   }, [notificationKeys]);
 
@@ -182,6 +216,7 @@ export function CompanySettingsView({
   }
 
   return (
+    <>
     <form className="max-w-xl space-y-4" onSubmit={saveSettings}>
       <Input
         id="settings-company-name"
@@ -230,6 +265,37 @@ export function CompanySettingsView({
         value={hiringNeeds}
         onChange={(event) => setHiringNeeds(event.target.value)}
       />
+      <div className="space-y-3 rounded-radius border border-border px-3 py-3">
+        <p className="font-mono text-[11px] uppercase tracking-wide text-text-label">
+          Auto top-up
+        </p>
+        <Input
+          id="settings-auto-topup-threshold"
+          type="number"
+          min={0}
+          label={labels.autoTopUpThreshold || "Auto top-up when credits fall below"}
+          value={autoTopUpThreshold}
+          onChange={(event) => setAutoTopUpThreshold(event.target.value)}
+          placeholder="e.g. 100"
+        />
+        <label className="block space-y-1 text-sm">
+          <span className="text-text-secondary">
+            {labels.autoTopUpPack || "Auto top-up pack"}
+          </span>
+          <select
+            className="w-full rounded-radius-sm border border-border bg-surface-1 px-2 py-1.5"
+            value={autoTopUpPackId}
+            onChange={(event) => setAutoTopUpPackId(event.target.value)}
+          >
+            <option value="">Off</option>
+            {creditPacks.map((pack) => (
+              <option key={pack.id} value={pack.id}>
+                {pack.label} · {pack.credits} credits
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <FileUpload
         storagePath={`companies/${company.id}/logo`}
         uploadEndpoint="/api/employer/upload"
@@ -295,5 +361,83 @@ export function CompanySettingsView({
         }}
       />
     </form>
+
+    <section className="mt-8 max-w-xl space-y-4 rounded-radius border border-border bg-grad-card p-5">
+      <h2 className="font-serif text-xl text-text-primary">
+        {labels.privacyTitle || "Privacy & data"}
+      </h2>
+      <p className="text-sm text-text-secondary">
+        {labels.exportIntro ||
+          "Download a JSON copy of your company profile, unlocks, credit ledger, and matches summary."}
+      </p>
+      <Button
+        type="button"
+        variant="outline"
+        disabled={exportBusy}
+        onClick={() => {
+          void (async () => {
+            setExportBusy(true);
+            setStatusMessage(null);
+            try {
+              const response = await fetch("/api/employer/compliance/export", {
+                cache: "no-store",
+              });
+              if (!response.ok) {
+                setStatusMessage(labels.exportFailed || "Could not export data.");
+                return;
+              }
+              const blob = await response.blob();
+              const url = URL.createObjectURL(blob);
+              const anchor = document.createElement("a");
+              anchor.href = url;
+              anchor.download = "nextgenmove-company-export.json";
+              anchor.click();
+              URL.revokeObjectURL(url);
+              setStatusMessage(labels.exportReady || "Export downloaded.");
+            } finally {
+              setExportBusy(false);
+            }
+          })();
+        }}
+      >
+        {exportBusy
+          ? labels.exporting || "Exporting…"
+          : labels.exportMyData || "Export my data"}
+      </Button>
+      <div className="space-y-2 border-t border-border pt-4">
+        <h3 className="font-serif text-lg text-text-primary">
+          {labels.dangerZoneTitle || "Deactivate account"}
+        </h3>
+        <p className="text-sm text-text-secondary">
+          {labels.deactivateDescription ||
+            "Anonymize company PII and suspend this account. This cannot be undone."}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isDeactivating}
+          onClick={() => {
+            void (async () => {
+              setIsDeactivating(true);
+              const response = await fetch("/api/employer/deactivate", {
+                method: "POST",
+              });
+              if (response.ok) {
+                await clearSession();
+                window.location.href = "/sign-in";
+                return;
+              }
+              setIsDeactivating(false);
+              setStatusMessage(
+                labels.deactivateFailed || "Could not deactivate account.",
+              );
+            })();
+          }}
+        >
+          {labels.deactivateAccount || "Deactivate account"}
+        </Button>
+      </div>
+    </section>
+    </>
   );
 }

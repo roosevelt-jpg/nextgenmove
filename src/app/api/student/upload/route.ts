@@ -44,7 +44,10 @@ export async function POST(request: Request) {
     const kindHint = String(form.get("kind") || "");
     const contentType = String(file.type || "");
     const kind =
-      kindHint === "cv" || kindHint === "photo" || kindHint === "document"
+      kindHint === "cv" ||
+      kindHint === "photo" ||
+      kindHint === "document" ||
+      kindHint === "sprint_deliverable"
         ? kindHint
         : contentType.startsWith("image/")
           ? "photo"
@@ -52,6 +55,17 @@ export async function POST(request: Request) {
 
     if (kind === "photo") {
       if (!contentType.startsWith("image/")) {
+        return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
+      }
+    } else if (kind === "sprint_deliverable") {
+      const allowed = new Set([
+        ...ALLOWED_CV_TYPES,
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "text/plain",
+      ]);
+      if (!allowed.has(contentType)) {
         return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
       }
     } else if (!ALLOWED_CV_TYPES.has(contentType)) {
@@ -67,7 +81,13 @@ export async function POST(request: Request) {
     const filename = sanitizeUploadFilename(
       String(
         file.name ||
-          (kind === "photo" ? "photo.jpg" : kind === "document" ? "evidence.pdf" : "cv.pdf"),
+          (kind === "photo"
+            ? "photo.jpg"
+            : kind === "document"
+              ? "evidence.pdf"
+              : kind === "sprint_deliverable"
+                ? "sprint-deliverable.pdf"
+                : "cv.pdf"),
       ),
     );
     const path = `students/${session.studentId}/${kind}/${Date.now()}-${filename}`;

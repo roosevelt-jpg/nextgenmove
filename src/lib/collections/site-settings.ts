@@ -10,6 +10,7 @@ import { isCmsPageInFooter, isCmsPageInHeader } from "@/lib/public/nav";
 import { cachedPublicCms } from "@/lib/public/cms-cache";
 import { FALLBACK_SITE_SETTINGS } from "@/lib/public/cms-fallbacks";
 import { serializeForClient } from "@/lib/firestore-utils";
+import { isPubliclyPublished } from "@/lib/cms/publish-visibility";
 
 /** Normalize legacy Record socialLinks and array form into SocialLink[]. */
 export function normalizeSocialLinks(raw: unknown): SocialLink[] {
@@ -69,6 +70,16 @@ export const getSiteSettings = cache(async () =>
   }),
 );
 
+function mapCmsPage(
+  id: string,
+  data: FirebaseFirestore.DocumentData,
+): CmsPageDocument {
+  return serializeForClient({
+    id,
+    ...(data as Omit<CmsPageDocument, "id">),
+  });
+}
+
 export async function getPublishedCmsPageBySlug(
   slug: string,
 ): Promise<CmsPageDocument | null> {
@@ -82,10 +93,40 @@ export async function getPublishedCmsPageBySlug(
 
     const doc = snapshot.docs[0];
     if (!doc) return null;
-    return serializeForClient({
-      id: doc.id,
-      ...(doc.data() as Omit<CmsPageDocument, "id">),
-    });
+    const page = mapCmsPage(doc.id, doc.data());
+    if (!isPubliclyPublished(page)) return null;
+    return page;
+  } catch {
+    return null;
+  }
+}
+
+/** Admin preview: load any cms_pages doc by id (draft or scheduled). */
+export async function getCmsPageById(
+  id: string,
+): Promise<CmsPageDocument | null> {
+  try {
+    const snap = await adminDb.collection("cms_pages").doc(id).get();
+    if (!snap.exists) return null;
+    return mapCmsPage(snap.id, snap.data()!);
+  } catch {
+    return null;
+  }
+}
+
+/** Admin preview by slug — includes drafts / future publishAt. */
+export async function getCmsPageBySlugForPreview(
+  slug: string,
+): Promise<CmsPageDocument | null> {
+  try {
+    const snapshot = await adminDb
+      .collection("cms_pages")
+      .where("slug", "==", slug)
+      .limit(1)
+      .get();
+    const doc = snapshot.docs[0];
+    if (!doc) return null;
+    return mapCmsPage(doc.id, doc.data());
   } catch {
     return null;
   }
@@ -97,12 +138,9 @@ async function loadPublishedCmsPages(): Promise<CmsPageDocument[]> {
     .where("status", "==", "published")
     .get();
 
-  return snapshot.docs.map((doc) =>
-    serializeForClient({
-      id: doc.id,
-      ...(doc.data() as Omit<CmsPageDocument, "id">),
-    }),
-  );
+  return snapshot.docs
+    .map((doc) => mapCmsPage(doc.id, doc.data()))
+    .filter((page) => isPubliclyPublished(page));
 }
 
 const listPublishedCmsPages = cache(async () =>

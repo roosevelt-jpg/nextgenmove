@@ -9,6 +9,10 @@ import {
   initialsFromName,
 } from "@/lib/avatar-hue";
 import { resolveStorageUrl } from "@/lib/storage/file-ref";
+import {
+  parseYoutubeVideoId,
+  youtubeEmbedUrl,
+} from "@/lib/media/youtube";
 import styles from "./home-testimonials-section.module.css";
 
 function buildLoop(items: TestimonialDocument[]): TestimonialDocument[] {
@@ -64,7 +68,19 @@ function Avatar({
   );
 }
 
-function TestimonialCard({ item }: { item: TestimonialDocument }) {
+function TestimonialCard({
+  item,
+  verifiedLabel,
+}: {
+  item: TestimonialDocument;
+  verifiedLabel?: string;
+}) {
+  const videoId = item.youtubeVideoId
+    ? parseYoutubeVideoId(item.youtubeVideoId) || item.youtubeVideoId
+    : item.videoUrl
+      ? parseYoutubeVideoId(item.videoUrl)
+      : null;
+
   return (
     <article className={styles.card}>
       <div className={styles.cardTop}>
@@ -75,9 +91,37 @@ function TestimonialCard({ item }: { item: TestimonialDocument }) {
             <p className={styles.role}>{item.roleLabel}</p>
           ) : null}
           <Stars rating={item.rating} />
+          {item.verifiedPlacement && verifiedLabel ? (
+            <p className="mt-1 font-mono text-[10px] uppercase text-text-success">
+              {verifiedLabel}
+            </p>
+          ) : null}
         </div>
       </div>
       <p className={styles.quote}>“{item.quote}”</p>
+      {item.tags && item.tags.length > 0 ? (
+        <ul className="mt-2 flex flex-wrap gap-1">
+          {item.tags.map((tag) => (
+            <li
+              key={tag}
+              className="rounded-radius-sm bg-bg-purple px-1.5 py-0.5 font-mono text-[9px] uppercase text-fill-accent"
+            >
+              {tag}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {videoId ? (
+        <div className="mt-3 aspect-video overflow-hidden rounded-radius-sm border border-border">
+          <iframe
+            title={`${item.displayName} testimonial`}
+            src={youtubeEmbedUrl(videoId)}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -212,6 +256,7 @@ export function HomeTestimonialsSection({
                 <TestimonialCard
                   key={`${item.id}-${index}`}
                   item={item}
+                  verifiedLabel={page.testimonialsVerifiedLabel}
                 />
               ))}
             </div>

@@ -30,6 +30,9 @@ export interface CompanyDocument {
   preferredLocations?: string[];
   requirementTags?: string[];
   notificationPreferences?: Record<string, boolean>;
+  credits?: number;
+  autoTopUpThreshold?: number | null;
+  autoTopUpPackId?: string | null;
   createdAt: unknown;
 }
 
@@ -120,6 +123,12 @@ export async function getEmployerSession(): Promise<EmployerSession | null> {
           preferredLocations: data.preferredLocations ?? [],
           requirementTags: data.requirementTags ?? [],
           notificationPreferences: data.notificationPreferences ?? {},
+          credits: Number(data.credits ?? 0),
+          autoTopUpThreshold:
+            data.autoTopUpThreshold == null
+              ? null
+              : Number(data.autoTopUpThreshold),
+          autoTopUpPackId: data.autoTopUpPackId ?? null,
           createdAt: data.createdAt,
         },
         mode,

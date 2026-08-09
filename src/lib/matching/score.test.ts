@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeMatchScore } from "@/lib/matching/score";
+import { computeMatchScore, scoreWithBreakdown } from "@/lib/matching/score";
 
 const baseStudent = {
   skills: ["typescript", "react"],
@@ -47,5 +47,25 @@ describe("computeMatchScore", () => {
     });
 
     expect(score).toBeLessThan(50);
+  });
+});
+
+describe("scoreWithBreakdown", () => {
+  it("returns component scores and reasons", () => {
+    const inputs = {
+      student: baseStudent,
+      company: {
+        industry: "Engineering",
+        preferredLocations: ["dubai"],
+        requirementTags: ["typescript", "react"],
+      },
+    };
+    const breakdown = scoreWithBreakdown(inputs);
+
+    expect(breakdown.total).toBe(computeMatchScore(inputs));
+    expect(breakdown.skills).toBeGreaterThan(0);
+    expect(breakdown.location).toBeGreaterThan(0);
+    expect(breakdown.completeness).toBeGreaterThan(0);
+    expect(breakdown.reasons.length).toBeGreaterThanOrEqual(2);
   });
 });

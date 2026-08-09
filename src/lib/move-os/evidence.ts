@@ -15,13 +15,30 @@ function isoNow() {
   return new Date().toISOString();
 }
 
+const INACTIVE_EVIDENCE_STATUSES = new Set<EvidenceStatus>([
+  "archived",
+  "superseded",
+  "expired",
+  "rejected",
+]);
+
+function isActiveVerified(
+  item: Pick<EvidenceItem, "kind" | "status" | "expiresAt">,
+  nowIso: string,
+): boolean {
+  if (item.status !== "verified") return false;
+  if (item.expiresAt && item.expiresAt <= nowIso) return false;
+  return true;
+}
+
 export function computeReadiness(
-  items: Array<Pick<EvidenceItem, "kind" | "status">>,
+  items: Array<Pick<EvidenceItem, "kind" | "status" | "expiresAt">>,
   levers: Awaited<ReturnType<typeof getMoveOsLevers>>,
 ): StudentReadiness {
+  const nowIso = isoNow();
   const verifiedKinds = new Set(
     items
-      .filter((item) => item.status === "verified")
+      .filter((item) => isActiveVerified(item, nowIso))
       .map((item) => item.kind),
   );
 
@@ -112,6 +129,8 @@ export async function recomputeAndPersistStudentReadiness(
         dubaiReadyScore: next.score,
         benchStatus: next.benchStatus,
         readinessUpdatedAt: FieldValue.serverTimestamp(),
+        missingKinds: next.missingKinds,
+        verifiedKinds: next.verifiedKinds,
         readinessMissingKinds: next.missingKinds,
       }),
       { merge: true },
@@ -119,14 +138,54 @@ export async function recomputeAndPersistStudentReadiness(
   return next;
 }
 
+/** Alias used by Phase 2 call sites. */
+export const recomputeStudentReadiness = recomputeAndPersistStudentReadiness;
+
+async function supersedePriorEvidenceOfKind(
+  studentId: string,
+  kind: EvidenceKind,
+  exceptId?: string,
+): Promise<void> {
+  const snap = await adminDb
+    .collection("evidence_items")
+    .where("studentId", "==", studentId)
+    .where("kind", "==", kind)
+    .get();
+  const now = isoNow();
+  const batch = adminDb.batch();
+  let writes = 0;
+  for (const doc of snap.docs) {
+    if (exceptId && doc.id === exceptId) continue;
+    const status = String(doc.data().status ?? "") as EvidenceStatus;
+    if (INACTIVE_EVIDENCE_STATUSES.has(status)) continue;
+    batch.set(
+      doc.ref,
+      stripUndefined({
+        status: "superseded" as EvidenceStatus,
+        updatedAt: now,
+      }),
+      { merge: true },
+    );
+    writes += 1;
+  }
+  if (writes > 0) await batch.commit();
+}
+
 export async function createEvidenceItem(input: {
   studentId: string;
   kind: EvidenceKind;
   label: string;
   file: StorageFileRef;
+  expiresAt?: string | null;
 }): Promise<EvidenceItem> {
+  await supersedePriorEvidenceOfKind(input.studentId, input.kind);
+
   const ref = adminDb.collection("evidence_items").doc();
   const now = isoNow();
+  const expiresAt =
+    input.expiresAt && !Number.isNaN(Date.parse(input.expiresAt))
+      ? new Date(input.expiresAt).toISOString()
+      : null;
   const doc = stripUndefined({
     id: ref.id,
     studentId: input.studentId,
@@ -137,7 +196,7 @@ export async function createEvidenceItem(input: {
     notes: null,
     verifiedBy: null,
     verifiedAt: null,
-    expiresAt: null,
+    expiresAt,
     createdAt: now,
     updatedAt: now,
   });
@@ -146,23 +205,79 @@ export async function createEvidenceItem(input: {
   return doc as EvidenceItem;
 }
 
-export async function setEvidenceStatus(input: {
+export async function updateEvidenceItem(input: {
   evidenceId: string;
-  status: EvidenceStatus;
-  adminId: string;
-  notes?: string | null;
+  expiresAt?: string | null;
+  label?: string;
+  file?: StorageFileRef;
 }): Promise<EvidenceItem> {
   const ref = adminDb.collection("evidence_items").doc(input.evidenceId);
   const snap = await ref.get();
   if (!snap.exists) throw new Error("evidence_not_found");
   const data = snap.data() as EvidenceItem;
   const now = isoNow();
+
+  let expiresAt: string | null | undefined = undefined;
+  if (input.expiresAt !== undefined) {
+    expiresAt =
+      input.expiresAt && !Number.isNaN(Date.parse(input.expiresAt))
+        ? new Date(input.expiresAt).toISOString()
+        : null;
+  }
+
+  const patch = stripUndefined({
+    label: input.label,
+    file: input.file,
+    expiresAt,
+    updatedAt: now,
+  });
+  await ref.set(patch, { merge: true });
+  await recomputeAndPersistStudentReadiness(data.studentId);
+  return {
+    id: data.id,
+    studentId: data.studentId,
+    kind: data.kind,
+    label: input.label ?? data.label,
+    file: input.file ?? data.file,
+    status: data.status,
+    notes: data.notes ?? null,
+    verifiedBy: data.verifiedBy ?? null,
+    verifiedAt: data.verifiedAt ?? null,
+    expiresAt:
+      expiresAt !== undefined ? expiresAt : (data.expiresAt ?? null),
+    createdAt: data.createdAt ?? null,
+    updatedAt: now,
+  };
+}
+
+export async function setEvidenceStatus(input: {
+  evidenceId: string;
+  status: EvidenceStatus;
+  adminId: string;
+  notes?: string | null;
+  expiresAt?: string | null;
+}): Promise<EvidenceItem> {
+  const ref = adminDb.collection("evidence_items").doc(input.evidenceId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new Error("evidence_not_found");
+  const data = snap.data() as EvidenceItem;
+  const now = isoNow();
+
+  let expiresAt: string | null | undefined = undefined;
+  if (input.expiresAt !== undefined) {
+    expiresAt =
+      input.expiresAt && !Number.isNaN(Date.parse(input.expiresAt))
+        ? new Date(input.expiresAt).toISOString()
+        : null;
+  }
+
   await ref.set(
     stripUndefined({
       status: input.status,
       notes: input.notes ?? data.notes ?? null,
       verifiedBy: input.status === "verified" ? input.adminId : data.verifiedBy,
       verifiedAt: input.status === "verified" ? now : data.verifiedAt,
+      expiresAt,
       updatedAt: now,
     }),
     { merge: true },
@@ -174,6 +289,8 @@ export async function setEvidenceStatus(input: {
     notes: input.notes ?? data.notes ?? null,
     verifiedBy: input.status === "verified" ? input.adminId : data.verifiedBy,
     verifiedAt: input.status === "verified" ? now : data.verifiedAt,
+    expiresAt:
+      expiresAt !== undefined ? expiresAt : (data.expiresAt ?? null),
     updatedAt: now,
   };
 }

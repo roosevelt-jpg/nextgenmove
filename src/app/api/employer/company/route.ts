@@ -42,6 +42,8 @@ const patchSchema = z.object({
   requirementTags: z.array(z.string().trim().min(1)).max(40).optional(),
   hiringNeeds: z.string().trim().max(2000).optional(),
   notificationPreferences: z.record(z.string(), z.boolean()).optional(),
+  autoTopUpThreshold: z.number().int().min(0).max(1_000_000).nullable().optional(),
+  autoTopUpPackId: z.string().trim().max(80).nullable().optional(),
   requirements: z
     .array(
       z.object({

@@ -10,6 +10,7 @@ import type {
   PageHowItWorksDocument,
   PagePricingDocument,
   PageTracksDocument,
+  PageVisaPathDocument,
   ProgramLeversDocument,
   PublicRoleDocument,
   PodcastEpisodeDocument,
@@ -173,6 +174,20 @@ export async function getPageHowItWorks(): Promise<PageHowItWorksDocument | null
   }
 }
 
+export async function getPageVisaPath(): Promise<PageVisaPathDocument | null> {
+  try {
+    const snapshot = await adminDb
+      .collection("page_visa_path")
+      .doc("default")
+      .get();
+    const data = snapshot.data() as PageVisaPathDocument | undefined;
+    if (!data) return null;
+    return serializeForClient(data) as PageVisaPathDocument;
+  } catch {
+    return null;
+  }
+}
+
 export async function getPagePricing(): Promise<PagePricingDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_pricing").doc("default").get();
@@ -212,6 +227,7 @@ export async function getProgramLevers(): Promise<ProgramLeversDocument | null> 
       creditsPerEuro: data.creditsPerEuro ?? 4,
       lowCreditThreshold: Number(data.lowCreditThreshold ?? 50) || 50,
       creditTopUpPackages: data.creditTopUpPackages ?? [],
+      companyCreditTopUpPackages: data.companyCreditTopUpPackages ?? [],
       waysToEarn: data.waysToEarn ?? [],
       updatedAt: serializeTimestamp(data.updatedAt),
     };
@@ -234,6 +250,29 @@ export function defaultProgramLevers(): ProgramLeversDocument {
       { id: "pack_400", label: "Starter pack", credits: 400, priceEur: 100 },
       { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },
       { id: "pack_1600", label: "Premium pack", credits: 1600, priceEur: 400 },
+    ],
+    companyCreditTopUpPackages: [
+      {
+        id: "company_pack_200",
+        label: "Bench starter",
+        credits: 200,
+        priceEur: 250,
+        companyCredits: true,
+      },
+      {
+        id: "company_pack_500",
+        label: "Commit pack",
+        credits: 500,
+        priceEur: 550,
+        companyCredits: true,
+      },
+      {
+        id: "company_pack_1000",
+        label: "Scale pack",
+        credits: 1000,
+        priceEur: 1000,
+        companyCredits: true,
+      },
     ],
     waysToEarn: [
       {
