@@ -7,7 +7,7 @@ import type { SponsorLink } from "@/types/move-os";
 import { listStudentEvidence } from "./evidence";
 import { listMovesForStudent } from "./itinerary";
 import { getMoveOsLevers } from "./config";
-import { notifyMoveOsParty } from "./notify";
+import { notifyMoveOsParty, resolveUserEmail } from "./notify";
 import {
   buildSponsorWhatsAppDigestBody,
 } from "./sponsor-report";
@@ -22,6 +22,52 @@ function normalizePhone(raw: string | null | undefined): string | null {
   if (!trimmed) return null;
   if (!/^\+?[0-9]{8,16}$/.test(trimmed)) return null;
   return trimmed.startsWith("+") ? trimmed : `+${trimmed}`;
+}
+
+const DEFAULT_SPONSOR_INVITE_SUBJECT = "Nextgenmove · Sponsor trust link";
+
+function applySponsorInviteTemplate(
+  template: string,
+  vars: { sponsorName: string; sponsorUrl: string },
+): string {
+  return template
+    .replaceAll("{{sponsorName}}", vars.sponsorName)
+    .replaceAll("{{sponsorUrl}}", vars.sponsorUrl);
+}
+
+async function loadSponsorInviteCopy(): Promise<{
+  subject: string;
+  html: string;
+  textFallback: (vars: { sponsorName: string; sponsorUrl: string }) => string;
+}> {
+  const levers = await getMoveOsLevers();
+  let subject = String(levers.sponsorInviteSubject ?? "").trim();
+  let html = String(levers.sponsorInviteHtml ?? "").trim();
+
+  if (!subject || !html) {
+    try {
+      const settings = await adminDb
+        .collection("site_settings")
+        .doc("default")
+        .get();
+      const moveOs = (settings.data()?.moveOs ?? {}) as Record<string, unknown>;
+      if (!subject) {
+        subject = String(moveOs.sponsorInviteSubject ?? "").trim();
+      }
+      if (!html) {
+        html = String(moveOs.sponsorInviteHtml ?? "").trim();
+      }
+    } catch {
+      // fall through to defaults
+    }
+  }
+
+  return {
+    subject: subject || DEFAULT_SPONSOR_INVITE_SUBJECT,
+    html,
+    textFallback: ({ sponsorName, sponsorUrl }) =>
+      `${sponsorName}, you have a read-only Nextgenmove trust link for this move: ${sponsorUrl}`,
+  };
 }
 
 export async function createSponsorLink(input: {
@@ -67,19 +113,31 @@ export async function createSponsorLink(input: {
       : null);
 
   if (sponsorUrl) {
-    const body = `${input.sponsorName.trim()}, you have a read-only Nextgenmove trust link for this move: ${sponsorUrl}`;
+    const sponsorName = input.sponsorName.trim();
+    const copy = await loadSponsorInviteCopy();
+    const vars = { sponsorName, sponsorUrl };
+    const textBody = copy.textFallback(vars);
+    const htmlBody = copy.html
+      ? applySponsorInviteTemplate(copy.html, vars)
+      : `<p>${textBody}</p><p><a href="${sponsorUrl}">Open trust portal</a></p>`;
+    const subject = applySponsorInviteTemplate(copy.subject, vars);
+
     void sendRawEmail({
       to: sponsorEmail,
-      subject: "Nextgenmove · Sponsor trust link",
-      html: `<p>${body}</p><p><a href="${sponsorUrl}">Open trust portal</a></p>`,
-      text: body,
+      subject,
+      html: htmlBody,
+      text: textBody,
     });
-    void notifyMoveOsParty({
-      userId: input.studentId,
-      kind: "sponsor_link_created",
-      body: `Sponsor trust link sent to ${sponsorEmail}.`,
-      link: "/student/move",
-    });
+    void (async () => {
+      const emailTo = await resolveUserEmail(input.studentId);
+      await notifyMoveOsParty({
+        userId: input.studentId,
+        kind: "sponsor_link_created",
+        body: `Sponsor trust link sent to ${sponsorEmail}.`,
+        link: "/student/move",
+        emailTo,
+      });
+    })();
   }
 
   return { link: link as SponsorLink, token };

@@ -1,9 +1,9 @@
 /**
  * Scheduled publish gate for CMS entities.
  *
- * `publishAt` is metadata for now (no cron flips status). Public loaders must
- * treat a document as live only when status is published AND
- * (no publishAt OR publishAt <= now).
+ * Cron (`publishDueCmsDocuments`) flips draft/scheduled + due publishAt to
+ * published. Public loaders must still treat a document as live only when
+ * status is published AND (no publishAt OR publishAt <= now).
  */
 
 export function parsePublishAtMs(value: unknown): number | null {

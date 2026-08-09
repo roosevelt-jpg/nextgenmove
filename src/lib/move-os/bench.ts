@@ -4,7 +4,7 @@ import { stripUndefined } from "@/lib/stripUndefined";
 import type { BenchReservation } from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { ensureMoveItinerary } from "./itinerary";
-import { notifyMoveOsParty } from "./notify";
+import { notifyMoveOsParty, resolveUserEmail } from "./notify";
 
 function addHoursIso(hours: number): string {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
@@ -77,12 +77,16 @@ export async function reserveBenchSeat(input: {
     });
   }
 
-  void notifyMoveOsParty({
-    userId: input.studentId,
-    kind: "bench_reserved",
-    body: `An employer reserved your Visa-Cleared Bench seat until ${expiresAt}.`,
-    link: "/student/move",
-  });
+  void (async () => {
+    const emailTo = await resolveUserEmail(input.studentId);
+    await notifyMoveOsParty({
+      userId: input.studentId,
+      kind: "bench_reserved",
+      body: `An employer reserved your Visa-Cleared Bench seat until ${expiresAt}.`,
+      link: "/student/move",
+      emailTo,
+    });
+  })();
 
   return reservation as BenchReservation;
 }

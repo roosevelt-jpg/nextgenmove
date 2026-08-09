@@ -11,15 +11,25 @@ type ConsentRecord = {
   createdAt: string | null;
 };
 
+type PiiAccessEvent = {
+  id: string;
+  actorUid: string;
+  studentId: string;
+  action: string;
+  meta: Record<string, unknown> | null;
+  createdAt: string | null;
+};
+
 export function AdminComplianceView() {
   const [records, setRecords] = useState<ConsentRecord[]>([]);
+  const [piiAccessEvents, setPiiAccessEvents] = useState<PiiAccessEvent[]>([]);
   const [anonymizeLibPath, setAnonymizeLibPath] = useState(
     "src/lib/security/anonymize-account.ts",
   );
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/compliance?limit=50", {
+    const res = await fetch("/api/admin/compliance?limit=50&piiLimit=50", {
       cache: "no-store",
     });
     if (!res.ok) {
@@ -28,9 +38,11 @@ export function AdminComplianceView() {
     }
     const payload = (await res.json()) as {
       records: ConsentRecord[];
+      piiAccessEvents?: PiiAccessEvent[];
       anonymizeLibPath?: string;
     };
     setRecords(payload.records ?? []);
+    setPiiAccessEvents(payload.piiAccessEvents ?? []);
     if (payload.anonymizeLibPath) {
       setAnonymizeLibPath(payload.anonymizeLibPath);
     }
@@ -101,6 +113,69 @@ export function AdminComplianceView() {
                     </td>
                     <td className="px-3 py-2">
                       {record.marketing ? "yes" : "no"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="font-serif text-xl text-text-primary">
+          PII access audit
+        </h2>
+        <p className="text-sm text-text-secondary">
+          Recent unlock / view events from{" "}
+          <code className="font-mono text-xs">pii_access_events</code> (limit
+          50).
+        </p>
+        {piiAccessEvents.length === 0 ? (
+          <p className="text-sm text-text-muted">No PII access events found.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-radius border border-border">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead className="bg-surface-2 font-mono text-[10px] uppercase tracking-wide text-text-label">
+                <tr>
+                  <th className="px-3 py-2">Created</th>
+                  <th className="px-3 py-2">Actor</th>
+                  <th className="px-3 py-2">Student</th>
+                  <th className="px-3 py-2">Action</th>
+                  <th className="px-3 py-2">Meta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {piiAccessEvents.map((event) => (
+                  <tr key={event.id} className="border-t border-border">
+                    <td className="px-3 py-2 font-mono text-xs text-text-muted">
+                      {event.createdAt
+                        ? new Date(event.createdAt).toLocaleString()
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {event.actorUid}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {event.studentId}
+                    </td>
+                    <td className="px-3 py-2">{event.action}</td>
+                    <td className="px-3 py-2 font-mono text-[10px] text-text-muted">
+                      {event.meta
+                        ? [
+                            event.meta.matchId
+                              ? `match=${String(event.meta.matchId)}`
+                              : null,
+                            event.meta.companyId
+                              ? `company=${String(event.meta.companyId)}`
+                              : null,
+                            event.meta.requestId
+                              ? `req=${String(event.meta.requestId)}`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "—"
+                        : "—"}
                     </td>
                   </tr>
                 ))}

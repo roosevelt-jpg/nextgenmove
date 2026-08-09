@@ -18,6 +18,13 @@ interface TalentPoolRow extends Record<string, unknown> {
   shortlisted: boolean;
   stageId: string;
   matchScore: number | null;
+  matchBreakdown?: {
+    total: number;
+    skills: number;
+    location: number;
+    completeness: number;
+    reasons: string[];
+  };
   studentId: string;
   displayName?: string;
   fullName: string;
@@ -315,9 +322,18 @@ export function TalentPoolView({ labels, canBrowse = false }: TalentPoolViewProp
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {typeof row.matchScore === "number" ? (
-                    <span className="rounded-full bg-bg-purple px-2.5 py-0.5 text-[11px] font-semibold text-fill-accent">
-                      {row.matchScore}% {labels.matchScoreLabel ?? "match"}
-                    </span>
+                    <div className="space-y-1">
+                      <span className="rounded-full bg-bg-purple px-2.5 py-0.5 text-[11px] font-semibold text-fill-accent">
+                        {row.matchScore}% {labels.matchScoreLabel ?? "match"}
+                      </span>
+                      {row.matchBreakdown?.reasons?.length ? (
+                        <ul className="max-w-[14rem] list-inside list-disc text-[10px] text-text-muted">
+                          {row.matchBreakdown.reasons.slice(0, 3).map((reason) => (
+                            <li key={reason}>{reason}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
                   ) : null}
                   {labels.viewProfile ? (
                     <Link

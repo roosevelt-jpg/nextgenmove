@@ -1,6 +1,7 @@
 /**
  * Idempotent: merge DEFAULT_MOVE_OS_LEVERS into program_levers/default.moveOs
  * and ensure companies.credits exists (0) so dual-commit can be funded.
+ * Also seeds empty CMS shells for sponsor invite copy under site_settings.
  *
  * Usage: npx tsx scripts/seed-move-os.ts
  */
@@ -28,6 +29,15 @@ async function main() {
       existing.shadowSprintTemplates.length > 0
         ? existing.shadowSprintTemplates
         : DEFAULT_MOVE_OS_LEVERS.shadowSprintTemplates,
+    // Empty CMS shells — keep existing non-empty copy if already set.
+    sponsorInviteSubject:
+      typeof existing.sponsorInviteSubject === "string"
+        ? existing.sponsorInviteSubject
+        : "",
+    sponsorInviteHtml:
+      typeof existing.sponsorInviteHtml === "string"
+        ? existing.sponsorInviteHtml
+        : "",
   };
   await leversRef.set(
     stripUndefined({
@@ -37,6 +47,33 @@ async function main() {
     { merge: true },
   );
   console.log("moveOs levers merged into program_levers/default");
+
+  const settingsRef = adminDb.collection("site_settings").doc("default");
+  const settingsSnap = await settingsRef.get();
+  const settingsMoveOs = (settingsSnap.data()?.moveOs ?? {}) as Record<
+    string,
+    unknown
+  >;
+  await settingsRef.set(
+    stripUndefined({
+      moveOs: {
+        ...settingsMoveOs,
+        sponsorInviteSubject:
+          typeof settingsMoveOs.sponsorInviteSubject === "string"
+            ? settingsMoveOs.sponsorInviteSubject
+            : "",
+        sponsorInviteHtml:
+          typeof settingsMoveOs.sponsorInviteHtml === "string"
+            ? settingsMoveOs.sponsorInviteHtml
+            : "",
+      },
+      updatedAt: FieldValue.serverTimestamp(),
+    }),
+    { merge: true },
+  );
+  console.log(
+    "site_settings/default.moveOs sponsor invite shells ensured (empty if unset)",
+  );
 
   const companies = await adminDb.collection("companies").limit(200).get();
   let patched = 0;

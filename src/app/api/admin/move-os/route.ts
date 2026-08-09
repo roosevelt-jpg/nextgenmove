@@ -5,7 +5,12 @@ import {
   getAdminSession,
   unauthorizedResponse,
 } from "@/lib/admin/session";
-import { setEvidenceStatus, listStudentEvidence, recomputeAndPersistStudentReadiness } from "@/lib/move-os/evidence";
+import {
+  setEvidenceStatus,
+  listStudentEvidence,
+  listSupersededByKind,
+  recomputeAndPersistStudentReadiness,
+} from "@/lib/move-os/evidence";
 import { listMovesForStudent, updateMilestone } from "@/lib/move-os/itinerary";
 import { getMoveOsLevers, DEFAULT_MOVE_OS_LEVERS } from "@/lib/move-os/config";
 import { creditCompany, resolveDualCommit } from "@/lib/move-os/escrow";
@@ -39,6 +44,7 @@ export async function GET(request: Request) {
           ? { id: studentSnap.id, ...studentSnap.data() }
           : null,
         evidence,
+        supersededByKind: listSupersededByKind(evidence),
         moves,
         evidenceKinds: EVIDENCE_KINDS,
         readiness: {

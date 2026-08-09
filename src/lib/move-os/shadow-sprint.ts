@@ -1,10 +1,19 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase-admin";
 import { stripUndefined } from "@/lib/stripUndefined";
-import type { ShadowSprint } from "@/types/move-os";
+import type {
+  ShadowSprint,
+  ShadowSprintRubricScore,
+} from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { updateMilestone } from "./itinerary";
-import { notifyMoveOsParty } from "./notify";
+import { notifyMoveOsParty, resolveUserEmail } from "./notify";
+
+function averageRubricScore(scores: ShadowSprintRubricScore[]): number {
+  if (scores.length === 0) return 0;
+  const sum = scores.reduce((acc, row) => acc + row.score, 0);
+  return Math.max(1, Math.min(5, Math.round(sum / scores.length)));
+}
 
 function addDaysIso(days: number): string {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
@@ -68,12 +77,16 @@ export async function createShadowSprint(input: {
     status: "in_progress",
   });
 
-  void notifyMoveOsParty({
-    userId: input.studentId,
-    kind: "sprint_started",
-    body: `Shadow sprint started: ${title}. Due by ${endsAt}.`,
-    link: "/student/move",
-  });
+  void (async () => {
+    const emailTo = await resolveUserEmail(input.studentId);
+    await notifyMoveOsParty({
+      userId: input.studentId,
+      kind: "sprint_started",
+      body: `Shadow sprint started: ${title}. Due by ${endsAt}.`,
+      link: "/student/move",
+      emailTo,
+    });
+  })();
 
   return doc as ShadowSprint;
 }
@@ -97,23 +110,25 @@ export async function submitShadowDeliverable(input: {
     { merge: true },
   );
 
-  void notifyMoveOsParty({
-    userId: data.companyId,
-    kind: "sprint_submitted",
-    body: `Shadow sprint deliverable submitted for ${data.title}.`,
-    link: "/employer/bench",
-  });
+  void (async () => {
+    const emailTo = await resolveUserEmail(data.companyId);
+    await notifyMoveOsParty({
+      userId: data.companyId,
+      kind: "sprint_submitted",
+      body: `Shadow sprint deliverable submitted for ${data.title}.`,
+      link: "/employer/bench",
+      emailTo,
+    });
+  })();
 
   return { ...data, deliverableUrl: input.deliverableUrl, status: "submitted" };
 }
 
 async function emailSprintFinalDecision(sprint: ShadowSprint, status: "go" | "no_go") {
-  const [studentSnap, companySnap] = await Promise.all([
-    adminDb.collection("students").doc(sprint.studentId).get(),
-    adminDb.collection("companies").doc(sprint.companyId).get(),
+  const [studentEmail, companyEmail] = await Promise.all([
+    resolveUserEmail(sprint.studentId),
+    resolveUserEmail(sprint.companyId),
   ]);
-  const studentEmail = String(studentSnap.data()?.email ?? "").trim();
-  const companyEmail = String(companySnap.data()?.contactEmail ?? "").trim();
   const kind = status === "go" ? "sprint_go" : "sprint_no_go";
   const body =
     status === "go"
@@ -125,14 +140,14 @@ async function emailSprintFinalDecision(sprint: ShadowSprint, status: "go" | "no
     kind,
     body,
     link: "/student/move",
-    emailTo: studentEmail || null,
+    emailTo: studentEmail,
   });
   void notifyMoveOsParty({
     userId: sprint.companyId,
     kind,
     body,
     link: "/employer/bench",
-    emailTo: companyEmail || null,
+    emailTo: companyEmail,
   });
 }
 
@@ -140,8 +155,9 @@ export async function rateShadowSprint(input: {
   sprintId: string;
   actor: "student" | "company";
   actorId: string;
-  rating: number;
+  rating?: number;
   go: boolean;
+  rubricScores?: ShadowSprintRubricScore[] | null;
 }): Promise<ShadowSprint> {
   const ref = adminDb.collection("shadow_sprints").doc(input.sprintId);
   const snap = await ref.get();
@@ -154,10 +170,30 @@ export async function rateShadowSprint(input: {
     throw new Error("forbidden");
   }
 
+  const rubricScores =
+    input.rubricScores && input.rubricScores.length > 0
+      ? input.rubricScores.map((row) => ({
+          label: String(row.label).trim().slice(0, 120),
+          score: Math.max(1, Math.min(5, Math.round(Number(row.score)))),
+        }))
+      : null;
+  const rating =
+    rubricScores && rubricScores.length > 0
+      ? averageRubricScore(rubricScores)
+      : Math.max(1, Math.min(5, Math.round(Number(input.rating ?? (input.go ? 5 : 2)))));
+
   const patch =
     input.actor === "student"
-      ? { studentRating: input.rating, studentGo: input.go }
-      : { companyRating: input.rating, companyGo: input.go };
+      ? {
+          studentRating: rating,
+          studentGo: input.go,
+          studentRubricScores: rubricScores,
+        }
+      : {
+          companyRating: rating,
+          companyGo: input.go,
+          companyRubricScores: rubricScores,
+        };
 
   const studentGo =
     input.actor === "student" ? input.go : (data.studentGo ?? null);

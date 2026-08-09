@@ -10,6 +10,7 @@ import {
   projectStudentForEmployer,
 } from "@/lib/employer/student-visibility";
 import { getUnlockRequestStatusMap } from "@/lib/employer/profile-unlock";
+import { scoreWithBreakdown } from "@/lib/matching/score";
 
 const TALENT_POOL_SOURCES = [
   "admin_curated",
@@ -44,6 +45,12 @@ export async function GET(request: Request) {
       session.companyId,
       studentIds.filter(Boolean),
     );
+
+    const companyScoreInput = {
+      industry: session.company.industry ?? "",
+      preferredLocations: session.company.preferredLocations ?? [],
+      requirementTags: session.company.requirementTags ?? [],
+    };
 
     const rows = [];
 
@@ -100,12 +107,40 @@ export async function GET(request: Request) {
         { identityUnlocked, unlockRequestStatus },
       );
 
+      const breakdown = scoreWithBreakdown({
+        student: {
+          fullName: student.fullName ?? "",
+          sector: student.sector ?? "",
+          seniority: student.seniority ?? "",
+          currentCity: student.currentCity ?? "",
+          targetCities: student.targetCities ?? [],
+          bio: student.bio ?? "",
+          skills: student.skills ?? [],
+          availability: student.availability ?? "",
+          cvUrl: student.cvUrl ?? null,
+          linkedinUrl: student.linkedinUrl ?? null,
+          portfolioUrl: student.portfolioUrl ?? null,
+          photoUrl: student.photoUrl ?? null,
+        },
+        company: companyScoreInput,
+      });
+
+      const storedScore =
+        typeof match.matchScore === "number" ? match.matchScore : null;
+      const matchScore = storedScore ?? breakdown.total;
+
       rows.push({
         matchId: matchDoc.id,
         shortlisted: Boolean(match.shortlisted),
         stageId: match.stageId ?? "",
-        matchScore:
-          typeof match.matchScore === "number" ? match.matchScore : null,
+        matchScore,
+        matchBreakdown: {
+          total: breakdown.total,
+          skills: breakdown.skills,
+          location: breakdown.location,
+          completeness: breakdown.completeness,
+          reasons: breakdown.reasons,
+        },
         studentId: projected.id,
         identityUnlocked: projected.identityUnlocked,
         unlockRequestStatus: projected.unlockRequestStatus,

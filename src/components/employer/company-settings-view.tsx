@@ -51,6 +51,14 @@ export function CompanySettingsView({
   const [hydrated, setHydrated] = useState(false);
   const [exportBusy, setExportBusy] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [consentRecords, setConsentRecords] = useState<
+    Array<{
+      id: string;
+      source: string;
+      marketing: boolean;
+      createdAt: string | null;
+    }>
+  >([]);
   const suppressRef = useRef<(() => void) | null>(null);
 
   const draft = useMemo<CompanyDraft | null>(() => {
@@ -131,9 +139,10 @@ export function CompanySettingsView({
   }, [suppressNext]);
 
   const loadCompany = useCallback(async () => {
-    const [companyRes, creditsRes] = await Promise.all([
+    const [companyRes, creditsRes, consentsRes] = await Promise.all([
       fetch("/api/employer/company"),
       fetch("/api/employer/credits/top-up"),
+      fetch("/api/employer/consents"),
     ]);
     if (!companyRes.ok) {
       return;
@@ -168,6 +177,17 @@ export function CompanySettingsView({
         packages?: Array<{ id: string; label: string; credits: number }>;
       };
       setCreditPacks(creditsPayload.packages ?? []);
+    }
+    if (consentsRes.ok) {
+      const consentsPayload = (await consentsRes.json()) as {
+        records: Array<{
+          id: string;
+          source: string;
+          marketing: boolean;
+          createdAt: string | null;
+        }>;
+      };
+      setConsentRecords(consentsPayload.records ?? []);
     }
     setHydrated(true);
   }, [notificationKeys]);
@@ -404,6 +424,35 @@ export function CompanySettingsView({
           ? labels.exporting || "Exporting…"
           : labels.exportMyData || "Export my data"}
       </Button>
+      <div className="space-y-2 pt-2">
+        <p className="font-mono text-[11px] uppercase tracking-wide text-text-label">
+          {labels.consentTimelineTitle || "Consent timeline"}
+        </p>
+        {consentRecords.length === 0 ? (
+          <p className="text-sm text-text-muted">
+            {labels.consentEmpty || "No consent records yet."}
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {consentRecords.map((record) => (
+              <li
+                key={record.id}
+                className="rounded-radius border border-border px-3 py-2 text-sm"
+              >
+                <p className="text-text-primary">
+                  {record.source}
+                  {record.marketing ? " · marketing" : ""}
+                </p>
+                <p className="font-mono text-xs text-text-muted">
+                  {record.createdAt
+                    ? new Date(record.createdAt).toLocaleString()
+                    : "—"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <div className="space-y-2 border-t border-border pt-4">
         <h3 className="font-serif text-lg text-text-primary">
           {labels.dangerZoneTitle || "Deactivate account"}

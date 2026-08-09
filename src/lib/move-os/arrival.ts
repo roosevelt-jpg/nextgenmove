@@ -5,7 +5,33 @@ import type { ArrivalEvent, ArrivalEventKind } from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { resolveDualCommit } from "./escrow";
 import { getMoveById, updateMilestone } from "./itinerary";
-import { notifyMoveOsParty } from "./notify";
+import { notifyMoveOsParty, resolveUserEmail } from "./notify";
+
+async function notifyArrivalParties(input: {
+  studentId: string;
+  companyId: string;
+  kind: "arrival_sla_warning" | "arrival_sla_breach";
+  body: string;
+}): Promise<void> {
+  const [studentEmail, companyEmail] = await Promise.all([
+    resolveUserEmail(input.studentId),
+    resolveUserEmail(input.companyId),
+  ]);
+  void notifyMoveOsParty({
+    userId: input.studentId,
+    kind: input.kind,
+    body: input.body,
+    link: "/student/move",
+    emailTo: studentEmail,
+  });
+  void notifyMoveOsParty({
+    userId: input.companyId,
+    kind: input.kind,
+    body: input.body,
+    link: "/employer/bench",
+    emailTo: companyEmail,
+  });
+}
 
 export async function recordArrivalEvent(input: {
   moveId: string;
@@ -80,17 +106,11 @@ export async function recordArrivalEvent(input: {
     });
     const breachBody =
       "Arrival SLA was breached. Dual-commit stakes were refunded to both parties.";
-    void notifyMoveOsParty({
-      userId: move.studentId,
+    void notifyArrivalParties({
+      studentId: move.studentId,
+      companyId: move.companyId,
       kind: "arrival_sla_breach",
       body: breachBody,
-      link: "/student/move",
-    });
-    void notifyMoveOsParty({
-      userId: move.companyId,
-      kind: "arrival_sla_breach",
-      body: breachBody,
-      link: "/employer/bench",
     });
   }
   if (input.kind === "sla_met") {
@@ -121,10 +141,16 @@ export async function evaluateArrivalSla(moveId: string): Promise<{
   breached: boolean;
   hasDayOne: boolean;
   hasLanded: boolean;
+  /** True when deadline is within the warning window and not yet breached. */
+  inWarningWindow: boolean;
 }> {
   const move = await getMoveById(moveId);
   if (!move) throw new Error("move_not_found");
   const levers = await getMoveOsLevers();
+  const warningHours =
+    Number(levers.arrivalSlaWarningHours ?? 48) > 0
+      ? Number(levers.arrivalSlaWarningHours ?? 48)
+      : 48;
   const flight = move.milestones.find((m) => m.key === "flight");
   const arrival = move.milestones.find((m) => m.key === "arrival");
   const baseline =
@@ -140,6 +166,7 @@ export async function evaluateArrivalSla(moveId: string): Promise<{
       breached: false,
       hasDayOne: false,
       hasLanded: false,
+      inWarningWindow: false,
     };
   }
   const deadlineMs =
@@ -153,15 +180,66 @@ export async function evaluateArrivalSla(moveId: string): Promise<{
   const hasLanded = kinds.has("landed");
   const hasDayOne = kinds.has("day_one") || kinds.has("sla_met");
   const alreadyMiss = kinds.has("sla_miss") || move.status === "sla_breached";
-  const pastDeadline = Date.now() > deadlineMs;
+  const now = Date.now();
+  const pastDeadline = now > deadlineMs;
   const withinSla = !pastDeadline || hasDayOne;
+  const msUntilDeadline = deadlineMs - now;
+  const warningMs = warningHours * 60 * 60 * 1000;
+  const inWarningWindow =
+    !alreadyMiss &&
+    !hasDayOne &&
+    !pastDeadline &&
+    msUntilDeadline > 0 &&
+    msUntilDeadline <= warningMs;
   return {
     withinSla,
     deadline,
     breached: alreadyMiss || (pastDeadline && !hasDayOne),
     hasDayOne,
     hasLanded,
+    inWarningWindow,
   };
+}
+
+/**
+ * Emit `arrival_sla_warning` when deadline is within the warning window
+ * (levers.arrivalSlaWarningHours, default 48h) but not yet breached.
+ */
+export async function emitArrivalSlaWarnings(limit = 40): Promise<number> {
+  const snap = await adminDb
+    .collection("move_itineraries")
+    .where("status", "==", "active")
+    .limit(limit)
+    .get();
+  let warned = 0;
+  for (const doc of snap.docs) {
+    const data = doc.data() as {
+      studentId?: string;
+      companyId?: string;
+      arrivalSlaWarnedAt?: string | null;
+    };
+    if (data.arrivalSlaWarnedAt) continue;
+    const evalResult = await evaluateArrivalSla(doc.id);
+    if (!evalResult.inWarningWindow || !evalResult.deadline) continue;
+    if (!data.studentId || !data.companyId) continue;
+
+    const body = `Arrival SLA deadline is approaching (${evalResult.deadline}). Confirm day-one before the window closes.`;
+    await notifyArrivalParties({
+      studentId: data.studentId,
+      companyId: data.companyId,
+      kind: "arrival_sla_warning",
+      body,
+    });
+    await doc.ref.set(
+      stripUndefined({
+        arrivalSlaWarnedAt: new Date().toISOString(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+      { merge: true },
+    );
+    warned += 1;
+  }
+  return warned;
 }
 
 /** Auto-flag SLA misses for active moves past deadline without day_one. */

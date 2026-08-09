@@ -5,6 +5,7 @@ import { assertNotPreviewMode } from "@/lib/auth/portal-session";
 import {
   createEvidenceItem,
   listStudentEvidence,
+  listSupersededByKind,
   recomputeAndPersistStudentReadiness,
 } from "@/lib/move-os/evidence";
 import { EVIDENCE_KINDS } from "@/types/move-os";
@@ -34,7 +35,11 @@ export async function GET(request: Request) {
       listStudentEvidence(session.studentId),
       recomputeAndPersistStudentReadiness(session.studentId),
     ]);
-    return NextResponse.json({ items, readiness });
+    return NextResponse.json({
+      items,
+      readiness,
+      supersededByKind: listSupersededByKind(items),
+    });
   });
 }
 

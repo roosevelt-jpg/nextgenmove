@@ -57,8 +57,11 @@ export const DEFAULT_MOVE_OS_LEVERS: MoveOsLevers = {
   dualCommitCompanyCredits: 100,
   dualCommitInsuranceCredits: 50,
   arrivalSlaHours: 72,
+  arrivalSlaWarningHours: 48,
   shadowSprintDays: 5,
   sponsorEnabled: true,
+  sponsorInviteSubject: "",
+  sponsorInviteHtml: "",
   shadowSprintTemplates: DEFAULT_SHADOW_SPRINT_TEMPLATES,
 };
 

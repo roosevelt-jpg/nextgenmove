@@ -6,7 +6,7 @@ import { withRequestLog } from "@/lib/observability/api-handler";
 
 export const dynamic = "force-dynamic";
 
-/** Recent consent_records for admin compliance locker. */
+/** Recent consent_records + pii_access_events for admin compliance locker. */
 export async function GET(request: Request) {
   const session = await getAdminSession();
   if (!session) return unauthorizedResponse();
@@ -19,6 +19,10 @@ export async function GET(request: Request) {
       const limit = Math.min(
         200,
         Math.max(1, Number(searchParams.get("limit") ?? 50) || 50),
+      );
+      const piiLimit = Math.min(
+        50,
+        Math.max(1, Number(searchParams.get("piiLimit") ?? 50) || 50),
       );
 
       let snap;
@@ -51,8 +55,44 @@ export async function GET(request: Request) {
         return bT - aT;
       });
 
+      let piiSnap;
+      try {
+        piiSnap = await adminDb
+          .collection("pii_access_events")
+          .orderBy("createdAt", "desc")
+          .limit(piiLimit)
+          .get();
+      } catch {
+        piiSnap = await adminDb
+          .collection("pii_access_events")
+          .limit(piiLimit)
+          .get();
+      }
+
+      const piiAccessEvents = piiSnap.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          actorUid: String(data.actorUid ?? ""),
+          studentId: String(data.studentId ?? ""),
+          action: String(data.action ?? ""),
+          meta:
+            data.meta && typeof data.meta === "object"
+              ? (data.meta as Record<string, unknown>)
+              : null,
+          createdAt: serializeTimestamp(data.createdAt),
+        };
+      });
+
+      piiAccessEvents.sort((a, b) => {
+        const aT = a.createdAt ? Date.parse(a.createdAt) : 0;
+        const bT = b.createdAt ? Date.parse(b.createdAt) : 0;
+        return bT - aT;
+      });
+
       return NextResponse.json({
         records: records.slice(0, limit),
+        piiAccessEvents: piiAccessEvents.slice(0, piiLimit),
         anonymizeDocsHref: "/docs/security-model.md",
         anonymizeLibPath: "src/lib/security/anonymize-account.ts",
       });

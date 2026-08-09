@@ -104,6 +104,52 @@ export async function listStudentEvidence(
   });
 }
 
+/** Prior (superseded) versions grouped by evidence kind, newest first. */
+export type EvidencePriorVersion = Pick<
+  EvidenceItem,
+  "id" | "kind" | "label" | "status" | "createdAt" | "updatedAt" | "verifiedAt"
+>;
+
+export function listSupersededByKind(
+  items: EvidenceItem[],
+): Partial<Record<EvidenceKind, EvidencePriorVersion[]>> {
+  const byKind: Partial<Record<EvidenceKind, EvidencePriorVersion[]>> = {};
+  for (const item of items) {
+    if (item.status !== "superseded") continue;
+    const entry: EvidencePriorVersion = {
+      id: item.id,
+      kind: item.kind,
+      label: item.label,
+      status: item.status,
+      createdAt: item.createdAt ?? null,
+      updatedAt: item.updatedAt ?? null,
+      verifiedAt: item.verifiedAt ?? null,
+    };
+    const list = byKind[item.kind] ?? [];
+    list.push(entry);
+    byKind[item.kind] = list;
+  }
+  for (const kind of Object.keys(byKind) as EvidenceKind[]) {
+    byKind[kind]?.sort((a, b) => {
+      const aT = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const bT = b.createdAt ? Date.parse(b.createdAt) : 0;
+      return bT - aT;
+    });
+  }
+  return byKind;
+}
+
+/** Superseded siblings for a given kind (excludes `exceptId` if provided). */
+export function listSupersededSiblings(
+  items: EvidenceItem[],
+  kind: EvidenceKind,
+  exceptId?: string,
+): EvidencePriorVersion[] {
+  return (listSupersededByKind(items)[kind] ?? []).filter(
+    (item) => item.id !== exceptId,
+  );
+}
+
 export async function recomputeAndPersistStudentReadiness(
   studentId: string,
 ): Promise<StudentReadiness> {

@@ -2,10 +2,28 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui";
-import { EVIDENCE_KINDS, type EvidenceItem, type StudentReadiness } from "@/types/move-os";
+import {
+  EVIDENCE_KINDS,
+  type EvidenceItem,
+  type EvidenceKind,
+  type StudentReadiness,
+} from "@/types/move-os";
+
+type PriorVersion = {
+  id: string;
+  kind: EvidenceKind;
+  label: string;
+  status: string;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  verifiedAt?: string | null;
+};
 
 export function StudentEvidenceView() {
   const [items, setItems] = useState<EvidenceItem[]>([]);
+  const [supersededByKind, setSupersededByKind] = useState<
+    Partial<Record<EvidenceKind, PriorVersion[]>>
+  >({});
   const [readiness, setReadiness] = useState<StudentReadiness | null>(null);
   const [kind, setKind] = useState<(typeof EVIDENCE_KINDS)[number]>("passport");
   const [label, setLabel] = useState("");
@@ -19,9 +37,11 @@ export function StudentEvidenceView() {
     const payload = (await res.json()) as {
       items: EvidenceItem[];
       readiness: StudentReadiness;
+      supersededByKind?: Partial<Record<EvidenceKind, PriorVersion[]>>;
     };
     setItems(payload.items ?? []);
     setReadiness(payload.readiness ?? null);
+    setSupersededByKind(payload.supersededByKind ?? {});
   }, []);
 
   useEffect(() => {
@@ -163,27 +183,59 @@ export function StudentEvidenceView() {
         {items.length === 0 ? (
           <p className="text-sm text-text-muted">No evidence uploaded yet.</p>
         ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between rounded-radius border border-border px-3 py-2 text-sm"
-            >
-              <div>
-                <p className="font-medium text-text-primary">{item.label}</p>
-                <p className="text-xs text-text-muted">
-                  {item.kind} · {item.status}
-                  {item.expiresAt
-                    ? ` · expires ${new Date(item.expiresAt).toLocaleDateString()}`
-                    : ""}
-                </p>
-              </div>
-              {item.file?.url ? (
-                <a className="link-brand text-xs" href={item.file.url} target="_blank" rel="noreferrer">
-                  Open
-                </a>
-              ) : null}
-            </div>
-          ))
+          items
+            .filter((item) => item.status !== "superseded")
+            .map((item) => {
+              const priors = (supersededByKind[item.kind] ?? []).filter(
+                (prior) => prior.id !== item.id,
+              );
+              return (
+                <div
+                  key={item.id}
+                  className="space-y-1 rounded-radius border border-border px-3 py-2 text-sm"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-text-primary">{item.label}</p>
+                      <p className="text-xs text-text-muted">
+                        {item.kind} · {item.status}
+                        {item.expiresAt
+                          ? ` · expires ${new Date(item.expiresAt).toLocaleDateString()}`
+                          : ""}
+                      </p>
+                    </div>
+                    {item.file?.url ? (
+                      <a
+                        className="link-brand text-xs"
+                        href={item.file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                      </a>
+                    ) : null}
+                  </div>
+                  {priors.length > 0 ? (
+                    <details className="text-xs text-text-muted">
+                      <summary className="cursor-pointer">
+                        {priors.length} prior version
+                        {priors.length === 1 ? "" : "s"}
+                      </summary>
+                      <ul className="mt-1 list-inside list-disc space-y-0.5">
+                        {priors.map((prior) => (
+                          <li key={prior.id}>
+                            {prior.label} · superseded
+                            {prior.createdAt
+                              ? ` · ${new Date(prior.createdAt).toLocaleDateString()}`
+                              : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
+                </div>
+              );
+            })
         )}
       </section>
     </div>

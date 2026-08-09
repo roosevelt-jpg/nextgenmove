@@ -37,14 +37,21 @@ export async function GET(request: Request) {
     ]);
 
     const bench = ready.map((student) => {
-      const missingKinds = Array.isArray(student.missingKinds)
-        ? student.missingKinds.map(String)
-        : Array.isArray(student.readinessMissingKinds)
-          ? student.readinessMissingKinds.map(String)
-          : [];
-      const verifiedKinds = Array.isArray(student.verifiedKinds)
-        ? student.verifiedKinds.map(String)
-        : [];
+      // Sanitize: kinds labels only — never evidence file URLs or storage paths.
+      const missingKinds = (
+        Array.isArray(student.missingKinds)
+          ? student.missingKinds
+          : Array.isArray(student.readinessMissingKinds)
+            ? student.readinessMissingKinds
+            : []
+      )
+        .map((k) => String(k).trim())
+        .filter((k) => Boolean(k) && !/^https?:\/\//i.test(k) && !k.includes("/"));
+      const verifiedKinds = (
+        Array.isArray(student.verifiedKinds) ? student.verifiedKinds : []
+      )
+        .map((k) => String(k).trim())
+        .filter((k) => Boolean(k) && !/^https?:\/\//i.test(k) && !k.includes("/"));
       return {
         id: String(student.id),
         dubaiReadyScore: Number(student.dubaiReadyScore ?? 0),
@@ -61,6 +68,7 @@ export async function GET(request: Request) {
           : [],
         missingKinds,
         verifiedKinds,
+        verifiedKindsCount: verifiedKinds.length,
         missingKindsCount: missingKinds.length,
       };
     });

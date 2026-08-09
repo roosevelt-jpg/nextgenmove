@@ -42,6 +42,17 @@ export function StudentMoveView() {
   const [deliverableFile, setDeliverableFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [insuranceByMove, setInsuranceByMove] = useState<
+    Record<string, boolean>
+  >({});
+  const [rubricScoresBySprint, setRubricScoresBySprint] = useState<
+    Record<string, Record<string, number>>
+  >({});
+  const [dualCommitCredits, setDualCommitCredits] = useState({
+    studentCredits: 50,
+    companyCredits: 100,
+    insuranceCredits: 50,
+  });
 
   const load = useCallback(async () => {
     const res = await fetch("/api/student/move", { cache: "no-store" });
@@ -50,10 +61,22 @@ export function StudentMoveView() {
       moves: MoveItinerary[];
       sprints: ShadowSprint[];
       slaByMoveId: Record<string, SlaInfo>;
+      dualCommit?: {
+        studentCredits?: number;
+        companyCredits?: number;
+        insuranceCredits?: number;
+      };
     };
     setMoves(payload.moves ?? []);
     setSprints(payload.sprints ?? []);
     setSlaByMoveId(payload.slaByMoveId ?? {});
+    if (payload.dualCommit) {
+      setDualCommitCredits({
+        studentCredits: Number(payload.dualCommit.studentCredits ?? 50),
+        companyCredits: Number(payload.dualCommit.companyCredits ?? 100),
+        insuranceCredits: Number(payload.dualCommit.insuranceCredits ?? 50),
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -74,6 +97,10 @@ export function StudentMoveView() {
     setBusy(true);
     setMessage(null);
     try {
+      const withInsurance = Boolean(insuranceByMove[move.id]);
+      const companyHeld =
+        dualCommitCredits.companyCredits +
+        (withInsurance ? dualCommitCredits.insuranceCredits : 0);
       const res = await fetch("/api/student/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,6 +108,7 @@ export function StudentMoveView() {
           action: "dual_commit",
           moveId: move.id,
           matchId: move.matchId,
+          insurance: withInsurance,
         }),
       });
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
@@ -88,7 +116,11 @@ export function StudentMoveView() {
         setMessage(payload.error || "Could not lock dual commit.");
         return;
       }
-      setMessage("Dual commit locked.");
+      setMessage(
+        `Dual commit locked (you ${dualCommitCredits.studentCredits}; company ${companyHeld}${
+          withInsurance ? " incl. insurance" : ""
+        }).`,
+      );
       await load();
     } finally {
       setBusy(false);
@@ -204,14 +236,24 @@ export function StudentMoveView() {
     setBusy(true);
     setMessage(null);
     try {
+      const sprint = sprints.find((s) => s.id === sprintId);
+      const rubricLabels =
+        sprint?.rubric?.length && sprint.rubric.length > 0
+          ? sprint.rubric
+          : ["Overall fit"];
+      const scores = rubricScoresBySprint[sprintId] ?? {};
+      const rubricScores = rubricLabels.map((label) => ({
+        label,
+        score: scores[label] ?? 3,
+      }));
       const res = await fetch("/api/student/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "sprint_rate",
           sprintId,
-          rating: go ? 5 : 2,
           go,
+          rubricScores,
         }),
       });
       const payload = (await res.json().catch(() => ({}))) as { error?: string };
@@ -273,14 +315,32 @@ export function StudentMoveView() {
                     </p>
                   ) : null}
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => void dualCommit(move)}
-                >
-                  Lock dual commit
-                </Button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-xs text-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(insuranceByMove[move.id])}
+                      onChange={(e) =>
+                        setInsuranceByMove((prev) => ({
+                          ...prev,
+                          [move.id]: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span>
+                      Company insurance (+
+                      {dualCommitCredits.insuranceCredits})
+                    </span>
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void dualCommit(move)}
+                  >
+                    Lock dual commit
+                  </Button>
+                </div>
               </div>
               <ol className="space-y-2">
                 {(move.milestones ?? []).map((milestone) => (
@@ -411,24 +471,62 @@ export function StudentMoveView() {
                       (sprint.status === "submitted" ||
                         sprint.status === "rated" ||
                         sprint.status === "active") ? (
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => void rateSprint(sprint.id, true)}
-                          >
-                            GO
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() => void rateSprint(sprint.id, false)}
-                          >
-                            NO-GO
-                          </Button>
+                        <div className="space-y-2">
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {(sprint.rubric?.length
+                              ? sprint.rubric
+                              : ["Overall fit"]
+                            ).map((label) => {
+                              const scores =
+                                rubricScoresBySprint[sprint.id] ?? {};
+                              return (
+                                <label
+                                  key={label}
+                                  className="space-y-1 text-xs text-text-secondary"
+                                >
+                                  <span>{label} (1–5)</span>
+                                  <select
+                                    className="block w-full rounded-radius-sm border border-border bg-surface-1 px-2 py-1"
+                                    value={scores[label] ?? 3}
+                                    onChange={(e) =>
+                                      setRubricScoresBySprint((prev) => ({
+                                        ...prev,
+                                        [sprint.id]: {
+                                          ...(prev[sprint.id] ?? {}),
+                                          [label]: Number(e.target.value),
+                                        },
+                                      }))
+                                    }
+                                  >
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                      <option key={n} value={n}>
+                                        {n}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => void rateSprint(sprint.id, true)}
+                            >
+                              GO
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={busy}
+                              onClick={() => void rateSprint(sprint.id, false)}
+                            >
+                              NO-GO
+                            </Button>
+                          </div>
                         </div>
                       ) : null}
                     </div>

@@ -998,6 +998,7 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
   ],
   status_cms: [
     { value: "draft", label: "draft" },
+    { value: "scheduled", label: "scheduled" },
     { value: "published", label: "published" },
   ],
   status_testimonial: [

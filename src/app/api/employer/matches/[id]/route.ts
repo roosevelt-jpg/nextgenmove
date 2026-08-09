@@ -16,6 +16,7 @@ import {
 } from "@/lib/employer/student-visibility";
 import { getUnlockRequestStatus } from "@/lib/employer/profile-unlock";
 import { logPiiAccess } from "@/lib/security/pii-access-log";
+import { scoreWithBreakdown } from "@/lib/matching/score";
 
 const patchSchema = z.object({
   shortlisted: z.boolean().optional(),
@@ -125,12 +126,43 @@ export async function GET(
     });
   }
 
+  const breakdown = scoreWithBreakdown({
+    student: {
+      fullName: student.fullName ?? "",
+      sector: student.sector ?? "",
+      seniority: student.seniority ?? "",
+      currentCity: student.currentCity ?? "",
+      targetCities: student.targetCities ?? [],
+      bio: student.bio ?? "",
+      skills: student.skills ?? [],
+      availability: student.availability ?? "",
+      cvUrl: student.cvUrl ?? null,
+      linkedinUrl: student.linkedinUrl ?? null,
+      portfolioUrl: student.portfolioUrl ?? null,
+      photoUrl: student.photoUrl ?? null,
+    },
+    company: {
+      industry: session.company.industry ?? "",
+      preferredLocations: session.company.preferredLocations ?? [],
+      requirementTags: session.company.requirementTags ?? [],
+    },
+  });
+  const storedScore =
+    typeof match.matchScore === "number" ? match.matchScore : null;
+
   return NextResponse.json({
     match: {
       id,
       stageId: String(match.stageId ?? ""),
       shortlisted: Boolean(match.shortlisted),
-      matchScore: typeof match.matchScore === "number" ? match.matchScore : null,
+      matchScore: storedScore ?? breakdown.total,
+      matchBreakdown: {
+        total: breakdown.total,
+        skills: breakdown.skills,
+        location: breakdown.location,
+        completeness: breakdown.completeness,
+        reasons: breakdown.reasons,
+      },
       identityUnlocked,
       unlockRequestStatus: projected.unlockRequestStatus,
       notes: match.notes ?? [],

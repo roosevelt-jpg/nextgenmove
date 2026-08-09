@@ -12,6 +12,13 @@ interface CandidateDetail {
     stageId: string;
     shortlisted: boolean;
     matchScore: number | null;
+    matchBreakdown?: {
+      total: number;
+      skills: number;
+      location: number;
+      completeness: number;
+      reasons: string[];
+    } | null;
     identityUnlocked?: boolean;
     unlockRequestStatus?: "none" | "pending" | "approved" | "declined";
     interviewAt?: string | null;
@@ -248,10 +255,19 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {typeof match.matchScore === "number" ? (
-            <span className="rounded-full bg-bg-purple px-3 py-1 font-mono text-xs font-medium text-text-label">
-              {match.matchScore}%
-              {labels.matchScoreLabel ? ` ${labels.matchScoreLabel}` : ""}
-            </span>
+            <div className="space-y-1">
+              <span className="rounded-full bg-bg-purple px-3 py-1 font-mono text-xs font-medium text-text-label">
+                {match.matchScore}%
+                {labels.matchScoreLabel ? ` ${labels.matchScoreLabel}` : ""}
+              </span>
+              {match.matchBreakdown?.reasons?.length ? (
+                <ul className="max-w-[16rem] list-inside list-disc text-[10px] text-text-muted">
+                  {match.matchBreakdown.reasons.slice(0, 4).map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
           ) : null}
           {!unlocked ? (
             unlockStatus === "pending" ? (

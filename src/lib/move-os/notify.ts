@@ -1,3 +1,4 @@
+import { adminDb } from "@/lib/firebase-admin";
 import { createNotification } from "@/lib/notifications/create";
 import { sendRawEmail } from "@/lib/email/send";
 
@@ -25,6 +26,38 @@ const TITLES: Record<MoveOsNotifyKind, string> = {
   arrival_sla_breach: "Arrival SLA breached",
   sponsor_link_created: "Sponsor trust link ready",
 };
+
+/**
+ * Resolve a party email from users → students → companies (best-effort).
+ * Student and company doc IDs match the owning user uid.
+ */
+export async function resolveUserEmail(
+  userId: string,
+): Promise<string | null> {
+  const id = String(userId ?? "").trim();
+  if (!id) return null;
+
+  const userSnap = await adminDb.collection("users").doc(id).get();
+  if (userSnap.exists) {
+    const email = String(userSnap.data()?.email ?? "").trim();
+    if (email.includes("@")) return email;
+  }
+
+  const studentSnap = await adminDb.collection("students").doc(id).get();
+  if (studentSnap.exists) {
+    const email = String(studentSnap.data()?.email ?? "").trim();
+    if (email.includes("@")) return email;
+  }
+
+  const companySnap = await adminDb.collection("companies").doc(id).get();
+  if (companySnap.exists) {
+    const data = companySnap.data() ?? {};
+    const email = String(data.contactEmail ?? data.email ?? "").trim();
+    if (email.includes("@")) return email;
+  }
+
+  return null;
+}
 
 /** Best-effort Move OS notify: in-app + optional raw email. */
 export async function notifyMoveOsParty(options: {

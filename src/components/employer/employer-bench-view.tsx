@@ -21,6 +21,7 @@ interface BenchCard {
   skills: string[];
   missingKinds?: string[];
   verifiedKinds?: string[];
+  verifiedKindsCount?: number;
   missingKindsCount?: number;
 }
 
@@ -71,6 +72,17 @@ export function EmployerBenchView() {
   const [templateByMove, setTemplateByMove] = useState<Record<string, string>>(
     {},
   );
+  const [insuranceByMove, setInsuranceByMove] = useState<
+    Record<string, boolean>
+  >({});
+  const [rubricScoresBySprint, setRubricScoresBySprint] = useState<
+    Record<string, Record<string, number>>
+  >({});
+  const [dualCommitCredits, setDualCommitCredits] = useState({
+    studentCredits: 50,
+    companyCredits: 100,
+    insuranceCredits: 50,
+  });
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const load = useCallback(async () => {
@@ -108,8 +120,20 @@ export function EmployerBenchView() {
     if (moveRes.ok) {
       const payload = (await moveRes.json()) as {
         shadowSprintTemplates?: ShadowSprintTemplate[];
+        dualCommit?: {
+          studentCredits?: number;
+          companyCredits?: number;
+          insuranceCredits?: number;
+        };
       };
       setTemplates(payload.shadowSprintTemplates ?? []);
+      if (payload.dualCommit) {
+        setDualCommitCredits({
+          studentCredits: Number(payload.dualCommit.studentCredits ?? 50),
+          companyCredits: Number(payload.dualCommit.companyCredits ?? 100),
+          insuranceCredits: Number(payload.dualCommit.insuranceCredits ?? 50),
+        });
+      }
     }
   }, []);
 
@@ -397,12 +421,24 @@ export function EmployerBenchView() {
               student.missingKindsCount ??
               student.missingKinds?.length ??
               0;
+            const verifiedCount =
+              student.verifiedKindsCount ??
+              student.verifiedKinds?.length ??
+              0;
+            const missingLabels = (student.missingKinds ?? [])
+              .map((k) => String(k).replaceAll("_", " "))
+              .filter(Boolean);
+            const readinessTitle = `Verified ${verifiedCount}${
+              missingLabels.length
+                ? ` · Missing: ${missingLabels.join(", ")}`
+                : " · Missing: none"
+            }`;
             return (
               <div
                 key={student.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-radius border border-border px-3 py-3"
               >
-                <div>
+                <div title={readinessTitle}>
                   <p className="font-medium text-text-primary">
                     Score {student.dubaiReadyScore}
                     {missingCount > 0
@@ -523,19 +559,44 @@ export function EmployerBenchView() {
                       )}
                     </select>
                   </label>
+                  <label className="flex items-center gap-2 text-sm text-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(insuranceByMove[move.id])}
+                      onChange={(e) =>
+                        setInsuranceByMove((prev) => ({
+                          ...prev,
+                          [move.id]: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span>
+                      Insurance (+
+                      {dualCommitCredits.insuranceCredits} co. credits)
+                    </span>
+                  </label>
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() =>
+                    onClick={() => {
+                      const withInsurance = Boolean(insuranceByMove[move.id]);
+                      const companyHeld =
+                        dualCommitCredits.companyCredits +
+                        (withInsurance
+                          ? dualCommitCredits.insuranceCredits
+                          : 0);
                       void postMove(
                         {
                           action: "dual_commit",
                           moveId: move.id,
                           matchId: move.matchId,
+                          insurance: withInsurance,
                         },
-                        "Dual commit locked.",
-                      )
-                    }
+                        `Dual commit locked (company ${companyHeld} credits held${
+                          withInsurance ? " incl. insurance" : ""
+                        }).`,
+                      );
+                    }}
                   >
                     Lock dual commit
                   </Button>
@@ -645,7 +706,17 @@ export function EmployerBenchView() {
                   </Button>
                 </div>
 
-                {moveSprints.map((sprint) => (
+                {moveSprints.map((sprint) => {
+                  const rubricLabels =
+                    sprint.rubric?.length && sprint.rubric.length > 0
+                      ? sprint.rubric
+                      : ["Overall fit"];
+                  const scores = rubricScoresBySprint[sprint.id] ?? {};
+                  const rubricScores = rubricLabels.map((label) => ({
+                    label,
+                    score: scores[label] ?? 3,
+                  }));
+                  return (
                   <div
                     key={sprint.id}
                     className="space-y-2 rounded-radius border border-border px-3 py-2 text-sm"
@@ -673,46 +744,85 @@ export function EmployerBenchView() {
                       </p>
                     )}
                     {sprint.companyGo == null ? (
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() =>
-                            void postMove(
-                              {
-                                action: "sprint_rate",
-                                sprintId: sprint.id,
-                                rating: 5,
-                                go: true,
-                              },
-                              "Company GO recorded.",
-                            )
-                          }
-                        >
-                          GO
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            void postMove(
-                              {
-                                action: "sprint_rate",
-                                sprintId: sprint.id,
-                                rating: 2,
-                                go: false,
-                              },
-                              "Company NO-GO recorded.",
-                            )
-                          }
-                        >
-                          NO-GO
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {rubricLabels.map((label) => (
+                            <label
+                              key={label}
+                              className="space-y-1 text-xs text-text-secondary"
+                            >
+                              <span>{label} (1–5)</span>
+                              <select
+                                className="block w-full rounded-radius-sm border border-border bg-surface-1 px-2 py-1"
+                                value={scores[label] ?? 3}
+                                onChange={(e) =>
+                                  setRubricScoresBySprint((prev) => ({
+                                    ...prev,
+                                    [sprint.id]: {
+                                      ...(prev[sprint.id] ?? {}),
+                                      [label]: Number(e.target.value),
+                                    },
+                                  }))
+                                }
+                              >
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                  <option key={n} value={n}>
+                                    {n}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() =>
+                              void postMove(
+                                {
+                                  action: "sprint_rate",
+                                  sprintId: sprint.id,
+                                  go: true,
+                                  rubricScores,
+                                },
+                                "Company GO recorded.",
+                              )
+                            }
+                          >
+                            GO
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              void postMove(
+                                {
+                                  action: "sprint_rate",
+                                  sprintId: sprint.id,
+                                  go: false,
+                                  rubricScores,
+                                },
+                                "Company NO-GO recorded.",
+                              )
+                            }
+                          >
+                            NO-GO
+                          </Button>
+                        </div>
                       </div>
+                    ) : sprint.companyRubricScores?.length ? (
+                      <p className="text-xs text-text-muted">
+                        Scored:{" "}
+                        {sprint.companyRubricScores
+                          .map((row) => `${row.label} ${row.score}`)
+                          .join(" · ")}
+                      </p>
                     ) : null}
                   </div>
-                ))}
+                  );
+                })}
 
                 <ol className="space-y-1 text-sm">
                   {(move.milestones ?? []).slice(0, 9).map((m) => (

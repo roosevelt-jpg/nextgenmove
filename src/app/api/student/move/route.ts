@@ -17,6 +17,7 @@ import { lockDualCommit } from "@/lib/move-os/escrow";
 import { evaluateArrivalSla } from "@/lib/move-os/arrival";
 import { appBaseUrl } from "@/lib/billing/stripe";
 import { withRequestLog } from "@/lib/observability/api-handler";
+import { getMoveOsLevers } from "@/lib/move-os/config";
 import {
   sanitizeUploadFilename,
   uploadFileViaAdmin,
@@ -51,9 +52,10 @@ export async function GET(request: Request) {
   return withRequestLog(request, { route: "/api/student/move" }, async () => {
     const session = await getStudentSession();
     if (!session) return unauthorizedResponse();
-    const [moves, sprints] = await Promise.all([
+    const [moves, sprints, levers] = await Promise.all([
       listMovesForStudent(session.studentId),
       listSprintsForStudent(session.studentId),
+      getMoveOsLevers(),
     ]);
     const sla = await Promise.all(
       moves.map(async (move) => {
@@ -69,15 +71,26 @@ export async function GET(request: Request) {
       moves,
       sprints,
       slaByMoveId: Object.fromEntries(sla),
+      dualCommit: {
+        studentCredits: levers.dualCommitStudentCredits,
+        companyCredits: levers.dualCommitCompanyCredits,
+        insuranceCredits: levers.dualCommitInsuranceCredits,
+      },
     });
   });
 }
+
+const rubricScoreSchema = z.object({
+  label: z.string().trim().min(1).max(120),
+  score: z.number().int().min(1).max(5),
+});
 
 const actionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("dual_commit"),
     moveId: z.string().min(1),
     matchId: z.string().min(1),
+    insurance: z.boolean().optional(),
   }),
   z.object({
     action: z.literal("sponsor_invite"),
@@ -94,8 +107,9 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("sprint_rate"),
     sprintId: z.string().min(1),
-    rating: z.number().min(1).max(5),
+    rating: z.number().min(1).max(5).optional(),
     go: z.boolean(),
+    rubricScores: z.array(rubricScoreSchema).min(1).max(20).optional(),
   }),
   z.object({
     action: z.literal("milestone_note"),
@@ -252,6 +266,7 @@ export async function POST(request: Request) {
           moveId: body.moveId,
           studentId: session.studentId,
           companyId: move.companyId,
+          insurance: Boolean(body.insurance),
           request,
         });
         return NextResponse.json({ ok: true, ...result });
@@ -284,12 +299,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true, sprint });
       }
       if (body.action === "sprint_rate") {
+        if (!body.rubricScores?.length && body.rating == null) {
+          return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+        }
         const sprint = await rateShadowSprint({
           sprintId: body.sprintId,
           actor: "student",
           actorId: session.studentId,
           rating: body.rating,
           go: body.go,
+          rubricScores: body.rubricScores ?? null,
         });
         return NextResponse.json({ ok: true, sprint });
       }

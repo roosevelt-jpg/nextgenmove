@@ -4,7 +4,7 @@ import { stripUndefined } from "@/lib/stripUndefined";
 import type { CreditEscrow, EscrowParty } from "@/types/move-os";
 import { getMoveOsLevers } from "./config";
 import { updateMilestone } from "./itinerary";
-import { notifyMoveOsParty } from "./notify";
+import { notifyMoveOsParty, resolveUserEmail } from "./notify";
 
 export async function applyCompanyCreditDelta(input: {
   companyId: string;
@@ -255,18 +255,26 @@ export async function lockDualCommit(input: {
     status: "done",
   });
 
-  void notifyMoveOsParty({
-    userId: input.studentId,
-    kind: "dual_commit_locked",
-    body: "Your dual-commit stake is locked for this move.",
-    link: "/student/move",
-  });
-  void notifyMoveOsParty({
-    userId: input.companyId,
-    kind: "dual_commit_locked",
-    body: "Company dual-commit stake is locked for this move.",
-    link: "/employer/bench",
-  });
+  void (async () => {
+    const emailTo = await resolveUserEmail(input.studentId);
+    await notifyMoveOsParty({
+      userId: input.studentId,
+      kind: "dual_commit_locked",
+      body: "Your dual-commit stake is locked for this move.",
+      link: "/student/move",
+      emailTo,
+    });
+  })();
+  void (async () => {
+    const emailTo = await resolveUserEmail(input.companyId);
+    await notifyMoveOsParty({
+      userId: input.companyId,
+      kind: "dual_commit_locked",
+      body: "Company dual-commit stake is locked for this move.",
+      link: "/employer/bench",
+      emailTo,
+    });
+  })();
 
   try {
     const { maybeCompanyAutoTopUp } = await import("./company-auto-topup");

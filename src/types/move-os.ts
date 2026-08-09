@@ -128,6 +128,8 @@ export interface CreditEscrow {
   partyId: string;
   amount: number;
   status: EscrowStatus;
+  /** Company escrow only — dual-commit insurance stake was included. */
+  insurance?: boolean;
   createdAt?: string | null;
   resolvedAt?: string | null;
 }
@@ -149,6 +151,12 @@ export interface ShadowSprintTemplate {
   rubric: string[];
 }
 
+/** Per-criterion score collected at GO/NO-GO (1–5). */
+export interface ShadowSprintRubricScore {
+  label: string;
+  score: number;
+}
+
 export interface ShadowSprint {
   id: string;
   matchId: string;
@@ -163,6 +171,8 @@ export interface ShadowSprint {
   deliverableUrl?: string | null;
   studentRating?: number | null;
   companyRating?: number | null;
+  studentRubricScores?: ShadowSprintRubricScore[] | null;
+  companyRubricScores?: ShadowSprintRubricScore[] | null;
   studentGo?: boolean | null;
   companyGo?: boolean | null;
   startsAt?: string | null;
@@ -226,7 +236,13 @@ export interface MoveOsLevers {
   dualCommitCompanyCredits: number;
   dualCommitInsuranceCredits: number;
   arrivalSlaHours: number;
+  /** Hours before SLA deadline to emit `arrival_sla_warning` (default 48). */
+  arrivalSlaWarningHours: number;
   shadowSprintDays: number;
   sponsorEnabled: boolean;
+  /** CMS: sponsor invite email subject (empty → fallback). */
+  sponsorInviteSubject?: string | null;
+  /** CMS: sponsor invite HTML body; use `{{sponsorName}}` / `{{sponsorUrl}}`. */
+  sponsorInviteHtml?: string | null;
   shadowSprintTemplates: ShadowSprintTemplate[];
 }
