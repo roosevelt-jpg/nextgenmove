@@ -48,6 +48,12 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message === "gemini_model_unavailable") {
       return NextResponse.json({ error: "gemini_model_unavailable" }, { status: 503 });
     }
+    if (error instanceof Error && error.message === "gemini_quota_exhausted") {
+      return NextResponse.json({ error: "gemini_quota_exhausted" }, { status: 503 });
+    }
+    if (error instanceof Error && error.message === "gemini_empty_response") {
+      return NextResponse.json({ error: "gemini_empty_response" }, { status: 503 });
+    }
     console.error("assistant_chat_failed", error);
     return NextResponse.json({ error: "assistant_failed" }, { status: 500 });
   }

@@ -118,7 +118,9 @@ export async function POST(request: Request) {
         error instanceof Error &&
         (error.message === "gemini_not_configured" ||
           error.message === "gemini_invalid_key" ||
-          error.message === "gemini_model_unavailable")
+          error.message === "gemini_model_unavailable" ||
+          error.message === "gemini_quota_exhausted" ||
+          error.message === "gemini_empty_response")
       ) {
         reply =
           "Thanks for reaching out. Our assistant is temporarily offline — please use the contact form and our team will reply soon.";

@@ -1,21 +1,34 @@
 import {
   getIntegrationSecrets,
   isIntegrationConnected,
+  isIntegrationAdminDisabled,
 } from "@/lib/admin/integration-secrets";
+import { adminDb } from "@/lib/firebase-admin";
 
 /**
- * Prefer env override, then current Flash models.
- * gemini-2.0-flash was shut down 2026-06-01 — do not use it.
+ * Prefer env override, then current Flash models available on the key.
+ * gemini-2.0-flash was shut down for many projects — keep later as fallback only.
  */
 const GEMINI_MODEL_CANDIDATES = [
   process.env.GEMINI_MODEL?.trim(),
   "gemini-2.5-flash",
-  "gemini-3.5-flash",
-  "gemini-3.6-flash",
   "gemini-flash-latest",
+  "gemini-2.5-flash-lite",
+  "gemini-flash-lite-latest",
+  "gemini-2.0-flash",
 ].filter((value): value is string => Boolean(value));
 
 export async function getGeminiApiKey(): Promise<string | null> {
+  // Respect explicit admin disconnect even if secrets remain in the store.
+  try {
+    const snap = await adminDb.collection("integrations").doc("gemini").get();
+    if (snap.exists && isIntegrationAdminDisabled(snap.data())) {
+      return null;
+    }
+  } catch {
+    // continue — secrets/env may still work
+  }
+
   const secrets = await getIntegrationSecrets("gemini");
   const key = (
     secrets.apiKey ||
@@ -26,11 +39,11 @@ export async function getGeminiApiKey(): Promise<string | null> {
   ).trim();
   if (!key) return null;
 
-  // Honor explicit admin disconnect; otherwise any stored/env key is usable.
-  if (!(await isIntegrationConnected("gemini"))) {
-    return process.env.GEMINI_API_KEY?.trim() || null;
+  // Prefer any usable key when connected OR when secrets/env satisfy gemini.
+  if (await isIntegrationConnected("gemini")) {
+    return key;
   }
-  return key;
+  return process.env.GEMINI_API_KEY?.trim() || key || null;
 }
 
 function isModelUnavailable(status: number, body: string): boolean {
@@ -42,6 +55,36 @@ function isModelUnavailable(status: number, body: string): boolean {
     lower.includes("no longer available") ||
     lower.includes("deprecated")
   );
+}
+
+function isQuotaExhausted(status: number, body: string): boolean {
+  if (status === 429) return true;
+  const lower = body.toLowerCase();
+  return (
+    lower.includes("resource_exhausted") ||
+    lower.includes("quota") ||
+    lower.includes("prepayment credits are depleted") ||
+    lower.includes("billing") ||
+    lower.includes("rate limit")
+  );
+}
+
+function extractText(data: {
+  candidates?: Array<{
+    content?: { parts?: Array<{ text?: string }> };
+    finishReason?: string;
+  }>;
+  promptFeedback?: { blockReason?: string };
+}): string | null {
+  if (data.promptFeedback?.blockReason) {
+    return null;
+  }
+  const parts = data.candidates?.[0]?.content?.parts ?? [];
+  const text = parts
+    .map((p) => p.text ?? "")
+    .join("")
+    .trim();
+  return text || null;
 }
 
 export async function generateGeminiReply(options: {
@@ -89,27 +132,35 @@ export async function generateGeminiReply(options: {
         response.status,
         body.slice(0, 400),
       );
+      if (isQuotaExhausted(response.status, body)) {
+        throw new Error("gemini_quota_exhausted");
+      }
       if (isModelUnavailable(response.status, body)) {
         lastError = "gemini_model_unavailable";
         continue;
       }
-      if (response.status === 400 || response.status === 401 || response.status === 403) {
+      if (
+        response.status === 400 ||
+        response.status === 401 ||
+        response.status === 403
+      ) {
         throw new Error("gemini_invalid_key");
       }
       throw new Error("gemini_request_failed");
     }
 
     const data = (await response.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      candidates?: Array<{
+        content?: { parts?: Array<{ text?: string }> };
+        finishReason?: string;
+      }>;
+      promptFeedback?: { blockReason?: string };
     };
 
-    const text = data.candidates?.[0]?.content?.parts
-      ?.map((p) => p.text ?? "")
-      .join("")
-      .trim();
-
+    const text = extractText(data);
     if (!text) {
-      throw new Error("gemini_empty_response");
+      lastError = "gemini_empty_response";
+      continue;
     }
 
     return text;

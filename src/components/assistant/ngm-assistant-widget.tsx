@@ -139,7 +139,11 @@ export function NgmAssistantWidget({
               ? "Gemini API key was rejected. Re-save the key under Integrations."
               : code === "gemini_model_unavailable"
                 ? "Gemini model is unavailable. Try again shortly."
-                : "Could not send message. Try again.";
+                : code === "gemini_quota_exhausted"
+                  ? "Gemini credits are depleted. Add billing/credits in Google AI Studio, then try again."
+                  : code === "gemini_empty_response"
+                    ? "Gemini returned an empty reply. Try again in a moment."
+                    : "Could not send message. Try again.";
         setError(labels[code] ?? labels.assistantError ?? fallback);
         return;
       }
