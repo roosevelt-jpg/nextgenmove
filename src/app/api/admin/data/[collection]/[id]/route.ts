@@ -108,6 +108,14 @@ export async function PATCH(
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     } else {
       const { id: _id, updatedAt: _u, createdAt: _c, ...rest } = body;
+      if (
+        collection === "testimonials" &&
+        rest.status === "published" &&
+        !rest.publishedAt
+      ) {
+        rest.publishedAt = FieldValue.serverTimestamp();
+        rest.reviewedBy = session.uid;
+      }
       await ref.update({
         ...stripUndefined(rest),
         updatedAt: FieldValue.serverTimestamp(),

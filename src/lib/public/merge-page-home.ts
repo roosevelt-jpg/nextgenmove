@@ -45,5 +45,35 @@ export function mergePageHome(
     podcastHeadline: overlay.podcastHeadline || base.podcastHeadline,
     podcastManagedLabel:
       overlay.podcastManagedLabel || base.podcastManagedLabel,
+    testimonialsEyebrow:
+      overlay.testimonialsEyebrow || base.testimonialsEyebrow,
+    testimonialsHeadline:
+      overlay.testimonialsHeadline || base.testimonialsHeadline,
+    testimonialsSubtext:
+      overlay.testimonialsSubtext || base.testimonialsSubtext,
+    testimonialsManagedLabel:
+      overlay.testimonialsManagedLabel || base.testimonialsManagedLabel,
+    testimonialsSubmitCta:
+      overlay.testimonialsSubmitCta || base.testimonialsSubmitCta,
+    testimonialsSignInPrompt:
+      overlay.testimonialsSignInPrompt || base.testimonialsSignInPrompt,
+    testimonialsSignInCta:
+      overlay.testimonialsSignInCta || base.testimonialsSignInCta,
+    testimonialsEmptyText:
+      overlay.testimonialsEmptyText || base.testimonialsEmptyText,
+    testimonialsPendingThanks:
+      overlay.testimonialsPendingThanks || base.testimonialsPendingThanks,
+    testimonialsQuoteLabel:
+      overlay.testimonialsQuoteLabel || base.testimonialsQuoteLabel,
+    testimonialsRatingLabel:
+      overlay.testimonialsRatingLabel || base.testimonialsRatingLabel,
+    testimonialsPhotoLabel:
+      overlay.testimonialsPhotoLabel || base.testimonialsPhotoLabel,
+    testimonialsNameLabel:
+      overlay.testimonialsNameLabel || base.testimonialsNameLabel,
+    testimonialsSlider: {
+      ...base.testimonialsSlider,
+      ...overlay.testimonialsSlider,
+    },
   };
 }

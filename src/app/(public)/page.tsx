@@ -3,6 +3,7 @@ import { HomeAudienceCtaSection } from "@/components/public/home-audience-cta-se
 import { HomeGlobalReachSection } from "@/components/public/home-global-reach-section";
 import { HomePodcastSection } from "@/components/public/home-podcast-section";
 import { HomeStoriesSection } from "@/components/public/home-stories-section";
+import { HomeTestimonialsSection } from "@/components/public/home-testimonials-section";
 import { StatBlocksSection } from "@/components/public/stat-blocks-section";
 import { StepsSection } from "@/components/public/steps-section";
 import { SectionEyebrow } from "@/components/ui";
@@ -11,9 +12,9 @@ import {
   getLiveVideoCards,
   getPageHome,
 } from "@/lib/collections/pages";
+import { getPublishedTestimonials } from "@/lib/collections/testimonials";
 import { resolveHomeStoryCards } from "@/lib/public/demo-story-videos";
 import {
-  applyCurrentYearToken,
   getPublicHomeMetrics,
   resolveHomeStatBlocks,
 } from "@/lib/public/home-stats";
@@ -21,17 +22,17 @@ import {
 export const revalidate = 30;
 
 export default async function HomePage() {
-  const [page, videoCards, podcastEpisodes] = await Promise.all([
+  const [page, videoCards, podcastEpisodes, testimonials] = await Promise.all([
     getPageHome(),
     getLiveVideoCards(),
     getLivePodcastEpisodes(),
+    getPublishedTestimonials(),
   ]);
 
   const storyCards = resolveHomeStoryCards(videoCards);
 
   const metrics = await getPublicHomeMetrics(page.originCities?.length ?? 0);
   const statBlocks = resolveHomeStatBlocks(page.statBlocks, metrics);
-  const testimonialBadge = applyCurrentYearToken(page.testimonialBadge);
 
   return (
     <div className="overflow-x-hidden">
@@ -64,29 +65,7 @@ export default async function HomePage() {
       <HomeStoriesSection page={page} cards={storyCards} />
       <HomePodcastSection page={page} episodes={podcastEpisodes} />
 
-      {(page.testimonialQuote || page.testimonialAttribution) && (
-        <section className="bg-surface-2">
-          <div className="page-container py-8 sm:py-10">
-            <blockquote className="relative pr-0 sm:pr-28">
-              {testimonialBadge ? (
-                <span className="mb-3 inline-block rounded-full bg-surface-1 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-text-label sm:absolute sm:right-0 sm:top-0 sm:mb-0">
-                  {testimonialBadge}
-                </span>
-              ) : null}
-              {page.testimonialQuote ? (
-                <p className="max-w-3xl font-serif text-lg leading-snug text-text-primary sm:text-xl md:text-2xl">
-                  “{page.testimonialQuote}”
-                </p>
-              ) : null}
-              {page.testimonialAttribution ? (
-                <footer className="mt-4 text-sm text-text-secondary">
-                  {page.testimonialAttribution}
-                </footer>
-              ) : null}
-            </blockquote>
-          </div>
-        </section>
-      )}
+      <HomeTestimonialsSection page={page} items={testimonials} />
 
       <HomeAudienceCtaSection
         talentCta={page.talentCta}

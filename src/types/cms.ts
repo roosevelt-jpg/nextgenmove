@@ -1,3 +1,5 @@
+import type { StorageFileRef } from "@/lib/storage/file-ref";
+
 export interface StatBlock {
   label: string;
   /** Manual display value, or fallback when metric is unavailable */
@@ -126,9 +128,29 @@ export interface PageHomeDocument {
   podcastEyebrow?: string;
   podcastHeadline?: string;
   podcastManagedLabel?: string;
+  /** @deprecated Prefer testimonials collection + section chrome below */
   testimonialQuote?: string;
+  /** @deprecated Prefer testimonials collection */
   testimonialAttribution?: string;
+  /** @deprecated Prefer testimonials section chrome */
   testimonialBadge?: string;
+  testimonialsEyebrow?: string;
+  testimonialsHeadline?: string;
+  testimonialsSubtext?: string;
+  testimonialsManagedLabel?: string;
+  testimonialsSubmitCta?: string;
+  testimonialsSignInPrompt?: string;
+  testimonialsSignInCta?: string;
+  testimonialsEmptyText?: string;
+  testimonialsPendingThanks?: string;
+  testimonialsQuoteLabel?: string;
+  testimonialsRatingLabel?: string;
+  testimonialsPhotoLabel?: string;
+  testimonialsNameLabel?: string;
+  testimonialsSlider?: Pick<
+    RoutesMarqueeSettings,
+    "speedSec" | "pauseOnHover" | "enabled" | "direction"
+  >;
   talentCta?: AudienceCtaBand;
   companyCta?: AudienceCtaBand;
   /** Third homepage audience CTA (e.g. open roles) */
@@ -151,6 +173,25 @@ export interface VideoCardDocument {
   /** `youtube_playlist` for cron-synced cards; `manual` or omitted for admin CRUD; `demo` = homepage placeholder only */
   source?: "youtube_playlist" | "manual" | "demo";
   syncedAt?: string | null;
+}
+
+export type TestimonialStatus = "pending" | "published" | "rejected";
+export type TestimonialAuthorRole = "student" | "company";
+
+export interface TestimonialDocument {
+  id: string;
+  authorUid: string;
+  authorRole: TestimonialAuthorRole;
+  displayName: string;
+  roleLabel: string;
+  quote: string;
+  rating: number;
+  photo: StorageFileRef | null;
+  status: TestimonialStatus;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  publishedAt?: string | null;
+  reviewedBy?: string | null;
 }
 
 export interface PodcastEpisodeDocument {

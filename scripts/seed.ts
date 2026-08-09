@@ -323,6 +323,29 @@ const PAGE_HOME = {
     "Six weeks ago I was refreshing job boards in Amsterdam. Today I'm running brand for a scale-up in Dubai — and my coach was in my corner for every leg of it.",
   testimonialAttribution: "Sara K. · Marketing lead · Placed via Nextgenmove",
   testimonialBadge: "Placed {year}",
+  testimonialsEyebrow: "Testimonials",
+  testimonialsHeadline: "Voices from the route.",
+  testimonialsSubtext:
+    "Students and employers share what the move felt like — published after review.",
+  testimonialsManagedLabel: "Managed in admin · Homepage content",
+  testimonialsSubmitCta: "Submit testimonial",
+  testimonialsSignInPrompt:
+    "Sign in as a student or employer to share your experience.",
+  testimonialsSignInCta: "Sign in to post",
+  testimonialsEmptyText:
+    "Be the first voice on this board — sign in and submit a testimonial for review.",
+  testimonialsPendingThanks:
+    "Thanks — your testimonial is pending review.",
+  testimonialsQuoteLabel: "Your testimonial",
+  testimonialsRatingLabel: "Rating",
+  testimonialsPhotoLabel: "Photo (optional)",
+  testimonialsNameLabel: "Your name",
+  testimonialsSlider: {
+    enabled: true,
+    speedSec: 48,
+    pauseOnHover: true,
+    direction: "ltr",
+  },
   talentCta: {
     eyebrow: "For talent",
     title: "Your seat is waiting.",

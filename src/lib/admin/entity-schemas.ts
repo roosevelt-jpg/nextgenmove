@@ -51,6 +51,7 @@ export const ADMIN_COLLECTIONS = [
   "email_templates",
   "video_cards",
   "podcast_episodes",
+  "testimonials",
 ] as const;
 
 export type AdminCollection = (typeof ADMIN_COLLECTIONS)[number];
@@ -357,6 +358,82 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
         labelKey: "testimonialAttribution",
       },
       { key: "testimonialBadge", type: "text", labelKey: "testimonialBadge" },
+      { key: "testimonialsEyebrow", type: "text", labelKey: "testimonialsEyebrow" },
+      {
+        key: "testimonialsHeadline",
+        type: "text",
+        labelKey: "testimonialsHeadline",
+      },
+      {
+        key: "testimonialsSubtext",
+        type: "textarea",
+        labelKey: "testimonialsSubtext",
+      },
+      {
+        key: "testimonialsManagedLabel",
+        type: "text",
+        labelKey: "testimonialsManagedLabel",
+      },
+      {
+        key: "testimonialsSubmitCta",
+        type: "text",
+        labelKey: "testimonialsSubmitCta",
+      },
+      {
+        key: "testimonialsSignInPrompt",
+        type: "text",
+        labelKey: "testimonialsSignInPrompt",
+      },
+      {
+        key: "testimonialsSignInCta",
+        type: "text",
+        labelKey: "testimonialsSignInCta",
+      },
+      {
+        key: "testimonialsEmptyText",
+        type: "textarea",
+        labelKey: "testimonialsEmptyText",
+      },
+      {
+        key: "testimonialsPendingThanks",
+        type: "text",
+        labelKey: "testimonialsPendingThanks",
+      },
+      {
+        key: "testimonialsQuoteLabel",
+        type: "text",
+        labelKey: "testimonialsQuoteLabel",
+      },
+      {
+        key: "testimonialsRatingLabel",
+        type: "text",
+        labelKey: "testimonialsRatingLabel",
+      },
+      {
+        key: "testimonialsPhotoLabel",
+        type: "text",
+        labelKey: "testimonialsPhotoLabel",
+      },
+      {
+        key: "testimonialsNameLabel",
+        type: "text",
+        labelKey: "testimonialsNameLabel",
+      },
+      {
+        key: "testimonialsSlider",
+        type: "object",
+        labelKey: "testimonialsSlider",
+        fields: [
+          { key: "enabled", type: "boolean", labelKey: "marqueeEnabled" },
+          { key: "speedSec", type: "number", labelKey: "marqueeSpeedSec" },
+          { key: "direction", type: "select", labelKey: "marqueeDirection" },
+          {
+            key: "pauseOnHover",
+            type: "boolean",
+            labelKey: "marqueePauseOnHover",
+          },
+        ],
+      },
       {
         key: "talentCta",
         type: "object",
@@ -693,6 +770,19 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "status", type: "select", labelKey: "status" },
     ],
   },
+  testimonials: {
+    collection: "testimonials",
+    fields: [
+      { key: "displayName", type: "text", labelKey: "displayName", required: true },
+      { key: "roleLabel", type: "text", labelKey: "roleLabel" },
+      { key: "quote", type: "textarea", labelKey: "quote", required: true },
+      { key: "rating", type: "number", labelKey: "rating", required: true },
+      { key: "photo", type: "image", labelKey: "photo" },
+      { key: "authorRole", type: "select", labelKey: "authorRole" },
+      { key: "status", type: "select", labelKey: "status", required: true },
+      { key: "authorUid", type: "text", labelKey: "authorUid" },
+    ],
+  },
 };
 
 export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
@@ -715,6 +805,10 @@ export const COLLECTION_FIELD_STATIC_OPTIONS: Record<
   cms_forms: { status: "status_cms" },
   video_cards: { status: "status_content" },
   podcast_episodes: { status: "status_content" },
+  testimonials: {
+    status: "status_testimonial",
+    authorRole: "authorRole_testimonial",
+  },
   page_home: {
     direction: "marqueeDirection",
     easing: "marqueeEasing",
@@ -760,6 +854,15 @@ export const STATIC_SELECT_OPTIONS: Record<string, { value: string; label: strin
   status_cms: [
     { value: "draft", label: "draft" },
     { value: "published", label: "published" },
+  ],
+  status_testimonial: [
+    { value: "pending", label: "pending" },
+    { value: "published", label: "published" },
+    { value: "rejected", label: "rejected" },
+  ],
+  authorRole_testimonial: [
+    { value: "student", label: "student" },
+    { value: "company", label: "company" },
   ],
   fieldType: [
     { value: "text", label: "text" },

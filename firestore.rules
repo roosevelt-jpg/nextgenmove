@@ -235,6 +235,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /testimonials/{docId} {
+      allow read, write: if false;
+    }
+
     match /job_postings/{docId} {
       allow read: if isAdmin() || resource.data.status == 'open';
       allow write: if isAdmin();

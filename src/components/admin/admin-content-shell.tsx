@@ -25,6 +25,12 @@ const SECTION_COPY: Record<
     subtitleKey: "podcastSubtitle",
     fallbackTitle: "Podcast episodes",
   },
+  "/admin/content/testimonials": {
+    eyebrowKey: "testimonialsEyebrow",
+    titleKey: "testimonialsTitle",
+    subtitleKey: "testimonialsSubtitle",
+    fallbackTitle: "Testimonials",
+  },
   "/admin/content/home": {
     eyebrowKey: "homeEyebrow",
     titleKey: "homeTitle",
