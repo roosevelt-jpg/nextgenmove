@@ -41,8 +41,11 @@ export function normalizeSocialLinks(raw: unknown): SocialLink[] {
 async function loadSiteSettings(): Promise<SiteSettingsDocument> {
   const snapshot = await adminDb.collection("site_settings").doc("default").get();
   const data = (snapshot.data() as SiteSettingsDocument | undefined) ?? {};
+  const contactEmail =
+    String(data.contactEmail ?? "").trim() || "info@nextgenmove.agency";
   return serializeForClient({
     ...data,
+    contactEmail,
     socialLinks: normalizeSocialLinks(data.socialLinks),
   });
 }

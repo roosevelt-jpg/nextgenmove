@@ -55,7 +55,10 @@ function renameBrandString(value: string): string {
     .replace(/venturo/g, "nextgenmove")
     .replace(/PLACED VIA VENTURO/gi, "PLACED VIA NEXTGENMOVE")
     .replace(/placed via Venturo/gi, "placed via Nextgenmove")
-    .replace(/admin@nextgenmove\.ae/gi, "admin@nextgenmove.agency");
+    .replace(/admin@nextgenmove\.ae/gi, "info@nextgenmove.agency")
+    .replace(/admin@nextgenmove\.agency/gi, "info@nextgenmove.agency")
+    .replace(/hello@nextgenmove\.agency/gi, "info@nextgenmove.agency")
+    .replace(/nextgenmove@gmail\.com/gi, "info@nextgenmove.agency");
 }
 
 function renameDeep(value: unknown): { next: unknown; changed: boolean } {

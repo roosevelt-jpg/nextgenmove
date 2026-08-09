@@ -10,7 +10,7 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
   tagline: "Your next step, engineered.",
   siteDescription: "Your next step, engineered.",
   brandMark: "N",
-  contactEmail: "",
+  contactEmail: "info@nextgenmove.agency",
   contactPhone: "",
   contactAddress: "",
   youtubePlaylistUrl: "",

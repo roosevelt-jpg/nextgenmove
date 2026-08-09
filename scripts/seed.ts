@@ -727,7 +727,7 @@ const OPERATIONAL_SITE_SETTINGS = {
   defaultMetaDescription:
     "Nextgenmove matches pre-screened talent with employers. Free to join for talent; curated hiring for companies.",
   brandMark: "N",
-  contactEmail: "",
+  contactEmail: "info@nextgenmove.agency",
   contactPhone: "",
   contactAddress: "",
   footerCopyright: "© {year} {siteName}",
@@ -2318,7 +2318,7 @@ const SITE_SETTINGS = {
   defaultMetaTitle: "",
   defaultMetaDescription: "",
   brandMark: "",
-  contactEmail: "",
+  contactEmail: "info@nextgenmove.agency",
   contactPhone: "",
   contactAddress: "",
   footerCopyright: "",
