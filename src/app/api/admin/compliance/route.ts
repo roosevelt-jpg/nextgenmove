@@ -93,8 +93,6 @@ export async function GET(request: Request) {
       return NextResponse.json({
         records: records.slice(0, limit),
         piiAccessEvents: piiAccessEvents.slice(0, piiLimit),
-        anonymizeDocsHref: "/docs/security-model.md",
-        anonymizeLibPath: "src/lib/security/anonymize-account.ts",
       });
     },
   );

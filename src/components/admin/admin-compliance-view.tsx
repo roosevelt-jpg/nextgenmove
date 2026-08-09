@@ -20,12 +20,13 @@ type PiiAccessEvent = {
   createdAt: string | null;
 };
 
-export function AdminComplianceView() {
+export function AdminComplianceView({
+  labels,
+}: {
+  labels: Record<string, string>;
+}) {
   const [records, setRecords] = useState<ConsentRecord[]>([]);
   const [piiAccessEvents, setPiiAccessEvents] = useState<PiiAccessEvent[]>([]);
-  const [anonymizeLibPath, setAnonymizeLibPath] = useState(
-    "src/lib/security/anonymize-account.ts",
-  );
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -33,21 +34,17 @@ export function AdminComplianceView() {
       cache: "no-store",
     });
     if (!res.ok) {
-      setMessage("Could not load consent records.");
+      setMessage(labels.loadError || "Could not load consent records.");
       return;
     }
     const payload = (await res.json()) as {
       records: ConsentRecord[];
       piiAccessEvents?: PiiAccessEvent[];
-      anonymizeLibPath?: string;
     };
     setRecords(payload.records ?? []);
     setPiiAccessEvents(payload.piiAccessEvents ?? []);
-    if (payload.anonymizeLibPath) {
-      setAnonymizeLibPath(payload.anonymizeLibPath);
-    }
     setMessage(null);
-  }, []);
+  }, [labels.loadError]);
 
   useEffect(() => {
     void load();
@@ -55,25 +52,6 @@ export function AdminComplianceView() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-2">
-        <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-text-label">
-          Compliance locker
-        </p>
-        <h1 className="font-serif text-3xl text-text-primary">Consent & DSAR</h1>
-        <p className="max-w-2xl text-sm text-text-secondary">
-          Recent consent records (Admin SDK). Student and employer settings expose
-          self-serve JSON exports; deactivation runs through{" "}
-          <code className="font-mono text-xs">{anonymizeLibPath}</code>.
-        </p>
-        <p className="text-sm text-text-secondary">
-          Anonymize docs:{" "}
-          <span className="font-mono text-xs">docs/security-model.md</span>
-          {" · "}
-          helper{" "}
-          <span className="font-mono text-xs">{anonymizeLibPath}</span>
-        </p>
-      </header>
-
       {message ? (
         <p className="text-sm text-text-warning" role="alert">
           {message}
@@ -82,20 +60,20 @@ export function AdminComplianceView() {
 
       <section className="space-y-2">
         <h2 className="font-serif text-xl text-text-primary">
-          Recent consent records
+          {labels.consentsTitle}
         </h2>
         {records.length === 0 ? (
-          <p className="text-sm text-text-muted">No consent records found.</p>
+          <p className="text-sm text-text-muted">{labels.consentsEmpty}</p>
         ) : (
           <div className="overflow-x-auto rounded-radius border border-border">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="bg-surface-2 font-mono text-[10px] uppercase tracking-wide text-text-label">
                 <tr>
-                  <th className="px-3 py-2">Created</th>
-                  <th className="px-3 py-2">User</th>
-                  <th className="px-3 py-2">Source</th>
-                  <th className="px-3 py-2">Required</th>
-                  <th className="px-3 py-2">Marketing</th>
+                  <th className="px-3 py-2">{labels.colCreated}</th>
+                  <th className="px-3 py-2">{labels.colUser}</th>
+                  <th className="px-3 py-2">{labels.colSource}</th>
+                  <th className="px-3 py-2">{labels.colRequired}</th>
+                  <th className="px-3 py-2">{labels.colMarketing}</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,13 +84,15 @@ export function AdminComplianceView() {
                         ? new Date(record.createdAt).toLocaleString()
                         : "—"}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs">{record.userId}</td>
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {record.userId}
+                    </td>
                     <td className="px-3 py-2">{record.source}</td>
                     <td className="px-3 py-2">
-                      {record.requiredProcessing ? "yes" : "no"}
+                      {record.requiredProcessing ? labels.yes : labels.no}
                     </td>
                     <td className="px-3 py-2">
-                      {record.marketing ? "yes" : "no"}
+                      {record.marketing ? labels.yes : labels.no}
                     </td>
                   </tr>
                 ))}
@@ -123,26 +103,22 @@ export function AdminComplianceView() {
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-serif text-xl text-text-primary">
-          PII access audit
-        </h2>
-        <p className="text-sm text-text-secondary">
-          Recent unlock / view events from{" "}
-          <code className="font-mono text-xs">pii_access_events</code> (limit
-          50).
-        </p>
+        <h2 className="font-serif text-xl text-text-primary">{labels.piiTitle}</h2>
+        {labels.piiSubtitle ? (
+          <p className="text-sm text-text-secondary">{labels.piiSubtitle}</p>
+        ) : null}
         {piiAccessEvents.length === 0 ? (
-          <p className="text-sm text-text-muted">No PII access events found.</p>
+          <p className="text-sm text-text-muted">{labels.piiEmpty}</p>
         ) : (
           <div className="overflow-x-auto rounded-radius border border-border">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-surface-2 font-mono text-[10px] uppercase tracking-wide text-text-label">
                 <tr>
-                  <th className="px-3 py-2">Created</th>
-                  <th className="px-3 py-2">Actor</th>
-                  <th className="px-3 py-2">Student</th>
-                  <th className="px-3 py-2">Action</th>
-                  <th className="px-3 py-2">Meta</th>
+                  <th className="px-3 py-2">{labels.colCreated}</th>
+                  <th className="px-3 py-2">{labels.colActor}</th>
+                  <th className="px-3 py-2">{labels.colStudent}</th>
+                  <th className="px-3 py-2">{labels.colAction}</th>
+                  <th className="px-3 py-2">{labels.colMeta}</th>
                 </tr>
               </thead>
               <tbody>
