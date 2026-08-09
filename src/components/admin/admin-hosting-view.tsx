@@ -177,7 +177,24 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
     return buildHostingQuote(catalog, planId, periodId);
   }, [catalog, planId, periodId]);
 
+  useEffect(() => {
+    if (!hostingActive) return;
+    // Paid accounts should never stay on checkout steps.
+    if (step === "summary" || step === "payment") {
+      setStep("plans");
+      setClientSecret(null);
+      setMessage(null);
+    }
+  }, [hostingActive, step]);
+
   const startCheckout = () => {
+    if (hostingActive) {
+      setMessage(
+        labels.alreadyPaid ||
+          "Hosting is already paid and active. A new payment is not needed.",
+      );
+      return;
+    }
     if (!plan || !liveQuote) return;
     setQuote(liveQuote);
     setStep("summary");
@@ -186,6 +203,14 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
   };
 
   const continueToPayment = async () => {
+    if (hostingActive) {
+      setMessage(
+        labels.alreadyPaid ||
+          "Hosting is already paid and active. A new payment is not needed.",
+      );
+      setStep("plans");
+      return;
+    }
     if (!plan) return;
     setBusy(true);
     setMessage(null);
@@ -202,8 +227,19 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         paymentIntentId?: string;
         returnUrl?: string;
         quote?: HostingQuote;
+        subscription?: HostingSubscriptionStatus;
       };
       if (!response.ok) {
+        if (payload.error === "already_active") {
+          if (payload.subscription) setSubscription(payload.subscription);
+          else await load();
+          setStep("plans");
+          setMessage(
+            labels.alreadyPaid ||
+              "Hosting is already paid and active. A new payment is not needed.",
+          );
+          return;
+        }
         setMessage(
           labels[payload.error ?? ""] ||
             (payload.error === "hosting_stripe_not_configured"
@@ -392,14 +428,50 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         </div>
       </header>
 
-      {!stripeLive ? (
+      {!stripeLive && !hostingActive ? (
         <p className="rounded-radius-sm border border-border bg-bg-purple px-3 py-2 text-sm text-text-primary">
           {labels.stripeNotConfigured ||
             "Connect Hosting Plan (Stripe) under Integrations to enable checkout."}
         </p>
       ) : null}
 
-      {step === "plans" ? (
+      {hostingActive ? (
+        <section className="rounded-radius border border-border bg-grad-card p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-2">
+              <p className="inline-flex rounded-full bg-bg-success px-3 py-1 text-xs font-semibold uppercase tracking-wide text-text-success">
+                {labels.hostingPaidBadge || labels.hostingActiveBadge || "Paid · Hosting Active"}
+              </p>
+              <h2 className="font-serif text-2xl text-text-primary">
+                {labels.paidTitle || "Hosting is paid"}
+              </h2>
+              <p className="max-w-xl text-sm text-text-secondary">
+                {labels.paidBody ||
+                  "Payment is complete. You do not need to pay again while this plan is active."}
+              </p>
+              {subscription?.planName ? (
+                <p className="text-sm font-medium text-text-primary">
+                  {subscription.planName}
+                  {subscription.expiresAt
+                    ? ` · ${labels.activeUntil || "Active until"} ${subscription.expiresAt.slice(0, 10)}`
+                    : null}
+                </p>
+              ) : null}
+            </div>
+            <Button type="button" variant="outline" disabled>
+              {labels.alreadyPaidCta || "Already paid"}
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
+      {message && step === "plans" ? (
+        <p className="text-sm text-text-warning" role="alert">
+          {message}
+        </p>
+      ) : null}
+
+      {!hostingActive && step === "plans" ? (
         <section className="overflow-hidden rounded-radius border border-border bg-surface-1 shadow-sm">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]">
             <div className="space-y-5 p-5 sm:p-6">
@@ -521,7 +593,7 @@ export function AdminHostingView({ labels }: AdminHostingViewProps) {
         </section>
       ) : null}
 
-      {step === "summary" || step === "payment" ? (
+      {!hostingActive && (step === "summary" || step === "payment") ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
           <div className="space-y-4">
             <section className="rounded-radius border border-border bg-surface-1 p-5 shadow-sm">

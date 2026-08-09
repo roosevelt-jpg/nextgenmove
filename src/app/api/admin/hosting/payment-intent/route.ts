@@ -19,6 +19,7 @@ import {
 import { eurosToCents, appBaseUrl } from "@/lib/billing/stripe";
 import { stripUndefined } from "@/lib/stripUndefined";
 import { logger } from "@/lib/observability/logger";
+import { getHostingSubscription } from "@/lib/billing/hosting-activation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,17 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
+    const existing = await getHostingSubscription();
+    if (existing.status === "active") {
+      return NextResponse.json(
+        {
+          error: "already_active",
+          subscription: existing,
+        },
+        { status: 409 },
+      );
+    }
+
     const body = bodySchema.parse(await request.json());
     const catalog = await getHostingCatalog();
     const quote = buildHostingQuote(catalog, body.planId, body.periodId);
