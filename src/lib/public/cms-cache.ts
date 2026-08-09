@@ -30,8 +30,8 @@ export async function cachedPublicCms<T>({
       }
       return value;
     },
-    // v4: full homepage shell merge (stories / podcast / CTAs / testimonial).
-    [...key, "v4"],
+    // v5: conversion label deep-merge + marketing sections.
+    [...key, "v5"],
     { revalidate, tags },
   );
 

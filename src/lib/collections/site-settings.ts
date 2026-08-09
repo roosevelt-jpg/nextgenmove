@@ -39,15 +39,79 @@ export function normalizeSocialLinks(raw: unknown): SocialLink[] {
   return [];
 }
 
+function mergeLabelMaps(
+  live: Record<string, string> | undefined,
+  fallback: Record<string, string> | undefined,
+): Record<string, string> {
+  return { ...(fallback ?? {}), ...(live ?? {}) };
+}
+
 async function loadSiteSettings(): Promise<SiteSettingsDocument> {
   const snapshot = await adminDb.collection("site_settings").doc("default").get();
   const data = (snapshot.data() as SiteSettingsDocument | undefined) ?? {};
   const contactEmail =
     String(data.contactEmail ?? "").trim() || "info@nextgenmove.agency";
+  const fb = FALLBACK_SITE_SETTINGS;
+  const conversion = {
+    ...(fb.conversionLabels ?? {}),
+    ...(data.conversionLabels ?? {}),
+  };
+  const roleKeys = [
+    "roleReadinessEyebrow",
+    "roleReadinessMatchLabel",
+    "roleReadinessAnonTeaser",
+    "roleReadinessSignUpCta",
+    "roleReadinessSignUpHref",
+  ] as const;
+  const assistantKeys = [
+    "assistantLeadHiringTitle",
+    "assistantLeadHiringBody",
+    "assistantLeadTalentTitle",
+    "assistantLeadTalentBody",
+    "assistantLeadHiringCta",
+    "assistantLeadTalentCta",
+    "assistantLeadNameLabel",
+    "assistantLeadEmailLabel",
+    "assistantLeadSubmit",
+    "assistantLeadSuccess",
+    "assistantLeadError",
+  ] as const;
+  const conversionPage: Record<string, string> = {};
+  const conversionForm: Record<string, string> = {};
+  for (const key of roleKeys) {
+    const value = conversion[key];
+    if (typeof value === "string" && value.trim()) conversionPage[key] = value;
+  }
+  for (const key of assistantKeys) {
+    const value = conversion[key];
+    if (typeof value === "string" && value.trim()) conversionForm[key] = value;
+  }
+
   return serializeForClient({
+    ...fb,
     ...data,
     contactEmail,
     socialLinks: normalizeSocialLinks(data.socialLinks),
+    conversionLabels: conversion,
+    navLabels: mergeLabelMaps(
+      data.navLabels as Record<string, string> | undefined,
+      fb.navLabels as Record<string, string> | undefined,
+    ),
+    pageLabels: mergeLabelMaps(
+      { ...conversionPage, ...(data.pageLabels ?? {}) },
+      fb.pageLabels,
+    ),
+    formLabels: mergeLabelMaps(
+      { ...conversionForm, ...(data.formLabels ?? {}) },
+      fb.formLabels,
+    ),
+    authLabels: mergeLabelMaps(data.authLabels, fb.authLabels),
+    adminNavLabels: mergeLabelMaps(data.adminNavLabels, fb.adminNavLabels),
+    studentNavLabels: mergeLabelMaps(data.studentNavLabels, fb.studentNavLabels),
+    employerNavLabels: mergeLabelMaps(
+      data.employerNavLabels,
+      fb.employerNavLabels,
+    ),
   });
 }
 

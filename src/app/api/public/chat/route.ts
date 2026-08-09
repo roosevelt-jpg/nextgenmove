@@ -9,6 +9,12 @@ import {
 } from "@/lib/ai/gemini";
 import { buildAssistantContext } from "@/lib/ai/assistant-context";
 import { serializeTimestamp } from "@/lib/firestore-utils";
+import {
+  clientIpFromRequest,
+  enforceRateLimit,
+  rateLimitResponse,
+} from "@/lib/security/rate-limit";
+import { detectPublicChatLeadOffer } from "@/lib/ai/public-chat-lead";
 
 const schema = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -65,6 +71,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const ip = clientIpFromRequest(request);
+  const limited = await enforceRateLimit({
+    key: `public_chat:ip:${ip}`,
+    limit: 40,
+    windowSec: 3600,
+  });
+  if (!limited.allowed) {
+    return rateLimitResponse(limited.retryAfterSec);
+  }
+
   try {
     const body = schema.parse(await request.json());
     let threadId = body.threadId;
@@ -81,6 +97,7 @@ export async function POST(request: Request) {
           visitorName: body.visitorName || null,
           visitorEmail: body.visitorEmail || null,
           status: "open",
+          leadConverted: false,
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         }),
@@ -145,7 +162,17 @@ export async function POST(request: Request) {
       { merge: true },
     );
 
-    return NextResponse.json({ threadId, reply });
+    const threadSnap = await threadRef.get();
+    const threadData = threadSnap.data() ?? {};
+    const alreadyConverted = Boolean(threadData.leadConverted);
+    const historyText = (body.history ?? [])
+      .map((turn) => turn.text)
+      .join("\n");
+    const leadOffer = alreadyConverted
+      ? null
+      : detectPublicChatLeadOffer(`${historyText}\n${body.message}\n${reply}`);
+
+    return NextResponse.json({ threadId, reply, leadOffer });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

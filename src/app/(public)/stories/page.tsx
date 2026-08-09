@@ -7,12 +7,16 @@ export const revalidate = 60;
 export default async function StoriesPage() {
   const [page, stories] = await Promise.all([
     getPageHome(),
-    getPublishedTalentStories(48),
+    getPublishedTalentStories(96),
   ]);
 
   return (
     <div className="pb-10">
-      <HomeTalentStoriesSection page={page} items={stories} />
+      <HomeTalentStoriesSection
+        page={page}
+        items={stories}
+        showViewAll={false}
+      />
     </div>
   );
 }

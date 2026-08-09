@@ -1,4 +1,10 @@
-import type { PageHomeDocument, SiteSettingsDocument } from "@/types/cms";
+import type {
+  PageHomeDocument,
+  PagePricingDocument,
+  PageTracksDocument,
+  PageVisaPathDocument,
+  SiteSettingsDocument,
+} from "@/types/cms";
 
 /**
  * Last-resort public CMS shells used only when Firestore is unreachable.
@@ -39,6 +45,50 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
     headerCtaHref: "/sign-up",
     contact: "Contact",
   },
+  pageLabels: {
+    roleReadinessEyebrow: "Role readiness",
+    roleReadinessMatchLabel: "Evidence match {present}/{required}",
+    roleReadinessAnonTeaser:
+      "Sign up to see how your evidence vault lines up with this role.",
+    roleReadinessSignUpCta: "Create free account",
+    roleReadinessSignUpHref: "/sign-up",
+  },
+  formLabels: {
+    assistantLeadHiringTitle: "Talk to us about hiring",
+    assistantLeadHiringBody:
+      "Share a work email and we will route you to the right employer contact.",
+    assistantLeadTalentTitle: "Talk to us about your move",
+    assistantLeadTalentBody:
+      "Leave your details and a coach will follow up on next steps.",
+    assistantLeadHiringCta: "Request hiring help",
+    assistantLeadTalentCta: "Request talent help",
+    assistantLeadNameLabel: "Name",
+    assistantLeadEmailLabel: "Email",
+    assistantLeadSubmit: "Send",
+    assistantLeadSuccess: "Thanks — we will be in touch shortly.",
+    assistantLeadError: "Could not send. Please try again.",
+  },
+  conversionLabels: {
+    roleReadinessEyebrow: "Role readiness",
+    roleReadinessMatchLabel: "Evidence match {present}/{required}",
+    roleReadinessAnonTeaser:
+      "Sign up to see how your evidence vault lines up with this role.",
+    roleReadinessSignUpCta: "Create free account",
+    roleReadinessSignUpHref: "/sign-up",
+    assistantLeadHiringTitle: "Talk to us about hiring",
+    assistantLeadHiringBody:
+      "Share a work email and we will route you to the right employer contact.",
+    assistantLeadTalentTitle: "Talk to us about your move",
+    assistantLeadTalentBody:
+      "Leave your details and a coach will follow up on next steps.",
+    assistantLeadHiringCta: "Request hiring help",
+    assistantLeadTalentCta: "Request talent help",
+    assistantLeadNameLabel: "Name",
+    assistantLeadEmailLabel: "Email",
+    assistantLeadSubmit: "Send",
+    assistantLeadSuccess: "Thanks — we will be in touch shortly.",
+    assistantLeadError: "Could not send. Please try again.",
+  },
   adminNavLabels: {
     dashboard: "Dashboard",
     levers: "Program Levers",
@@ -70,6 +120,25 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
     settings: "Settings",
   },
 };
+
+/** Shared Move OS explainer copy used across home / tracks / pricing fallbacks. */
+const FALLBACK_MOVE_OS = {
+  moveOsEyebrow: "Move OS",
+  moveOsHeadline: "Dual commitment. Shadow sprint. Arrival.",
+  moveOsSubtext:
+    "A structured path from mutual commit through a short proof sprint to day-one readiness — without inventing placements.",
+  moveOsDualCommitTitle: "Dual commit",
+  moveOsDualCommitBody:
+    "Talent and employer both confirm intent before the sprint starts, so time and evidence are spent on real fits.",
+  moveOsSprintTitle: "Shadow sprint",
+  moveOsSprintBody:
+    "A short, scoped work sample against the role — scored on evidence, not interviews alone.",
+  moveOsArrivalTitle: "Arrival",
+  moveOsArrivalBody:
+    "When the sprint clears, relocation and onboarding steps stay on one shared timeline.",
+  moveOsCtaLabel: "See how Move OS works",
+  moveOsCtaHref: "/how-it-works",
+} as const;
 
 export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   eyebrowText: "Relocation. Engineered.",
@@ -251,6 +320,27 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   talentStoriesEmptyText: "Published talent stories will appear here.",
   talentStoriesViewAllLabel: "View all stories →",
   talentStoriesViewAllHref: "/stories",
+  talentStoriesFilterAllLabel: "All corridors",
+  talentStoriesCorridorCtaLabel: "Explore this corridor",
+  talentStoriesCorridorCtaHref: "/visa-path",
+  talentStoriesEmptyFilteredText:
+    "No published stories for this corridor yet. Try another filter or check back soon.",
+  benchTeaserEyebrow: "Employer bench",
+  benchTeaserHeadline: "Ready talent, by corridor.",
+  benchTeaserSubtext:
+    "A live slice of candidates marked ready for introduction — counts only, no profiles until you request access.",
+  benchTeaserCtaLabel: "Request talent",
+  benchTeaserCtaHref: "/request-talent",
+  benchTeaserEmptyText: "Bench counts will appear as talent becomes ready.",
+  benchTeaserReadyLabel: "Ready now",
+  benchTeaserCorridorsLabel: "Corridors",
+  ...FALLBACK_MOVE_OS,
+  newsletterEyebrow: "Dispatch",
+  newsletterHeadline: "One email a month. No noise.",
+  newsletterSubtext:
+    "Corridor updates, open roles, and Move OS tips — unsubscribe anytime.",
+  newsletterCorridorLabel: "Preferred corridor (optional)",
+  newsletterSuccessMessage: "You're on the list. Watch for the next dispatch.",
   talentCta: {
     eyebrow: "For talent",
     title: "Your seat is waiting.",
@@ -329,7 +419,7 @@ export const FALLBACK_PAGE_HOME: PageHomeDocument = {
   ],
 };
 
-export const FALLBACK_PAGE_VISA_PATH: import("@/types/cms").PageVisaPathDocument = {
+export const FALLBACK_PAGE_VISA_PATH: PageVisaPathDocument = {
   eyebrow: "Visa path",
   headline: "Simulate your corridor timeline.",
   subtext:
@@ -343,6 +433,11 @@ export const FALLBACK_PAGE_VISA_PATH: import("@/types/cms").PageVisaPathDocument
   signInCta: "Sign in",
   totalDaysLabel: "{days} days total",
   emptyCorridorsText: "Visa corridors will appear here soon.",
+  anonymousUploadCta: "Create an account to upload evidence",
+  anonymousUploadHref: "/sign-up",
+  vaultOpenCta: "Open evidence vault",
+  vaultOpenHref: "/student/evidence",
+  missingKindCtaTemplate: "Add {kind} to your vault",
   corridors: [
     {
       id: "eu_dxb",
@@ -373,3 +468,58 @@ export const FALLBACK_PAGE_VISA_PATH: import("@/types/cms").PageVisaPathDocument
   ],
 };
 
+export const FALLBACK_PAGE_PRICING: PagePricingDocument = {
+  trackAHeadline: "Self service",
+  trackAFeatures: [
+    "Full talent pool access",
+    "Pipeline tracking",
+    "Introduction via Nextgenmove",
+  ],
+  trackBHeadline: "Nextgenmove does everything",
+  trackBFeatures: [
+    "Nextgenmove searches for you",
+    "Weekly updates",
+    "Full placement support",
+  ],
+  faqItems: [
+    {
+      question: "Can we switch tracks later?",
+      answer:
+        "Yes — plan changes go through a quick approval from your account contact.",
+    },
+    {
+      question: "Is there a contract?",
+      answer: "No lock-in on either track. Cancel anytime from Our Profile.",
+    },
+  ],
+  ctaLabel: "Request this plan",
+  ...FALLBACK_MOVE_OS,
+};
+
+export const FALLBACK_PAGE_TRACKS: PageTracksDocument = {
+  trackABody:
+    "<p>Browse the talent pool yourself. You find the match. Nextgenmove handles the introduction.</p>",
+  trackBBody:
+    "<p>Full service. Nextgenmove actively sources your match and coaches the placement through to day ninety.</p>",
+  comparisonRows: [
+    {
+      feature: "Talent pool access",
+      trackAValue: "Full",
+      trackBValue: "Full",
+    },
+    {
+      feature: "Sourcing",
+      trackAValue: "Self-serve",
+      trackBValue: "Nextgenmove-led",
+    },
+    {
+      feature: "Coaching support",
+      trackAValue: "Introductions",
+      trackBValue: "End-to-end",
+    },
+  ],
+  caseStudyQuote: null,
+  ctaLabel: "Request talent",
+  ctaHref: "/request-talent",
+  ...FALLBACK_MOVE_OS,
+};

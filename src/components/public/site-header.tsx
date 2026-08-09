@@ -37,7 +37,7 @@ export async function SiteHeader() {
         </Link>
 
         <nav
-          className="hidden flex-1 items-center justify-center gap-6 md:flex"
+          className="hidden min-w-0 flex-1 items-center justify-center gap-3 overflow-x-auto lg:gap-5 xl:gap-6 md:flex [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="primary"
         >
           {links.map((link) =>
@@ -45,7 +45,7 @@ export async function SiteHeader() {
               <Link
                 key={link.key}
                 href={link.href}
-                className="text-sm text-on-gradient/80 transition-opacity hover:text-on-gradient hover:opacity-100"
+                className="shrink-0 whitespace-nowrap text-sm text-on-gradient/80 transition-opacity hover:text-on-gradient hover:opacity-100"
               >
                 {link.label}
               </Link>

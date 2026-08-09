@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { VisaPathSimulator } from "@/components/public/visa-path-simulator";
 import { getPageVisaPath } from "@/lib/collections/pages";
 import { FALLBACK_PAGE_VISA_PATH } from "@/lib/public/cms-fallbacks";
@@ -23,11 +24,13 @@ export default async function VisaPathPage() {
 
   return (
     <div className="page-section">
-      <VisaPathSimulator
-        page={page}
-        isStudent={Boolean(session)}
-        studentEvidenceKinds={studentEvidenceKinds}
-      />
+      <Suspense fallback={null}>
+        <VisaPathSimulator
+          page={page}
+          isStudent={Boolean(session)}
+          studentEvidenceKinds={studentEvidenceKinds}
+        />
+      </Suspense>
     </div>
   );
 }

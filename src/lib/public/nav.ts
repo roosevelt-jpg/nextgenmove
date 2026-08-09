@@ -104,13 +104,23 @@ export function buildHeaderSections(navLabels: NavLabels = {}) {
   return buildDefaultFooterGroups(navLabels);
 }
 
-/** Flat primary nav links matching the marketing mockup header. */
+/** Flat primary nav links — product routes + marketing CTAs. */
 export function buildHeaderPrimaryLinks(navLabels: NavLabels = {}) {
-  return [
+  const links = [
     {
       key: "howItWorks",
       href: PUBLIC_ROUTES.howItWorks,
       label: navLabels.howItWorks,
+    },
+    {
+      key: "visaPath",
+      href: PUBLIC_ROUTES.visaPath,
+      label: navLabels.visaPath,
+    },
+    {
+      key: "browseRoles",
+      href: PUBLIC_ROUTES.browseRoles,
+      label: navLabels.browseRoles,
     },
     {
       key: "forCompanies",
@@ -123,11 +133,17 @@ export function buildHeaderPrimaryLinks(navLabels: NavLabels = {}) {
       label: navLabels.pricing,
     },
     {
+      key: "requestTalent",
+      href: PUBLIC_ROUTES.requestTalent,
+      label: navLabels.requestTalent,
+    },
+    {
       key: "signIn",
       href: "/sign-in",
       label: navLabels.signIn,
     },
-  ] as const;
+  ];
+  return links.filter((link) => Boolean(link.label?.trim()));
 }
 
 export function isCmsPageInHeader(page: CmsPageDocument): boolean {

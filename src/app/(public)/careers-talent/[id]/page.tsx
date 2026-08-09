@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { RoleInterestForm } from "@/components/public/role-interest-form";
+import { RoleReadinessTeaser } from "@/components/public/role-readiness-teaser";
 import { RichText } from "@/components/public/rich-text";
 import { Badge } from "@/components/ui";
 import { getPublicRole } from "@/lib/collections/pages";
@@ -47,9 +48,10 @@ export default async function PublicRoleDetailPage({
 
       {role.description ? <RichText html={role.description} /> : null}
 
-      <section>
+      <section className="space-y-4">
+        <RoleReadinessTeaser roleLocation={role.location} />
         {formLabels.interestSectionTitle ? (
-          <h2 className="mb-4 font-serif text-2xl text-text-primary">
+          <h2 className="font-serif text-2xl text-text-primary">
             {formLabels.interestSectionTitle}
           </h2>
         ) : null}

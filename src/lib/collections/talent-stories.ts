@@ -16,6 +16,9 @@ function mapTalentStory(
     photo: resolveStorageFileRef(data.photo),
     youtubeVideoId: data.youtubeVideoId ? String(data.youtubeVideoId) : null,
     corridor: data.corridor ? String(data.corridor) : null,
+    tags: Array.isArray(data.tags)
+      ? data.tags.map((tag: unknown) => String(tag)).filter(Boolean)
+      : undefined,
     displayName: data.displayName ? String(data.displayName) : undefined,
     status:
       data.status === "published" || data.status === "rejected"

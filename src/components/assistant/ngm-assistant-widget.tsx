@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type ChatTurn = { role: "user" | "model" | "admin"; text: string };
+type LeadOffer = "hiring" | "talent";
 
 export interface NgmAssistantWidgetProps {
   labels?: Record<string, string>;
@@ -26,6 +27,12 @@ export function NgmAssistantWidget({
   const [threadId, setThreadId] = useState<string | null>(null);
   const [visitorName, setVisitorName] = useState("");
   const [visitorEmail, setVisitorEmail] = useState("");
+  const [leadOffer, setLeadOffer] = useState<LeadOffer | null>(null);
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadBusy, setLeadBusy] = useState(false);
+  const [leadDone, setLeadDone] = useState(false);
+  const [leadError, setLeadError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const title =
@@ -47,7 +54,7 @@ export function NgmAssistantWidget({
   useEffect(() => {
     if (!open) return;
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [turns, open, busy]);
+  }, [turns, open, busy, leadOffer, leadDone]);
 
   useEffect(() => {
     if (!publicMode || !threadId || !open) return;
@@ -85,6 +92,15 @@ export function NgmAssistantWidget({
       window.clearInterval(timer);
     };
   }, [publicMode, threadId, open]);
+
+  useEffect(() => {
+    if (leadOffer && !leadName && visitorName.trim()) {
+      setLeadName(visitorName.trim());
+    }
+    if (leadOffer && !leadEmail && visitorEmail.trim()) {
+      setLeadEmail(visitorEmail.trim());
+    }
+  }, [leadOffer, leadName, leadEmail, visitorName, visitorEmail]);
 
   const send = async () => {
     const message = input.trim();
@@ -127,6 +143,7 @@ export function NgmAssistantWidget({
       const payload = (await response.json().catch(() => null)) as {
         reply?: string;
         threadId?: string;
+        leadOffer?: LeadOffer | null;
         error?: string;
       } | null;
 
@@ -160,12 +177,80 @@ export function NgmAssistantWidget({
         ...nextTurns,
         { role: "model", text: payload?.reply ?? "" },
       ]);
+
+      if (
+        publicMode &&
+        !leadDone &&
+        (payload?.leadOffer === "hiring" || payload?.leadOffer === "talent")
+      ) {
+        setLeadOffer(payload.leadOffer);
+        setLeadError(null);
+      }
     } catch {
       setError(labels.assistantError ?? "Could not send message. Try again.");
     } finally {
       setBusy(false);
     }
   };
+
+  const submitLead = async () => {
+    if (!leadOffer || leadBusy || leadDone) return;
+    const name = leadName.trim() || visitorName.trim();
+    const email = leadEmail.trim() || visitorEmail.trim();
+    if (!name || !email) {
+      setLeadError(labels.assistantLeadError ?? null);
+      return;
+    }
+
+    setLeadBusy(true);
+    setLeadError(null);
+    try {
+      const transcriptSnippet = turns
+        .slice(-6)
+        .map((turn) => `${turn.role}: ${turn.text}`)
+        .join("\n")
+        .slice(0, 1800);
+
+      const response = await fetch("/api/public/chat/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadOffer,
+          name,
+          email,
+          ...(threadId ? { threadId } : {}),
+          transcriptSnippet,
+        }),
+      });
+
+      if (!response.ok) {
+        setLeadError(labels.assistantLeadError ?? null);
+        return;
+      }
+
+      setLeadDone(true);
+      setLeadOffer(null);
+      if (!visitorName.trim()) setVisitorName(name);
+      if (!visitorEmail.trim()) setVisitorEmail(email);
+    } catch {
+      setLeadError(labels.assistantLeadError ?? null);
+    } finally {
+      setLeadBusy(false);
+    }
+  };
+
+  const leadTitle =
+    leadOffer === "hiring"
+      ? labels.assistantLeadHiringTitle
+      : labels.assistantLeadTalentTitle;
+  const leadBody =
+    leadOffer === "hiring"
+      ? labels.assistantLeadHiringBody
+      : labels.assistantLeadTalentBody;
+  const leadCta =
+    leadOffer === "hiring"
+      ? labels.assistantLeadHiringCta
+      : labels.assistantLeadTalentCta;
 
   return (
     <div className={cn("fixed bottom-4 right-4 z-40", className)}>
@@ -243,6 +328,57 @@ export function NgmAssistantWidget({
               <p className="text-xs text-text-warning" role="status">
                 {error}
               </p>
+            ) : null}
+
+            {publicMode && leadDone && labels.assistantLeadSuccess ? (
+              <div className="rounded-radius border border-border bg-bg-success/40 px-2.5 py-2 text-xs text-text-success">
+                {labels.assistantLeadSuccess}
+              </div>
+            ) : null}
+
+            {publicMode && leadOffer && !leadDone ? (
+              <div className="space-y-2 rounded-radius border border-border bg-surface px-2.5 py-2">
+                {leadTitle ? (
+                  <p className="text-xs font-semibold text-text-primary">
+                    {leadTitle}
+                  </p>
+                ) : null}
+                {leadBody ? (
+                  <p className="text-[11px] text-text-secondary">{leadBody}</p>
+                ) : null}
+                <input
+                  value={leadName}
+                  onChange={(event) => setLeadName(event.target.value)}
+                  placeholder={labels.assistantLeadNameLabel}
+                  className="w-full rounded-radius-sm border border-border bg-bg px-2 py-1 text-[11px] text-text-primary outline-none"
+                  aria-label={labels.assistantLeadNameLabel}
+                />
+                <input
+                  value={leadEmail}
+                  onChange={(event) => setLeadEmail(event.target.value)}
+                  placeholder={labels.assistantLeadEmailLabel}
+                  type="email"
+                  className="w-full rounded-radius-sm border border-border bg-bg px-2 py-1 text-[11px] text-text-primary outline-none"
+                  aria-label={labels.assistantLeadEmailLabel}
+                />
+                {leadError ? (
+                  <p className="text-[11px] text-text-warning" role="status">
+                    {leadError}
+                  </p>
+                ) : null}
+                <Button
+                  size="xs"
+                  type="button"
+                  disabled={
+                    leadBusy ||
+                    !(leadName.trim() || visitorName.trim()) ||
+                    !(leadEmail.trim() || visitorEmail.trim())
+                  }
+                  onClick={() => void submitLead()}
+                >
+                  {leadCta || labels.assistantLeadSubmit}
+                </Button>
+              </div>
             ) : null}
           </div>
 

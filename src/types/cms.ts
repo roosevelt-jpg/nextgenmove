@@ -168,6 +168,37 @@ export interface PageHomeDocument {
   talentStoriesEmptyText?: string;
   talentStoriesViewAllLabel?: string;
   talentStoriesViewAllHref?: string;
+  talentStoriesFilterAllLabel?: string;
+  talentStoriesCorridorCtaLabel?: string;
+  talentStoriesCorridorCtaHref?: string;
+  talentStoriesEmptyFilteredText?: string;
+  /** Employer bench teaser strip */
+  benchTeaserEyebrow?: string;
+  benchTeaserHeadline?: string;
+  benchTeaserSubtext?: string;
+  benchTeaserCtaLabel?: string;
+  benchTeaserCtaHref?: string;
+  benchTeaserEmptyText?: string;
+  benchTeaserReadyLabel?: string;
+  benchTeaserCorridorsLabel?: string;
+  /** Move OS explainer (homepage) */
+  moveOsEyebrow?: string;
+  moveOsHeadline?: string;
+  moveOsSubtext?: string;
+  moveOsDualCommitTitle?: string;
+  moveOsDualCommitBody?: string;
+  moveOsSprintTitle?: string;
+  moveOsSprintBody?: string;
+  moveOsArrivalTitle?: string;
+  moveOsArrivalBody?: string;
+  moveOsCtaLabel?: string;
+  moveOsCtaHref?: string;
+  /** Newsletter band */
+  newsletterEyebrow?: string;
+  newsletterHeadline?: string;
+  newsletterSubtext?: string;
+  newsletterCorridorLabel?: string;
+  newsletterSuccessMessage?: string;
   talentCta?: AudienceCtaBand;
   companyCta?: AudienceCtaBand;
   /** Third homepage audience CTA (e.g. open roles) */
@@ -202,6 +233,12 @@ export interface PageVisaPathDocument {
   signInCta?: string;
   totalDaysLabel?: string;
   emptyCorridorsText?: string;
+  anonymousUploadCta?: string;
+  anonymousUploadHref?: string;
+  vaultOpenCta?: string;
+  vaultOpenHref?: string;
+  /** Use `{kind}` for the missing evidence kind label */
+  missingKindCtaTemplate?: string;
   corridors?: VisaPathCorridor[];
 }
 
@@ -256,6 +293,8 @@ export interface TalentStoryDocument {
   photo: StorageFileRef | null;
   youtubeVideoId?: string | null;
   corridor?: string | null;
+  /** Optional corridor labels; used with `corridor` for public filter chips. */
+  tags?: string[];
   displayName?: string;
   status: TalentStoryStatus;
   /** Schedule metadata — public loaders require publishAt <= now when set. */
@@ -306,6 +345,18 @@ export interface PagePricingDocument {
   trackBFeatures?: string[];
   faqItems?: FaqItem[];
   ctaLabel?: string;
+  /** Move OS explainer (shared field names with homepage) */
+  moveOsEyebrow?: string;
+  moveOsHeadline?: string;
+  moveOsSubtext?: string;
+  moveOsDualCommitTitle?: string;
+  moveOsDualCommitBody?: string;
+  moveOsSprintTitle?: string;
+  moveOsSprintBody?: string;
+  moveOsArrivalTitle?: string;
+  moveOsArrivalBody?: string;
+  moveOsCtaLabel?: string;
+  moveOsCtaHref?: string;
 }
 
 export interface ComparisonRow {
@@ -329,6 +380,18 @@ export interface PageTracksDocument {
   statBlocks?: StatBlock[];
   ctaLabel?: string;
   ctaHref?: string;
+  /** Move OS explainer (shared field names with homepage) */
+  moveOsEyebrow?: string;
+  moveOsHeadline?: string;
+  moveOsSubtext?: string;
+  moveOsDualCommitTitle?: string;
+  moveOsDualCommitBody?: string;
+  moveOsSprintTitle?: string;
+  moveOsSprintBody?: string;
+  moveOsArrivalTitle?: string;
+  moveOsArrivalBody?: string;
+  moveOsCtaLabel?: string;
+  moveOsCtaHref?: string;
 }
 
 export interface NavLabels {
@@ -341,6 +404,8 @@ export interface NavLabels {
   journal?: string;
   browseRoles?: string;
   howItWorks?: string;
+  visaPath?: string;
+  stories?: string;
   credits?: string;
   pricing?: string;
   tracks?: string;
@@ -472,6 +537,8 @@ export interface SiteSettingsDocument {
   footerAttributionUrl?: string;
   navLabels?: NavLabels;
   footerLinks?: FooterGroup[];
+  /** First-class marketing conversion copy (admin Settings → Conversion labels). */
+  conversionLabels?: Record<string, string>;
   formLabels?: Record<string, string>;
   pageLabels?: Record<string, string>;
   authLabels?: Record<string, string>;

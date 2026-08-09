@@ -369,6 +369,41 @@ const PAGE_HOME = {
   talentStoriesEmptyText: "Published talent stories will appear here.",
   talentStoriesViewAllLabel: "View all stories →",
   talentStoriesViewAllHref: "/stories",
+  talentStoriesFilterAllLabel: "All corridors",
+  talentStoriesCorridorCtaLabel: "Explore this corridor",
+  talentStoriesCorridorCtaHref: "/visa-path",
+  talentStoriesEmptyFilteredText:
+    "No published stories for this corridor yet. Try another filter or check back soon.",
+  benchTeaserEyebrow: "Employer bench",
+  benchTeaserHeadline: "Ready talent, by corridor.",
+  benchTeaserSubtext:
+    "A live slice of candidates marked ready for introduction — counts only, no profiles until you request access.",
+  benchTeaserCtaLabel: "Request talent",
+  benchTeaserCtaHref: "/request-talent",
+  benchTeaserEmptyText: "Bench counts will appear as talent becomes ready.",
+  benchTeaserReadyLabel: "Ready now",
+  benchTeaserCorridorsLabel: "Corridors",
+  moveOsEyebrow: "Move OS",
+  moveOsHeadline: "Dual commitment. Shadow sprint. Arrival.",
+  moveOsSubtext:
+    "A structured path from mutual commit through a short proof sprint to day-one readiness — without inventing placements.",
+  moveOsDualCommitTitle: "Dual commit",
+  moveOsDualCommitBody:
+    "Talent and employer both confirm intent before the sprint starts, so time and evidence are spent on real fits.",
+  moveOsSprintTitle: "Shadow sprint",
+  moveOsSprintBody:
+    "A short, scoped work sample against the role — scored on evidence, not interviews alone.",
+  moveOsArrivalTitle: "Arrival",
+  moveOsArrivalBody:
+    "When the sprint clears, relocation and onboarding steps stay on one shared timeline.",
+  moveOsCtaLabel: "See how Move OS works",
+  moveOsCtaHref: "/how-it-works",
+  newsletterEyebrow: "Dispatch",
+  newsletterHeadline: "One email a month. No noise.",
+  newsletterSubtext:
+    "Corridor updates, open roles, and Move OS tips — unsubscribe anytime.",
+  newsletterCorridorLabel: "Preferred corridor (optional)",
+  newsletterSuccessMessage: "You're on the list. Watch for the next dispatch.",
   talentCta: {
     eyebrow: "For talent",
     title: "Your seat is waiting.",
@@ -497,6 +532,11 @@ const PAGE_VISA_PATH = {
   signInCta: "Sign in",
   totalDaysLabel: "{days} days total",
   emptyCorridorsText: "Visa corridors will appear here soon.",
+  anonymousUploadCta: "Create an account to upload evidence",
+  anonymousUploadHref: "/sign-up",
+  vaultOpenCta: "Open evidence vault",
+  vaultOpenHref: "/student/evidence",
+  missingKindCtaTemplate: "Add {kind} to your vault",
   corridors: [
     {
       id: "eu_dxb",
@@ -601,6 +641,21 @@ const PAGE_PRICING = {
     },
   ],
   ctaLabel: "Request this plan",
+  moveOsEyebrow: "Move OS",
+  moveOsHeadline: "Dual commitment. Shadow sprint. Arrival.",
+  moveOsSubtext:
+    "A structured path from mutual commit through a short proof sprint to day-one readiness — without inventing placements.",
+  moveOsDualCommitTitle: "Dual commit",
+  moveOsDualCommitBody:
+    "Talent and employer both confirm intent before the sprint starts, so time and evidence are spent on real fits.",
+  moveOsSprintTitle: "Shadow sprint",
+  moveOsSprintBody:
+    "A short, scoped work sample against the role — scored on evidence, not interviews alone.",
+  moveOsArrivalTitle: "Arrival",
+  moveOsArrivalBody:
+    "When the sprint clears, relocation and onboarding steps stay on one shared timeline.",
+  moveOsCtaLabel: "See how Move OS works",
+  moveOsCtaHref: "/how-it-works",
 };
 
 const PAGE_TRACKS = {
@@ -653,6 +708,21 @@ const PAGE_TRACKS = {
   caseStudyQuote: null,
   ctaLabel: "Request talent",
   ctaHref: "/request-talent",
+  moveOsEyebrow: "Move OS",
+  moveOsHeadline: "Dual commitment. Shadow sprint. Arrival.",
+  moveOsSubtext:
+    "A structured path from mutual commit through a short proof sprint to day-one readiness — without inventing placements.",
+  moveOsDualCommitTitle: "Dual commit",
+  moveOsDualCommitBody:
+    "Talent and employer both confirm intent before the sprint starts, so time and evidence are spent on real fits.",
+  moveOsSprintTitle: "Shadow sprint",
+  moveOsSprintBody:
+    "A short, scoped work sample against the role — scored on evidence, not interviews alone.",
+  moveOsArrivalTitle: "Arrival",
+  moveOsArrivalBody:
+    "When the sprint clears, relocation and onboarding steps stay on one shared timeline.",
+  moveOsCtaLabel: "See how Move OS works",
+  moveOsCtaHref: "/how-it-works",
 };
 
 const DEFAULT_WAYS_TO_EARN = [
@@ -1073,6 +1143,19 @@ const OPERATIONAL_SITE_SETTINGS = {
     viewRole: "View role",
     filterByDepartment: "Department",
     allDepartments: "All departments",
+    assistantLeadHiringTitle: "Talk to us about hiring",
+    assistantLeadHiringBody:
+      "Share a work email and we will route you to the right employer contact.",
+    assistantLeadTalentTitle: "Talk to us about your move",
+    assistantLeadTalentBody:
+      "Leave your details and a coach will follow up on next steps.",
+    assistantLeadHiringCta: "Request hiring help",
+    assistantLeadTalentCta: "Request talent help",
+    assistantLeadNameLabel: "Name",
+    assistantLeadEmailLabel: "Email",
+    assistantLeadSubmit: "Send",
+    assistantLeadSuccess: "Thanks — we will be in touch shortly.",
+    assistantLeadError: "Could not send. Please try again.",
   },
   pageLabels: {
     pricingTitle: "Pricing",
@@ -1139,6 +1222,12 @@ const OPERATIONAL_SITE_SETTINGS = {
     careersApplyEyebrow: "Apply",
     cmsPageEyebrow: "Page",
     cmsFormEyebrow: "Form",
+    roleReadinessEyebrow: "Role readiness",
+    roleReadinessMatchLabel: "Evidence match {present}/{required}",
+    roleReadinessAnonTeaser:
+      "Sign up to see how your evidence vault lines up with this role.",
+    roleReadinessSignUpCta: "Create free account",
+    roleReadinessSignUpHref: "/sign-up",
   },
   employerNavLabels: {
     dashboard: "Dashboard",
@@ -2062,6 +2151,39 @@ const OPERATIONAL_SITE_SETTINGS = {
       talentStoriesEmptyText: "Talent stories empty",
       talentStoriesViewAllLabel: "View all stories CTA",
       talentStoriesViewAllHref: "View all stories href",
+      talentStoriesFilterAllLabel: "Stories filter — all",
+      talentStoriesCorridorCtaLabel: "Stories corridor CTA",
+      talentStoriesCorridorCtaHref: "Stories corridor CTA href",
+      talentStoriesEmptyFilteredText: "Stories empty (filtered)",
+      benchTeaserEyebrow: "Bench teaser eyebrow",
+      benchTeaserHeadline: "Bench teaser headline",
+      benchTeaserSubtext: "Bench teaser subtext",
+      benchTeaserCtaLabel: "Bench teaser CTA",
+      benchTeaserCtaHref: "Bench teaser CTA href",
+      benchTeaserEmptyText: "Bench teaser empty",
+      benchTeaserReadyLabel: "Bench ready label",
+      benchTeaserCorridorsLabel: "Bench corridors label",
+      moveOsEyebrow: "Move OS eyebrow",
+      moveOsHeadline: "Move OS headline",
+      moveOsSubtext: "Move OS subtext",
+      moveOsDualCommitTitle: "Dual commit title",
+      moveOsDualCommitBody: "Dual commit body",
+      moveOsSprintTitle: "Shadow sprint title",
+      moveOsSprintBody: "Shadow sprint body",
+      moveOsArrivalTitle: "Arrival title",
+      moveOsArrivalBody: "Arrival body",
+      moveOsCtaLabel: "Move OS CTA",
+      moveOsCtaHref: "Move OS CTA href",
+      newsletterEyebrow: "Newsletter eyebrow",
+      newsletterHeadline: "Newsletter headline",
+      newsletterSubtext: "Newsletter subtext",
+      newsletterCorridorLabel: "Newsletter corridor label",
+      newsletterSuccessMessage: "Newsletter success",
+      anonymousUploadCta: "Anonymous upload CTA",
+      anonymousUploadHref: "Anonymous upload href",
+      vaultOpenCta: "Vault open CTA",
+      vaultOpenHref: "Vault open href",
+      missingKindCtaTemplate: "Missing kind CTA template",
       corridors: "Visa corridors",
       corridorId: "Corridor id",
       corridorLabel: "Corridor label",

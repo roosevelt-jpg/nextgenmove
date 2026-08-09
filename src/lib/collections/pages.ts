@@ -17,7 +17,11 @@ import type {
   VideoCardDocument,
 } from "@/types/cms";
 import { cachedPublicCms } from "@/lib/public/cms-cache";
-import { FALLBACK_PAGE_HOME } from "@/lib/public/cms-fallbacks";
+import {
+  FALLBACK_PAGE_HOME,
+  FALLBACK_PAGE_PRICING,
+  FALLBACK_PAGE_TRACKS,
+} from "@/lib/public/cms-fallbacks";
 import { mergePageHome } from "@/lib/public/merge-page-home";
 import { listLiveVideoCards } from "@/lib/media/video-cards";
 import { getSiteSettings } from "@/lib/collections/site-settings";
@@ -188,14 +192,51 @@ export async function getPageVisaPath(): Promise<PageVisaPathDocument | null> {
   }
 }
 
+const MOVE_OS_KEYS = [
+  "moveOsEyebrow",
+  "moveOsHeadline",
+  "moveOsSubtext",
+  "moveOsDualCommitTitle",
+  "moveOsDualCommitBody",
+  "moveOsSprintTitle",
+  "moveOsSprintBody",
+  "moveOsArrivalTitle",
+  "moveOsArrivalBody",
+  "moveOsCtaLabel",
+  "moveOsCtaHref",
+] as const;
+
+type MoveOsKey = (typeof MOVE_OS_KEYS)[number];
+
+function withMoveOsFallbacks<T extends Partial<Record<MoveOsKey, string>>>(
+  data: T | undefined,
+  fallback: T,
+): T {
+  const base = { ...(data ?? {}) } as T;
+  for (const key of MOVE_OS_KEYS) {
+    const current = base[key];
+    if (typeof current !== "string" || !current.trim()) {
+      const fromFallback = fallback[key];
+      if (typeof fromFallback === "string" && fromFallback) {
+        (base as Partial<Record<MoveOsKey, string>>)[key] = fromFallback;
+      }
+    }
+  }
+  return base;
+}
+
 export async function getPagePricing(): Promise<PagePricingDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_pricing").doc("default").get();
     const data = snapshot.data() as PagePricingDocument | undefined;
-    if (!data) return null;
-    return serializeForClient(data);
+    if (!data) {
+      return serializeForClient(FALLBACK_PAGE_PRICING);
+    }
+    return serializeForClient(
+      withMoveOsFallbacks(data, FALLBACK_PAGE_PRICING),
+    );
   } catch {
-    return null;
+    return serializeForClient(FALLBACK_PAGE_PRICING);
   }
 }
 
@@ -203,10 +244,14 @@ export async function getPageTracks(): Promise<PageTracksDocument | null> {
   try {
     const snapshot = await adminDb.collection("page_tracks").doc("default").get();
     const data = snapshot.data() as PageTracksDocument | undefined;
-    if (!data) return null;
-    return serializeForClient(data);
+    if (!data) {
+      return serializeForClient(FALLBACK_PAGE_TRACKS);
+    }
+    return serializeForClient(
+      withMoveOsFallbacks(data, FALLBACK_PAGE_TRACKS),
+    );
   } catch {
-    return null;
+    return serializeForClient(FALLBACK_PAGE_TRACKS);
   }
 }
 

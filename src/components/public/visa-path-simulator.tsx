@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type {
   PageVisaPathDocument,
   VisaPathCorridor,
@@ -42,6 +43,22 @@ function kindLabel(kind: string): string {
   return kind.replace(/_/g, " ");
 }
 
+function withQuery(
+  href: string,
+  params: Record<string, string | undefined>,
+): string {
+  const base = href.trim() || "/";
+  try {
+    const url = new URL(base, "https://nextgenmove.local");
+    for (const [key, value] of Object.entries(params)) {
+      if (value) url.searchParams.set(key, value);
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return base;
+  }
+}
+
 export function VisaPathSimulator({
   page,
   studentEvidenceKinds,
@@ -51,6 +68,9 @@ export function VisaPathSimulator({
   studentEvidenceKinds?: string[] | null;
   isStudent?: boolean;
 }) {
+  const searchParams = useSearchParams();
+  const corridorQuery = searchParams.get("corridor")?.trim() ?? "";
+
   const corridors = useMemo(
     () =>
       (page.corridors ?? [])
@@ -62,10 +82,21 @@ export function VisaPathSimulator({
   const [selectedId, setSelectedId] = useState(corridors[0]?.id ?? "");
 
   useEffect(() => {
+    const matched = corridorQuery
+      ? corridors.find(
+          (c) =>
+            c.id === corridorQuery ||
+            c.label.toLowerCase() === corridorQuery.toLowerCase(),
+        )
+      : null;
+    if (matched) {
+      setSelectedId(matched.id);
+      return;
+    }
     if (!corridors.some((c) => c.id === selectedId)) {
       setSelectedId(corridors[0]?.id ?? "");
     }
-  }, [corridors, selectedId]);
+  }, [corridors, corridorQuery, selectedId]);
 
   const selected = corridors.find((c) => c.id === selectedId) ?? null;
   const totalDays = selected?.steps.reduce((sum, step) => sum + step.days, 0) ?? 0;
@@ -84,14 +115,28 @@ export function VisaPathSimulator({
     [studentEvidenceKinds],
   );
 
-  const missingKinds = requiredKinds.filter(
-    (kind) => !presentSet.has(kind.toLowerCase()),
-  );
-  const presentKinds = requiredKinds.filter((kind) =>
-    presentSet.has(kind.toLowerCase()),
-  );
+  const missingKinds = isStudent
+    ? requiredKinds.filter((kind) => !presentSet.has(kind.toLowerCase()))
+    : requiredKinds;
+  const presentKinds = isStudent
+    ? requiredKinds.filter((kind) => presentSet.has(kind.toLowerCase()))
+    : [];
 
   const knownKinds = new Set<string>(EVIDENCE_KINDS);
+  const firstMissing = missingKinds[0];
+  const missingKindCta =
+    firstMissing && page.missingKindCtaTemplate
+      ? page.missingKindCtaTemplate.replace("{kind}", kindLabel(firstMissing))
+      : null;
+
+  const anonymousHref = withQuery(page.anonymousUploadHref || "/sign-up", {
+    corridor: selected?.id,
+    kind: firstMissing,
+  });
+  const vaultHref = withQuery(page.vaultOpenHref || "/student/evidence", {
+    corridor: selected?.id,
+    kind: firstMissing,
+  });
 
   return (
     <div className="space-y-6">
@@ -109,13 +154,13 @@ export function VisaPathSimulator({
 
       {corridors.length === 0 ? (
         <p className="text-sm text-text-secondary">
-          {page.emptyCorridorsText || "Visa corridors will appear here soon."}
+          {page.emptyCorridorsText}
         </p>
       ) : (
         <>
           <label className="block max-w-md space-y-1.5">
             <span className="font-mono text-[11px] uppercase tracking-wide text-fill-accent">
-              {page.selectCorridorLabel || "Choose a corridor"}
+              {page.selectCorridorLabel}
             </span>
             <select
               className="w-full rounded-radius border border-border bg-surface px-3 py-2 text-sm text-text-primary"
@@ -135,14 +180,13 @@ export function VisaPathSimulator({
               <section className="space-y-3 rounded-radius border border-border bg-surface p-4">
                 <div className="flex flex-wrap items-end justify-between gap-2">
                   <h2 className="font-serif text-xl text-text-primary">
-                    {page.timelineLabel || "Timeline"}
+                    {page.timelineLabel}
                   </h2>
-                  <p className="font-mono text-[11px] uppercase text-text-accent">
-                    {(page.totalDaysLabel || "{days} days total").replace(
-                      "{days}",
-                      String(totalDays),
-                    )}
-                  </p>
+                  {page.totalDaysLabel ? (
+                    <p className="font-mono text-[11px] uppercase text-text-accent">
+                      {page.totalDaysLabel.replace("{days}", String(totalDays))}
+                    </p>
+                  ) : null}
                 </div>
                 <ol className="space-y-3">
                   {selected.steps.map((step, index) => (
@@ -153,7 +197,7 @@ export function VisaPathSimulator({
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-mono text-[10px] uppercase text-fill-accent">
-                            Step {String(index + 1).padStart(2, "0")}
+                            {String(index + 1).padStart(2, "0")}
                           </p>
                           <p className="text-sm font-medium text-text-primary">
                             {step.title}
@@ -182,7 +226,7 @@ export function VisaPathSimulator({
 
               <section className="space-y-3 rounded-radius border border-border bg-surface p-4">
                 <h2 className="font-serif text-xl text-text-primary">
-                  {page.evidenceLabel || "Required evidence"}
+                  {page.evidenceLabel}
                 </h2>
                 {requiredKinds.length === 0 ? (
                   <p className="text-sm text-text-secondary">—</p>
@@ -209,7 +253,7 @@ export function VisaPathSimulator({
                     {presentKinds.length ? (
                       <div>
                         <p className="mb-1.5 font-mono text-[10px] uppercase text-text-success">
-                          {page.presentEvidenceLabel || "In your vault"}
+                          {page.presentEvidenceLabel}
                         </p>
                         <ul className="flex flex-wrap gap-1.5">
                           {presentKinds.map((kind) => (
@@ -225,11 +269,11 @@ export function VisaPathSimulator({
                     ) : null}
                     <div>
                       <p className="mb-1.5 font-mono text-[10px] uppercase text-text-warning">
-                        {page.missingEvidenceLabel || "Missing from your vault"}
+                        {page.missingEvidenceLabel}
                       </p>
                       {missingKinds.length === 0 ? (
                         <p className="text-sm text-text-success">
-                          {page.presentEvidenceLabel || "In your vault"} ✓
+                          {page.presentEvidenceLabel}
                         </p>
                       ) : (
                         <ul className="flex flex-wrap gap-1.5">
@@ -244,6 +288,81 @@ export function VisaPathSimulator({
                         </ul>
                       )}
                     </div>
+                    <div className="flex flex-col gap-2">
+                      {missingKindCta && missingKinds.length > 0 ? (
+                        <a
+                          href={vaultHref}
+                          className="inline-flex items-center justify-center rounded-radius bg-fill-primary px-3 py-2 text-sm font-medium text-on-primary"
+                        >
+                          {missingKindCta}
+                        </a>
+                      ) : null}
+                      {page.vaultOpenCta ? (
+                        <a
+                          href={page.vaultOpenHref || "/student/evidence"}
+                          className={
+                            missingKindCta && missingKinds.length > 0
+                              ? "inline-flex items-center justify-center rounded-radius border border-border px-3 py-2 text-sm font-medium text-text-primary"
+                              : "inline-flex items-center justify-center rounded-radius bg-fill-primary px-3 py-2 text-sm font-medium text-on-primary"
+                          }
+                        >
+                          {page.vaultOpenCta}
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : selected && requiredKinds.length > 0 ? (
+                  <div className="space-y-3 border-t border-border pt-3">
+                    {page.missingEvidenceLabel ? (
+                      <p className="mb-1.5 font-mono text-[10px] uppercase text-text-warning">
+                        {page.missingEvidenceLabel}
+                      </p>
+                    ) : null}
+                    <ul className="flex flex-wrap gap-1.5">
+                      {missingKinds.map((kind) => (
+                        <li
+                          key={kind}
+                          className="rounded-radius-sm bg-bg-warning px-2 py-0.5 text-xs text-text-warning"
+                        >
+                          {kindLabel(kind)}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex flex-col gap-2">
+                      {missingKindCta ? (
+                        <a
+                          href={anonymousHref}
+                          className="inline-flex items-center justify-center rounded-radius bg-fill-primary px-3 py-2 text-sm font-medium text-on-primary"
+                        >
+                          {missingKindCta}
+                        </a>
+                      ) : null}
+                      {page.anonymousUploadCta ? (
+                        <a
+                          href={anonymousHref}
+                          className={
+                            missingKindCta
+                              ? "inline-flex items-center justify-center rounded-radius border border-border px-3 py-2 text-sm font-medium text-text-primary"
+                              : "inline-flex items-center justify-center rounded-radius bg-fill-primary px-3 py-2 text-sm font-medium text-on-primary"
+                          }
+                        >
+                          {page.anonymousUploadCta}
+                        </a>
+                      ) : null}
+                    </div>
+                    {page.signInPrompt ? (
+                      <p className="text-sm text-text-secondary">
+                        {page.signInPrompt}{" "}
+                        {page.signInCta ? (
+                          <a
+                            href="/sign-in?next=/visa-path"
+                            className="font-medium text-fill-accent hover:underline"
+                          >
+                            {page.signInCta}
+                          </a>
+                        ) : null}
+                      </p>
+                    ) : null}
                   </div>
                 ) : page.signInPrompt ? (
                   <p className="border-t border-border pt-3 text-sm text-text-secondary">

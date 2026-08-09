@@ -106,5 +106,52 @@ export function mergePageHome(
       overlay.talentStoriesViewAllLabel || base.talentStoriesViewAllLabel,
     talentStoriesViewAllHref:
       overlay.talentStoriesViewAllHref || base.talentStoriesViewAllHref,
+    talentStoriesFilterAllLabel:
+      overlay.talentStoriesFilterAllLabel || base.talentStoriesFilterAllLabel,
+    talentStoriesCorridorCtaLabel:
+      overlay.talentStoriesCorridorCtaLabel ||
+      base.talentStoriesCorridorCtaLabel,
+    talentStoriesCorridorCtaHref:
+      overlay.talentStoriesCorridorCtaHref ||
+      base.talentStoriesCorridorCtaHref,
+    talentStoriesEmptyFilteredText:
+      overlay.talentStoriesEmptyFilteredText ||
+      base.talentStoriesEmptyFilteredText,
+    benchTeaserEyebrow:
+      overlay.benchTeaserEyebrow || base.benchTeaserEyebrow,
+    benchTeaserHeadline:
+      overlay.benchTeaserHeadline || base.benchTeaserHeadline,
+    benchTeaserSubtext:
+      overlay.benchTeaserSubtext || base.benchTeaserSubtext,
+    benchTeaserCtaLabel:
+      overlay.benchTeaserCtaLabel || base.benchTeaserCtaLabel,
+    benchTeaserCtaHref:
+      overlay.benchTeaserCtaHref || base.benchTeaserCtaHref,
+    benchTeaserEmptyText:
+      overlay.benchTeaserEmptyText || base.benchTeaserEmptyText,
+    benchTeaserReadyLabel:
+      overlay.benchTeaserReadyLabel || base.benchTeaserReadyLabel,
+    benchTeaserCorridorsLabel:
+      overlay.benchTeaserCorridorsLabel || base.benchTeaserCorridorsLabel,
+    moveOsEyebrow: overlay.moveOsEyebrow || base.moveOsEyebrow,
+    moveOsHeadline: overlay.moveOsHeadline || base.moveOsHeadline,
+    moveOsSubtext: overlay.moveOsSubtext || base.moveOsSubtext,
+    moveOsDualCommitTitle:
+      overlay.moveOsDualCommitTitle || base.moveOsDualCommitTitle,
+    moveOsDualCommitBody:
+      overlay.moveOsDualCommitBody || base.moveOsDualCommitBody,
+    moveOsSprintTitle: overlay.moveOsSprintTitle || base.moveOsSprintTitle,
+    moveOsSprintBody: overlay.moveOsSprintBody || base.moveOsSprintBody,
+    moveOsArrivalTitle: overlay.moveOsArrivalTitle || base.moveOsArrivalTitle,
+    moveOsArrivalBody: overlay.moveOsArrivalBody || base.moveOsArrivalBody,
+    moveOsCtaLabel: overlay.moveOsCtaLabel || base.moveOsCtaLabel,
+    moveOsCtaHref: overlay.moveOsCtaHref || base.moveOsCtaHref,
+    newsletterEyebrow: overlay.newsletterEyebrow || base.newsletterEyebrow,
+    newsletterHeadline: overlay.newsletterHeadline || base.newsletterHeadline,
+    newsletterSubtext: overlay.newsletterSubtext || base.newsletterSubtext,
+    newsletterCorridorLabel:
+      overlay.newsletterCorridorLabel || base.newsletterCorridorLabel,
+    newsletterSuccessMessage:
+      overlay.newsletterSuccessMessage || base.newsletterSuccessMessage,
   };
 }

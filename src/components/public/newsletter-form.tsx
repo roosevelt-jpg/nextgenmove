@@ -6,13 +6,17 @@ import { Button, Input } from "@/components/ui";
 export interface NewsletterFormProps {
   labels: Record<string, string>;
   layout?: "stack" | "inline";
+  /** When true, show optional corridor preference field. */
+  showCorridor?: boolean;
 }
 
 export function NewsletterForm({
   labels,
   layout = "stack",
+  showCorridor = false,
 }: NewsletterFormProps) {
   const [email, setEmail] = useState("");
+  const [corridor, setCorridor] = useState("");
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -23,10 +27,14 @@ export function NewsletterForm({
     setIsSubmitting(true);
 
     try {
+      const trimmedCorridor = corridor.trim();
       const response = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          ...(trimmedCorridor ? { corridor: trimmedCorridor } : {}),
+        }),
       });
 
       if (!response.ok) {
@@ -49,6 +57,18 @@ export function NewsletterForm({
       <p className="text-sm text-text-success">{labels.successMessage}</p>
     ) : null;
   }
+
+  const corridorField =
+    showCorridor && labels.corridorLabel ? (
+      <Input
+        id="newsletter-corridor"
+        type="text"
+        aria-label={labels.corridorLabel}
+        label={labels.corridorLabel}
+        value={corridor}
+        onChange={(event) => setCorridor(event.target.value)}
+      />
+    ) : null;
 
   if (layout === "inline") {
     const title = labels.newsletterTitle ?? labels.title;
@@ -77,6 +97,7 @@ export function NewsletterForm({
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
+          {corridorField}
           <Button type="submit" disabled={isSubmitting} className="shrink-0">
             {labels.newsletterSubmit ?? labels.subscribe ?? labels.submit}
           </Button>
@@ -106,6 +127,7 @@ export function NewsletterForm({
         value={email}
         onChange={(event) => setEmail(event.target.value)}
       />
+      {corridorField}
       {errorCode ? (
         <p className="text-sm text-text-warning" role="alert">
           {labels[errorCode] ?? labels.genericError ?? errorCode}

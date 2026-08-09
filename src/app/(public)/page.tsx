@@ -1,7 +1,10 @@
 import { AnimatedGlobeHero } from "@/components/public/animated-globe-hero";
 import { CorridorIntelligenceStrip } from "@/components/public/corridor-intelligence-strip";
 import { HomeAudienceCtaSection } from "@/components/public/home-audience-cta-section";
+import { HomeBenchTeaserSection } from "@/components/public/home-bench-teaser-section";
 import { HomeGlobalReachSection } from "@/components/public/home-global-reach-section";
+import { HomeMoveOsSection } from "@/components/public/home-move-os-section";
+import { HomeNewsletterSection } from "@/components/public/home-newsletter-section";
 import { HomePodcastSection } from "@/components/public/home-podcast-section";
 import { HomeStoriesSection } from "@/components/public/home-stories-section";
 import { HomeTalentStoriesSection } from "@/components/public/home-talent-stories-section";
@@ -14,6 +17,7 @@ import {
   getLiveVideoCards,
   getPageHome,
 } from "@/lib/collections/pages";
+import { getSiteSettings } from "@/lib/collections/site-settings";
 import { getPublishedTestimonials } from "@/lib/collections/testimonials";
 import { getPublishedTalentStories } from "@/lib/collections/talent-stories";
 import { resolveHomeStoryCards } from "@/lib/public/demo-story-videos";
@@ -22,24 +26,36 @@ import {
   resolveHomeStatBlocks,
 } from "@/lib/public/home-stats";
 import { getCorridorIntelligence } from "@/lib/public/corridor-intelligence";
+import { getBenchTeaser } from "@/lib/public/bench-teaser";
 
 export const revalidate = 30;
 
 export default async function HomePage() {
-  const [page, videoCards, podcastEpisodes, testimonials, talentStories, corridorIntel] =
-    await Promise.all([
-      getPageHome(),
-      getLiveVideoCards(),
-      getLivePodcastEpisodes(),
-      getPublishedTestimonials(),
-      getPublishedTalentStories(6),
-      getCorridorIntelligence(),
-    ]);
+  const [
+    page,
+    videoCards,
+    podcastEpisodes,
+    testimonials,
+    talentStories,
+    corridorIntel,
+    benchTeaser,
+    settings,
+  ] = await Promise.all([
+    getPageHome(),
+    getLiveVideoCards(),
+    getLivePodcastEpisodes(),
+    getPublishedTestimonials(),
+    getPublishedTalentStories(6),
+    getCorridorIntelligence(),
+    getBenchTeaser(),
+    getSiteSettings(),
+  ]);
 
   const storyCards = resolveHomeStoryCards(videoCards);
 
   const metrics = await getPublicHomeMetrics(page.originCities?.length ?? 0);
   const statBlocks = resolveHomeStatBlocks(page.statBlocks, metrics);
+  const formLabels = settings.formLabels ?? {};
 
   return (
     <div className="overflow-x-hidden">
@@ -52,6 +68,15 @@ export default async function HomePage() {
       <HomeGlobalReachSection page={page} />
 
       <CorridorIntelligenceStrip labels={page} initialData={corridorIntel} />
+
+      <HomeBenchTeaserSection
+        page={page}
+        initialData={{
+          readyCount: benchTeaser.readyCount,
+          corridors: benchTeaser.corridors,
+          generatedAt: benchTeaser.generatedAt,
+        }}
+      />
 
       {(page.itineraryEyebrow ||
         page.itineraryHeadline ||
@@ -77,11 +102,15 @@ export default async function HomePage() {
 
       <HomeTestimonialsSection page={page} items={testimonials} />
 
+      <HomeMoveOsSection labels={page} />
+
       <HomeAudienceCtaSection
         talentCta={page.talentCta}
         companyCta={page.companyCta}
         rolesCta={page.rolesCta}
       />
+
+      <HomeNewsletterSection page={page} formLabels={formLabels} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeMoveOsSection } from "@/components/public/home-move-os-section";
 import { RichText } from "@/components/public/rich-text";
 import { StatBlocksSection } from "@/components/public/stat-blocks-section";
 import { Button, Card, CardBody, SectionEyebrow } from "@/components/ui";
@@ -173,6 +174,8 @@ export default async function TracksPage() {
           ) : null}
         </blockquote>
       ) : null}
+
+      {page ? <HomeMoveOsSection labels={page} className="!p-0 !max-w-none" /> : null}
 
       {ctaLabel ? (
         <div className="flex flex-col items-start gap-4 rounded-radius border border-border bg-[image:var(--grad-rouse)] px-6 py-8 text-on-gradient sm:flex-row sm:items-center sm:justify-between sm:px-8">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeMoveOsSection } from "@/components/public/home-move-os-section";
 import { Button, Card, CardBody, SectionEyebrow } from "@/components/ui";
 import { getPagePricing, getProgramLevers } from "@/lib/collections/pages";
 import { getSiteSettings } from "@/lib/collections/site-settings";
@@ -148,6 +149,8 @@ export default async function PricingPage() {
           </Card>
         ) : null}
       </div>
+
+      {page ? <HomeMoveOsSection labels={page} className="!p-0 !max-w-none" /> : null}
 
       {page?.faqItems?.length ? (
         <section className="space-y-6 border-t border-border pt-12">

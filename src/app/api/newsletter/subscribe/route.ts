@@ -7,12 +7,14 @@ import { stripUndefined } from "@/lib/stripUndefined";
 
 const subscribeSchema = z.object({
   email: z.string().email(),
+  corridor: z.string().trim().max(120).optional(),
 });
 
 export async function POST(request: Request) {
   try {
-    const { email } = subscribeSchema.parse(await request.json());
-    const normalizedEmail = email.trim().toLowerCase();
+    const parsed = subscribeSchema.parse(await request.json());
+    const normalizedEmail = parsed.email.trim().toLowerCase();
+    const corridor = parsed.corridor?.trim() || undefined;
 
     const existing = await adminDb
       .collection("newsletter_subscribers")
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
       stripUndefined({
         id: subscriberRef.id,
         email: normalizedEmail,
+        corridor,
         subscribedAt: FieldValue.serverTimestamp(),
       }),
     );
