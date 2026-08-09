@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { key: "contact", href: "/admin/contact", match: "prefix" as const },
   { key: "chatInbox", href: "/admin/chat-inbox", match: "prefix" as const },
   { key: "unlockRequests", href: "/admin/unlock-requests", match: "prefix" as const },
+  { key: "moveOs", href: "/admin/move-os", match: "prefix" as const },
   { key: "integrations", href: "/admin/integrations", match: "prefix" as const },
   { key: "library", href: "/admin/content", match: "exact" as const },
   { key: "content", href: "/admin/content/videos", match: "homepage" as const },
@@ -62,6 +63,13 @@ function NavIcon({ name }: { name: string }) {
         <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
           <rect x="3.5" y="7" width="9" height="6.5" rx="1.25" />
           <path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7" />
+        </svg>
+      );
+    case "moveOs":
+      return (
+        <svg className={common} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+          <path d="M2.5 11.5 8 3.5l5.5 8H2.5z" />
+          <path d="M8 7v2.5" />
         </svg>
       );
     case "integrations":

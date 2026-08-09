@@ -158,6 +158,7 @@ export async function writeRegistrationDocuments(options: {
         formattedAddress: company.formattedAddress?.trim() || "",
         requirementTags: [],
         hiringNeeds: company.hiringNeeds?.trim() || "",
+        credits: 0,
         createdAt: now,
       }),
     );

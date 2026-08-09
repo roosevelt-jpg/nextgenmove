@@ -2466,6 +2466,22 @@ async function seedProgramLevers(db: Firestore) {
           { id: "pack_1600", label: "Premium pack", credits: 1600, priceEur: 400 },
         ],
     waysToEarn,
+    moveOs: existing.moveOs ?? {
+      evidenceRequiredKinds: [
+        "passport",
+        "cv",
+        "funds_proof",
+        "english_proof",
+        "visa_eligibility_pack",
+      ],
+      benchReadyMinScore: 70,
+      benchHoldHours: 72,
+      dualCommitStudentCredits: 50,
+      dualCommitCompanyCredits: 100,
+      arrivalSlaHours: 72,
+      shadowSprintDays: 5,
+      sponsorEnabled: true,
+    },
     updatedAt: FieldValue.serverTimestamp(),
   };
 

@@ -11,6 +11,7 @@ import {
 const NAV_ITEMS = [
   { key: "dashboard", href: "/employer/dashboard" },
   { key: "talentPool", href: "/employer/talent-pool" },
+  { key: "bench", href: "/employer/bench" },
   { key: "jobs", href: "/employer/jobs" },
   { key: "pipeline", href: "/employer/pipeline" },
   { key: "shortlist", href: "/employer/shortlist" },

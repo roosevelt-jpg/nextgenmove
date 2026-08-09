@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/sync-youtube-videos",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/move-os-maintenance",
+      "schedule": "0 * * * *"
     }
   ]
 }

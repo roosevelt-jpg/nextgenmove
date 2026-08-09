@@ -285,6 +285,17 @@ export async function PATCH(
 
     // Placement fee tracking when a match reaches a terminal stage.
     if (nextStageId && stageIsTerminal) {
+      try {
+        const { ensureMoveItinerary } = await import("@/lib/move-os/itinerary");
+        await ensureMoveItinerary({
+          matchId: id,
+          studentId: String(match.studentId),
+          companyId: session.companyId,
+        });
+      } catch (moveOsError) {
+        console.error("hire_ensure_move_itinerary_failed", moveOsError);
+      }
+
       const leversSnap = await adminDb
         .collection("program_levers")
         .doc("default")

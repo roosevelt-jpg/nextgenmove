@@ -300,6 +300,32 @@ service cloud.firestore {
       }
     }
 
+    // Move OS — Admin SDK only (student/employer/sponsor use API routes).
+    match /evidence_items/{id} {
+      allow read, write: if false;
+    }
+    match /move_itineraries/{id} {
+      allow read, write: if false;
+    }
+    match /bench_reservations/{id} {
+      allow read, write: if false;
+    }
+    match /credit_escrows/{id} {
+      allow read, write: if false;
+    }
+    match /company_credit_transactions/{id} {
+      allow read, write: if false;
+    }
+    match /shadow_sprints/{id} {
+      allow read, write: if false;
+    }
+    match /arrival_events/{id} {
+      allow read, write: if false;
+    }
+    match /sponsor_links/{id} {
+      allow read, write: if false;
+    }
+
     // ── Default deny ──────────────────────────────────────────────────────
 
     match /{document=**} {

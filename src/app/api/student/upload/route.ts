@@ -38,25 +38,24 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const file = form.get("file");
-    const kindHint = String(form.get("kind") || "");
-
     if (!isUploadFile(file)) {
       return NextResponse.json({ error: "missing_file" }, { status: 400 });
     }
-
+    const kindHint = String(form.get("kind") || "");
     const contentType = String(file.type || "");
     const kind =
-      kindHint === "cv" || kindHint === "photo"
+      kindHint === "cv" || kindHint === "photo" || kindHint === "document"
         ? kindHint
         : contentType.startsWith("image/")
           ? "photo"
           : "cv";
 
-    if (kind === "cv") {
-      if (!ALLOWED_CV_TYPES.has(contentType)) {
+    if (kind === "photo") {
+      if (!contentType.startsWith("image/")) {
         return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
       }
-    } else if (!contentType.startsWith("image/")) {
+    } else if (!ALLOWED_CV_TYPES.has(contentType)) {
+      // CV + evidence documents: PDF / Word only.
       return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
     }
 
@@ -66,7 +65,10 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const filename = sanitizeUploadFilename(
-      String(file.name || (kind === "cv" ? "cv.pdf" : "photo.jpg")),
+      String(
+        file.name ||
+          (kind === "photo" ? "photo.jpg" : kind === "document" ? "evidence.pdf" : "cv.pdf"),
+      ),
     );
     const path = `students/${session.studentId}/${kind}/${Date.now()}-${filename}`;
 
