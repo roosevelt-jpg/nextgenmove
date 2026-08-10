@@ -13,6 +13,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: ReactNode;
   /** Show eye toggle when type is password. */
   showPasswordToggle?: boolean;
+  labelClassName?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -21,6 +22,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       label,
       error,
       className,
+      labelClassName,
       id,
       type = "text",
       showPasswordToggle,
@@ -40,7 +42,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label != null && String(label).trim() !== "" ? (
           <label
             htmlFor={inputId}
-            className="font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-text-muted"
+            className={cn(
+              "font-sans text-[10px] font-medium uppercase tracking-[0.14em] text-text-muted",
+              labelClassName,
+            )}
           >
             {label}
           </label>

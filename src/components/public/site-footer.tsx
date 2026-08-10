@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand/brand-logo";
+import { NewsletterForm } from "@/components/public/newsletter-form";
 import { SocialLinks } from "@/components/public/social-links";
+import { getPageHome } from "@/lib/collections/pages";
 import {
   getSiteSettings,
   listFooterCmsPages,
@@ -14,9 +16,10 @@ import {
 import { resolveFooterGroups } from "@/lib/public/nav";
 
 export async function SiteFooter() {
-  const [settings, cmsPages] = await Promise.all([
+  const [settings, cmsPages, pageHome] = await Promise.all([
     getSiteSettings(),
     listFooterCmsPages(),
+    getPageHome(),
   ]);
   const navLabels = settings.navLabels ?? {};
   const formLabels = settings.formLabels ?? {};
@@ -27,6 +30,27 @@ export async function SiteFooter() {
   const description =
     settings.siteDescription?.trim() || settings.tagline?.trim() || "";
   const copyright = formatFooterCopyright(siteName);
+
+  const newsletterLabels: Record<string, string> = {
+    ...formLabels,
+    email: formLabels.email ?? "",
+    emailPlaceholder: formLabels.emailPlaceholder ?? "",
+    newsletterSubmit:
+      formLabels.newsletterSubmit ??
+      formLabels.subscribe ??
+      formLabels.submit ??
+      "",
+    subscribe: formLabels.subscribe ?? formLabels.newsletterSubmit ?? "",
+    successMessage:
+      pageHome.newsletterSuccessMessage ?? formLabels.successMessage ?? "",
+    corridorLabel: pageHome.newsletterCorridorLabel ?? "",
+    email_exists: formLabels.email_exists ?? "",
+    genericError: formLabels.genericError ?? "",
+  };
+  const newsletterEyebrow = pageHome.newsletterEyebrow?.trim() ?? "";
+  const showNewsletter = Boolean(
+    newsletterLabels.email || newsletterLabels.newsletterSubmit,
+  );
 
   return (
     <footer className="mt-auto bg-grad-rouse text-on-gradient">
@@ -86,6 +110,25 @@ export async function SiteFooter() {
           />
         </div>
       </div>
+
+      {showNewsletter ? (
+        <div className="border-t border-white/20">
+          <div className="page-container mx-auto flex w-full max-w-page flex-col gap-3 py-5 sm:flex-row sm:items-end sm:justify-between">
+            {newsletterEyebrow ? (
+              <p className="shrink-0 font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-on-gradient/70">
+                {newsletterEyebrow}
+              </p>
+            ) : null}
+            <NewsletterForm
+              labels={newsletterLabels}
+              layout="compact"
+              showCorridor
+              tone="onDark"
+              className="w-full sm:max-w-xl sm:flex-1"
+            />
+          </div>
+        </div>
+      ) : null}
 
       <div className="border-t border-white/20">
         <div className="page-container mx-auto flex w-full max-w-page flex-col gap-2 py-4 text-sm text-on-gradient/75 sm:flex-row sm:items-center sm:justify-between">
