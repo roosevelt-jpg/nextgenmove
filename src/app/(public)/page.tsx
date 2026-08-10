@@ -100,8 +100,6 @@ export default async function HomePage() {
       <HomeTalentStoriesSection page={page} items={talentStories} />
       <HomePodcastSection page={page} episodes={podcastEpisodes} />
 
-      <HomeTestimonialsSection page={page} items={testimonials} />
-
       <HomeMoveOsSection labels={page} />
 
       <HomeAudienceCtaSection
@@ -111,6 +109,8 @@ export default async function HomePage() {
       />
 
       <HomeNewsletterSection page={page} formLabels={formLabels} />
+
+      <HomeTestimonialsSection page={page} items={testimonials} />
     </div>
   );
 }
