@@ -22,19 +22,16 @@ import {
   sanitizeUploadFilename,
   uploadFileViaAdmin,
 } from "@/lib/storage/upload-via-admin";
+import {
+  DOCUMENT_MIME,
+  IMAGE_MIME,
+  VIDEO_MIME,
+  isAllowedMime,
+  isVideoMime,
+  maxBytesForMime,
+} from "@/lib/storage/upload-mime";
 
 export const dynamic = "force-dynamic";
-
-const MAX_SPRINT_BYTES = 15 * 1024 * 1024;
-const ALLOWED_SPRINT_TYPES = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "text/plain",
-]);
 
 function isUploadFile(value: FormDataEntryValue | null): value is File {
   return (
@@ -148,7 +145,7 @@ async function resolveSprintDeliverableUrl(input: {
     const file = form.get("file");
     if (isUploadFile(file)) {
       const contentType = String(file.type || "");
-      if (!ALLOWED_SPRINT_TYPES.has(contentType)) {
+      if (!isAllowedMime(contentType, DOCUMENT_MIME, IMAGE_MIME, VIDEO_MIME)) {
         return {
           ok: false,
           response: NextResponse.json(
@@ -157,7 +154,8 @@ async function resolveSprintDeliverableUrl(input: {
           ),
         };
       }
-      if (file.size <= 0 || file.size > MAX_SPRINT_BYTES) {
+      const maxBytes = maxBytesForMime(contentType, { allowVideo: true });
+      if (file.size <= 0 || file.size > maxBytes) {
         return {
           ok: false,
           response: NextResponse.json(
@@ -168,7 +166,12 @@ async function resolveSprintDeliverableUrl(input: {
       }
       const buffer = Buffer.from(await file.arrayBuffer());
       const filename = sanitizeUploadFilename(
-        String(file.name || "sprint-deliverable.pdf"),
+        String(
+          file.name ||
+            (isVideoMime(contentType)
+              ? "sprint-deliverable.mp4"
+              : "sprint-deliverable.pdf"),
+        ),
       );
       const path = `students/${input.sessionStudentId}/sprint/${Date.now()}-${filename}`;
       const uploaded = await uploadFileViaAdmin({

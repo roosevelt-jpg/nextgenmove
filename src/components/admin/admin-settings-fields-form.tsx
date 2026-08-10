@@ -6,6 +6,7 @@ import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 import { cn } from "@/lib/utils";
+import { ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 
 export type SettingsFieldKind =
   | "text"
@@ -229,7 +230,7 @@ export function AdminSettingsFieldsForm({
                   <FileUpload
                     storagePath={`site-branding/${field.key}`}
                     uploadEndpoint="/api/admin/upload"
-                    accept="image/*"
+                    accept={ACCEPT_IMAGES}
                     uploadKind={field.key}
                     label={labels.uploadImage || "Upload image"}
                     dropzoneContent={

@@ -8,19 +8,25 @@ import {
   sanitizeUploadFilename,
   uploadFileViaAdmin,
 } from "@/lib/storage/upload-via-admin";
+import {
+  DOCUMENT_MIME,
+  IMAGE_MIME,
+  VIDEO_MIME,
+  isAllowedMime,
+  isImageMime,
+  isVideoMime,
+  maxBytesForMime,
+} from "@/lib/storage/upload-mime";
 
 export const dynamic = "force-dynamic";
 
-const MAX_BYTES = 15 * 1024 * 1024;
-
-const ALLOWED_DOC_TYPES = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+const EMPLOYER_KINDS = [
+  "logo",
+  "requirements",
+  "jd",
+  "sprint_deliverable",
+] as const;
+type EmployerUploadKind = (typeof EMPLOYER_KINDS)[number];
 
 function isUploadFile(value: FormDataEntryValue | null): value is File {
   return (
@@ -32,6 +38,10 @@ function isUploadFile(value: FormDataEntryValue | null): value is File {
     "size" in value &&
     typeof (value as File).arrayBuffer === "function"
   );
+}
+
+function isEmployerKind(value: string): value is EmployerUploadKind {
+  return (EMPLOYER_KINDS as readonly string[]).includes(value);
 }
 
 export async function POST(request: Request) {
@@ -51,38 +61,45 @@ export async function POST(request: Request) {
     }
 
     const contentType = String(file.type || "");
-    const kind =
-      kindHint === "logo" ||
-      kindHint === "requirements" ||
-      kindHint === "sprint_deliverable"
-        ? kindHint
-        : contentType.startsWith("image/")
-          ? "logo"
-          : "requirements";
+    const kind: EmployerUploadKind = isEmployerKind(kindHint)
+      ? kindHint
+      : isImageMime(contentType)
+        ? "logo"
+        : "requirements";
 
     if (kind === "logo") {
-      if (!contentType.startsWith("image/")) {
+      if (!isAllowedMime(contentType, IMAGE_MIME)) {
         return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
       }
-    } else if (!ALLOWED_DOC_TYPES.has(contentType)) {
-      return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
+    } else if (kind === "requirements" || kind === "jd") {
+      if (!isAllowedMime(contentType, DOCUMENT_MIME, IMAGE_MIME)) {
+        return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
+      }
+    } else if (kind === "sprint_deliverable") {
+      if (!isAllowedMime(contentType, DOCUMENT_MIME, IMAGE_MIME, VIDEO_MIME)) {
+        return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
+      }
     }
 
-    if (file.size <= 0 || file.size > MAX_BYTES) {
+    const maxBytes = maxBytesForMime(contentType, {
+      allowVideo: kind === "sprint_deliverable",
+    });
+    if (file.size <= 0 || file.size > maxBytes) {
       return NextResponse.json({ error: "invalid_file_size" }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = sanitizeUploadFilename(
-      String(
-        file.name ||
-          (kind === "logo"
-            ? "logo.png"
-            : kind === "sprint_deliverable"
-              ? "sprint-deliverable.pdf"
-              : "requirement.pdf"),
-      ),
-    );
+    const defaultName =
+      kind === "logo"
+        ? "logo.png"
+        : kind === "sprint_deliverable"
+          ? isVideoMime(contentType)
+            ? "sprint-deliverable.mp4"
+            : "sprint-deliverable.pdf"
+          : kind === "jd"
+            ? "job-description.pdf"
+            : "requirement.pdf";
+    const filename = sanitizeUploadFilename(String(file.name || defaultName));
     const path = `companies/${session.companyId}/${kind}/${Date.now()}-${filename}`;
 
     const result = await uploadFileViaAdmin({

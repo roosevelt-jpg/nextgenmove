@@ -1,4 +1,5 @@
 import type { TaxonomiesDocument } from "@/types/cms";
+import { ACCEPT_AUDIO, ACCEPT_VIDEOS } from "@/lib/storage/upload-mime";
 
 export type AdminFieldType =
   | "text"
@@ -21,6 +22,8 @@ export interface AdminFieldSchema {
   labelKey: string;
   taxonomyKey?: keyof TaxonomiesDocument;
   required?: boolean;
+  /** HTML accept string for image/file fields (overrides type defaults). */
+  accept?: string;
   fields?: AdminFieldSchema[];
 }
 
@@ -175,6 +178,8 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "categories", type: "multiselect", labelKey: "categories" },
       { key: "skills", type: "multiselect", labelKey: "skills" },
       { key: "description", type: "textarea", labelKey: "description" },
+      { key: "jdFile", type: "file", labelKey: "jdFile" },
+      { key: "jdUrl", type: "text", labelKey: "jdUrl" },
       { key: "status", type: "select", labelKey: "status" },
     ],
   },
@@ -1084,6 +1089,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "title", type: "text", labelKey: "title", required: true },
       { key: "subtitle", type: "text", labelKey: "subtitle" },
       { key: "videoUrl", type: "text", labelKey: "videoUrl", required: true },
+      {
+        key: "videoFile",
+        type: "file",
+        labelKey: "videoFile",
+        accept: ACCEPT_VIDEOS,
+      },
       { key: "duration", type: "text", labelKey: "duration" },
       { key: "thumbnailUrl", type: "image", labelKey: "thumbnailUrl" },
       { key: "position", type: "number", labelKey: "position" },
@@ -1098,6 +1109,12 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
       { key: "guestName", type: "text", labelKey: "guestName" },
       { key: "duration", type: "text", labelKey: "duration" },
       { key: "audioUrl", type: "text", labelKey: "audioUrl", required: true },
+      {
+        key: "audioFile",
+        type: "file",
+        labelKey: "audioFile",
+        accept: ACCEPT_AUDIO,
+      },
       { key: "description", type: "textarea", labelKey: "description" },
       { key: "status", type: "select", labelKey: "status" },
     ],

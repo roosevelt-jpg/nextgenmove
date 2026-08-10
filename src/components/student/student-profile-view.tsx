@@ -6,6 +6,7 @@ import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
+import { ACCEPT_DOCUMENTS, ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 
 interface WorkEntry {
   company: string;
@@ -412,7 +413,8 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         <FileUpload
           storagePath={`students/${profile.id}/cv`}
           uploadEndpoint="/api/student/upload"
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          uploadKind="cv"
+          accept={ACCEPT_DOCUMENTS}
           label={labels.cvUpload || "CV / resume"}
           dropzoneContent={labels.cvDropzone || "PDF or Word (.doc, .docx)"}
           progressLabel={labels.uploadProgress || "Uploading…"}
@@ -433,9 +435,10 @@ export function StudentProfileView({ labels }: StudentProfileViewProps) {
         <FileUpload
           storagePath={`students/${profile.id}/photo`}
           uploadEndpoint="/api/student/upload"
-          accept="image/*"
+          uploadKind="photo"
+          accept={ACCEPT_IMAGES}
           label={labels.photoUpload || "Profile photo"}
-          dropzoneContent={labels.photoDropzone || "JPG or PNG"}
+          dropzoneContent={labels.photoDropzone || "JPG, PNG, or WebP"}
           progressLabel={labels.uploadProgress || "Uploading…"}
           onUploadComplete={(result: FileUploadMetadata) =>
             setProfile({ ...profile, photoUrl: result.url })

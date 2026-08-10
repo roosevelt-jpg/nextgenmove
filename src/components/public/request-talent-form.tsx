@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
+import { ACCEPT_DOCUMENTS } from "@/lib/storage/upload-mime";
 
 export interface RequestTalentFormProps {
   labels: Record<string, string>;
@@ -195,7 +196,7 @@ export function RequestTalentForm({ labels }: RequestTalentFormProps) {
         <FileUpload
           storagePath="requests/sourcing"
           uploadEndpoint="/api/public/upload"
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept={ACCEPT_DOCUMENTS}
           label={labels.jobDescriptionUpload}
           dropzoneContent={labels.jobDescriptionDropzone}
           progressLabel={labels.uploadProgress}

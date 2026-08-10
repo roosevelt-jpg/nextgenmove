@@ -1,5 +1,8 @@
 import { adminDb } from "@/lib/firebase-admin";
-import { resolveStorageUrl } from "@/lib/storage/file-ref";
+import {
+  resolveStorageFileRef,
+  resolveStorageUrl,
+} from "@/lib/storage/file-ref";
 import type { VideoCardDocument } from "@/types/cms";
 
 export async function listLiveVideoCards(
@@ -12,11 +15,14 @@ export async function listLiveVideoCards(
 
   const items = snapshot.docs.map((doc) => {
     const data = doc.data();
+    const videoFile = resolveStorageFileRef(data.videoFile);
+    const uploadedVideoUrl = videoFile?.url ?? "";
     return {
       id: doc.id,
       title: String(data.title ?? ""),
       subtitle: String(data.subtitle ?? ""),
-      videoUrl: String(data.videoUrl ?? ""),
+      videoUrl: uploadedVideoUrl || String(data.videoUrl ?? ""),
+      videoFile,
       duration: String(data.duration ?? ""),
       thumbnailUrl: resolveStorageUrl(data.thumbnailUrl),
       position: Number(data.position ?? 0),

@@ -6,6 +6,7 @@ import { Button, Input } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { FormPersistBar } from "@/components/ui/form-persist-bar";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
+import { ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 
 export interface AccountProfileViewProps {
   labels: Record<string, string>;
@@ -343,7 +344,7 @@ export function AccountProfileView({
           <FileUpload
             storagePath={storagePath}
             uploadEndpoint="/api/account/upload"
-            accept="image/*"
+            accept={ACCEPT_IMAGES}
             label={labels.uploadPhoto || "Upload photo"}
             dropzoneContent={
               labels.photoDropzone || "JPG or PNG. Click or drop to upload."

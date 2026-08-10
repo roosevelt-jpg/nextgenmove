@@ -7,6 +7,7 @@ import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload
 import type { PagePricingDocument, ProgramLeversDocument } from "@/types/cms";
 import type { CompanyDocument } from "@/lib/employer/session";
 import { cn } from "@/lib/utils";
+import { ACCEPT_DOCUMENTS_AND_IMAGES } from "@/lib/storage/upload-mime";
 
 interface ProfileData {
   company: CompanyDocument;
@@ -348,9 +349,10 @@ export function CompanyProfileView({ labels }: CompanyProfileViewProps) {
               storagePath={`companies/${company.id}/requirements`}
               uploadEndpoint="/api/employer/upload"
               uploadKind="requirements"
+              accept={ACCEPT_DOCUMENTS_AND_IMAGES}
               label={labels.requirementUpload || "Upload requirement"}
               dropzoneContent={
-                labels.requirementDropzone || "PDF or image — click or drop"
+                labels.requirementDropzone || "PDF, Word, or image — click or drop"
               }
               progressLabel={labels.uploadProgress || "Uploading…"}
               disabled={!requirementTitle.trim()}

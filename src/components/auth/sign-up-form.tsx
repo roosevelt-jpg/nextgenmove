@@ -10,6 +10,7 @@ import {
   LocationPicker,
   type LocationValue,
 } from "@/components/ui/location-picker";
+import { ACCEPT_DOCUMENTS, ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 import {
   establishSession,
   registerAccount,
@@ -1390,7 +1391,7 @@ export function SignUpForm({
                 storagePath={`students/${uid}/photo`}
                 uploadEndpoint="/api/student/upload"
                 uploadKind="photo"
-                accept="image/*"
+                accept={ACCEPT_IMAGES}
                 label={labels.photoUploadLabel || "Profile photo (required)"}
                 dropzoneContent={labels.photoDropzone}
                 progressLabel={labels.uploadProgress}
@@ -1409,7 +1410,7 @@ export function SignUpForm({
                 storagePath={`students/${uid}/cv`}
                 uploadEndpoint="/api/student/upload"
                 uploadKind="cv"
-                accept=".pdf,application/pdf"
+                accept={ACCEPT_DOCUMENTS}
                 label={labels.cvUploadLabel || "CV (optional)"}
                 dropzoneContent={labels.cvDropzone}
                 progressLabel={labels.uploadProgress}
@@ -1423,7 +1424,7 @@ export function SignUpForm({
                 storagePath={`companies/${uid}/logo`}
                 uploadEndpoint="/api/employer/upload"
                 uploadKind="logo"
-                accept="image/*"
+                accept={ACCEPT_IMAGES}
                 label={labels.logoUploadLabel || "Company logo (required)"}
                 dropzoneContent={labels.logoDropzone}
                 progressLabel={labels.uploadProgress}

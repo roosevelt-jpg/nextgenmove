@@ -8,10 +8,13 @@ import {
   sanitizeUploadFilename,
   uploadFileViaAdmin,
 } from "@/lib/storage/upload-via-admin";
+import {
+  DOCUMENT_MIME,
+  MAX_PUBLIC_UPLOAD_BYTES,
+  isAllowedMime,
+} from "@/lib/storage/upload-mime";
 
 export const dynamic = "force-dynamic";
-
-const MAX_BYTES = 10 * 1024 * 1024;
 
 /** Public visitors may only upload documents into these prefixes. */
 const ALLOWED_PREFIXES = [
@@ -19,12 +22,6 @@ const ALLOWED_PREFIXES = [
   "requests/sourcing",
   "roles/interest",
 ];
-
-const ALLOWED_DOC_TYPES = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-]);
 
 function isUploadFile(value: FormDataEntryValue | null): value is File {
   return (
@@ -71,11 +68,11 @@ export async function POST(request: Request) {
     }
 
     const contentType = String(file.type || "");
-    if (!ALLOWED_DOC_TYPES.has(contentType)) {
+    if (!isAllowedMime(contentType, DOCUMENT_MIME)) {
       return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
     }
 
-    if (file.size <= 0 || file.size > MAX_BYTES) {
+    if (file.size <= 0 || file.size > MAX_PUBLIC_UPLOAD_BYTES) {
       return NextResponse.json({ error: "invalid_file_size" }, { status: 400 });
     }
 

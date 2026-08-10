@@ -13,6 +13,7 @@ import {
   parseYoutubeVideoId,
   youtubeEmbedUrl,
 } from "@/lib/media/youtube";
+import { ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 import styles from "./home-testimonials-section.module.css";
 
 function buildLoop(items: TestimonialDocument[]): TestimonialDocument[] {
@@ -320,7 +321,7 @@ export function HomeTestimonialsSection({
               </span>
               <input
                 type="file"
-                accept="image/*"
+                accept={ACCEPT_IMAGES}
                 className={styles.file}
                 onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
               />

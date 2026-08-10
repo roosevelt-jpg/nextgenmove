@@ -4,10 +4,13 @@ import {
   sanitizeUploadFilename,
   uploadFileViaAdmin,
 } from "@/lib/storage/upload-via-admin";
+import {
+  IMAGE_MIME,
+  MAX_UPLOAD_BYTES,
+  isAllowedMime,
+} from "@/lib/storage/upload-mime";
 
 export const dynamic = "force-dynamic";
-
-const MAX_BYTES = 15 * 1024 * 1024;
 
 function isUploadFile(value: FormDataEntryValue | null): value is File {
   return (
@@ -37,11 +40,11 @@ export async function POST(request: Request) {
     }
 
     const contentType = String(file.type || "");
-    if (!contentType.startsWith("image/")) {
+    if (!isAllowedMime(contentType, IMAGE_MIME)) {
       return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
     }
 
-    if (file.size <= 0 || file.size > MAX_BYTES) {
+    if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
       return NextResponse.json({ error: "invalid_file_size" }, { status: 400 });
     }
 

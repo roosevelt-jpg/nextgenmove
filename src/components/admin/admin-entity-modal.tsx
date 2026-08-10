@@ -182,7 +182,11 @@ export function AdminEntityModal({
             values={values}
             labels={labels}
             taxonomies={taxonomies}
-            storagePath={`admin/${schema.collection}`}
+            storagePath={
+              schema.collection === "content_items"
+                ? "content/uploads"
+                : `admin/${schema.collection}`
+            }
             entityCollection={schema.collection}
             onChange={handleChange}
           />

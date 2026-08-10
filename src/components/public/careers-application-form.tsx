@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Button, Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import type { JobPostingDocument } from "@/types/cms";
+import { ACCEPT_DOCUMENTS } from "@/lib/storage/upload-mime";
 
 export interface CareersApplicationFormProps {
   jobs?: JobPostingDocument[];
@@ -149,7 +150,7 @@ export function CareersApplicationForm({
       <FileUpload
         storagePath={storagePath}
         uploadEndpoint="/api/public/upload"
-        accept=".pdf,application/pdf"
+        accept={ACCEPT_DOCUMENTS}
         label={labels.cvUpload}
         dropzoneContent={labels.cvDropzone}
         progressLabel={labels.uploadProgress}

@@ -56,14 +56,37 @@ service firebase.storage {
         && request.resource.size < 15 * 1024 * 1024;
     }
 
-    function isPdfOrImageUpload() {
-      return request.resource.contentType.matches('application/pdf|image/.*');
+    function isValidVideoUpload() {
+      return request.resource != null
+        && request.resource.size < 100 * 1024 * 1024;
+    }
+
+    function isDocumentOrImageUpload() {
+      return request.resource.contentType.matches(
+        'application/pdf|application/msword|application/vnd\\.openxmlformats-officedocument\\.wordprocessingml\\.document|image/jpeg|image/jpg|image/png|image/webp'
+      );
+    }
+
+    function isImageUpload() {
+      return request.resource.contentType.matches('image/jpeg|image/jpg|image/png|image/webp');
+    }
+
+    function isVideoUpload() {
+      return request.resource.contentType.matches('video/mp4|video/webm|video/quicktime');
+    }
+
+    function isAudioUpload() {
+      return request.resource.contentType.matches('audio/mpeg|audio/mp3|audio/wav|audio/x-wav|audio/aac|audio/webm');
+    }
+
+    function isDocumentImageOrVideoUpload() {
+      return isDocumentOrImageUpload() || isVideoUpload();
     }
 
     // ── User profile photos (account settings) ────────────────────────────
 
     match /users/{userId}/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload()
+      allow write: if isValidUpload() && isImageUpload()
         && (isAdmin() || (isOwner(userId) && isActiveUser()));
       allow read: if true;
     }
@@ -71,26 +94,50 @@ service firebase.storage {
     // ── Student CVs (canonical + current app paths) ───────────────────────
 
     match /cvs/{studentId}/{allPaths=**} {
-      allow write: if isValidUpload() && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow write: if isValidUpload() && isDocumentOrImageUpload()
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
       allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
     }
 
     match /students/{studentId}/cv/{allPaths=**} {
-      allow write: if isValidUpload() && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow write: if isValidUpload() && isDocumentOrImageUpload()
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
+    }
+
+    // Evidence documents (PDF / Word / image).
+    match /students/{studentId}/document/{allPaths=**} {
+      allow write: if isValidUpload() && isDocumentOrImageUpload()
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
+    }
+
+    // Shadow sprint deliverables (docs / images / video).
+    match /students/{studentId}/sprint/{allPaths=**} {
+      allow write: if (
+          (isValidUpload() && isDocumentOrImageUpload())
+          || (isValidVideoUpload() && isVideoUpload())
+        )
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
+      allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
+    }
+
+    match /students/{studentId}/video/{allPaths=**} {
+      allow write: if isValidVideoUpload() && isVideoUpload()
+        && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
       allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
     }
 
     // ── Student photos ────────────────────────────────────────────────────
 
     match /student-photos/{studentId}/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload()
+      allow write: if isValidUpload() && isImageUpload()
         && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
-      // Photos only after NGM unlock (match_access) — same gate as CVs.
       allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
     }
 
     match /students/{studentId}/photo/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload()
+      allow write: if isValidUpload() && isImageUpload()
         && (isAdmin() || (isOwner(studentId) && isStudent() && isActiveUser()));
       allow read: if isAdmin() || isOwner(studentId) || companyHasMatchAccess(studentId);
     }
@@ -98,67 +145,103 @@ service firebase.storage {
     // ── Company logos ─────────────────────────────────────────────────────
 
     match /company-logos/{companyId}/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload()
+      allow write: if isValidUpload() && isImageUpload()
         && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
       allow read: if true;
     }
 
     match /companies/{companyId}/logo/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload()
+      allow write: if isValidUpload() && isImageUpload()
         && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
       allow read: if true;
     }
 
     // Company requirement documents (private to owner + admin).
     match /companies/{companyId}/requirements/{allPaths=**} {
-      allow write: if isValidUpload() && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
+      allow write: if isValidUpload() && isDocumentOrImageUpload()
+        && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
+      allow read: if isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser());
+    }
+
+    match /companies/{companyId}/jd/{allPaths=**} {
+      allow write: if isValidUpload() && isDocumentOrImageUpload()
+        && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
+      allow read: if isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser());
+    }
+
+    match /companies/{companyId}/sprint_deliverable/{allPaths=**} {
+      allow write: if (
+          (isValidUpload() && isDocumentOrImageUpload())
+          || (isValidVideoUpload() && isVideoUpload())
+        )
+        && (isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser()));
       allow read: if isAdmin() || (isOwner(companyId) && isCompany() && isActiveUser());
     }
 
     // ── Purchase-gated store content (stream via /api/student/store/download) ─
 
     match /content/{contentItemId}/{allPaths=**} {
-      allow write: if isValidUpload() && isAdmin();
+      allow write: if (
+          (isValidUpload() && (isDocumentOrImageUpload() || isAudioUpload()))
+          || (isValidVideoUpload() && (isVideoUpload() || isAudioUpload()))
+        ) && isAdmin();
       allow read: if false;
     }
 
     // ── Public CMS media ──────────────────────────────────────────────────
 
     match /journal-covers/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload() && isAdmin();
+      allow write: if isValidUpload() && isImageUpload() && isAdmin();
       allow read: if true;
     }
 
     match /team-photos/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload() && isAdmin();
+      allow write: if isValidUpload() && isImageUpload() && isAdmin();
+      allow read: if true;
+    }
+
+    match /testimonials/{allPaths=**} {
+      allow write: if (
+          (isValidUpload() && isDocumentOrImageUpload())
+          || (isValidVideoUpload() && isVideoUpload())
+        ) && isAdmin();
+      allow read: if true;
+    }
+
+    match /talent-stories/{allPaths=**} {
+      allow write: if isValidUpload() && isImageUpload() && isAdmin();
       allow read: if true;
     }
 
     match /admin/{allPaths=**} {
-      allow write: if isValidUpload() && isAdmin();
+      allow write: if (
+          (isValidUpload() && (isDocumentOrImageUpload() || isAudioUpload()))
+          || (isValidVideoUpload() && (isVideoUpload() || isAudioUpload()))
+        ) && isAdmin();
       allow read: if true;
     }
 
     // ── Job descriptions / inbound form uploads ───────────────────────────
 
     match /job-descriptions/{allPaths=**} {
-      allow write: if isValidUpload() && (isAdmin() || (isCompany() && isActiveUser()));
+      allow write: if isValidUpload() && isDocumentOrImageUpload()
+        && (isAdmin() || (isCompany() && isActiveUser()));
       allow read: if isAdmin() || (isCompany() && isActiveUser());
     }
 
     // Anonymous inbound uploads (write-only; served/processed via Admin SDK APIs).
     match /careers/applications/{jobId}/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload();
+      allow write: if isValidUpload() && isDocumentOrImageUpload();
       allow read: if isAdmin();
     }
 
     match /requests/sourcing/{allPaths=**} {
-      allow write: if isValidUpload();
+      allow write: if isValidUpload() && isDocumentOrImageUpload();
       allow read: if isAdmin();
     }
 
     match /roles/interest/{roleId}/{allPaths=**} {
-      allow write: if isValidUpload() && isPdfOrImageUpload();
+      allow write: if isValidUpload() && isDocumentOrImageUpload();
       allow read: if isAdmin();
     }
 

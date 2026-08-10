@@ -7,6 +7,7 @@ import type {
   MoveMilestoneKey,
   ShadowSprint,
 } from "@/types/move-os";
+import { ACCEPT_MEDIA } from "@/lib/storage/upload-mime";
 
 type SlaInfo = {
   withinSla: boolean;
@@ -441,6 +442,7 @@ export function StudentMoveView() {
                             </span>
                             <input
                               type="file"
+                              accept={ACCEPT_MEDIA}
                               className="block w-full text-xs"
                               onChange={(e) =>
                                 setDeliverableFile(e.target.files?.[0] ?? null)

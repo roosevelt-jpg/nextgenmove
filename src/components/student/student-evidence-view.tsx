@@ -8,6 +8,7 @@ import {
   type EvidenceKind,
   type StudentReadiness,
 } from "@/types/move-os";
+import { ACCEPT_DOCUMENTS_AND_IMAGES } from "@/lib/storage/upload-mime";
 
 type PriorVersion = {
   id: string;
@@ -169,6 +170,7 @@ export function StudentEvidenceView() {
         </label>
         <input
           type="file"
+          accept={ACCEPT_DOCUMENTS_AND_IMAGES}
           disabled={busy}
           onChange={(e) => {
             const file = e.target.files?.[0];

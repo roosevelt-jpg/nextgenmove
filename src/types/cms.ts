@@ -278,6 +278,8 @@ export interface VideoCardDocument {
   title: string;
   subtitle: string;
   videoUrl: string;
+  /** Optional uploaded video file; playback prefers this URL when set. */
+  videoFile?: StorageFileRef | null;
   duration: string;
   thumbnailUrl: string;
   position: number;
@@ -344,6 +346,8 @@ export interface PodcastEpisodeDocument {
   guestName: string;
   duration: string;
   audioUrl: string;
+  /** Optional uploaded audio file; playback prefers this URL when set. */
+  audioFile?: StorageFileRef | null;
   description: string;
   status: "draft" | "live" | "archived";
 }
@@ -615,6 +619,10 @@ export interface JobPostingDocument {
   categories?: string[];
   skills?: string[];
   description: string;
+  /** Optional uploaded JD file metadata. */
+  jdFile?: StorageFileRef | null;
+  /** Optional legacy/public JD download URL. */
+  jdUrl?: string | null;
   status: "open" | "closed" | "pending" | "rejected";
   createdAt: string | null;
 }

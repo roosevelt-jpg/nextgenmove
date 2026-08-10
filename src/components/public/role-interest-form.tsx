@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, Input, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import type { PublicRoleDocument } from "@/types/cms";
+import { ACCEPT_DOCUMENTS } from "@/lib/storage/upload-mime";
 
 export interface RoleInterestFormProps {
   role: PublicRoleDocument;
@@ -90,7 +91,7 @@ export function RoleInterestForm({ role, labels }: RoleInterestFormProps) {
       <FileUpload
         storagePath={`roles/interest/${role.id}`}
         uploadEndpoint="/api/public/upload"
-        accept=".pdf,application/pdf"
+        accept={ACCEPT_DOCUMENTS}
         label={labels.cvUpload}
         dropzoneContent={labels.cvDropzone}
         progressLabel={labels.uploadProgress}

@@ -10,6 +10,18 @@ import {
 } from "@/lib/employer/session";
 import { anonymizedEmployerLabel } from "@/lib/marketplace/company-visibility";
 
+const storageFileRefSchema = z
+  .object({
+    url: z.string().url(),
+    path: z.string().min(1),
+    filename: z.string().min(1),
+    size: z.number().nullable().optional(),
+    mimeType: z.string().optional(),
+    uploadedAt: z.string().nullable().optional(),
+  })
+  .nullable()
+  .optional();
+
 const jobSchema = z.object({
   title: z.string().trim().min(1).max(160),
   companyName: z.string().trim().min(1).max(160).optional(),
@@ -22,6 +34,8 @@ const jobSchema = z.object({
   skills: z.array(z.string().trim().min(1)).max(40).optional(),
   postedAt: z.string().datetime().optional(),
   expiresAt: z.string().datetime().optional().nullable(),
+  jdFile: storageFileRefSchema,
+  jdUrl: z.string().url().nullable().optional(),
 });
 
 export async function PATCH(
@@ -49,6 +63,11 @@ export async function PATCH(
       session.companyId,
       existingLabel,
     );
+    const jdUrl =
+      body.jdUrl ??
+      (body.jdFile && typeof body.jdFile.url === "string"
+        ? body.jdFile.url
+        : null);
     await ref.set(
       stripUndefined({
         companyName: body.companyName?.trim() || session.company.name,
@@ -62,6 +81,8 @@ export async function PATCH(
         categories: body.categories,
         skills: body.skills ?? [],
         department: body.categories[0] ?? "",
+        jdFile: body.jdFile ?? null,
+        jdUrl: jdUrl || null,
         postedAt: body.postedAt ? new Date(body.postedAt) : snap.data()?.postedAt,
         expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
         // Re-submit for moderation after edits

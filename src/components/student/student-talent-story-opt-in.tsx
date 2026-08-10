@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button, Input } from "@/components/ui";
+import { ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 
 export function StudentTalentStoryOptIn({
   labels,
@@ -122,7 +123,7 @@ export function StudentTalentStoryOptIn({
         </span>
         <input
           type="file"
-          accept="image/*"
+          accept={ACCEPT_IMAGES}
           onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
         />
       </label>

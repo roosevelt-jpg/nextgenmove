@@ -7,6 +7,7 @@ import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload
 import type { CompanyDocument } from "@/lib/employer/session";
 import { useDebouncedAutosave } from "@/hooks/use-debounced-autosave";
 import { clearSession } from "@/lib/auth-client";
+import { ACCEPT_IMAGES } from "@/lib/storage/upload-mime";
 
 export interface CompanySettingsViewProps {
   labels: Record<string, string>;
@@ -320,7 +321,7 @@ export function CompanySettingsView({
         storagePath={`companies/${company.id}/logo`}
         uploadEndpoint="/api/employer/upload"
         uploadKind="logo"
-        accept="image/*"
+        accept={ACCEPT_IMAGES}
         label={labels.logoUpload || "Company logo"}
         dropzoneContent={labels.logoDropzone || "JPG or PNG"}
         progressLabel={labels.uploadProgress || "Uploading…"}

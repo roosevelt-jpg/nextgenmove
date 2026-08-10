@@ -11,6 +11,7 @@ import {
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase-client";
 import { cn } from "@/lib/utils";
+import { ACCEPT_DOCUMENTS } from "@/lib/storage/upload-mime";
 
 export interface FileUploadMetadata {
   url: string;
@@ -58,7 +59,7 @@ export function FileUpload({
   onUploadComplete,
   onError,
   onClear,
-  accept,
+  accept = ACCEPT_DOCUMENTS,
   disabled = false,
   className,
   label,
@@ -171,7 +172,7 @@ export function FileUpload({
 
       xhr.onerror = () => fail(new Error("upload_network_error"));
       xhr.ontimeout = () => fail(new Error("upload_timeout"));
-      xhr.timeout = 120_000;
+      xhr.timeout = 300_000;
       xhr.send(body);
     },
     [complete, fail, uploadKind, storagePath],

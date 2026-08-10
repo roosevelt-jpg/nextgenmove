@@ -125,13 +125,16 @@ async function loadLivePodcastEpisodes(): Promise<PodcastEpisodeDocument[]> {
     .get();
   const items = snapshot.docs.map((doc) => {
     const data = doc.data();
+    const audioFile = resolveStorageFileRef(data.audioFile);
+    const uploadedAudioUrl = audioFile?.url ?? "";
     return {
       id: doc.id,
       episodeNumber: Number(data.episodeNumber ?? 0),
       title: String(data.title ?? ""),
       guestName: String(data.guestName ?? ""),
       duration: String(data.duration ?? ""),
-      audioUrl: String(data.audioUrl ?? ""),
+      audioUrl: uploadedAudioUrl || String(data.audioUrl ?? ""),
+      audioFile,
       description: String(data.description ?? ""),
       status: (data.status as PodcastEpisodeDocument["status"]) ?? "draft",
     };

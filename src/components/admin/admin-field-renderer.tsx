@@ -10,6 +10,10 @@ import { Input, Select, Textarea } from "@/components/ui";
 import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { looksLikeHtml, stripHtmlPreservingSpaces } from "@/lib/content/plain-text";
+import {
+  ACCEPT_DOCUMENTS,
+  ACCEPT_IMAGES,
+} from "@/lib/storage/upload-mime";
 
 function asPlainText(value: unknown): string {
   const raw = value == null ? "" : String(value);
@@ -366,12 +370,15 @@ export function AdminFieldRenderer({
         : value && typeof value === "object" && "url" in (value as object)
           ? (value as Partial<FileUploadMetadata>)
           : null;
+    const accept =
+      field.accept ??
+      (field.type === "image" ? ACCEPT_IMAGES : ACCEPT_DOCUMENTS);
     return (
       <div className="space-y-2">
         <FileUpload
           storagePath={storagePath}
           uploadEndpoint="/api/admin/upload"
-          accept={field.type === "image" ? "image/*" : undefined}
+          accept={accept}
           label={label}
           dropzoneContent={labels.uploadDropzone}
           progressLabel={labels.uploadProgress}

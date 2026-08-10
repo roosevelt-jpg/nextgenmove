@@ -4,10 +4,12 @@ import {
   sanitizeUploadFilename,
   uploadFileViaAdmin,
 } from "@/lib/storage/upload-via-admin";
+import {
+  isAdminUploadMime,
+  maxBytesForMime,
+} from "@/lib/storage/upload-mime";
 
 export const dynamic = "force-dynamic";
-
-const MAX_BYTES = 15 * 1024 * 1024;
 
 function isUploadFile(value: FormDataEntryValue | null): value is File {
   return (
@@ -45,7 +47,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "missing_file" }, { status: 400 });
     }
 
-    if (file.size <= 0 || file.size > MAX_BYTES) {
+    const contentType = String(file.type || "application/octet-stream");
+    if (!isAdminUploadMime(contentType)) {
+      return NextResponse.json({ error: "invalid_file_type" }, { status: 400 });
+    }
+
+    const maxBytes = maxBytesForMime(contentType, { allowVideo: true });
+    if (file.size <= 0 || file.size > maxBytes) {
       return NextResponse.json({ error: "invalid_file_size" }, { status: 400 });
     }
 
@@ -57,7 +65,7 @@ export async function POST(request: Request) {
     const result = await uploadFileViaAdmin({
       path,
       buffer,
-      contentType: String(file.type || "application/octet-stream"),
+      contentType,
       filename,
     });
 

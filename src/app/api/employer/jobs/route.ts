@@ -11,6 +11,18 @@ import {
 import { serializeTimestamp } from "@/lib/firestore-utils";
 import { anonymizedEmployerLabel } from "@/lib/marketplace/company-visibility";
 
+const storageFileRefSchema = z
+  .object({
+    url: z.string().url(),
+    path: z.string().min(1),
+    filename: z.string().min(1),
+    size: z.number().nullable().optional(),
+    mimeType: z.string().optional(),
+    uploadedAt: z.string().nullable().optional(),
+  })
+  .nullable()
+  .optional();
+
 const jobSchema = z.object({
   title: z.string().trim().min(1).max(160),
   companyName: z.string().trim().min(1).max(160).optional(),
@@ -23,6 +35,8 @@ const jobSchema = z.object({
   skills: z.array(z.string().trim().min(1)).max(40).optional(),
   postedAt: z.string().datetime().optional(),
   expiresAt: z.string().datetime().optional().nullable(),
+  jdFile: storageFileRefSchema,
+  jdUrl: z.string().url().nullable().optional(),
 });
 
 export async function GET() {
@@ -53,12 +67,16 @@ export async function GET() {
         categories: Array.isArray(data.categories) ? data.categories : [],
         skills: Array.isArray(data.skills) ? data.skills : [],
         status: String(data.status ?? "pending"),
+        jdFile: data.jdFile ?? null,
+        jdUrl: data.jdUrl ? String(data.jdUrl) : null,
         postedAt: serializeTimestamp(data.postedAt),
         expiresAt: serializeTimestamp(data.expiresAt),
         createdAt: serializeTimestamp(data.createdAt),
       };
     })
-    .sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
+    .sort((a, b) =>
+      String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")),
+    );
 
   return NextResponse.json({ items });
 }
@@ -75,6 +93,11 @@ export async function POST(request: Request) {
     const now = FieldValue.serverTimestamp();
     const companyName = body.companyName?.trim() || session.company.name;
     const employerLabel = anonymizedEmployerLabel(session.companyId);
+    const jdUrl =
+      body.jdUrl ??
+      (body.jdFile && typeof body.jdFile.url === "string"
+        ? body.jdFile.url
+        : null);
     const payload = stripUndefined({
       id: ref.id,
       companyId: session.companyId,
@@ -89,6 +112,8 @@ export async function POST(request: Request) {
       categories: body.categories,
       skills: body.skills ?? [],
       department: body.categories[0] ?? "",
+      jdFile: body.jdFile ?? null,
+      jdUrl: jdUrl || null,
       status: "open",
       moderationStatus: "approved",
       postedAt: body.postedAt ? new Date(body.postedAt) : now,

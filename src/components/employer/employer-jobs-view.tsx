@@ -11,9 +11,12 @@ import {
   type AdvancedFilterField,
   type AdvancedFilterValue,
 } from "@/components/ui";
+import { FileUpload, type FileUploadMetadata } from "@/components/ui/file-upload";
 import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
 import { computeEmployerLabel } from "@/lib/marketplace/employer-label";
+import { ACCEPT_DOCUMENTS_AND_IMAGES } from "@/lib/storage/upload-mime";
+import type { StorageFileRef } from "@/lib/storage/file-ref";
 
 interface JobItem {
   id: string;
@@ -28,6 +31,8 @@ interface JobItem {
   categories: string[];
   skills: string[];
   status: string;
+  jdFile?: StorageFileRef | null;
+  jdUrl?: string | null;
   postedAt: string | null;
   expiresAt: string | null;
 }
@@ -43,6 +48,8 @@ const EMPTY = {
   categoriesText: "",
   skillsText: "",
   expiresAt: "",
+  jdFile: null as StorageFileRef | null,
+  jdUrl: "" as string,
 };
 
 export function EmployerJobsView({ labels }: { labels: Record<string, string> }) {
@@ -135,6 +142,8 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
       categoriesText: (item.categories ?? []).join(", "),
       skillsText: (item.skills ?? []).join(", "),
       expiresAt: item.expiresAt ? item.expiresAt.slice(0, 16) : "",
+      jdFile: item.jdFile ?? null,
+      jdUrl: item.jdUrl ?? item.jdFile?.url ?? "",
     });
     setError(null);
     setSavedEmployerLabel(item.employerLabel ?? null);
@@ -172,6 +181,8 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
       expiresAt: form.expiresAt
         ? new Date(form.expiresAt).toISOString()
         : null,
+      jdFile: form.jdFile,
+      jdUrl: form.jdUrl.trim() || form.jdFile?.url || null,
     };
     const res = await fetch(
       editing ? `/api/employer/jobs/${editing.id}` : "/api/employer/jobs",
@@ -424,6 +435,50 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
             }
             onChange={(e) =>
               setForm((f) => ({ ...f, description: e.target.value }))
+            }
+          />
+          <FileUpload
+            storagePath="companies/jobs/jd"
+            uploadEndpoint="/api/employer/upload"
+            uploadKind="jd"
+            accept={ACCEPT_DOCUMENTS_AND_IMAGES}
+            label={labels.fieldJdUpload || "Job description file (optional)"}
+            dropzoneContent={
+              labels.jdDropzone || "PDF, Word, or image — click or drop"
+            }
+            progressLabel={labels.uploadProgress || "Uploading…"}
+            initialFile={
+              form.jdFile
+                ? {
+                    url: form.jdFile.url,
+                    path: form.jdFile.path,
+                    filename: form.jdFile.filename,
+                    size: form.jdFile.size ?? 0,
+                    mimeType: form.jdFile.mimeType,
+                  }
+                : null
+            }
+            onUploadComplete={(result: FileUploadMetadata) => {
+              const ref: StorageFileRef = {
+                url: result.url,
+                path: result.path,
+                filename: result.filename,
+                size: result.size,
+                mimeType: result.mimeType,
+                uploadedAt: new Date().toISOString(),
+              };
+              setForm((f) => ({
+                ...f,
+                jdFile: ref,
+                jdUrl: result.url,
+              }));
+            }}
+            onClear={() =>
+              setForm((f) => ({
+                ...f,
+                jdFile: null,
+                jdUrl: "",
+              }))
             }
           />
         </div>
