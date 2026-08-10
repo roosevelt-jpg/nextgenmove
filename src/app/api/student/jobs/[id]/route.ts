@@ -10,6 +10,14 @@ import {
 } from "@/lib/student/session";
 import { serializeTimestamp } from "@/lib/firestore-utils";
 import { createNotification } from "@/lib/notifications/create";
+import {
+  anonymizedEmployerLabel,
+  projectCompanyForStudent,
+} from "@/lib/marketplace/company-visibility";
+import {
+  getCompanyUnlockRequestStatus,
+  isCompanyIdentityUnlocked,
+} from "@/lib/marketplace/mutual-unlock";
 
 export async function GET(
   _request: Request,
@@ -32,22 +40,83 @@ export async function GET(
     .limit(1)
     .get();
 
+  const matchDoc = existing.docs[0];
+  const matchData = matchDoc?.data();
+  const unlocked = matchData ? isCompanyIdentityUnlocked(matchData) : false;
+  const companyUnlockStatus = matchDoc
+    ? unlocked
+      ? "approved"
+      : await getCompanyUnlockRequestStatus(session.studentId, matchDoc.id)
+    : "none";
+
+  const categories = Array.isArray(data.categories)
+    ? data.categories.map(String)
+    : [];
+  const skills = Array.isArray(data.skills) ? data.skills.map(String) : [];
+  const department = String(data.department ?? "");
+  const location = String(data.location ?? "");
+  const companyId = String(data.companyId ?? "");
+
+  let companyView = null;
+  if (companyId) {
+    const companySnap = await adminDb.collection("companies").doc(companyId).get();
+    const companyData = companySnap.exists ? companySnap.data()! : {};
+    const logo =
+      companyData.logoUrl ??
+      (companyData.logo && typeof companyData.logo === "object"
+        ? (companyData.logo as { url?: string }).url
+        : undefined);
+    companyView = projectCompanyForStudent({
+      company: {
+        id: companyId,
+        name: (companyData.name as string | undefined) ?? String(data.companyName ?? ""),
+        companyName:
+          (companyData.companyName as string | undefined) ??
+          String(data.companyName ?? ""),
+        sector: companyData.sector as string | undefined,
+        industry: companyData.industry as string | undefined,
+        location: companyData.location as string | undefined,
+        preferredLocations: companyData.preferredLocations as
+          | string[]
+          | undefined,
+        website: companyData.website as string | undefined,
+        logoUrl: typeof logo === "string" ? logo : undefined,
+        contactEmail: companyData.contactEmail as string | undefined,
+      },
+      unlocked,
+      employerLabel: data.employerLabel,
+    });
+  }
+
+  const employerLabel =
+    companyView?.displayName ||
+    anonymizedEmployerLabel(companyId, data.employerLabel);
+
   return NextResponse.json({
     job: {
       id: snap.id,
       title: String(data.title ?? ""),
-      companyName: String(data.companyName ?? ""),
-      companyId: String(data.companyId ?? ""),
       description: String(data.description ?? ""),
-      location: String(data.location ?? ""),
+      location,
       salary: String(data.salary ?? ""),
       employmentType: String(data.employmentType ?? ""),
-      gender: String(data.gender ?? ""),
-      categories: Array.isArray(data.categories) ? data.categories.map(String) : [],
-      skills: Array.isArray(data.skills) ? data.skills.map(String) : [],
+      department,
+      categories,
+      skills,
       postedAt: serializeTimestamp(data.postedAt ?? data.createdAt),
+      employerLabel,
+      companyIdentityUnlocked: unlocked,
+      ...(unlocked
+        ? {
+            companyName: companyView?.name || undefined,
+            companyWebsite: companyView?.website || undefined,
+            companyLogoUrl: companyView?.logoUrl || undefined,
+          }
+        : {}),
     },
-    alreadyApplied: !existing.empty,
+    alreadyApplied: Boolean(matchDoc),
+    matchId: matchDoc?.id ?? null,
+    companyUnlockStatus,
   });
 }
 
@@ -88,14 +157,23 @@ export async function POST(
       .get();
 
     if (!existing.empty) {
-      return NextResponse.json({ error: "already_applied", id: existing.docs[0]!.id });
+      return NextResponse.json({
+        error: "already_applied",
+        id: existing.docs[0]!.id,
+      });
     }
 
-    const stages = await adminDb.collection("pipeline_stages").orderBy("order").get().catch(
-      () => adminDb.collection("pipeline_stages").get(),
-    );
+    const stages = await adminDb
+      .collection("pipeline_stages")
+      .orderBy("order")
+      .get()
+      .catch(() => adminDb.collection("pipeline_stages").get());
     const firstStage = stages.docs[0];
     const ref = adminDb.collection("matches").doc();
+    const employerLabel = anonymizedEmployerLabel(
+      companyId,
+      job.employerLabel ? String(job.employerLabel) : null,
+    );
     await ref.set(
       stripUndefined({
         id: ref.id,
@@ -103,11 +181,14 @@ export async function POST(
         companyId,
         jobPostingId: id,
         jobTitle: String(job.title ?? ""),
+        employerLabel,
         stageId: firstStage?.id ?? "pipeline_new",
         shortlisted: false,
         applicationStatus: "pending",
         source: "student_applied",
         identityUnlocked: false,
+        companyIdentityUnlocked: false,
+        companyUnlockStatus: "none",
         matchScore: null,
         notes: [],
         createdAt: FieldValue.serverTimestamp(),
@@ -123,9 +204,10 @@ export async function POST(
       link: "/student/applications",
     });
 
-    // Notify company owner if present
     const companySnap = await adminDb.collection("companies").doc(companyId).get();
-    const ownerId = String(companySnap.data()?.ownerId ?? companySnap.data()?.userId ?? "");
+    const ownerId = String(
+      companySnap.data()?.ownerId ?? companySnap.data()?.userId ?? "",
+    );
     if (ownerId) {
       const { anonymizedDisplayName } = await import(
         "@/lib/employer/student-visibility"
@@ -139,7 +221,10 @@ export async function POST(
       });
     }
 
-    return NextResponse.json({ id: ref.id, status: "pending" }, { status: 201 });
+    return NextResponse.json(
+      { id: ref.id, status: "pending", matchId: ref.id },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

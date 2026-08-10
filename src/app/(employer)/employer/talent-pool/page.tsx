@@ -10,6 +10,7 @@ export default async function TalentPoolPage() {
   const labels = {
     ...(settings.formLabels ?? {}),
     ...(settings.employerPageLabels?.talentPool ?? {}),
+    ...(settings.employerPageLabels?.marketplace ?? {}),
   };
 
   const canBrowse =

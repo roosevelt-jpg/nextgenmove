@@ -54,6 +54,7 @@ export const ADMIN_COLLECTIONS = [
   "testimonials",
   "talent_stories",
   "page_visa_path",
+  "page_marketplace",
 ] as const;
 
 export type AdminCollection = (typeof ADMIN_COLLECTIONS)[number];
@@ -1192,6 +1193,50 @@ export const ENTITY_SCHEMAS: Record<string, AdminEntitySchema> = {
           },
         ],
       },
+    ],
+  },
+  page_marketplace: {
+    collection: "page_marketplace",
+    singletonId: "default",
+    fields: [
+      { key: "eyebrow", type: "text", labelKey: "eyebrow" },
+      { key: "title", type: "text", labelKey: "title" },
+      { key: "subtitle", type: "textarea", labelKey: "subtitle" },
+      { key: "body", type: "textarea", labelKey: "body" },
+      { key: "privacyTitle", type: "text", labelKey: "privacyTitle" },
+      { key: "privacyBody", type: "textarea", labelKey: "privacyBody" },
+      { key: "searchPlaceholder", type: "text", labelKey: "searchPlaceholder" },
+      { key: "filterLocation", type: "text", labelKey: "filterLocation" },
+      { key: "filterType", type: "text", labelKey: "filterType" },
+      { key: "filterSkill", type: "text", labelKey: "filterSkill" },
+      { key: "applyCta", type: "text", labelKey: "applyCta" },
+      { key: "revealEmployerCta", type: "text", labelKey: "revealEmployerCta" },
+      {
+        key: "revealEmployerPending",
+        type: "text",
+        labelKey: "revealEmployerPending",
+      },
+      { key: "revealEmployerDone", type: "text", labelKey: "revealEmployerDone" },
+      { key: "maskedEmployerHint", type: "text", labelKey: "maskedEmployerHint" },
+      { key: "unlockTalentCta", type: "text", labelKey: "unlockTalentCta" },
+      {
+        key: "unlockWithCreditsCta",
+        type: "text",
+        labelKey: "unlockWithCreditsCta",
+      },
+      { key: "empty", type: "text", labelKey: "empty" },
+      { key: "loadError", type: "text", labelKey: "loadError" },
+      { key: "loading", type: "text", labelKey: "loading" },
+      { key: "talentSignUpCta", type: "text", labelKey: "talentSignUpCta" },
+      { key: "talentSignUpHref", type: "text", labelKey: "talentSignUpHref" },
+      { key: "employerRequestCta", type: "text", labelKey: "employerRequestCta" },
+      {
+        key: "employerRequestHref",
+        type: "text",
+        labelKey: "employerRequestHref",
+      },
+      { key: "browseRolesCta", type: "text", labelKey: "browseRolesCta" },
+      { key: "browseRolesHref", type: "text", labelKey: "browseRolesHref" },
     ],
   },
 };

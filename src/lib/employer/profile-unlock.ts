@@ -233,6 +233,7 @@ async function ensureMatchForUnlock(options: {
         matchScore,
         source: "company_browsed",
         identityUnlocked: false,
+        companyIdentityUnlocked: false,
         notes: [],
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),

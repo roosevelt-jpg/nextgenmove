@@ -8,6 +8,7 @@ import type {
   PageAboutDocument,
   PageHomeDocument,
   PageHowItWorksDocument,
+  PageMarketplaceDocument,
   PagePricingDocument,
   PageTracksDocument,
   PageVisaPathDocument,
@@ -19,6 +20,7 @@ import type {
 import { cachedPublicCms } from "@/lib/public/cms-cache";
 import {
   FALLBACK_PAGE_HOME,
+  FALLBACK_PAGE_MARKETPLACE,
   FALLBACK_PAGE_PRICING,
   FALLBACK_PAGE_TRACKS,
 } from "@/lib/public/cms-fallbacks";
@@ -192,6 +194,25 @@ export async function getPageVisaPath(): Promise<PageVisaPathDocument | null> {
   }
 }
 
+export async function getPageMarketplace(): Promise<PageMarketplaceDocument> {
+  try {
+    const snapshot = await adminDb
+      .collection("page_marketplace")
+      .doc("default")
+      .get();
+    const data = snapshot.data() as PageMarketplaceDocument | undefined;
+    if (!data) {
+      return serializeForClient(FALLBACK_PAGE_MARKETPLACE);
+    }
+    return serializeForClient({
+      ...FALLBACK_PAGE_MARKETPLACE,
+      ...data,
+    }) as PageMarketplaceDocument;
+  } catch {
+    return serializeForClient(FALLBACK_PAGE_MARKETPLACE);
+  }
+}
+
 const MOVE_OS_KEYS = [
   "moveOsEyebrow",
   "moveOsHeadline",
@@ -271,6 +292,8 @@ export async function getProgramLevers(): Promise<ProgramLeversDocument | null> 
       placementFeeEur: data.placementFeeEur ?? 350,
       creditsPerEuro: data.creditsPerEuro ?? 4,
       lowCreditThreshold: Number(data.lowCreditThreshold ?? 50) || 50,
+      profileUnlockCredits: Number(data.profileUnlockCredits ?? 0) || 0,
+      companyUnlockCredits: Number(data.companyUnlockCredits ?? 0) || 0,
       creditTopUpPackages: data.creditTopUpPackages ?? [],
       companyCreditTopUpPackages: data.companyCreditTopUpPackages ?? [],
       waysToEarn: data.waysToEarn ?? [],
@@ -291,6 +314,8 @@ export function defaultProgramLevers(): ProgramLeversDocument {
     placementFeeEur: 350,
     creditsPerEuro: 4,
     lowCreditThreshold: 50,
+    profileUnlockCredits: 0,
+    companyUnlockCredits: 0,
     creditTopUpPackages: [
       { id: "pack_400", label: "Starter pack", credits: 400, priceEur: 100 },
       { id: "pack_800", label: "Coach pack", credits: 800, priceEur: 200 },

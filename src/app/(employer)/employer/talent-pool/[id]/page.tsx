@@ -7,6 +7,7 @@ export default async function CandidateProfilePage() {
     ...(settings.formLabels ?? {}),
     ...(settings.employerPageLabels?.talentPool ?? {}),
     ...(settings.employerPageLabels?.candidateProfile ?? {}),
+    ...(settings.employerPageLabels?.marketplace ?? {}),
   };
 
   return <CandidateProfileView labels={labels} />;

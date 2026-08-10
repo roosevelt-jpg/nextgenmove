@@ -43,6 +43,12 @@ const SECTION_COPY: Record<
     subtitleKey: "visaPathSubtitle",
     fallbackTitle: "Visa path simulator",
   },
+  "/admin/content/marketplace": {
+    eyebrowKey: "marketplaceEyebrow",
+    titleKey: "marketplaceTitle",
+    subtitleKey: "marketplaceSubtitle",
+    fallbackTitle: "Marketplace",
+  },
   "/admin/content/home": {
     eyebrowKey: "homeEyebrow",
     titleKey: "homeTitle",

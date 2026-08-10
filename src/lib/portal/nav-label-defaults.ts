@@ -30,7 +30,7 @@ export const DEFAULT_ADMIN_NAV_LABELS: Record<string, string> = {
 
 export const DEFAULT_STUDENT_NAV_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
-  jobs: "Jobs",
+  jobs: "Marketplace",
   applications: "Applied jobs",
   evidence: "Evidence vault",
   visaPath: "Visa path",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AdvancedFilters,
+  Button,
   EmptyState,
   type AdvancedFilterField,
   type AdvancedFilterValue,
@@ -14,7 +15,10 @@ interface ApplicationItem {
   id: string;
   jobPostingId: string | null;
   jobTitle: string;
-  companyName: string;
+  employerLabel: string;
+  companyName?: string;
+  companyIdentityUnlocked?: boolean;
+  companyUnlockStatus?: "none" | "pending" | "approved" | "declined";
   applicationStatus: string;
   createdAt: string | null;
 }
@@ -25,16 +29,23 @@ export function StudentApplicationsView({
   labels: Record<string, string>;
 }) {
   const [items, setItems] = useState<ApplicationItem[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
     search: "",
     status: "",
   });
 
   const load = useCallback(async () => {
+    setStatus("loading");
     const res = await fetch("/api/student/applications");
-    if (!res.ok) return;
+    if (!res.ok) {
+      setStatus("error");
+      return;
+    }
     const data = (await res.json()) as { items?: ApplicationItem[] };
     setItems(data.items ?? []);
+    setStatus("ready");
   }, []);
 
   useEffect(() => {
@@ -72,6 +83,7 @@ export function StudentApplicationsView({
           value: filters.search,
           accessors: [
             (row) => row.jobTitle,
+            (row) => row.employerLabel,
             (row) => row.companyName,
             (row) => row.applicationStatus,
           ],
@@ -83,14 +95,35 @@ export function StudentApplicationsView({
     [items, filters],
   );
 
-  const statusLabel = (status: string) =>
-    labels[`status_${status}`] || status;
+  const statusLabel = (applicationStatus: string) =>
+    labels[`status_${applicationStatus}`] || applicationStatus;
+
+  const revealEmployer = async (item: ApplicationItem) => {
+    setBusyId(item.id);
+    const res = await fetch("/api/student/company-unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        matchId: item.id,
+        jobPostingId: item.jobPostingId || undefined,
+      }),
+    });
+    setBusyId(null);
+    if (res.ok) await load();
+  };
+
+  if (status === "loading") {
+    return <EmptyState title={labels.loading || ""} />;
+  }
+  if (status === "error") {
+    return <EmptyState title={labels.loadError || ""} />;
+  }
 
   return (
     <div className="space-y-6">
       <header className="space-y-1">
         <h1 className="font-serif text-2xl text-text-primary">
-          {labels.title || "Applied jobs"}
+          {labels.title}
         </h1>
         {labels.subtitle ? (
           <p className="text-sm text-text-secondary">{labels.subtitle}</p>
@@ -99,18 +132,18 @@ export function StudentApplicationsView({
           href="/student/jobs"
           className="inline-block text-sm font-medium text-text-label hover:text-fill-accent"
         >
-          {labels.openJobBoard || "Browse jobs →"}
+          {labels.openJobBoard}
         </Link>
       </header>
 
       <AdvancedFilters
         labels={{
           ...labels,
-          search: labels.search || "Search",
-          searchPlaceholder: labels.searchPlaceholder || "Search applications…",
-          filterStatus: labels.filterStatus || "Status",
-          filterAll: labels.filterAll || "All",
-          clearFilters: labels.clearFilters || "Clear filters",
+          search: labels.search,
+          searchPlaceholder: labels.searchPlaceholder,
+          filterStatus: labels.filterStatus,
+          filterAll: labels.filterAll,
+          clearFilters: labels.clearFilters,
         }}
         fields={fields}
         values={filters}
@@ -119,30 +152,75 @@ export function StudentApplicationsView({
       />
 
       {filtered.length === 0 ? (
-        <EmptyState title={labels.empty || "You have not applied to any jobs yet."} />
+        <EmptyState title={labels.empty || ""} />
       ) : (
         <ul className="divide-y divide-border rounded-radius border border-border">
-          {filtered.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-            >
-              <div>
-                <p className="font-medium text-text-primary">
-                  {item.jobTitle || labels.jobTitleLabel || "Role"}
-                </p>
-                <p className="text-sm text-text-secondary">
-                  {item.companyName}
-                  {item.createdAt
-                    ? ` · ${new Date(item.createdAt).toLocaleDateString()}`
-                    : ""}
-                </p>
-              </div>
-              <span className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag">
-                {statusLabel(item.applicationStatus)}
-              </span>
-            </li>
-          ))}
+          {filtered.map((item) => {
+            const unlocked =
+              item.companyIdentityUnlocked === true ||
+              item.companyUnlockStatus === "approved";
+            const employer =
+              unlocked && item.companyName
+                ? item.companyName
+                : item.employerLabel;
+
+            return (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              >
+                <div>
+                  <p className="font-medium text-text-primary">
+                    {item.jobTitle || labels.jobTitleLabel}
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    {employer}
+                    {item.createdAt
+                      ? ` · ${new Date(item.createdAt).toLocaleDateString()}`
+                      : ""}
+                  </p>
+                  {!unlocked && labels.maskedEmployerHint ? (
+                    <p className="mt-1 text-[11px] text-text-muted">
+                      {labels.maskedEmployerHint}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-radius bg-bg-tag px-2 py-0.5 text-xs font-medium text-text-tag">
+                    {statusLabel(item.applicationStatus)}
+                  </span>
+                  {!unlocked ? (
+                    item.companyUnlockStatus === "pending" ? (
+                      <span className="rounded-radius border border-border px-2 py-0.5 text-xs text-text-secondary">
+                        {labels.revealEmployerPending}
+                      </span>
+                    ) : labels.revealEmployerCta ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busyId === item.id}
+                        onClick={() => void revealEmployer(item)}
+                      >
+                        {labels.revealEmployerCta}
+                      </Button>
+                    ) : null
+                  ) : labels.revealEmployerDone ? (
+                    <span className="rounded-radius bg-bg-purple px-2 py-0.5 text-xs font-medium text-text-label">
+                      {labels.revealEmployerDone}
+                    </span>
+                  ) : null}
+                  {item.jobPostingId ? (
+                    <Link
+                      href={`/student/jobs/${item.jobPostingId}`}
+                      className="text-xs font-medium text-text-label hover:text-fill-accent"
+                    >
+                      {labels.viewDetails}
+                    </Link>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

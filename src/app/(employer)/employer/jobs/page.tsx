@@ -6,6 +6,7 @@ export default async function EmployerJobsPage() {
   const labels = {
     ...(settings.formLabels ?? {}),
     ...(settings.employerPageLabels?.jobs ?? {}),
+    ...(settings.employerPageLabels?.marketplace ?? {}),
   };
 
   return (

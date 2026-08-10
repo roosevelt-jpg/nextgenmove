@@ -8,6 +8,7 @@ import {
   getEmployerSession,
   unauthorizedResponse,
 } from "@/lib/employer/session";
+import { anonymizedEmployerLabel } from "@/lib/marketplace/company-visibility";
 
 const jobSchema = z.object({
   title: z.string().trim().min(1).max(160),
@@ -41,9 +42,17 @@ export async function PATCH(
 
   try {
     const body = jobSchema.parse(await request.json());
+    const existingLabel = snap.data()?.employerLabel
+      ? String(snap.data()!.employerLabel)
+      : null;
+    const employerLabel = anonymizedEmployerLabel(
+      session.companyId,
+      existingLabel,
+    );
     await ref.set(
       stripUndefined({
         companyName: body.companyName?.trim() || session.company.name,
+        employerLabel,
         title: body.title,
         description: body.description,
         location: body.location,
@@ -62,7 +71,7 @@ export async function PATCH(
       }),
       { merge: true },
     );
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, employerLabel });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

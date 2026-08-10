@@ -6,16 +6,20 @@ import {
   unauthorizedResponse,
 } from "@/lib/employer/session";
 import {
-  createProfileUnlockRequest,
   getUnlockRequestStatusMap,
   PROFILE_UNLOCK_TYPE,
 } from "@/lib/employer/profile-unlock";
+import {
+  employerUnlockStudent,
+  isStudentIdentityUnlocked,
+} from "@/lib/marketplace/mutual-unlock";
 import { adminDb } from "@/lib/firebase-admin";
 
 const postSchema = z
   .object({
     studentId: z.string().min(1).optional(),
     matchId: z.string().min(1).optional(),
+    mode: z.enum(["request", "credits"]).optional(),
   })
   .refine((body) => Boolean(body.studentId || body.matchId), {
     message: "studentId_or_matchId_required",
@@ -73,7 +77,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "not_found" }, { status: 404 });
       }
       const match = matchSnap.data()!;
-      if (match.identityUnlocked === true) {
+      if (isStudentIdentityUnlocked(match)) {
         return NextResponse.json({ error: "already_unlocked" }, { status: 409 });
       }
       studentId = String(match.studentId ?? "");
@@ -86,7 +90,7 @@ export async function POST(request: Request) {
         .get();
       if (!matchSnap.empty) {
         matchId = matchSnap.docs[0]!.id;
-        if (matchSnap.docs[0]!.data().identityUnlocked === true) {
+        if (isStudentIdentityUnlocked(matchSnap.docs[0]!.data())) {
           return NextResponse.json({ error: "already_unlocked" }, { status: 409 });
         }
       }
@@ -96,13 +100,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
 
-    const result = await createProfileUnlockRequest({
+    const mode = body.mode ?? "request";
+
+    const result = await employerUnlockStudent({
+      mode,
       companyId: session.companyId,
       companyName: session.company.name,
       studentId,
       matchId,
+      actorUid: session.user.uid,
       request,
     });
+
+    if (mode === "credits") {
+      return NextResponse.json({
+        matchId: result.matchId,
+        mode: "credits",
+        paid: result.paid ?? false,
+        creditsSpent: result.creditsSpent ?? 0,
+        unlockRequestStatus: result.unlockRequestStatus,
+        identityUnlocked: true,
+      });
+    }
 
     const statusMap = await getUnlockRequestStatusMap(session.companyId, [
       studentId,
@@ -111,14 +130,26 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: result.id,
       alreadyPending: result.alreadyPending,
+      mode: "request",
       unlockRequestStatus: statusMap.get(studentId) ?? "pending",
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
-    if (error instanceof Error && error.message === "student_not_found") {
-      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    if (error instanceof Error) {
+      if (error.message === "student_not_found" || error.message === "not_found") {
+        return NextResponse.json({ error: "not_found" }, { status: 404 });
+      }
+      if (error.message === "credits_disabled") {
+        return NextResponse.json({ error: "credits_disabled" }, { status: 400 });
+      }
+      if (error.message === "insufficient_company_credits") {
+        return NextResponse.json(
+          { error: "insufficient_credits" },
+          { status: 402 },
+        );
+      }
     }
     console.error("employer_unlock_request_failed", error);
     return NextResponse.json({ error: "request_failed" }, { status: 500 });

@@ -1,11 +1,14 @@
 import { StudentJobDetailView } from "@/components/student/student-job-detail-view";
 import { getSiteSettings } from "@/lib/collections/site-settings";
+import { FALLBACK_MARKETPLACE_LABELS } from "@/lib/public/cms-fallbacks";
 
 export default async function StudentJobDetailPage() {
   const settings = await getSiteSettings();
   const labels = {
+    ...FALLBACK_MARKETPLACE_LABELS,
     ...(settings.formLabels ?? {}),
     ...(settings.studentPageLabels?.jobs ?? {}),
+    ...(settings.studentPageLabels?.marketplace ?? {}),
   };
 
   return (

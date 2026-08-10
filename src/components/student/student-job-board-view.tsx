@@ -13,27 +13,37 @@ import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-clie
 interface JobCard {
   id: string;
   title: string;
-  companyName: string;
+  employerLabel: string;
   location: string;
   salary: string;
   employmentType: string;
+  department?: string;
+  skills: string[];
   categories: string[];
+  postedAt?: string | null;
+  companyIdentityUnlocked?: boolean;
 }
 
 export function StudentJobBoardView({ labels }: { labels: Record<string, string> }) {
   const [items, setItems] = useState<JobCard[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
     search: "",
+    location: "",
     type: "",
-    salary: "",
-    category: "",
+    skill: "",
   });
 
   const load = useCallback(async () => {
+    setStatus("loading");
     const res = await fetch("/api/student/jobs");
-    if (!res.ok) return;
+    if (!res.ok) {
+      setStatus("error");
+      return;
+    }
     const data = (await res.json()) as { items?: JobCard[] };
     setItems(data.items ?? []);
+    setStatus("ready");
   }, []);
 
   useEffect(() => {
@@ -50,13 +60,13 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
     [labels],
   );
 
-  const salaryOptions = useMemo(
-    () => uniqueOptionValues(items.map((i) => i.salary)),
+  const locationOptions = useMemo(
+    () => uniqueOptionValues(items.map((i) => i.location)),
     [items],
   );
 
-  const categoryOptions = useMemo(
-    () => uniqueOptionValues(items.flatMap((i) => i.categories ?? [])),
+  const skillOptions = useMemo(
+    () => uniqueOptionValues(items.flatMap((i) => i.skills ?? [])),
     [items],
   );
 
@@ -69,6 +79,13 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
         placeholderKey: "searchPlaceholder",
       },
       {
+        id: "location",
+        type: "select",
+        labelKey: "filterLocation",
+        allKey: "filterAll",
+        options: locationOptions,
+      },
+      {
         id: "type",
         type: "select",
         labelKey: "filterType",
@@ -76,21 +93,14 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
         options: typeOptions,
       },
       {
-        id: "salary",
+        id: "skill",
         type: "select",
-        labelKey: "filterSalary",
+        labelKey: "filterSkill",
         allKey: "filterAll",
-        options: salaryOptions,
-      },
-      {
-        id: "category",
-        type: "select",
-        labelKey: "filterCategory",
-        allKey: "filterAll",
-        options: categoryOptions,
+        options: skillOptions,
       },
     ],
-    [typeOptions, salaryOptions, categoryOptions],
+    [typeOptions, locationOptions, skillOptions],
   );
 
   const filtered = useMemo(
@@ -101,19 +111,21 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
           accessors: [
             (job) => job.title,
             (job) => job.location,
-            (job) => job.companyName,
+            (job) => job.employerLabel,
+            (job) => job.skills,
             (job) => job.categories,
+            (job) => job.department,
           ],
         },
         equals: [
+          { value: filters.location, accessor: (job) => job.location },
           { value: filters.type, accessor: (job) => job.employmentType },
-          { value: filters.salary, accessor: (job) => job.salary },
           {
-            value: filters.category,
+            value: filters.skill,
             accessor: (job) =>
-              filters.category &&
-              (job.categories ?? []).includes(String(filters.category))
-                ? String(filters.category)
+              filters.skill &&
+              (job.skills ?? []).includes(String(filters.skill))
+                ? String(filters.skill)
                 : "",
           },
         ],
@@ -124,28 +136,45 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
   const typeLabel = (value: string) =>
     typeOptions.find((o) => o.value === value)?.label || value;
 
+  if (status === "loading") {
+    return (
+      <EmptyState title={labels.loading || labels.empty || ""} />
+    );
+  }
+
+  if (status === "error") {
+    return <EmptyState title={labels.loadError || labels.empty || ""} />;
+  }
+
   return (
     <div className="space-y-4">
       <header className="space-y-1">
+        {labels.eyebrow ? (
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-text-label">
+            {labels.eyebrow}
+          </p>
+        ) : null}
         <h1 className="font-serif text-2xl text-text-primary">
-          {labels.title || "Job board"}
+          {labels.title}
         </h1>
         {labels.subtitle ? (
           <p className="text-sm text-text-secondary">{labels.subtitle}</p>
+        ) : null}
+        {labels.maskedEmployerHint ? (
+          <p className="text-xs text-text-muted">{labels.maskedEmployerHint}</p>
         ) : null}
       </header>
 
       <AdvancedFilters
         labels={{
           ...labels,
-          search: labels.searchPlaceholder || "Search",
-          searchPlaceholder:
-            labels.searchPlaceholder || "Search by title or location",
-          filterType: labels.filterType || "Job type",
-          filterSalary: labels.filterSalary || "Salary",
-          filterCategory: labels.filterCategory || "Category",
-          filterAll: labels.filterAll || "All",
-          clearFilters: labels.clearFilters || "Clear filters",
+          search: labels.searchPlaceholder,
+          searchPlaceholder: labels.searchPlaceholder,
+          filterLocation: labels.filterLocation,
+          filterType: labels.filterType,
+          filterSkill: labels.filterSkill,
+          filterAll: labels.filterAll,
+          clearFilters: labels.clearFilters,
         }}
         fields={fields}
         values={filters}
@@ -154,7 +183,7 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
       />
 
       {filtered.length === 0 ? (
-        <EmptyState title={labels.empty || "No open jobs match your filters."} />
+        <EmptyState title={labels.empty || ""} />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
           {filtered.map((job) => (
@@ -164,21 +193,31 @@ export function StudentJobBoardView({ labels }: { labels: Record<string, string>
             >
               <h2 className="font-medium text-text-primary">{job.title}</h2>
               <p className="mt-1 text-sm text-text-secondary">
-                {[job.companyName, job.location, typeLabel(job.employmentType)]
+                {[job.employerLabel, job.location, typeLabel(job.employmentType)]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
               {job.salary ? (
                 <p className="mt-1 text-sm text-text-primary">{job.salary}</p>
               ) : null}
+              {job.skills?.length ? (
+                <ul className="mt-2 flex flex-wrap gap-1">
+                  {job.skills.slice(0, 4).map((skill) => (
+                    <li
+                      key={skill}
+                      className="rounded-radius bg-bg-tag px-2 py-0.5 text-[10px] text-text-tag"
+                    >
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <div className="mt-3">
                 <Link
                   href={`/student/jobs/${job.id}`}
-                  target="_blank"
-                  rel="noreferrer"
                   className="text-sm font-medium text-text-label hover:text-fill-accent"
                 >
-                  {labels.viewDetails || "View details"}
+                  {labels.viewDetails}
                 </Link>
               </div>
             </li>

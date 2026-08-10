@@ -284,6 +284,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /page_marketplace/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /program_levers/{docId} {
       allow read: if true;
       allow write: if isAdmin();

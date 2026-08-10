@@ -13,11 +13,13 @@ import {
 } from "@/components/ui";
 import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-client-filters";
 import { useTaxonomies } from "@/lib/hooks/use-taxonomies";
+import { computeEmployerLabel } from "@/lib/marketplace/employer-label";
 
 interface JobItem {
   id: string;
   title: string;
   companyName: string;
+  employerLabel?: string;
   description: string;
   location: string;
   salary: string;
@@ -52,6 +54,9 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savedEmployerLabel, setSavedEmployerLabel] = useState<string | null>(
+    null,
+  );
   const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
     search: "",
     status: "",
@@ -113,6 +118,7 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
     setEditing(null);
     setForm(EMPTY);
     setError(null);
+    setSavedEmployerLabel(null);
     setOpen(true);
   };
 
@@ -131,6 +137,7 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
       expiresAt: item.expiresAt ? item.expiresAt.slice(0, 16) : "",
     });
     setError(null);
+    setSavedEmployerLabel(item.employerLabel ?? null);
     setOpen(true);
   };
 
@@ -183,6 +190,13 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
           "Could not save job.",
       );
       return;
+    }
+    const payload = (await res.json().catch(() => null)) as {
+      employerLabel?: string;
+      id?: string;
+    } | null;
+    if (payload?.employerLabel) {
+      setSavedEmployerLabel(payload.employerLabel);
     }
     setOpen(false);
     await load();
@@ -304,6 +318,33 @@ export function EmployerJobsView({ labels }: { labels: Record<string, string> })
               setForm((f) => ({ ...f, companyName: e.target.value }))
             }
           />
+          {labels.anonymizedEmployerNote ? (
+            <p className="text-xs text-text-muted">
+              {labels.anonymizedEmployerNote}
+            </p>
+          ) : null}
+          {(savedEmployerLabel ||
+            form.location.trim() ||
+            form.categoriesText.trim()) &&
+          labels.employerLabelPreview ? (
+            <p className="rounded-radius border border-border bg-surface-2 px-3 py-2 text-xs text-text-secondary">
+              {labels.employerLabelPreview.replace(
+                "{label}",
+                savedEmployerLabel ||
+                  computeEmployerLabel({
+                    department: form.categoriesText
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)[0],
+                    location: form.location,
+                    categories: form.categoriesText
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  }),
+              )}
+            </p>
+          ) : null}
           <Input
             label={labels.fieldCategories || "Categories (comma-separated)"}
             value={form.categoriesText}

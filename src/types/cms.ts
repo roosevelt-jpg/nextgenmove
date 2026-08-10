@@ -242,6 +242,37 @@ export interface PageVisaPathDocument {
   corridors?: VisaPathCorridor[];
 }
 
+/** Public + shared marketplace copy (`page_marketplace/default`). */
+export interface PageMarketplaceDocument {
+  id?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  body?: string;
+  privacyTitle?: string;
+  privacyBody?: string;
+  searchPlaceholder?: string;
+  filterLocation?: string;
+  filterType?: string;
+  filterSkill?: string;
+  applyCta?: string;
+  revealEmployerCta?: string;
+  revealEmployerPending?: string;
+  revealEmployerDone?: string;
+  maskedEmployerHint?: string;
+  unlockTalentCta?: string;
+  unlockWithCreditsCta?: string;
+  empty?: string;
+  loadError?: string;
+  loading?: string;
+  talentSignUpCta?: string;
+  talentSignUpHref?: string;
+  employerRequestCta?: string;
+  employerRequestHref?: string;
+  browseRolesCta?: string;
+  browseRolesHref?: string;
+}
+
 export interface VideoCardDocument {
   id: string;
   title: string;
@@ -656,6 +687,16 @@ export interface ProgramLeversDocument {
   creditsPerEuro: number;
   /** Notify students when wallet balance falls at or below this amount. */
   lowCreditThreshold: number;
+  /**
+   * Company credit cost to instantly reveal a student identity.
+   * 0 = request-only (admin approve path).
+   */
+  profileUnlockCredits: number;
+  /**
+   * Student credit cost to instantly reveal an employer identity.
+   * 0 = request-only (admin approve path).
+   */
+  companyUnlockCredits: number;
   creditTopUpPackages: CreditTopUpPackage[];
   /** Employer dual-commit / Move OS company credit packs. */
   companyCreditTopUpPackages?: CreditTopUpPackage[];

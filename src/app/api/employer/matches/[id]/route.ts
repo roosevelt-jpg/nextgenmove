@@ -17,6 +17,7 @@ import {
 import { getUnlockRequestStatus } from "@/lib/employer/profile-unlock";
 import { logPiiAccess } from "@/lib/security/pii-access-log";
 import { scoreWithBreakdown } from "@/lib/matching/score";
+import { getProfileUnlockCreditCost } from "@/lib/marketplace/mutual-unlock";
 
 const patchSchema = z.object({
   shortlisted: z.boolean().optional(),
@@ -150,6 +151,10 @@ export async function GET(
   const storedScore =
     typeof match.matchScore === "number" ? match.matchScore : null;
 
+  const profileUnlockCreditCost = await getProfileUnlockCreditCost();
+  const creditsUnlockAvailable =
+    !identityUnlocked && profileUnlockCreditCost > 0;
+
   return NextResponse.json({
     match: {
       id,
@@ -165,6 +170,10 @@ export async function GET(
       },
       identityUnlocked,
       unlockRequestStatus: projected.unlockRequestStatus,
+      creditsUnlockAvailable,
+      unlockModes: creditsUnlockAvailable
+        ? ["request", "credits"]
+        : ["request"],
       notes: match.notes ?? [],
       interviewAt: serializeInterviewAt(match.interviewAt),
       applicationStatus: match.applicationStatus
@@ -178,6 +187,10 @@ export async function GET(
       fullName: projected.displayName,
       identityUnlocked: projected.identityUnlocked,
       unlockRequestStatus: projected.unlockRequestStatus,
+      creditsUnlockAvailable,
+      unlockModes: creditsUnlockAvailable
+        ? ["request", "credits"]
+        : ["request"],
       email: projected.email,
       phone: projected.phone,
       sector: projected.sector,

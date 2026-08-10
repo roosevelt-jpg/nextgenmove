@@ -21,6 +21,8 @@ interface CandidateDetail {
     } | null;
     identityUnlocked?: boolean;
     unlockRequestStatus?: "none" | "pending" | "approved" | "declined";
+    creditsUnlockAvailable?: boolean;
+    unlockModes?: string[];
     interviewAt?: string | null;
     applicationStatus?: string | null;
     interviewScorecard?: {
@@ -37,6 +39,8 @@ interface CandidateDetail {
     fullName: string;
     identityUnlocked?: boolean;
     unlockRequestStatus?: "none" | "pending" | "approved" | "declined";
+    creditsUnlockAvailable?: boolean;
+    unlockModes?: string[];
     email: string;
     phone?: string | null;
     sector: string;
@@ -160,13 +164,16 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
     return true;
   };
 
-  const requestUnlock = async () => {
+  const requestUnlock = async (mode?: "credits") => {
     setBusy(true);
     setActionMessage(null);
     const response = await fetch("/api/employer/unlock-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matchId }),
+      body: JSON.stringify({
+        matchId,
+        ...(mode ? { mode } : {}),
+      }),
     });
     setBusy(false);
     if (!response.ok) {
@@ -175,6 +182,12 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
       } | null;
       if (payload?.error === "already_unlocked") {
         setActionMessage(labels.unlockAlreadyApproved || "Already unlocked.");
+      } else if (mode === "credits") {
+        setActionMessage(
+          labels.unlockCreditsError ||
+            labels.unlockRequestError ||
+            "Could not unlock with credits.",
+        );
       } else {
         setActionMessage(labels.unlockRequestError || "Could not submit unlock request.");
       }
@@ -207,6 +220,14 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
     student.unlockRequestStatus ?? match.unlockRequestStatus ?? "none";
   const displayName =
     student.displayName || student.fullName || labels.anonymizedCandidate || "Candidate";
+  const creditsUnlockAvailable =
+    student.creditsUnlockAvailable === true ||
+    match.creditsUnlockAvailable === true ||
+    student.unlockModes?.includes("credits") === true ||
+    match.unlockModes?.includes("credits") === true;
+  const unlockTalentLabel =
+    labels.unlockTalentCta || labels.requestUnlock || "Request unlock";
+  const unlockCreditsLabel = labels.unlockWithCreditsCta;
 
   return (
     <div className="space-y-6">
@@ -275,9 +296,21 @@ export function CandidateProfileView({ labels }: CandidateProfileViewProps) {
                 {labels.unlockPending || "Unlock pending"}
               </span>
             ) : (
-              <Button size="sm" disabled={busy} onClick={() => void requestUnlock()}>
-                {labels.requestUnlock || "Request unlock"}
-              </Button>
+              <>
+                <Button size="sm" disabled={busy} onClick={() => void requestUnlock()}>
+                  {unlockTalentLabel}
+                </Button>
+                {creditsUnlockAvailable && unlockCreditsLabel ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => void requestUnlock("credits")}
+                  >
+                    {unlockCreditsLabel}
+                  </Button>
+                ) : null}
+              </>
             )
           ) : (
             <span className="rounded-full bg-bg-purple px-3 py-1.5 text-xs font-medium text-text-label">

@@ -215,6 +215,7 @@ export async function POST(request: Request) {
         matchScore,
         source: "company_browsed",
         identityUnlocked: false,
+        companyIdentityUnlocked: false,
         notes: [],
         viewedAt: FieldValue.serverTimestamp(),
         createdAt: FieldValue.serverTimestamp(),

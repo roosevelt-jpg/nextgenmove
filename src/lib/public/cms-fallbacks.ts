@@ -1,5 +1,6 @@
 import type {
   PageHomeDocument,
+  PageMarketplaceDocument,
   PagePricingDocument,
   PageTracksDocument,
   PageVisaPathDocument,
@@ -34,6 +35,7 @@ export const FALLBACK_SITE_SETTINGS: SiteSettingsDocument = {
     browseRoles: "Browse roles",
     howItWorks: "How it works",
     visaPath: "Visa path",
+    marketplace: "Marketplace",
     stories: "Stories",
     credits: "Credits",
     pricing: "Pricing",
@@ -466,6 +468,59 @@ export const FALLBACK_PAGE_VISA_PATH: PageVisaPathDocument = {
       ],
     },
   ],
+};
+
+export const FALLBACK_PAGE_MARKETPLACE: PageMarketplaceDocument = {
+  eyebrow: "Marketplace",
+  title: "Hire and apply with mutual privacy.",
+  subtitle:
+    "Talent and employers meet with identities masked until both sides are ready to reveal.",
+  body:
+    "Browse anonymized roles, apply in one click, then request an employer reveal after you apply. Employers see masked talent profiles until Nextgenmove unlocks identity.",
+  privacyTitle: "Mutual privacy by default",
+  privacyBody:
+    "Company names stay anonymized for talent until an unlock is approved. Candidate identity stays masked for employers until unlock — via Nextgenmove review or credits when enabled.",
+  searchPlaceholder: "Search by title, skill, or location",
+  filterLocation: "Location",
+  filterType: "Employment type",
+  filterSkill: "Skill",
+  applyCta: "Apply",
+  revealEmployerCta: "Reveal employer",
+  revealEmployerPending: "Reveal pending",
+  revealEmployerDone: "Employer revealed",
+  maskedEmployerHint: "Employer identity is hidden until you request a reveal.",
+  unlockTalentCta: "Request unlock",
+  unlockWithCreditsCta: "Unlock with credits",
+  empty: "No open roles match your filters.",
+  loadError: "Could not load marketplace roles. Try again.",
+  loading: "Loading marketplace…",
+  talentSignUpCta: "Join as talent",
+  talentSignUpHref: "/sign-up",
+  employerRequestCta: "Request talent",
+  employerRequestHref: "/request-talent",
+  browseRolesCta: "Browse public roles",
+  browseRolesHref: "/careers-talent",
+};
+
+/** Flat portal labels derived from the marketplace singleton fallback. */
+export const FALLBACK_MARKETPLACE_LABELS: Record<string, string> = {
+  eyebrow: FALLBACK_PAGE_MARKETPLACE.eyebrow!,
+  title: FALLBACK_PAGE_MARKETPLACE.title!,
+  subtitle: FALLBACK_PAGE_MARKETPLACE.subtitle!,
+  searchPlaceholder: FALLBACK_PAGE_MARKETPLACE.searchPlaceholder!,
+  filterLocation: FALLBACK_PAGE_MARKETPLACE.filterLocation!,
+  filterType: FALLBACK_PAGE_MARKETPLACE.filterType!,
+  filterSkill: FALLBACK_PAGE_MARKETPLACE.filterSkill!,
+  applyCta: FALLBACK_PAGE_MARKETPLACE.applyCta!,
+  revealEmployerCta: FALLBACK_PAGE_MARKETPLACE.revealEmployerCta!,
+  revealEmployerPending: FALLBACK_PAGE_MARKETPLACE.revealEmployerPending!,
+  revealEmployerDone: FALLBACK_PAGE_MARKETPLACE.revealEmployerDone!,
+  maskedEmployerHint: FALLBACK_PAGE_MARKETPLACE.maskedEmployerHint!,
+  unlockTalentCta: FALLBACK_PAGE_MARKETPLACE.unlockTalentCta!,
+  unlockWithCreditsCta: FALLBACK_PAGE_MARKETPLACE.unlockWithCreditsCta!,
+  empty: FALLBACK_PAGE_MARKETPLACE.empty!,
+  loadError: FALLBACK_PAGE_MARKETPLACE.loadError!,
+  loading: FALLBACK_PAGE_MARKETPLACE.loading!,
 };
 
 export const FALLBACK_PAGE_PRICING: PagePricingDocument = {

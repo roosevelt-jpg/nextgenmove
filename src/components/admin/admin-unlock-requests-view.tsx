@@ -11,6 +11,7 @@ import { applyClientFilters, uniqueOptionValues } from "@/lib/filters/apply-clie
 
 export interface UnlockRequestItem {
   id: string;
+  type?: string;
   companyId: string;
   studentId: string;
   matchId?: string | null;
@@ -19,6 +20,7 @@ export interface UnlockRequestItem {
   createdAt?: string | null;
   resolvedAt?: string | null;
   companyName?: string;
+  employerLabel?: string | null;
   candidateLabel?: string;
   studentFullName?: string;
 }
@@ -46,6 +48,7 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
   const [filters, setFilters] = useState<Record<string, AdvancedFilterValue>>({
     search: "",
     status: "",
+    type: "",
   });
 
   const load = useCallback(async () => {
@@ -95,6 +98,19 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
     [items],
   );
 
+  const typeOptions = useMemo(() => {
+    const raw = uniqueOptionValues(
+      items.map((i) => i.type || "profile_unlock"),
+    );
+    return raw.map((opt) => ({
+      value: opt.value,
+      label:
+        opt.value === "company_unlock"
+          ? labels.typeCompanyUnlock || "Company unlock"
+          : labels.typeProfileUnlock || "Profile unlock",
+    }));
+  }, [items, labels.typeCompanyUnlock, labels.typeProfileUnlock]);
+
   const filterFields = useMemo<AdvancedFilterField[]>(
     () => [
       {
@@ -104,6 +120,13 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
         placeholderKey: "searchPlaceholder",
       },
       {
+        id: "type",
+        type: "select",
+        labelKey: "filterType",
+        allKey: "filterAll",
+        options: typeOptions,
+      },
+      {
         id: "status",
         type: "select",
         labelKey: "filterStatus",
@@ -111,7 +134,7 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
         options: statusOptions,
       },
     ],
-    [statusOptions],
+    [statusOptions, typeOptions],
   );
 
   const filteredItems = useMemo(
@@ -121,13 +144,21 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
           value: filters.search,
           accessors: [
             (row) => row.companyName,
+            (row) => row.employerLabel,
             (row) => row.companyId,
             (row) => row.candidateLabel,
             (row) => row.studentFullName,
             (row) => row.studentId,
+            (row) => row.type,
           ],
         },
-        equals: [{ value: filters.status, accessor: (row) => row.status }],
+        equals: [
+          { value: filters.status, accessor: (row) => row.status },
+          {
+            value: filters.type,
+            accessor: (row) => row.type || "profile_unlock",
+          },
+        ],
       }),
     [items, filters],
   );
@@ -152,6 +183,7 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
           search: labels.search || "Search",
           searchPlaceholder: labels.searchPlaceholder || "Search requests…",
           filterStatus: labels.filterStatus || "Status",
+          filterType: labels.filterType || "Type",
           filterAll: labels.filterAll || "All",
           clearFilters: labels.clearFilters || "Clear filters",
         }}
@@ -170,6 +202,7 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-border bg-surface-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text-muted">
               <tr>
+                <th className="px-3 py-2.5">{labels.colType || "Type"}</th>
                 <th className="px-3 py-2.5">{labels.colCompany || "Company"}</th>
                 <th className="px-3 py-2.5">{labels.colCandidate || "Candidate"}</th>
                 <th className="px-3 py-2.5">{labels.colRequested || "Requested"}</th>
@@ -181,8 +214,17 @@ export function AdminUnlockRequestsView({ labels }: AdminUnlockRequestsViewProps
               {filteredItems.map((item) => (
                 <tr key={item.id} className="border-b border-border last:border-0">
                   <td className="px-3 py-3 align-top">
+                    <span className="rounded-full border border-border px-2 py-0.5 text-xs text-text-secondary">
+                      {(item.type || "profile_unlock") === "company_unlock"
+                        ? labels.typeCompanyUnlock || "Company unlock"
+                        : labels.typeProfileUnlock || "Profile unlock"}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 align-top">
                     <p className="font-medium text-text-primary">
-                      {item.companyName || item.companyId}
+                      {item.type === "company_unlock"
+                        ? item.employerLabel || item.companyName || item.companyId
+                        : item.companyName || item.companyId}
                     </p>
                     <p className="mt-0.5 font-mono text-[10px] text-text-muted">
                       {item.companyId}

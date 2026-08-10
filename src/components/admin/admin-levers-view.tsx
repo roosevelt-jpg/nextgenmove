@@ -421,6 +421,36 @@ export function AdminLeversView({ labels }: AdminLeversViewProps) {
               })
             }
           />
+          <Input
+            id="profileUnlockCredits"
+            type="number"
+            label={
+              labels.profileUnlockCredits ||
+              "Profile unlock credits (company → student)"
+            }
+            value={String(levers.profileUnlockCredits ?? 0)}
+            onChange={(event) =>
+              setLevers({
+                ...levers,
+                profileUnlockCredits: Number(event.target.value),
+              })
+            }
+          />
+          <Input
+            id="companyUnlockCredits"
+            type="number"
+            label={
+              labels.companyUnlockCredits ||
+              "Company unlock credits (student → employer)"
+            }
+            value={String(levers.companyUnlockCredits ?? 0)}
+            onChange={(event) =>
+              setLevers({
+                ...levers,
+                companyUnlockCredits: Number(event.target.value),
+              })
+            }
+          />
         </div>
       </section>
 

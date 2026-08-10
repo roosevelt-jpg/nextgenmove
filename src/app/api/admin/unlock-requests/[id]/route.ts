@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { adminDb } from "@/lib/firebase-admin";
 import {
   getAdminSession,
   logActivity,
@@ -8,7 +9,13 @@ import {
 import {
   approveProfileUnlock,
   declineProfileUnlock,
+  PROFILE_UNLOCK_TYPE,
 } from "@/lib/employer/profile-unlock";
+import {
+  approveCompanyUnlock,
+  COMPANY_UNLOCK_TYPE,
+  declineCompanyUnlock,
+} from "@/lib/marketplace/mutual-unlock";
 
 const patchSchema = z.object({
   action: z.enum(["approve", "decline"]),
@@ -28,6 +35,56 @@ export async function PATCH(
 
   try {
     const body = patchSchema.parse(await request.json());
+    const reqSnap = await adminDb.collection("requests").doc(id).get();
+    if (!reqSnap.exists) {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+    const reqType = String(reqSnap.data()?.type ?? "");
+
+    if (reqType === COMPANY_UNLOCK_TYPE) {
+      if (body.action === "approve") {
+        const result = await approveCompanyUnlock({
+          requestId: id,
+          adminUid: session.uid,
+          note: body.note,
+        });
+
+        await logActivity({
+          actorId: session.uid,
+          actorRole: session.role,
+          action: "company_unlock_approved",
+          targetType: "requests",
+          targetId: id,
+          metadata: {
+            companyId: result.companyId,
+            studentId: result.studentId,
+            matchId: result.matchId,
+          },
+        });
+
+        return NextResponse.json({ ok: true, ...result });
+      }
+
+      await declineCompanyUnlock({
+        requestId: id,
+        adminUid: session.uid,
+        note: body.note,
+      });
+
+      await logActivity({
+        actorId: session.uid,
+        actorRole: session.role,
+        action: "company_unlock_declined",
+        targetType: "requests",
+        targetId: id,
+      });
+
+      return NextResponse.json({ ok: true });
+    }
+
+    if (reqType !== PROFILE_UNLOCK_TYPE) {
+      return NextResponse.json({ error: "invalid_type" }, { status: 400 });
+    }
 
     if (body.action === "approve") {
       const result = await approveProfileUnlock({

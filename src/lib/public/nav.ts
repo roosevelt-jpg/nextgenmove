@@ -7,6 +7,7 @@ export const PUBLIC_ROUTES = {
   browseRoles: "/careers-talent",
   howItWorks: "/how-it-works",
   visaPath: "/visa-path",
+  marketplace: "/marketplace",
   stories: "/stories",
   credits: "/credits",
   pricing: "/pricing",
@@ -45,6 +46,11 @@ export function buildDefaultFooterGroups(navLabels: NavLabels = {}): FooterGroup
           key: "visaPath",
           href: PUBLIC_ROUTES.visaPath,
           label: navLabels.visaPath,
+        },
+        {
+          key: "marketplace",
+          href: PUBLIC_ROUTES.marketplace,
+          label: navLabels.marketplace,
         },
         {
           key: "stories",
@@ -116,6 +122,11 @@ export function buildHeaderPrimaryLinks(navLabels: NavLabels = {}) {
       key: "visaPath",
       href: PUBLIC_ROUTES.visaPath,
       label: navLabels.visaPath,
+    },
+    {
+      key: "marketplace",
+      href: PUBLIC_ROUTES.marketplace,
+      label: navLabels.marketplace,
     },
     {
       key: "browseRoles",

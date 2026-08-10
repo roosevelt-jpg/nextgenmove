@@ -9,6 +9,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/employer/session";
 import { serializeTimestamp } from "@/lib/firestore-utils";
+import { anonymizedEmployerLabel } from "@/lib/marketplace/company-visibility";
 
 const jobSchema = z.object({
   title: z.string().trim().min(1).max(160),
@@ -40,6 +41,10 @@ export async function GET() {
         id: doc.id,
         title: String(data.title ?? ""),
         companyName: String(data.companyName ?? session.company.name),
+        employerLabel: anonymizedEmployerLabel(
+          session.companyId,
+          data.employerLabel ? String(data.employerLabel) : null,
+        ),
         description: String(data.description ?? ""),
         location: String(data.location ?? ""),
         salary: String(data.salary ?? ""),
@@ -68,10 +73,13 @@ export async function POST(request: Request) {
     const body = jobSchema.parse(await request.json());
     const ref = adminDb.collection("job_postings").doc();
     const now = FieldValue.serverTimestamp();
+    const companyName = body.companyName?.trim() || session.company.name;
+    const employerLabel = anonymizedEmployerLabel(session.companyId);
     const payload = stripUndefined({
       id: ref.id,
       companyId: session.companyId,
-      companyName: body.companyName?.trim() || session.company.name,
+      companyName,
+      employerLabel,
       title: body.title,
       description: body.description,
       location: body.location,
@@ -89,7 +97,10 @@ export async function POST(request: Request) {
       updatedAt: now,
     });
     await ref.set(payload);
-    return NextResponse.json({ id: ref.id, status: "open" }, { status: 201 });
+    return NextResponse.json(
+      { id: ref.id, status: "open", employerLabel },
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });

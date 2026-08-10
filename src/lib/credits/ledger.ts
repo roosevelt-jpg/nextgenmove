@@ -12,6 +12,8 @@ export interface CreditGrantOptions {
   relatedContentId?: string | null;
   /** Skip if a transaction with this source already exists for the student */
   once?: boolean;
+  /** Deterministic ledger doc id for idempotent spends (e.g. unlock:student:{matchId}). */
+  ledgerId?: string;
   db?: Firestore;
   request?: Request;
 }
@@ -43,21 +45,36 @@ export async function applyCreditDelta(options: CreditGrantOptions): Promise<{
       throw new Error("student_not_found");
     }
 
-    if (options.once) {
-      const existing = await transaction.get(
-        db
-          .collection("credit_transactions")
-          .where("studentId", "==", options.studentId)
-          .where("source", "==", options.source)
-          .limit(1),
-      );
+    const txRef = options.ledgerId
+      ? db.collection("credit_transactions").doc(options.ledgerId)
+      : db.collection("credit_transactions").doc();
 
-      if (!existing.empty) {
-        return {
-          applied: false,
-          credits: (studentSnap.data()?.credits as number | undefined) ?? 0,
-          reason: "already_granted",
-        };
+    if (options.once) {
+      if (options.ledgerId) {
+        const existingById = await transaction.get(txRef);
+        if (existingById.exists) {
+          return {
+            applied: false,
+            credits: (studentSnap.data()?.credits as number | undefined) ?? 0,
+            reason: "already_granted",
+          };
+        }
+      } else {
+        const existing = await transaction.get(
+          db
+            .collection("credit_transactions")
+            .where("studentId", "==", options.studentId)
+            .where("source", "==", options.source)
+            .limit(1),
+        );
+
+        if (!existing.empty) {
+          return {
+            applied: false,
+            credits: (studentSnap.data()?.credits as number | undefined) ?? 0,
+            reason: "already_granted",
+          };
+        }
       }
     }
 
@@ -67,8 +84,6 @@ export async function applyCreditDelta(options: CreditGrantOptions): Promise<{
     if (next < 0) {
       throw new Error("insufficient_credits");
     }
-
-    const txRef = db.collection("credit_transactions").doc();
 
     transaction.update(studentRef, stripUndefined({ credits: next }));
     transaction.set(
